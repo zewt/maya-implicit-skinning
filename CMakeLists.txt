@@ -7,15 +7,10 @@ project(implicit_framework)
 #-------------------------------------------------------------------------------
 # Check dependencies
 #-------------------------------------------------------------------------------
-FIND_PACKAGE(CUDA QUIET REQUIRED)
-FIND_PACKAGE(Qt4 REQUIRED)
+FIND_PACKAGE(CUDA REQUIRED)
+FIND_PACKAGE(Qt5OpenGL REQUIRED)
+FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(OpenGL REQUIRED)
-
-if(QT4_FOUND)
-    message("QT4 found")
-else()
-    message("QT4 not found")
-endif()
 
 SET(QT_USE_QTOPENGL 1)
 set(QT_USE_QTDBUS TRUE)
@@ -25,7 +20,7 @@ IF(WIN32)
     SET (QT_USE_MOTIF 0)
 ENDIF()
 
-INCLUDE(${QT_USE_FILE})
+#INCLUDE(${QT_USE_FILE})
 # END CHECK DEPENDANCIES -------------------------------------------------------
 
 
@@ -280,12 +275,12 @@ endif()
 #-------------------------------------------------------------------------------
 
 # List of .ui files in order to generate associated .h
-QT4_WRAP_UI(host_sources ${qt_ui_files})
+QT5_WRAP_UI(host_sources ${qt_ui_files})
 
 # for moc :
 # The below macro generates moc files from qobject_headers when needed and
 # add to the variable host_sources the corresponding generated .cpp
-QT4_WRAP_CPP(host_sources ${qobject_headers})
+QT5_WRAP_CPP(host_sources ${qobject_headers})
 
 # build all .cu files into a static lib cuda_lib
 CUDA_ADD_LIBRARY( cuda_lib STATIC  ${cuda_sources} )
@@ -295,6 +290,8 @@ ADD_LIBRARY( implicit_framework STATIC ${host_sources} )
 # Libraries implicit_framework needs to be linked against:
 TARGET_LINK_LIBRARIES(implicit_framework
     ${LIB_CUDA} cuda_lib
+    Qt5::Widgets
+    Qt5::OpenGL
     ${OpenGL} ${GLEW} ${glu} ${QT_LIBRARIES} ${FBX} -ldl -lpthread)
 
 TARGET_LINK_LIBRARIES(cuda_lib implicit_framework)
