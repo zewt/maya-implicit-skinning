@@ -55,6 +55,9 @@ OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
     // Needed to initialize the opengl shared context
     _hidden->updateGL();
     _hidden->makeCurrent();
+
+    OGL_widget_skin::init_glew();
+
     _hidden->setGeometry(0,0,0,0);
     _hidden->hide();
     assert( _hidden->isValid() );

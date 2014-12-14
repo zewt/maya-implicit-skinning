@@ -75,6 +75,8 @@ void OGL_widget_skin::init()
     _refresh_screen_timer = new QTimer(this);
     connect(_refresh_screen_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
     connect(&(_msge_stack->get_timer()), SIGNAL(timeout()), this, SLOT(updateGL()));
+
+    initializeGL();
 }
 
 // -----------------------------------------------------------------------------
