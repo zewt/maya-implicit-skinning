@@ -20,6 +20,9 @@
 #define FBX_UTILS_HPP__
 
 #include <string>
+// Note: if this fails in MSVC2013 with "Unsupported platform", you'll need to edit the
+// kstring.h header and comment out the "KARCH_DEV_MSC <= 1600" bit at the top.  There's
+// some deeply horrifying stuff going on in there.
 #include <fbxsdk.h>
 #include <fbxfilesdk/kfbxio/kfbxiosettings.h>
 #include <fbxfilesdk/kfbxplugins/kfbxsdkmanager.h>
