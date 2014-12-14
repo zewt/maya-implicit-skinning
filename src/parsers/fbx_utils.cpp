@@ -19,6 +19,7 @@
 #include "fbx_utils.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 #ifdef IOS_REF
 #undef  IOS_REF

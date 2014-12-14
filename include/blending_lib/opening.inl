@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <algorithm>
 //#include <cmath>
 #include "math_cu.hpp"
 

@@ -23,6 +23,7 @@
 #include <cmath>
 #include <vector>
 #include <cassert>
+#include <algorithm>
 
 #include "glbuffer_object.hpp"
 #include "shader.hpp"

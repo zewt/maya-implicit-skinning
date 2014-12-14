@@ -20,6 +20,7 @@
 #define DISPLAY_CTRL_HPP_
 
 #include "display_operator.hpp"
+#include <algorithm>
 
 /** @brief Display controller
   This class is an utility to control display settings such as screen size,
