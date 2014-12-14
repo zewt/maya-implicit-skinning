@@ -267,8 +267,17 @@ endif()
 if(MSVC)
 configure_file(${FBX_ROOT}/2012.2/lib/vs2010/x86/fbxsdk-2012.2.dll ${CMAKE_CURRENT_BINARY_DIR}/fbxsdk-2012.2.dll COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/glew32.dll ${CMAKE_CURRENT_BINARY_DIR}/glew32.dll COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/QtCore4.dll ${CMAKE_CURRENT_BINARY_DIR}/QtCore4.dll COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/QtGui4.dll ${CMAKE_CURRENT_BINARY_DIR}/QtGui4.dll COPYONLY)
+
+get_target_property(QtBinDir Qt5::Core LOCATION)
+get_filename_component(QtBinDir "${QtBinDir}" DIRECTORY)
+
+configure_file("${QtBinDir}/Qt5Core.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${QtBinDir}/Qt5OpenGL.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${QtBinDir}/Qt5Widgets.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${QtBinDir}/Qt5Gui.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${QtBinDir}/icudt53.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${QtBinDir}/icuin53.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${QtBinDir}/icuuc53.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 endif()
 
 # END COPY DLLS ----------------------------------------------------------------
