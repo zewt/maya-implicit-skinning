@@ -1,6 +1,6 @@
 # Note set CUDA_BUILD_EMULATION to OFF to enable Device mode compilation.
 
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 2.8.11)
 
 project(implicit_framework)
 
@@ -281,6 +281,10 @@ QT5_WRAP_UI(host_sources ${qt_ui_files})
 # The below macro generates moc files from qobject_headers when needed and
 # add to the variable host_sources the corresponding generated .cpp
 QT5_WRAP_CPP(host_sources ${qobject_headers})
+
+# Work around CMake: the same CUDA helpers exist upstream, and it's a different
+# version that never actually links cuda.lib.
+set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY})
 
 # build all .cu files into a static lib cuda_lib
 CUDA_ADD_LIBRARY( cuda_lib STATIC  ${cuda_sources} )
