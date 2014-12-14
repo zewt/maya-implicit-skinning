@@ -153,7 +153,7 @@ void Preset_ctrl::load_presets()
 
 Button_ctrl* Preset_ctrl::read_preset(QString filename)
 {
-    std::ifstream file(filename.toAscii());
+    std::ifstream file(filename.toLatin1());
 
     std::string dummy;
 
@@ -181,7 +181,7 @@ Button_ctrl* Preset_ctrl::read_preset(QString filename)
 void Preset_ctrl::write_preset(const IBL::Ctrl_setup& s,
                                const QString& filename)
 {
-    std::ofstream file(filename.toAscii(), std::ios::trunc);
+    std::ofstream file(filename.toLatin1(), std::ios::trunc);
 
     file << "p0( " << s.p0().x << " , " << s.p0().y << " )" << std::endl;
     file << "p1( " << s.p1().x << " , " << s.p1().y << " )" << std::endl;

@@ -106,7 +106,7 @@ bool Main_window_skin::load_custom_skeleton(QString name)
     skel_name.append(".skel");
     if( QFile::exists(skel_name) )
     {
-        Cuda_ctrl::_graph.load_from_file(skel_name.toAscii());
+        Cuda_ctrl::_graph.load_from_file(skel_name.toLatin1());
         Cuda_ctrl::_skeleton.load( *g_graph );
         return true;
     }
@@ -125,7 +125,7 @@ bool Main_window_skin::load_custom_weights(QString name)
     ssd_name.append(".weights");
     if( QFile::exists(ssd_name) )
     {
-        Cuda_ctrl::load_animesh_and_ssd_weights(ssd_name.toAscii());
+        Cuda_ctrl::load_animesh_and_ssd_weights(ssd_name.toLatin1());
         return true;
     }
     else
@@ -216,7 +216,7 @@ void Main_window_skin::on_actionSave_as_skeleton_triggered()
                                                     "./resource/meshes",
                                                     tr("*.skel") );
     if( fileName.size() != 0)
-        Cuda_ctrl::_graph.save_to_file(fileName.toAscii());
+        Cuda_ctrl::_graph.save_to_file(fileName.toLatin1());
 
 }
 
@@ -252,7 +252,7 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
         }
         else if( ext == "skel")
         {
-            Cuda_ctrl::_graph.load_from_file(fileName.toAscii());
+            Cuda_ctrl::_graph.load_from_file(fileName.toLatin1());
             Cuda_ctrl::_skeleton.load( *g_graph );
             _viewports->set_io(EOGL_widget::GRAPH);
         }
@@ -308,7 +308,7 @@ void Main_window_skin::on_actionSave_as_mesh_triggered()
        QFileInfo fi(fileName);
        QString ext = fi.suffix().toLower();
        if(ext == "off")
-           g_mesh->export_off(fileName.toAscii(), diag.exec());
+           g_mesh->export_off(fileName.toLatin1(), diag.exec());
        else if( ext == "obj" )
        {
            Loader::Abs_mesh abs_mesh;
@@ -336,7 +336,7 @@ void Main_window_skin::on_actionSave_ISM_triggered()
                                                     "./resource/meshes",
                                                     tr("*.ism") );
     if( fileName.size() != 0)
-        Cuda_ctrl::_anim_mesh->save_ism(fileName.toAscii());
+        Cuda_ctrl::_anim_mesh->save_ism(fileName.toLatin1());
 }
 
 // -----------------------------------------------------------------------------
@@ -354,7 +354,7 @@ void Main_window_skin::on_actionLoad_ISM_triggered()
                                                     tr("*.ism") );
 
     if( fileName.size() != 0)
-        Cuda_ctrl::_anim_mesh->load_ism(fileName.toAscii());
+        Cuda_ctrl::_anim_mesh->load_ism(fileName.toLatin1());
 
     update_viewports();
 }
@@ -416,7 +416,7 @@ void Main_window_skin::on_actionLoad_model_triggered(bool)
             if( !load_custom_weights( name ) ) return;
         }
 
-        Cuda_ctrl::_anim_mesh->load_ism(fileName.toAscii());
+        Cuda_ctrl::_anim_mesh->load_ism(fileName.toLatin1());
 
         // Enable GUI for animesh
         enable_animesh( true );
@@ -441,9 +441,9 @@ void Main_window_skin::on_actionLoad_weights_triggered()
     if( fileName.size() != 0)
     {
         if(Cuda_ctrl::is_animesh_loaded())
-            Cuda_ctrl::_anim_mesh->load_weights(fileName.toAscii());
+            Cuda_ctrl::_anim_mesh->load_weights(fileName.toLatin1());
         else
-            Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toAscii() );
+            Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toLatin1() );
 
         _viewports->set_io(EOGL_widget::MESH_EDIT);
         enable_animesh( true );
@@ -466,7 +466,7 @@ void Main_window_skin::on_actionSave_weights_triggered(bool checked)
                                                     "./resource/meshes",
                                                     tr("*.weights") );
     if( fileName.size() != 0)
-        Cuda_ctrl::_anim_mesh->save_weights(fileName.toAscii());
+        Cuda_ctrl::_anim_mesh->save_weights(fileName.toLatin1());
 }
 
 // -----------------------------------------------------------------------------

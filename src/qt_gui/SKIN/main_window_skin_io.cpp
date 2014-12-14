@@ -54,7 +54,7 @@ void Main_window_skin::keyPressEvent( QKeyEvent* event )
     QString t = event->text();
     QChar c = t[0];
     using namespace Constants;
-    switch (c.toAscii()) {
+    switch (c.toLatin1()) {
     case 'o':
     {
         if( _anim_mesh != 0)

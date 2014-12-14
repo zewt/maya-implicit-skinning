@@ -318,7 +318,7 @@ public:
         QChar c = t[0];
         using namespace Constants;
         bool view_changed = true;
-        switch (c.toAscii()) {
+        switch (c.toLatin1()) {
         // ''''''''''''''''''''''''''''''''''''''''''''
         // Change operator parameters :
 

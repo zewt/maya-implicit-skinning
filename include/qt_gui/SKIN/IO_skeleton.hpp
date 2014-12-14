@@ -267,7 +267,7 @@ public:
         QString t = event->text();
         QChar c = t[0];
 
-        switch (c.toAscii())
+        switch (c.toLatin1())
         {
         case 'j':
         {
@@ -355,7 +355,7 @@ public:
         QString t = event->text();
         QChar c = t[0];
 
-        switch (c.toAscii())
+        switch (c.toLatin1())
         {
         case 'j':
         {
