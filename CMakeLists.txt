@@ -55,8 +55,12 @@ endif()
 # compiler and cuda compilation in NVCC.  Note that CUDA_INCLUDE_DIRS is added
 # automatically by CUDA_ADD_EXECUTABLE and CUDA_ADD_LIBRARY.
 
+# SET(FBX_ROOT $ENV{FBXSDK_ROOT})
+SET(FBX_ROOT "C:/Program Files/Autodesk/FBX SDK")
+
 INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${FBX_ROOT}/2012.2/include
     libs/include
     libs/include/vcglib
     include
@@ -244,7 +248,7 @@ if(MSVC)
     set(glu "glu32")
     set(OpenGL "opengl32")
     ADD_DEFINITIONS(-DFBXSDK_SHARED) # macro needed to tell fbx we're using dlls
-    set(FBX "${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/vs2010/x86/fbxsdk-2012.2.lib")
+    set(FBX "${FBX_ROOT}/2012.2/lib/vs2010/x86/fbxsdk-2012.2.lib")
 else()
     set(LIB_CUDA -lcuda)
     set(glu GLU)
@@ -261,7 +265,7 @@ endif()
 #-------------------------------------------------------------------------------
 
 if(MSVC)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/fbxsdk-2012.2.dll ${CMAKE_CURRENT_BINARY_DIR}/fbxsdk-2012.2.dll COPYONLY)
+configure_file(${FBX_ROOT}/2012.2/lib/vs2010/x86/fbxsdk-2012.2.dll ${CMAKE_CURRENT_BINARY_DIR}/fbxsdk-2012.2.dll COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/glew32.dll ${CMAKE_CURRENT_BINARY_DIR}/glew32.dll COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/QtCore4.dll ${CMAKE_CURRENT_BINARY_DIR}/QtCore4.dll COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/QtGui4.dll ${CMAKE_CURRENT_BINARY_DIR}/QtGui4.dll COPYONLY)
