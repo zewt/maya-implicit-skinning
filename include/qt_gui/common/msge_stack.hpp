@@ -24,7 +24,7 @@
 #include <QTimer>
 #include <QTime>
 #include <QFont>
-#include <QGLWidget>
+#include <QtOpenGL/QGLWidget>
 
 #include "text_renderer.hpp"
 

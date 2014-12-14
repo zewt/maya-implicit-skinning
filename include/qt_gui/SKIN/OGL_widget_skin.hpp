@@ -31,7 +31,7 @@
 #include "cuda_rendering.hpp"
 
 #include "common/msge_stack.hpp"
-#include <QGLWidget>
+#include <QtOpenGL/QGLWidget>
 #include "common/OGL_widget_enum.hpp"
 
 // FORWARD DEFS ----------------------------------------------------------------

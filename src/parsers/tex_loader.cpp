@@ -19,7 +19,7 @@
 #include "tex_loader.hpp"
 
 #include <QImage>
-#include <QGLWidget>
+#include <QtOpenGL/QGLWidget>
 #include <QFileInfo>
 #include <iostream>
 

@@ -29,7 +29,7 @@
  *   copyright            : (C) 2006 by Benoit Jacob                       *
  ***************************************************************************/
 
-#include <QGLWidget>
+#include <QtOpenGL/QGLWidget>
 #include <QPainter>
 #include <QImage>
 #include <QChar>
