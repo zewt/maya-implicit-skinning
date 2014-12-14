@@ -1,0 +1,209 @@
+/**
+    @page rules Coding conventions
+    
+    Here we described the basic rules used in the project style/organization.
+    Some rules are merely choices that only depend on personnal taste.
+    You might disagree on some points but remember that conventions are made 
+    to keep the project as a whole. Consistency of a project is more 
+    important than the rules in iteself. 
+    
+    The rule of thumb here is to respect the general philosophy and use your common
+    sense 
+        
+    @section first_sec Disclaimer: Copy/Paste code
+    
+    Copy/Paste chunks of code without trying to factorize it is not tolerable.
+    It's no good for code maintenance, it's no good for readability nor compilation time.
+    We are computer scientist not monks.
+    
+    @section Comments
+    
+    Everything should be commented of course. But for the lazy one here is the minimal
+    requirement: for a header file at least describe generally what it does and give some examples
+    of use of the module/class interface. It will help readers to skim throughout the project
+    rapidly, find the areas of interests and how to use them. 
+    
+    Commenting functions one by one is a great plus but comes after. Avoid paraphrasing the function's name:
+    @code
+    // Concatenate two strings
+    string concat(string s0, string s1)    
+    @endcode
+    
+    The ideal case is a functions that doesn't need to be commented because its name and parameters
+    describe themself explicitly.    
+    
+    @section Indentation
+    
+    @li Indentation width equal 4 whitespaces.    
+    @li No tabulation allowed. Tabulation width often changes between
+    IDEs, unlike whitespaces which are interpreted the same.
+    
+    
+    If possible the prefered width for a file equal 80 characters.
+    when a line is too long:
+    @code
+    void fun(){    
+        for(){
+            if(){
+                a->way->too->long->chain->of( indirection->that->kill->performances );
+            }
+        }
+    }
+    @endcode
+    prefer more lines:
+    @code
+    void fun(){    
+        for(){
+            if(){
+                Type var = a->way->too->long->chain;
+                var->of( indirection->that->kill->performances );
+            }
+        }
+    }    
+    @endcode
+    You can also indent functions parameters.
+    
+    It's not always possible to respect this conventions but
+    a line with more than 100 characters is often sign of bad code design
+    and should not happen
+    
+    @section Spacing
+    
+    In general prefer more whitespace over less whitespace.
+    
+    @li binnary operators ( +, -, * etc.) have whitespaces
+    @li parameters loops conditions. have whitespaces
+    @li unnary operators ( ~, !, ++ etc.) have not   
+    @li indirections member access ( ., ->) have not
+    
+    A bad spacing:
+    @code
+    void fun(int p0,bool p2,var a){
+        for(int i=0;i<p0;i++)
+            if(p2) a -> foo . bar(i+1);
+    }   
+    @endcode
+    A better one: 
+    @code
+    void fun(int p0, bool p2, var a)
+    {
+        for(int i = 0; i < p0; i++)
+            if( p2 ) a->foo.bar(i + 1);
+    }   
+    @endcode
+       
+    @section naming naming
+    
+    Style chosen is the underscores style (e.g. my_var, my_func).
+        @subsection Character case
+        @li class, enum, typedef, first character must begin uppercase
+        @li functions, variables, parameters are lowercase
+        @li file names are lowercase
+        
+        @subsection Files
+        files .hpp .cpp .cu etc. should be named after their class/namespace they implement.
+        for instance:
+        @li class My_class {} -> my_class.hpp
+        @li namespace My_namespace {} -> my_namespace.hpp
+        @li namespace My_namespace{ namespace My_nested_namespace{} } -> my_namespace_my_nested_namespace.hpp
+    
+        @subsection Prefix
+    
+        @li '_' for class attributes
+        @li 'g_' for global variables
+        @li 'd_' for device memory pointers
+        @li 'h_' or nothing for host pointers
+        
+    @section Headers
+    
+    Reduce the header size at maximum by using forward definition:
+    @code
+    //user.hpp
+    class My_class0;
+    class My_class1;
+    
+    class User{
+        My_class0* _attr0;
+        My_class1* _attr1;
+    }    
+    
+    //user.cpp
+    #include "user.hpp"
+    #include "my_class0.hpp"
+    #include "my_class1.hpp"    
+    @endcode
+    
+    this will limit dependencies and accelerate compilation time.        
+    @section Enumerants
+    
+    enums must be defined within a class or namespace.
+    
+    Sometime you need to define enumerants outside its class but semantically it still belongs to it.
+    Here is how to organize your files:
+    for this class
+    @code
+    // File my_class.hpp
+    class My_class { ... };    
+    @endcode
+    the associated file for the enumerants is suffixed '_enum'
+    @code
+    // File my_class_enum.hpp
+    namespace EMy_class { // namespace name is the class name prefixed with 'E'
+    enum My_enum0{    }
+    enum My_enum1{    }
+    };    
+    @endcode
+    
+    This is usefull to perform forward definitions and limit dependencies between files
+    @code
+    // user.hpp
+    
+    #inlclude "my_class_enum.hpp"
+    class My_class;
+    
+    class User {
+    public:
+        void some_method(EMy_class::My_enum0 e);
+        My_class* _a; 
+    };    
+    @endcode 
+    
+    @section function tools/utilities
+    
+    Sometime you need to code small function tool. 
+    Prefer this:
+    @code
+    // my_class.cpp
+    static void my_tool(int p0, int p1){ ... }    
+    @endcode
+    To:
+    @code
+    // my_class.hpp
+    class my_class {
+    public:
+        ...
+    private:
+        void my_tool(int p0, int p1);   
+    };
+    // my_class.cpp
+    void My_class::my_tool(int p0, int p1){ ... }    
+    @endcode    
+    Unless it is really more convenient to have access to the class attributes.
+    
+    @li The first example will be clearer: the function will only affect its parameters and not some random attributes.
+    @li static keyword prevents name conflict with other includes.
+    
+    @section assertions
+    
+    Assert() as much as possible. check array bounds, check for null pointers etc.
+    for openGL use glAssert() macro in the project each time you call a 'gl' functions.
+    You can also use assert_msge(condition, "message");  to print the error message.
+    low level functions asserts while higher level functions check for errors prenventing the assertions.
+    
+    @section pointers
+    
+    @li Of course ALWAYS set to NULL a deallocated pointer. 
+    @li never use NULL macro its C not C++ prefer the literal 0.
+    
+        
+*/

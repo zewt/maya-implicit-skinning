@@ -1,0 +1,56 @@
+
+-----------------------------------------------------------------------------------------------
+
+
+Related to skeleton/mesh/weight reading found in a forum :
+
+-----------------------------------------------------------------------------------------------
+Not sure if this is the best way to do it, but roughly here’s what I do :
+
+- from the mesh, get the associated skin : attrMesh->GetDeformer(0);
+- from the skin, get the first cluster (a cluster is the link between one bone and a set of vertice in the mesh) : skin->GetCluster(0);
+- from the cluster, get the bone : cluster->GetLink();
+- from the bone, go up the node hierarchy until you find the skeleton root, which is the first node in the hierarchy for which the type is still eSkeleton
+- now you can go down the node hierarchy recursively to reconstruct your skeleton
+
+Each cluster gives you the mesh vertice associated with a given bone (GetControlPointIndices), together with their weight (GetControlPointWeights). It also gives you the transformation matrice of the mesh at bind tiime (GetTransformMatrix) and of the bone at bind time (GetTransformLinkMatrix).
+
+Animations are stored as scene-wide data called “takes”. You can get all takes from the scene object (FillTakeNameArray), set the one you want as active (SetCurrentTake), and then ask a node whether it is affected by that take (GetAnimationInterval). Lastly, you can sk the FBX frameworkl to evaluate a node’s transformation for the current take at a given time (GetLocalTFromCurrentTake for instance).
+
+Hope this helps !
+Ben
+------------------------------------------------------------------------------------------------
+(Finding the root node of the skeleton)
+Here's what I did:
+KFbxNode* FBXFile::FindRoot(KFbxNode* root, KFbxNodeAttribute::EAttributeType attrib)
+{
+    unsigned numChildren = root->GetChildCount();
+    if(!numChildren)
+        return NULL;
+
+    KFbxNode* child = NULL;
+    for(unsigned c = 0; c < numChildren; c++)
+    {
+        child = root->GetChild(c);
+        if(!child->GetNodeAttribute())
+            continue;
+        if(child->GetNodeAttribute()->GetAttributeType() != attrib)
+            continue;
+        
+        return child;
+    }
+
+    KFbxNode* rootJoint = NULL;
+    for(unsigned c = 0; c < numChildren; c++)
+    {
+        child = root->GetChild(c);
+        rootJoint = FindRoot(child, attrib);
+        if(rootJoint)
+            break;
+    }
+    return rootJoint;
+}
+
+All you need to do to find the skeleton root is call:
+KFbxNode* jointRoot = FindRoot(root, KFbxNodeAttribute::eSKELETON);
+

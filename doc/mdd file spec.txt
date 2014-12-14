@@ -1,0 +1,30 @@
+MDD file format
+The MDD file format is very simple and here is a brief description for TD's and developers who are interested in adding tools to a pipeline built around MDD.
+
+The first thing to note is that the MDD file format is Motorola Big Endian byte order as opposed to the Intel Little Endian standard. 
+So however you implement the structure below, you must come up with an algorithm to flip the bytes during file IO.
+
+The data structure is like so:
+typedef Struct{
+int totalframes;
+int totalPoints;
+float *Times; //time for each frame
+float **points[3];
+}mddstruct;
+
+
+and the data is written like so:
+
+
+totalframes
+totalPoints
+Times
+while(!totalframes)
+{
+while(!totalPoints)
+{
+write point[frame][point][axis];
+point++;
+}
+frame++;
+}

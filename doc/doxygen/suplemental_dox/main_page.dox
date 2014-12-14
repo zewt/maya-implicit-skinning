@@ -1,0 +1,12 @@
+/**
+    @mainpage Implicit framework presentation
+    
+    @section Introduction
+    
+    This is an acadamic research project. 
+    It aims at implementing a skinning deformer
+    based on implicit surfaces.
+    
+    The main technology used are C++, CUDA, OpenGL, Qt framework, Eigen for solving linear systems,
+    FBX sdk to parse FBX meshes and CMake to handle compilation.
+*/

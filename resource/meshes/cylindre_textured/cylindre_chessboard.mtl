@@ -1,0 +1,12 @@
+# Blender3D MTL File: cylindre_damier.blend
+# Material Count: 1
+newmtl chessboard_
+Ns 0.2
+Ka 0.000000 0.000000 0.000000
+Kd 1.0 1.0 1.0
+Ks 0.1 0.1 0.1
+d 1
+illum 2
+map_Kd chessboard64x64.png
+
+

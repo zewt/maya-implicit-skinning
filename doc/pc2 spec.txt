@@ -1,0 +1,14 @@
+.PC2 File Format:
+
+You can create or modify PointCache2 files by hand using the following file format. The start of the file is a header containing:
+char    cacheSignature[12];   // Will be 'POINTCACHE2' followed by a trailing null character.
+int     fileVersion;          // Currently 1
+int     numPoints;            // Number of points per sample
+float   startFrame;           // Corresponds to the UI value of the same name.
+float   sampleRate;           // Corresponds to the UI value of the same name.
+int     numSamples;           // Defines how many samples are stored in the file.
+Be sure to check the version number. If it isn't 1, then don't mess with the file, as the format will change in the future.
+
+Following the header, there is a straight dump of all the cache samples (which are snapshots of all the point positions for an object). Each sample is stored one after the other as a flat array of x/y/z floats for each point (so each sample is (numPoints * sizeof(float) * 3) bytes).
+
+See the included "PointCacheWriter.ms" script as an example.

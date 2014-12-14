@@ -1,0 +1,12 @@
+/**
+    @page skinning_skeleton.dox
+    
+    This module aims to store an implicit skeleton handle its blending 
+    and evaluate it.
+    It can be used by the implicit skinning algorithm for instance. 
+    (which projects a skinned  mesh vertices onto the implicit surface)
+    This evaluation)
+    
+    It's important to keep this module as independant as possible. This
+    way extracting it to make a library will be easier.
+*/

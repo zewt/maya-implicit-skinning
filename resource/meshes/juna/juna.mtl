@@ -1,0 +1,16 @@
+# Blender MTL File: 'Juna_naked_no_nipple.blend'
+# Material Count: 1
+newmtl JunaSkin_Skin.png
+Ns 37.254902
+Ka 0.000000 0.000000 0.000000
+Kd 0.807843 0.623529 0.505882
+Ks 0.007725 0.008627 0.009098
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd 3D_Models/textures/Skin.png
+map_Ns 3D_Models/textures/Skin_Hard.png
+map_Bump 3D_Models/textures/Skin_Bump.png
+map_Ks 3D_Models/textures/Skin_Spec2.png
+
+
