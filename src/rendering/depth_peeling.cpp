@@ -140,15 +140,15 @@ void Peeler::set_background(int width, int height,
 
     glActiveTexture(GL_TEXTURE1);
     pbo_depth->bind();
-    glAssert( glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundDepthTexId) );
-    glAssert( glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, 0, 0, width, height,
+    glAssert( glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundDepthTexId) );
+    glAssert( glTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, width, height,
                               GL_DEPTH_COMPONENT, GL_FLOAT, 0) );
     //draw_quad();
     pbo_depth->unbind();
 
     pbo_color->bind();
-    glAssert( glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundColorTexId) );
-    glAssert( glTexSubImage2D(GL_TEXTURE_RECTANGLE, 0, 0, 0, width, height,
+    glAssert( glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundColorTexId) );
+    glAssert( glTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, width, height,
                               GL_RGBA, GL_UNSIGNED_BYTE, 0) );
     //draw_quad();
     pbo_color->unbind();
@@ -178,7 +178,7 @@ void Peeler::peel(float base_alpha)
     glAssert( g_shader_init->use() );
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundDepthTexId);
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundDepthTexId);
     g_shader_init->set_uniform("BaseDepthTex", 1);
 
     glActiveTexture(GL_TEXTURE0);
@@ -210,11 +210,11 @@ void Peeler::peel(float base_alpha)
 
 
         g_shader_peel->use();
-        glBindTexture(GL_TEXTURE_RECTANGLE, _depthTexId[prevId]);
+        glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _depthTexId[prevId]);
         g_shader_peel->set_uniform("DepthTex", 0);
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundDepthTexId);
+        glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundDepthTexId);
         g_shader_peel->set_uniform("BaseDepthTex", 1);
 
         glActiveTexture(GL_TEXTURE0);
@@ -233,7 +233,7 @@ void Peeler::peel(float base_alpha)
         glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE, GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
 
         g_shader_blend->use();
-        glBindTexture(GL_TEXTURE_RECTANGLE, _colorTexId[currId]);
+        glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _colorTexId[currId]);
         g_shader_blend->set_uniform("TempTex", 0);
         draw_quad();
         Shader_prog::unuse();
@@ -253,11 +253,11 @@ void Peeler::peel(float base_alpha)
 
     g_shader_final->use();
     //g_shaderFrontFinal->set_uniform("BackgroundColor", 0.f, 0.f, 0.f);
-    glBindTexture(GL_TEXTURE_RECTANGLE, _colorBlenderTexId);
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _colorBlenderTexId);
     g_shader_final->set_uniform("ColorTex", 0);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundColorTexId);
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundColorTexId);
     g_shader_final->set_uniform("BackgroundTex", 1);
 
     glActiveTexture(GL_TEXTURE0);
@@ -278,20 +278,20 @@ void Peeler::init_depth_peeling(int width, int height)
     glGenTextures(1, &_backgroundDepthTexId);
     glActiveTexture(GL_TEXTURE1);
 
-    glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundDepthTexId);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT32F_NV,
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundDepthTexId);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_DEPTH_COMPONENT32F_NV,
                  width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-    glBindTexture(GL_TEXTURE_RECTANGLE, _backgroundColorTexId);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height,
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _backgroundColorTexId);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, width, height,
                  0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
     glActiveTexture(GL_TEXTURE0);
@@ -304,46 +304,46 @@ void Peeler::init_depth_peeling(int width, int height)
 
     for (int i = 0; i < 2; i++)
     {
-        glBindTexture(GL_TEXTURE_RECTANGLE, _depthTexId[i]);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _depthTexId[i]);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT32F_NV,
+        glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_DEPTH_COMPONENT32F_NV,
                      width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-        glBindTexture(GL_TEXTURE_RECTANGLE, _colorTexId[i]);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height,
+        glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _colorTexId[i]);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, width, height,
                      0, GL_RGBA, GL_FLOAT, 0);
 
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fboId[i]);
         glAssert( glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT,
-                                            GL_TEXTURE_RECTANGLE, _depthTexId[i], 0) );
+                                            GL_TEXTURE_RECTANGLE_EXT, _depthTexId[i], 0) );
         glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0,
-                                  GL_TEXTURE_RECTANGLE, _colorTexId[i], 0);
+                                  GL_TEXTURE_RECTANGLE_EXT, _colorTexId[i], 0);
 
     }
 
     glGenTextures(1, &_colorBlenderTexId);
-    glBindTexture(GL_TEXTURE_RECTANGLE, _colorBlenderTexId);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_RECTANGLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA, width, height,
+    glBindTexture(GL_TEXTURE_RECTANGLE_EXT, _colorBlenderTexId);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, width, height,
                  0, GL_RGBA, GL_FLOAT, 0);
 
     glGenFramebuffersEXT(1, &_colorBlenderFboId);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _colorBlenderFboId);
     glAssert( glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT,
-                                        GL_TEXTURE_RECTANGLE, _depthTexId[0], 0) );
+                                        GL_TEXTURE_RECTANGLE_EXT, _depthTexId[0], 0) );
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0,
-                              GL_TEXTURE_RECTANGLE, _colorBlenderTexId, 0);
+                              GL_TEXTURE_RECTANGLE_EXT, _colorBlenderTexId, 0);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
     _is_init = true;

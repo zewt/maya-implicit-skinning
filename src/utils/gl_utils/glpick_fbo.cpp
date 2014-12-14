@@ -68,7 +68,7 @@ GlPick_FBO::GlPick_FBO(int width, int height) :
 
     _color_tex = new GlTex2D(width, height, 0, GL_NEAREST, GL_CLAMP, GL_R32UI );
     _color_tex->bind();
-    _color_tex->allocate( GL_UNSIGNED_INT, GL_RED_INTEGER );
+    _color_tex->allocate( GL_UNSIGNED_INT, GL_RED_INTEGER_EXT );
 
     _depth_tex = new GlTex2D(width, height, 0, GL_NEAREST, GL_CLAMP, GL_DEPTH_COMPONENT);
     _depth_tex->bind();
@@ -129,7 +129,7 @@ int GlPick_FBO::end()
     _fbo->unbind();
     glAssert( glBindFramebufferEXT(GL_READ_FRAMEBUFFER, _fbo->id()) );
     glAssert( glReadBuffer(GL_COLOR_ATTACHMENT0) );
-    glAssert( glReadPixels(_x, _y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &(id[0])) );
+    glAssert( glReadPixels(_x, _y, 1, 1, GL_RED_INTEGER_EXT, GL_UNSIGNED_INT, &(id[0])) );
 
     glAssert( glReadBuffer(GL_NONE) );
     glAssert( glBindFramebufferEXT(GL_READ_FRAMEBUFFER, 0) );
@@ -151,7 +151,7 @@ void GlPick_FBO::resize(int w, int h)
 {
     _color_tex->bind();
     _color_tex->set_size(w, h);
-    _color_tex->allocate( GL_UNSIGNED_INT, GL_RED_INTEGER );
+    _color_tex->allocate( GL_UNSIGNED_INT, GL_RED_INTEGER_EXT );
 
     _depth_tex->bind();
     _depth_tex->set_size(w, h);
