@@ -57,9 +57,6 @@ Main_window_skin::Main_window_skin(QWidget *parent) :
     setup_main_window();
     //--------------
 
-    QObject::connect(widget_ctrl_presets, SIGNAL( preset_pushed()       ),
-                     this               , SLOT  ( ctrl_presets_pushed() ));
-
     // HACK: Because blending_env initialize to elbow too ...
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
     update_ctrl_spin_boxes(shape);
@@ -238,24 +235,6 @@ void Main_window_skin::set_gizmo_scale() {}
 
 void Main_window_skin::toggle_fitting(bool checked){
     Cuda_ctrl::_anim_mesh->set_implicit_skinning(checked);
-}
-
-void Main_window_skin::ctrl_presets_pushed()
-{
-    IBL::Ctrl_setup shape;
-    const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-
-    if(set.size() > 0)
-        for(unsigned i = 0; i < set.size(); i++){
-            shape = _skeleton.get_joint_controller( set[i] );
-            update_ctrl_spin_boxes(shape);
-        }
-    else{
-        shape = _operators.get_global_controller();
-        update_ctrl_spin_boxes(shape);
-    }
-
-    Cuda_ctrl::_display._raytrace_again = true;
 }
 
 void Main_window_skin::active_viewport(int id)

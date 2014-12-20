@@ -70,9 +70,6 @@
          <item>
           <layout class="QVBoxLayout" name="vert_layout_display_tool_box">
            <item>
-            <widget class="Settings_raytracing" name="settings_raytracing" native="true"/>
-           </item>
-           <item>
             <widget class="QGroupBox" name="box_camera">
              <property name="title">
               <string>Camera</string>
@@ -1363,33 +1360,6 @@ For Humphrey set how much the original position counts</string>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="grpBox_controller">
-             <property name="title">
-              <string>Controller preset</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_17">
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>7</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>7</number>
-              </property>
-              <item>
-               <widget class="Preset_ctrl" name="widget_ctrl_presets" native="true"/>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
             <widget class="QGroupBox" name="gBox_controller_values">
              <property name="title">
               <string>Controller values</string>
@@ -2646,17 +2616,6 @@ This is a post process step.</string>
     <bool>false</bool>
    </attribute>
   </widget>
-  <widget class="Toolbar_frames" name="toolBar_frame">
-   <property name="windowTitle">
-    <string>Timeline</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>BottomToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
   <action name="actionLoad_mesh">
    <property name="text">
     <string>Load mesh</string>
@@ -2793,26 +2752,9 @@ This is a post process step.</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Toolbar_frames</class>
-   <extends>QToolBar</extends>
-   <header>qt_gui/common/toolbars/toolbar_frames.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>Preset_ctrl</class>
-   <extends>QWidget</extends>
-   <header>qt_gui/common/widgets/preset_controllers.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>Toolbar</class>
    <extends>QToolBar</extends>
    <header>qt_gui/common/toolbars/toolbar.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>Settings_raytracing</class>
-   <extends>QWidget</extends>
-   <header>common/widgets/settings_raytracing.hpp</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

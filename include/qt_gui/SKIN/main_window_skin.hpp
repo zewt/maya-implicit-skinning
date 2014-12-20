@@ -26,7 +26,7 @@
 
 #include "fbx_loader.hpp"
 #include "ui_main_window_skin.h"
-#include "common/widgets/preset_controllers.hpp"
+#include "controller.hpp"
 
 #include "OGL_widget_skin.hpp"
 
@@ -106,9 +106,6 @@ private:
     /// The openGL viewports
     OGL_viewports_skin* _viewports;
 
-    /// A custom widget to handle controller presets
-    Preset_ctrl* _ctrl_presets;
-
 public slots:
     // -------------------------------------------------------------------------
     /// @name MANUAL SLOTS
@@ -125,7 +122,6 @@ public slots:
     void set_gizmo_trackball();
     void set_gizmo_scale();
     void toggle_fitting(bool checked);
-    void ctrl_presets_pushed();
 
 
     // -------------------------------------------------------------------------

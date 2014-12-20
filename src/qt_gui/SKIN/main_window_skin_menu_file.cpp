@@ -154,9 +154,9 @@ bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loade
     Cuda_ctrl::_anim_mesh->set_ssd_weight( skel );
 
     // Load first animation
-    std::vector<Loader::Base_anim_eval*> anims;
-    loader.get_animations( anims );
-    toolBar_frame->set_anim_list( anims );
+//    std::vector<Loader::Base_anim_eval*> anims;
+//    loader.get_animations( anims );
+//    toolBar_frame->set_anim_list( anims );
 
     return true;
 }
@@ -186,13 +186,6 @@ void Main_window_skin::on_actionLoad_keyframes_triggered()
             // Load into our data representation
             std::vector<Loader::Base_anim_eval*> anims;
             loader.get_animations( anims );
-
-            Diag_ok_cancel diag("Add or replace keyframes",
-                                "Do you want to replace the current animation tracks",
-                                this);
-
-            if(diag.exec()) toolBar_frame->set_anim_list( anims );
-            else            toolBar_frame->add_anims( anims );
         }
         else
         {
