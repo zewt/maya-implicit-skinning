@@ -253,26 +253,11 @@ public:
     /// along the mesh to smoothen transition between SSD animation and IS.
     void init_ssd_interpolation_weights();
 
-    /// The ssd weights are initialize with the bone's cluster. It will result
-    /// in a rigid animation of the mesh : each vertex is only influenced by
-    /// the nearest bone
-    void init_rigid_ssd_weights();
-
-    /// diffuse the ssd weights thanks to the heat difusion equation
-    /// @warning Only works with closed 2-manifold triangular meshes
-    void heat_diffuse_ssd_weights(float heat);
-
-    /// Some diffusion but not topology based
-    /// @warning experimental
-    void geodesic_diffuse_ssd_weights(int nb_iter, float strength);
-
-    /// Diffuse the ssd weights along the mesh and normalize them
-    void topology_diffuse_ssd_weights(int nb_iter, float strength);
-
     /// Set the weight of the ith vertex associated to the if joint,
     /// the value is clamped between [0, 1], and the value associated to the
     /// other joints are normalized.
     void set_ssd_weight(int id_vertex, int id_joint, float weight);
+    void init_rigid_ssd_weights();
 
     float get_ssd_weight(int id_vertex, int id_joint);
 

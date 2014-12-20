@@ -38,8 +38,6 @@ public:
         _ssao(false),
         _grid(false),
         _potential_2d(false),
-        _oriented_bbox(false),
-        _aa_bbox(false),
         _nb_samples_res(128),
         _progressive_raytracing(true),
         _bloom(false),
@@ -76,10 +74,6 @@ public:
 
     /// Show the 2D potential plane when raytracing implicit surfaces
     bool _potential_2d;
-
-    bool _oriented_bbox;
-    /// Axis aligned bounded box
-    bool _aa_bbox;
 
     /// nb samples required for one pass of raytracing.
     /// When raytracing is done in progressive mode only _width/_nb_samples_res

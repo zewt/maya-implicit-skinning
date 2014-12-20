@@ -195,8 +195,6 @@ Mesh::Mesh(const Mesh& m) :
     _nb_edges(m._nb_edges),
     _tri_list_per_vert(m._tri_list_per_vert),
     _quad_list_per_vert(m._quad_list_per_vert),
-    _not_manifold_verts(m._not_manifold_verts),
-    _on_side_verts(m._on_side_verts),
     _size_unpacked_vert_array(m._size_unpacked_vert_array),
     _unpacked_tri_list_per_vert(m._unpacked_tri_list_per_vert),
     _unpacked_quad_list_per_vert(m._unpacked_quad_list_per_vert),
@@ -503,8 +501,6 @@ void Mesh::free_mesh_data()
 
     _tri_list_per_vert.clear();
     _quad_list_per_vert.clear();
-    _not_manifold_verts.clear();
-    _on_side_verts.clear();
     _unpacked_tri_list_per_vert.clear();
     _unpacked_quad_list_per_vert.clear();
     _material_grps_tri.clear();

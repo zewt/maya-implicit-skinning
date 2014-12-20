@@ -151,11 +151,7 @@ public:
     void set_ssd_weight(int id_vertex, int id_joint, float weight);
     /// SSD weights from the abstract representation of a parsed file.
     void set_ssd_weight(const Loader::Abs_skeleton& skel);
-    void init_rigid_ssd_weights();
-    void topology_diffuse_ssd_weights(float alpha, int nb_iter);
-    void geodesic_diffuse_ssd_weights(float alpha, int nb_iter);
-    void heat_diffuse_ssd_weights(float heat);
-
+    
     //--------------------------------------------------------------------------
     /// @name Mesh_selection
     //--------------------------------------------------------------------------

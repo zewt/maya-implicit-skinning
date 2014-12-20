@@ -110,14 +110,7 @@ public slots:
 
     /// Enable disable painting mode
     void paint_toggled(bool state);
-    /// Update GUI relative to the active viewport
-    void active_viewport(int id);
 
-    void show_all_gizmo(bool checked);
-    void set_gizmo_trans();
-    void set_gizmo_rot();
-    void set_gizmo_trackball();
-    void set_gizmo_scale();
     void toggle_fitting(bool checked);
 
 
@@ -133,12 +126,9 @@ public slots:
     void on_actionLoad_skeleton_triggered();
     void on_spinBox_bulge_in_contact_force_valueChanged(double );
     void on_update_bulge_in_contact_released();
-    void on_display_operator_toggled(bool checked);
-    void on_display_controller_toggled(bool checked);
     void on_rbf_edition_toggled(bool checked);
     void on_actionSave_ISM_triggered();
     void on_actionLoad_ISM_triggered();
-    void on_local_frame_toggled(bool checked);
     void on_reset_anim_released();
     void on_actionLoad_weights_triggered();
     void on_actionSave_as_mesh_triggered();
@@ -153,16 +143,11 @@ public slots:
     void on_box_potential_pit_toggled(bool checked);
     void on_spinBox_diffuse_smoothing_weights_iter_valueChanged(int );
     void on_actionReloadShaders_triggered();
-    void on_button_defects_point_cl_toggled(bool checked);
     void on_spinB_step_length_valueChanged(double );
     void on_checkBox_collsion_on_toggled(bool checked);
     void on_pushB_attached_skeleton_released();
-    void on_pushB_set_rigid_weights_released();
-    void on_pushB_diffuse_curr_weights_released();
-    void on_pushB_diff_w_exp_released();
     void on_choose_hrbf_samples_released();
     void on_spinBox_valueChanged(int );
-    void on_checkB_show_junction_toggled(bool checked);
     void on_dSpinB_min_dist_samples_valueChanged(double );
     void on_dSpinB_max_fold_valueChanged(double );
     void on_dSpinB_max_dist_joint_valueChanged(double );
@@ -178,13 +163,11 @@ public slots:
     void on_dSpinB_ctrl_slope1_valueChanged(double );
     void on_comboB_operators_currentIndexChanged(int );
     void on_dSpinB_opening_value_valueChanged(double );
-    void on_spinB_aperture_valueChanged(int );
     void on_checkB_cap_joint_toggled(bool checked);
     void on_checkB_capparent_toggled(bool checked);
     void on_dSpinB_hrbf_radius_valueChanged(double );
 private slots:
     void on_checkBox_update_base_potential_toggled(bool checked);
-    void on_pButton_compute_heat_difusion_released();
 
     void on_cBox_always_precompute_toggled(bool checked);
     void on_checkB_enable_smoothing_toggled(bool checked);
@@ -193,12 +176,10 @@ private slots:
     void on_spinB_nb_iter_smooth2_valueChanged(int );
     void on_dSpinB_lambda_smooth2_valueChanged(double );
     void on_spinB_max_res_valueChanged(int );
-    void on_checkB_align_with_normal_toggled(bool checked);
     void on_checkB_factor_siblings_toggled(bool checked);
     void on_pushB_empty_bone_released();
 
     void on_actionLoad_FBX_triggered();
-    void on_actionSave_FBX_triggered();
 
     void on_pButton_add_caps_released();
     void on_pButton_supr_caps_released();
@@ -207,7 +188,6 @@ private slots:
     void on_color_smoothing_conservative_toggled(bool checked);
     void on_color_smoothing_laplacian_toggled(bool checked);
     void on_spinB_grid_res_valueChanged(int );
-    void on_checkB_aa_bbox_clicked(bool checked);
 };
 
 #endif // _MAIN_WINDOW_H_

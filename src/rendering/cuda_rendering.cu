@@ -91,58 +91,6 @@ static void draw_junction_sphere(bool rest_pose)
 
 // -----------------------------------------------------------------------------
 
-static void draw_bbox()
-{
-    if(!Cuda_ctrl::_display._oriented_bbox && !Cuda_ctrl::_display._aa_bbox)
-        return;
-
-    using namespace Cuda_ctrl;
-    const std::vector<int>& selection_set = _skeleton.get_selection_set();
-    _color.get(Color_ctrl::BOUNDING_BOX).set_gl_state();
-    for(unsigned int i = 0; i < selection_set.size(); i++)
-    {
-        int id = selection_set[i];
-        const Bone* b = g_skel->get_bone(id);
-
-        if(b->get_type() == EBone::SSD)
-            continue;
-
-        OBBox_cu obbox = b->get_obbox();
-
-        Vec3_cu lengths = obbox._bb.lengths();
-        if(Cuda_ctrl::_display._oriented_bbox)
-        {
-            glPushMatrix();
-
-            glMultMatrixf(obbox._tr.transpose().m);
-            glTranslatef(obbox._bb.pmin.x, obbox._bb.pmin.y, obbox._bb.pmin.z);
-            glScalef(lengths.x, lengths.y, lengths.z);
-
-            glColor3f(0.f, 0.f, 0.f);
-            g_primitive_printer.draw(g_cube_vbo);
-            glPopMatrix();
-        }
-
-        if( Cuda_ctrl::_display._aa_bbox )
-        {
-            BBox_cu bbox = b->get_bbox();
-
-            lengths = bbox.lengths();
-            glPushMatrix();
-
-
-            glTranslatef(bbox.pmin.x, bbox.pmin.y, bbox.pmin.z);
-            glScalef(lengths.x, lengths.y, lengths.z);
-
-            glColor3f(1.f, 1.f, 0.f);
-            g_primitive_printer.draw( g_cube_vbo );
-            glPopMatrix();
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 static void draw_cylinder()
 {
     using namespace Cuda_ctrl;
@@ -379,7 +327,6 @@ static void plain_objects(const Camera* cam, const Render_context_cu* ctx,
         draw_mesh_points(cam, ctx->_rest_pose);
         draw_grid_lines(cam);
 
-        draw_bbox();
         draw_cylinder();
         draw_voxels();
 

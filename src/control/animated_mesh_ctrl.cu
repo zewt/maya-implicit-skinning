@@ -165,13 +165,6 @@ void Animated_mesh_ctrl::set_ssd_weight(const Loader::Abs_skeleton& skel)
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::init_rigid_ssd_weights()
-{
-    _animesh->init_rigid_ssd_weights();
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::switch_do_smoothing(){
     set_do_smoothing(!_do_smooth);
 }
@@ -233,25 +226,6 @@ void Animated_mesh_ctrl::update_clusters(EAnimesh::Cluster_type type,
 void Animated_mesh_ctrl::deform_mesh()
 {
     _animesh->transform_vertices((EAnimesh::Blending_type)get_blending_type());
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::topology_diffuse_ssd_weights(float alpha, int nb_iter)
-{
-    _animesh->topology_diffuse_ssd_weights(nb_iter, alpha);
-}
-
-void Animated_mesh_ctrl::geodesic_diffuse_ssd_weights(float alpha, int nb_iter)
-{
-    _animesh->geodesic_diffuse_ssd_weights(nb_iter, alpha);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::heat_diffuse_ssd_weights(float heat)
-{
-    _animesh->heat_diffuse_ssd_weights(heat);
 }
 
 // -----------------------------------------------------------------------------

@@ -70,11 +70,6 @@ Main_window_skin::Main_window_skin(QWidget *parent) :
 
 void Main_window_skin::setup_comboB_operators()
 {
-    comboB_operators->addItem("Max union 2D"           , (int)Blending_env::MAX     );
-    comboB_operators->addItem("Bulge 4D"               , (int)Blending_env::B_OH_4D );
-    comboB_operators->addItem("Bulge 3D"               , (int)Blending_env::B_D     );
-    comboB_operators->addItem("Ultimate union 3D"      , (int)Blending_env::U_OH    );
-    comboB_operators->addItem("Diamond union 3D"       , (int)Blending_env::C_D     );
 }
 
 // -----------------------------------------------------------------------------
@@ -107,11 +102,15 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
     {
         Cuda_ctrl::_anim_mesh->choose_hrbf_samples_poisson
                 (bone_id,
-                 dSpinB_max_dist_joint->value(),
-                 dSpinB_max_dist_parent->value(),
-                 dSpinB_min_dist_samples->value(),
-                 spinB_nb_samples_psd->value(),
-                 dSpinB_max_fold->value() );
+                 // Set a distance threshold from sample to the joints to choose them.
+                 -0.02, // dSpinB_max_dist_joint->value(),
+                 -0.02, // dSpinB_max_dist_parent->value(),
+                 0, // dSpinB_min_dist_samples->value(),
+                 // Minimal number of samples.  (this value is used only whe the value min dist is zero)
+                 50, // spinB_nb_samples_psd->value(), 20-1000
+
+                 // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
+                 0); // dSpinB_max_fold->value() );
 
     }break;
 
@@ -119,10 +118,10 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
     {
         Cuda_ctrl::_anim_mesh->choose_hrbf_samples_ad_hoc
                 (bone_id,
-                 dSpinB_max_dist_joint->value(),
-                 dSpinB_max_dist_parent->value(),
-                 dSpinB_min_dist_samples->value(),
-                 dSpinB_max_fold->value() );
+                 -0.02, // dSpinB_max_dist_joint->value(),
+                 -0.02, // dSpinB_max_dist_parent->value(),
+                 0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
+                 0); // dSpinB_max_fold->value() );
 
     }break;
 
@@ -227,18 +226,8 @@ void Main_window_skin::paint_toggled(bool state)
 
 // MANUAL SLOTS ################################################################
 
-void Main_window_skin::show_all_gizmo(bool checked) {}
-void Main_window_skin::set_gizmo_trans() {}
-void Main_window_skin::set_gizmo_rot() {}
-void Main_window_skin::set_gizmo_trackball() {}
-void Main_window_skin::set_gizmo_scale() {}
-
 void Main_window_skin::toggle_fitting(bool checked){
     Cuda_ctrl::_anim_mesh->set_implicit_skinning(checked);
-}
-
-void Main_window_skin::active_viewport(int id)
-{
 }
 
 // AUTOMATIC SLOTS #############################################################
@@ -344,12 +333,6 @@ void Main_window_skin::on_rbf_edition_toggled(bool checked)
     Cuda_ctrl::_display._edit_hrbf_samples = checked;
 }
 
-void Main_window_skin::on_local_frame_toggled(bool){
-}
-
-void Main_window_skin::on_checkB_align_with_normal_toggled(bool){
-}
-
 void Main_window_skin::on_checkB_factor_siblings_toggled(bool checked)
 {
     Cuda_ctrl::_anim_mesh->set_factor_siblings( checked );
@@ -374,16 +357,15 @@ void Main_window_skin::on_spinBox_nb_step_fitting_valueChanged(int val)
 
 void Main_window_skin::on_debug_show_normal_toggled(bool checked)
 {
-    Cuda_ctrl::_debug._show_normals = checked;
 }
 
 void Main_window_skin::on_debug_show_gradient_toggled(bool checked)
 {
-    Cuda_ctrl::_debug._show_gradient = checked;
 }
 
 void Main_window_skin::on_doubleSpinBox_valueChanged(double val)
 {
+    // When the scalar product between the gradient of step n and n-1 exceed this threshold we stop the vertex.
     Cuda_ctrl::_debug._collision_threshold = val;
 }
 
@@ -402,36 +384,6 @@ void Main_window_skin::on_actionReloadShaders_triggered()
     Cuda_ctrl::reload_shaders();
 }
 
-void Main_window_skin::on_button_defects_point_cl_toggled(bool checked)
-{
-    if( checked )
-    {
-        Color cl = Cuda_ctrl::_color.get(Color_ctrl::MESH_POINTS);
-        g_mesh->set_point_color_bo(cl.r, cl.g, cl.b, cl.a);
-
-        cl = Cuda_ctrl::_color.get(Color_ctrl::MESH_DEFECTS);
-        const std::vector<int>& list0 = g_mesh->get_not_manifold_list();
-        const std::vector<int>& list1 = g_mesh->get_on_side_list();
-
-        float* color_ptr = 0;
-        g_mesh->_point_color_bo.map_to(color_ptr, GL_WRITE_ONLY);
-        for(unsigned i = 0; i < (list0.size()+list1.size()); i++)
-        {
-            int v_idx = i < list0.size() ? list0[i] : list1[i-list0.size()];
-            const Mesh::Packed_data d = g_mesh->get_packed_vert_map()[v_idx];
-            for(int j = 0; j < d.nb_ocurrence; j++)
-            {
-                const int p_idx = d.idx_data_unpacked + j;
-                color_ptr[p_idx*4  ] = cl.r;
-                color_ptr[p_idx*4+1] = cl.g;
-                color_ptr[p_idx*4+2] = cl.b;
-                color_ptr[p_idx*4+3] = cl.a;
-            }
-        }
-        g_mesh->_point_color_bo.unmap();
-    }
-}
-
 void Main_window_skin::on_spinB_step_length_valueChanged(double val)
 {
     Cuda_ctrl::_debug._step_length = val;
@@ -444,70 +396,16 @@ void Main_window_skin::on_checkBox_collsion_on_toggled(bool checked)
 
 void Main_window_skin::on_pushB_attached_skeleton_released()
 {
-    if( g_graph != 0 && g_graph->_vertices.size() > 0 &&
-        Cuda_ctrl::is_mesh_loaded() )
+    if( g_graph != 0 && g_graph->_vertices.size() > 0 && Cuda_ctrl::is_mesh_loaded() )
     {
-
         Cuda_ctrl::_skeleton.load( *g_graph );
         Cuda_ctrl::load_animesh();
     }
 }
 
-void Main_window_skin::on_pushB_set_rigid_weights_released()
-{
-    Cuda_ctrl::_anim_mesh->init_rigid_ssd_weights();
-}
-
-void Main_window_skin::on_pushB_diffuse_curr_weights_released()
-{
-    Cuda_ctrl::_anim_mesh->topology_diffuse_ssd_weights(dSpinB_diff_w_alpha->value(), spinB_diff_w_nb_iter->value());
-}
-
-void Main_window_skin::on_pushB_diff_w_exp_released()
-{
-    Cuda_ctrl::_anim_mesh->geodesic_diffuse_ssd_weights(dSpinB_diff_w_alpha_exp->value(), spinB_auto_w_nb_iter_exp->value());
-}
-
 void Main_window_skin::on_choose_hrbf_samples_released()
 {
     choose_hrbf_samples_selected_bones();
-}
-
-void Main_window_skin::on_checkB_show_junction_toggled(bool checked)
-{
-    Cuda_ctrl::_display._junction_spheres = checked;
-}
-
-void Main_window_skin::on_dSpinB_min_dist_samples_valueChanged(double )
-{
-    if(checkB_auto_sample->isChecked())
-    {
-        choose_hrbf_samples_selected_bones();
-    }
-}
-
-void Main_window_skin::on_dSpinB_max_fold_valueChanged(double )
-{
-    if(checkB_auto_sample->isChecked())
-    {
-        choose_hrbf_samples_selected_bones();
-    }
-}
-
-void Main_window_skin::on_dSpinB_max_dist_joint_valueChanged(double )
-{
-    if(checkB_auto_sample->isChecked())
-    {
-        choose_hrbf_samples_selected_bones();
-    }
-}
-
-void Main_window_skin::on_dSpinB_max_dist_parent_valueChanged(double )
-{
-    if(checkB_auto_sample->isChecked())
-    {
-        choose_hrbf_samples_selected_bones();
-    }
 }
 
 void Main_window_skin::on_dSpinB_collision_depth_valueChanged(double val)
@@ -571,6 +469,7 @@ void Main_window_skin::on_checkB_cap_joint_toggled(bool checked)
 {
     const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
 
+    // Add hrbf sample to the tip of the selected joint
     for(unsigned i = 0; i < set.size(); i++)
         Cuda_ctrl::_anim_mesh->set_jcap(set[i], checked);
 }
@@ -579,6 +478,7 @@ void Main_window_skin::on_checkB_capparent_toggled(bool checked)
 {
     const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
 
+    // Add hrbf sample to the tip of the parent of the selected joint.
     for(unsigned i = 0; i < set.size(); i++)
         Cuda_ctrl::_anim_mesh->set_pcap(set[i], checked);
 }
@@ -595,21 +495,6 @@ void Main_window_skin::on_dSpinB_hrbf_radius_valueChanged(double val)
 void Main_window_skin::on_checkBox_update_base_potential_toggled(bool checked)
 {
     Cuda_ctrl::_anim_mesh->enable_update_base_potential( checked );
-}
-
-void Main_window_skin::on_pButton_compute_heat_difusion_released()
-{
-//    if(g_mesh->is_manifold() && g_mesh->is_closed() && g_mesh->get_nb_quad() == 0)
-    {
-        _anim_mesh->heat_diffuse_ssd_weights( dSpinBox_heat_coeff->value() );
-    }
-//    else
-//    {
-//        QMessageBox::information(this,
-//                                 "Error",
-//                                 "To compute heat diffusion mesh should be\n"
-//                                 "closed 2-manifold and triangular\n");
-//    }
 }
 
 void Main_window_skin::on_cBox_always_precompute_toggled(bool checked)
@@ -695,17 +580,11 @@ void Main_window_skin::on_spinB_grid_res_valueChanged(int res)
     Skeleton_env::set_grid_res(0, res); // FIXME: remove hardcoded skeleton ID
 }
 
-void Main_window_skin::on_checkB_aa_bbox_clicked(bool checked)
-{
-    Cuda_ctrl::_display._aa_bbox= checked;
-}
-
 
 // -----------------------------------------------------------------------------
 
 void Main_window_skin::enable_mesh(bool state)
 {
-    box_mesh_color->setEnabled( state );
 }
 
 void Main_window_skin::keyPressEvent( QKeyEvent* event )
@@ -724,22 +603,22 @@ void Main_window_skin::keyPressEvent( QKeyEvent* event )
 
 
 
-void Main_window_skin::on_display_operator_toggled(bool checked)
-{
-}
-
-void Main_window_skin::on_display_controller_toggled(bool checked)
-{
-}
-
 void Main_window_skin::on_spinBox_valueChanged(int val)
 {
 }
 
 void Main_window_skin::on_comboB_operators_currentIndexChanged(int idx)
 {
-    int t = comboB_operators->itemData(idx).toInt();
-    Cuda_ctrl::_display._operator_type = Blending_env::Op_t(t);
+
+//    comboB_operators->addItem("Max union 2D"           , (int)Blending_env::MAX     );
+//    comboB_operators->addItem("Bulge 4D"               , (int)Blending_env::B_OH_4D );
+//    comboB_operators->addItem("Bulge 3D"               , (int)Blending_env::B_D     );
+//    comboB_operators->addItem("Ultimate union 3D"      , (int)Blending_env::U_OH    );
+//    comboB_operators->addItem("Diamond union 3D"       , (int)Blending_env::C_D     );
+
+
+
+    Cuda_ctrl::_display._operator_type = Blending_env::MAX;
 //    Cuda_ctrl::_display._operator_mode = Blending_env::Op_mode(m); // TODO
 
     Cuda_ctrl::_operators.update_displayed_operator_texture();
@@ -751,7 +630,259 @@ void Main_window_skin::on_dSpinB_opening_value_valueChanged(double val)
     Cuda_ctrl::_operators.update_displayed_operator_texture();
 }
 
-void Main_window_skin::on_spinB_aperture_valueChanged(int val)
+
+
+
+
+
+
+
+
+
+
+#include <QFileDialog>
+#include <QMessageBox>
+
+#include <cassert>
+#include <algorithm>
+
+#include "cuda_ctrl.hpp"
+#include "vec3_cu.hpp"
+#include "gl_mesh.hpp"
+#include "SKIN/OGL_viewports_skin.hpp"
+#include "loader.hpp"
+#include "fbx_loader.hpp"
+#include "obj_loader.hpp"
+#include "conversions.hpp"
+
+void Main_window_skin::load_fbx_mesh( Fbx_loader::Fbx_file& loader)
 {
+    Mesh* ptr_mesh = new Mesh();
+    Loader::Abs_mesh mesh;
+    loader.get_mesh( mesh );
+    if(mesh._vertices.size() == 0){
+        QMessageBox::information(this, "Warning", "no mesh found");
+        return;
+    }
+
+    ptr_mesh->load( mesh, loader._path);
+    Cuda_ctrl::load_mesh( ptr_mesh );
+}
+
+// -----------------------------------------------------------------------------
+
+bool Main_window_skin::load_custom_skeleton(QString name)
+{
+    QString skel_name = name;
+    skel_name.append(".skel");
+    if( !QFile::exists(skel_name) )
+    {
+        QMessageBox::information(this, "Error", "Can't' find "+name+".skel");
+        return false;
+    }
+
+    Cuda_ctrl::_graph.load_from_file(skel_name.toLatin1());
+    Cuda_ctrl::_skeleton.load( *g_graph );
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+
+bool Main_window_skin::load_custom_weights(QString name)
+{
+    QString ssd_name = name;
+    ssd_name.append(".weights");
+    if( QFile::exists(ssd_name) )
+    {
+        Cuda_ctrl::load_animesh_and_ssd_weights(ssd_name.toLatin1());
+        return true;
+    }
+    else
+    {
+        QMessageBox::information(this, "Error", "Can't' find "+name+".weights");
+        return false;
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loader)
+{
+    // Extract skeleton data
+    Loader::Abs_skeleton skel;
+    loader.get_skeleton(skel);
+    if(skel._bones.size() == 0) return false;
+
+    // Convert to our skeleton representation
+    Cuda_ctrl::_skeleton.load( skel );
+    Cuda_ctrl::_skeleton.set_offset_scale( g_mesh->get_offset(), g_mesh->get_scale());
+
+    Cuda_ctrl::load_animesh(); // Bind animated mesh to skel
+    // Convert bones weights to our representation
+    Cuda_ctrl::_anim_mesh->set_ssd_weight( skel );
+
+    // Load first animation
+//    std::vector<Loader::Base_anim_eval*> anims;
+//    loader.get_animations( anims );
+//    toolBar_frame->set_anim_list( anims );
+
+    return true;
+}
+
+void Main_window_skin::on_actionLoad_skeleton_triggered()
+{
+    if( !Cuda_ctrl::is_mesh_loaded() ){
+        QMessageBox::information(this, "Error", "You must load a mesh before.");
+        return;
+    }
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Load skeleton"),
+                                                    "./resource/meshes",
+                                                    tr("*.skel *.fbx") );
+    if( fileName.size() != 0)
+    {
+        QFileInfo fi(fileName);
+        QString ext = fi.suffix().toLower();
+
+        if(ext == "fbx")
+        {
+            // Parse file
+            Fbx_loader::Fbx_file loader( fileName.toStdString() );
+
+            // Load into our data representation
+            load_fbx_skeleton_anims( loader );
+        }
+        else if( ext == "skel")
+        {
+            Cuda_ctrl::_graph.load_from_file(fileName.toLatin1());
+            Cuda_ctrl::_skeleton.load( *g_graph );
+        }
+        else
+        {
+            QMessageBox::information(this, "Error", "Unsupported file type: '"+ext+"'");
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Main_window_skin::on_actionSave_as_mesh_triggered()
+{
+    if( !Cuda_ctrl::is_mesh_loaded() ){
+        QMessageBox::information(this, "Error", "No mesh to be saved.");
+        return;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("Save mesh"),
+                                                    "./resource/meshes",
+                                                    tr("*.off *obj") );
+
+    if( fileName.size() != 0 )
+    {
+       QFileInfo fi(fileName);
+       QString ext = fi.suffix().toLower();
+       if(ext == "off")
+           g_mesh->export_off(fileName.toLatin1(), false);
+       else if( ext == "obj" )
+       {
+           Loader::Abs_mesh abs_mesh;
+           g_mesh->save( abs_mesh );
+           Obj_loader::Obj_file loader;
+           loader.set_mesh( abs_mesh );
+           loader.save_file( fileName.toStdString() );
+       }
+       else
+           QMessageBox::information(this, "Error !", "unsupported ext: '"+ext+"' \n");
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void Main_window_skin::on_actionSave_ISM_triggered()
+{
+    if( !Cuda_ctrl::is_animesh_loaded() ){
+        QMessageBox::information(this, "Error", "No animated mesh to save");
+        return;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("Save ism"),
+                                                    "./resource/meshes",
+                                                    tr("*.ism") );
+    if( fileName.size() != 0)
+        Cuda_ctrl::_anim_mesh->save_ism(fileName.toLatin1());
+}
+
+// -----------------------------------------------------------------------------
+
+void Main_window_skin::on_actionLoad_ISM_triggered()
+{
+    if( !Cuda_ctrl::is_animesh_loaded() ){
+        QMessageBox::information(this, "Error", "No animated mesh loaded");
+        return;
+    }
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Load ism"),
+                                                    "./resource/meshes",
+                                                    tr("*.ism") );
+
+    if( fileName.size() != 0)
+        Cuda_ctrl::_anim_mesh->load_ism(fileName.toLatin1());
+}
+
+// -----------------------------------------------------------------------------
+
+void Main_window_skin::on_actionLoad_weights_triggered()
+{
+    if( !Cuda_ctrl::is_animesh_loaded() ){
+        QMessageBox::information(this, "Error", "No animated mesh loaded");
+        return;
+    }
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Load skinning weights"),
+                                                    "./resource/meshes",
+                                                    tr("*.weights *.csv") );
+    if( fileName.size() == 0)
+        return;
+
+    if(Cuda_ctrl::is_animesh_loaded())
+        Cuda_ctrl::_anim_mesh->load_weights(fileName.toLatin1());
+    else
+        Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toLatin1() );
+}
+
+// -----------------------------------------------------------------------------
+void Main_window_skin::on_actionLoad_mesh_triggered()
+{
+}
+
+void Main_window_skin::on_actionLoad_FBX_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Load from FBX"),
+                                                    "./resource/meshes",
+                                                    tr("*.fbx") );
+    if( fileName.size() == 0)
+        return;
+    QString name = fileName.section('.',0,0);
+
+    // Load mesh
+    QString mesh_name = name;
+    mesh_name.append(".fbx");
+    if( !QFile::exists(mesh_name) )
+    {
+        QMessageBox::information(this, "Error !", "Can't' find "+name+"'.fbx'\n");
+        return;
+    }
+
+    Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
+    load_fbx_mesh( loader );
+    enable_mesh( true );
+
+    load_fbx_skeleton_anims( loader );
 }
 
