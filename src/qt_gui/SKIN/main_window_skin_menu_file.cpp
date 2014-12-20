@@ -49,52 +49,18 @@ extern Graph* g_graph;
 
 using namespace Cuda_ctrl;
 
-// -----------------------------------------------------------------------------
-
-//static Mesh* parse_mesh(const std::string& file_name)
-//{
-//    Mesh* ptr_mesh = 0;
-//    std::string ext = file_name;
-//    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-//    if( ext.find(".off") != std::string::npos )
-//        ptr_mesh = new Mesh(file_name.c_str());
-//    else if( ext.find(".obj") != std::string::npos )
-//    {
-//        ptr_mesh = new Mesh();
-//        // Parse file
-//        Obj_loader::Obj_file loader( file_name );
-//        Loader::Abs_mesh mesh;
-//        // compute abstract representation
-//        loader.get_mesh( mesh );
-//        // load for opengl
-//        ptr_mesh->load( mesh, loader._path);
-//    }
-//    else if( ext.find(".fbx") != std::string::npos )
-//    {
-//        ptr_mesh = new Mesh();
-//        Fbx_loader::Fbx_file loader( file_name );
-//        Loader::Abs_mesh mesh;
-//        loader.get_mesh( mesh );
-//        ptr_mesh->load( mesh, loader._path);
-//    }
-//    else
-//        assert(false); // Not the right type of mesh
-
-//    return ptr_mesh;
-//}
-
-// -----------------------------------------------------------------------------
-
 void Main_window_skin::load_fbx_mesh( Fbx_loader::Fbx_file& loader)
 {
     Mesh* ptr_mesh = new Mesh();
     Loader::Abs_mesh mesh;
     loader.get_mesh( mesh );
-    if(mesh._vertices.size() > 0){
-        ptr_mesh->load( mesh, loader._path);
-        Cuda_ctrl::load_mesh( ptr_mesh );
-    }else
+    if(mesh._vertices.size() == 0){
         QMessageBox::information(this, "Warning", "no mesh found");
+        return;
+    }
+
+    ptr_mesh->load( mesh, loader._path);
+    Cuda_ctrl::load_mesh( ptr_mesh );
 }
 
 // -----------------------------------------------------------------------------
@@ -148,7 +114,6 @@ bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loade
     Cuda_ctrl::_skeleton.set_offset_scale( g_mesh->get_offset(), g_mesh->get_scale());
 
     Cuda_ctrl::load_animesh(); // Bind animated mesh to skel
-    enable_animesh( false );   // enable gui for animated mesh0
     // Convert bones weights to our representation
     Cuda_ctrl::_anim_mesh->set_ssd_weight( skel );
 
@@ -182,10 +147,7 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
             Fbx_loader::Fbx_file loader( fileName.toStdString() );
 
             // Load into our data representation
-            if( load_fbx_skeleton_anims( loader ) )
-            {
-                enable_animesh( true );
-            }
+            load_fbx_skeleton_anims( loader );
         }
         else if( ext == "skel")
         {
@@ -196,23 +158,6 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
         {
             QMessageBox::information(this, "Error", "Unsupported file type: '"+ext+"'");
         }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::on_actionLoad_mesh_triggered()
-{
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load mesh"),
-                                                    "./resource/meshes",
-                                                    tr("*.off *.obj *.fbx") );
-    if( fileName.size() != 0)
-    {
-        Cuda_ctrl::load_mesh(fileName.toStdString());
-        Cuda_ctrl::erase_graph();
-        enable_animesh( false );
-        enable_mesh( true );
     }
 }
 
@@ -286,66 +231,6 @@ void Main_window_skin::on_actionLoad_ISM_triggered()
 
 // -----------------------------------------------------------------------------
 
-void Main_window_skin::on_actionLoad_model_triggered(bool)
-{
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load model"),
-                                                    "./resource/meshes",
-                                                    tr("*.ism") );
-    if( fileName.size() != 0)
-    {
-        QFileInfo fi(fileName);
-        QString name         = fi.canonicalPath() + "/" + fi.completeBaseName();
-        QString skel_name    = name;
-        QString weights_name = name;
-        QString ism_name     = name;
-        weights_name.append(".weights");
-        skel_name.   append(".skel"   );
-        ism_name.    append(".ism"    );
-
-        // Load mesh
-        bool skel_loaded = false;
-        QString mesh_name = name;
-        mesh_name.append(".off");
-        if( QFile::exists(mesh_name) )
-            Cuda_ctrl::load_mesh(mesh_name.toStdString());
-        else if( QFile::exists((mesh_name = name).append(".obj")) )
-            Cuda_ctrl::load_mesh(mesh_name.toStdString());
-        else if( QFile::exists((mesh_name = name).append(".fbx")) )
-        {
-            Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
-            load_fbx_mesh( loader );
-            skel_loaded = load_fbx_skeleton_anims( loader );
-            if( skel_loaded )
-            {
-                enable_animesh( true );
-            }
-        }
-        else
-        {
-            QMessageBox::information(this, "Error !", "Can't' find "+name+"'.obj/.off/.fbx'\n");
-            return;
-        }
-        // Enable GUI for mesh
-        enable_mesh( true );
-
-        if( !skel_loaded )
-        {
-            // Load skeleton graph
-            if( !load_custom_skeleton( name ) ) return;
-            // Load ssd weights
-            if( !load_custom_weights( name ) ) return;
-        }
-
-        Cuda_ctrl::_anim_mesh->load_ism(fileName.toLatin1());
-
-        // Enable GUI for animesh
-        enable_animesh( true );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Main_window_skin::on_actionLoad_weights_triggered()
 {
     if( !Cuda_ctrl::is_animesh_loaded() ){
@@ -357,18 +242,19 @@ void Main_window_skin::on_actionLoad_weights_triggered()
                                                     tr("Load skinning weights"),
                                                     "./resource/meshes",
                                                     tr("*.weights *.csv") );
-    if( fileName.size() != 0)
-    {
-        if(Cuda_ctrl::is_animesh_loaded())
-            Cuda_ctrl::_anim_mesh->load_weights(fileName.toLatin1());
-        else
-            Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toLatin1() );
+    if( fileName.size() == 0)
+        return;
 
-        enable_animesh( true );
-    }
+    if(Cuda_ctrl::is_animesh_loaded())
+        Cuda_ctrl::_anim_mesh->load_weights(fileName.toLatin1());
+    else
+        Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toLatin1() );
 }
 
 // -----------------------------------------------------------------------------
+void Main_window_skin::on_actionLoad_mesh_triggered()
+{
+}
 
 void Main_window_skin::on_actionLoad_FBX_triggered()
 {
@@ -376,28 +262,24 @@ void Main_window_skin::on_actionLoad_FBX_triggered()
                                                     tr("Load from FBX"),
                                                     "./resource/meshes",
                                                     tr("*.fbx") );
-    if( fileName.size() != 0)
+    if( fileName.size() == 0)
+        return;
+    QString name = fileName.section('.',0,0);
+
+    // Load mesh
+    QString mesh_name = name;
+    mesh_name.append(".fbx");
+    if( !QFile::exists(mesh_name) )
     {
-        QString name = fileName.section('.',0,0);
-
-        // Load mesh
-        QString mesh_name = name;
-        mesh_name.append(".fbx");
-        if( QFile::exists(mesh_name) )
-        {
-            Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
-            load_fbx_mesh( loader );
-            enable_mesh( true );
-
-            if( load_fbx_skeleton_anims( loader ) )
-                enable_animesh( true );
-        }
-        else
-        {
-            QMessageBox::information(this, "Error !", "Can't' find "+name+"'.fbx'\n");
-            return;
-        }
+        QMessageBox::information(this, "Error !", "Can't' find "+name+"'.fbx'\n");
+        return;
     }
+
+    Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
+    load_fbx_mesh( loader );
+    enable_mesh( true );
+
+    load_fbx_skeleton_anims( loader );
 }
 
 // -----------------------------------------------------------------------------

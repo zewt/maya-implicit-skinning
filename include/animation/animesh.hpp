@@ -373,17 +373,6 @@ public:
 
     inline EAnimesh::Color_type get_color_type(){ return mesh_color; }
 
-    /// Compute colors for the animated mesh according to the color type
-    /// @warning for SSD_WEIGHTS use set_color_ssd_weight() method
-    void set_colors(EAnimesh::Color_type type = EAnimesh::BASE_POTENTIAL,
-                    float r = 0.7f,
-                    float g = 0.7f,
-                    float b = 0.7f,
-                    float a = 1.f );
-
-    ///< color the mesh according to its ssd weights associated to the ith joint
-    void set_color_ssd_weight(int joint_id);
-
     GlBuffer_obj* get_vbo_rest_pose(){
         return _vbo_input_vert;
     }

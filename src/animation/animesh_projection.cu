@@ -53,9 +53,6 @@ void Animesh::update_base_potential()
 
     _skel->unreset();
 
-    if(mesh_color == EAnimesh::BASE_POTENTIAL)
-        set_colors(mesh_color);
-
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
 }
 
@@ -497,15 +494,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
                           &(_mesh->_vbo),
                           &(_mesh->_normals_bo),
                           &(_mesh->_tangents_bo));
-
-#if !defined(NDEBUG) || 1
-    if(mesh_color == EAnimesh::ANIM_SMOOTH_CONSERVATIVE ||
-       mesh_color == EAnimesh::ANIM_SMOOTH_LAPLACIAN ||
-       mesh_color == EAnimesh::NORMAL ||
-       mesh_color == EAnimesh::GRAD_POTENTIAL ||
-       mesh_color == EAnimesh::VERTICES_STATE)
-        set_colors(mesh_color);
-#endif
 
     //std::cout << "transform :" << (float)time.stop()/1000.f << std::endl;$
 }

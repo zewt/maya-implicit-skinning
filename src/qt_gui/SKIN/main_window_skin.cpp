@@ -60,8 +60,9 @@ Main_window_skin::Main_window_skin(QWidget *parent) :
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
     update_ctrl_spin_boxes(shape);
 
+    Fbx_loader::init();
+
     // Desactivate GUI parts
-    enable_animesh( false );
     enable_mesh   ( false );
 }
 
@@ -449,7 +450,6 @@ void Main_window_skin::on_pushB_attached_skeleton_released()
 
         Cuda_ctrl::_skeleton.load( *g_graph );
         Cuda_ctrl::load_animesh();
-        enable_animesh( true );
     }
 }
 
@@ -701,10 +701,6 @@ void Main_window_skin::on_checkB_aa_bbox_clicked(bool checked)
 }
 
 
-void Main_window_skin::enable_animesh(bool state)
-{
-}
-
 // -----------------------------------------------------------------------------
 
 void Main_window_skin::enable_mesh(bool state)
@@ -728,145 +724,11 @@ void Main_window_skin::keyPressEvent( QKeyEvent* event )
 
 
 
-#include "SKIN/OGL_viewports_skin.hpp"
-#include "cuda_ctrl.hpp"
-
-// TODO: to be deleted ////////////////
-#include "mesh.hpp"
-extern Mesh* g_mesh;
-#include "graph.hpp"
-extern Graph* g_graph;
-#include "skeleton.hpp"
-extern Skeleton* g_skel;
-///////////////////
-
-////////////////////////////////////////////////////////////
-// Implement what's related to display tab of the toolbox //
-////////////////////////////////////////////////////////////
-
-void Main_window_skin::on_dSpinB_near_plane_valueChanged(double val)
-{
-}
-
-void Main_window_skin::on_dSpinB_far_plane_valueChanged(double val)
-{
-}
-
-// COLOR MESH ==================================================================
-
-void Main_window_skin::on_ssd_interpolation_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::SSD_INTERPOLATION);
-    }
-}
-
-void Main_window_skin::on_base_potential_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::BASE_POTENTIAL);
-    }
-}
-
-void Main_window_skin::on_cluster_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::CLUSTER);
-    }
-}
-
-void Main_window_skin::on_color_grey_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_uniform(0.8f, 0.8f, 0.8f, 0.99f);
-    }
-}
-
-void Main_window_skin::on_color_smoothing_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::SMOOTHING_WEIGHTS);
-    }
-}
-
-void Main_window_skin::on_ssd_weights_toggled(bool checked)
-{
-    if(checked)
-    {
-        const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-
-        if(set.size() > 0)
-        {
-            int id = set[set.size()-1];
-            Cuda_ctrl::_anim_mesh->color_ssd_weights(id);
-        }
-    }
-}
-
-void Main_window_skin::on_color_nearest_joint_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::NEAREST_JOINT);
-    }
-}
-
-void Main_window_skin::on_implicit_gradient_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::GRAD_POTENTIAL);
-    }
-}
-
-void Main_window_skin::on_color_normals_toggled(bool checked)
-{
-    if(checked){
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::NORMAL);
-    }
-}
-
-void Main_window_skin::on_vertices_state_toggled(bool checked)
-{
-    if( checked )
-    {
-        Cuda_ctrl::_anim_mesh->color_type(EAnimesh::VERTICES_STATE);
-    }
-}
-
-void Main_window_skin::on_buton_uniform_point_cl_toggled(bool checked)
-{
-}
-
-// END COLOR MESH ==============================================================
-
-void Main_window_skin::on_display_skeleton_toggled(bool checked)
-{
-}
-
 void Main_window_skin::on_display_operator_toggled(bool checked)
 {
 }
 
 void Main_window_skin::on_display_controller_toggled(bool checked)
-{
-}
-
-// RAYTRACING ==================================================================
-
-void Main_window_skin::settings_raytracing_on_enable_raytracing_toggled(bool checked)
-{
-}
-
-void Main_window_skin::settings_raytracing_on_potential_plane_pos_released()
-{
-}
-
-// END RAYTRACING ==============================================================
-
-void Main_window_skin::on_wireframe_toggled(bool checked)
-{
-}
-
-void Main_window_skin::on_display_oriented_bbox_toggled(bool checked)
 {
 }
 
@@ -893,10 +755,3 @@ void Main_window_skin::on_spinB_aperture_valueChanged(int val)
 {
 }
 
-void Main_window_skin::on_pushB_reset_camera_released()
-{
-}
-
-void Main_window_skin::on_checkB_camera_tracking_toggled(bool checked)
-{
-}

@@ -58,9 +58,6 @@ public:
     /// values
     void set_current_ctrl();
 
-    /// Wether activate/or deactivate GUI related to animesh
-    void enable_animesh(bool state);
-
     /// Wether activate/or deactivate GUI related to mesh
     void enable_mesh(bool state);
 
@@ -131,34 +128,20 @@ public slots:
     void on_actionExit_triggered();
     void on_enable_smoothing_toggled(bool checked);
     void on_spinBox_smooth_iter_valueChanged(int );
-    void on_ssd_interpolation_toggled(bool checked);
-    void on_base_potential_toggled(bool checked);
-    void on_cluster_toggled(bool checked);
     void on_horizontalSlider_sliderMoved(int position);
     void on_ssd_raio_toggled(bool checked);
-    void on_display_skeleton_toggled(bool checked);
-    void on_color_normals_toggled(bool checked);
     void on_actionLoad_skeleton_triggered();
     void on_spinBox_bulge_in_contact_force_valueChanged(double );
     void on_update_bulge_in_contact_released();
     void on_display_operator_toggled(bool checked);
     void on_display_controller_toggled(bool checked);
     void on_rbf_edition_toggled(bool checked);
-    void settings_raytracing_on_enable_raytracing_toggled(bool checked);
     void on_actionSave_ISM_triggered();
     void on_actionLoad_ISM_triggered();
     void on_local_frame_toggled(bool checked);
     void on_reset_anim_released();
-    void on_color_grey_toggled(bool checked);
-    void on_ssd_weights_toggled(bool checked);
-    void on_color_smoothing_toggled(bool checked);
-    void on_color_nearest_joint_toggled(bool checked);
     void on_actionLoad_weights_triggered();
     void on_actionSave_as_mesh_triggered();
-    void on_implicit_gradient_toggled(bool checked);
-    void on_actionLoad_model_triggered(bool checked);
-    void on_wireframe_toggled(bool checked);
-    void settings_raytracing_on_potential_plane_pos_released();
     void on_enable_partial_fit_toggled(bool checked);
     void on_spinBox_nb_step_fitting_valueChanged(int );
     void on_debug_show_normal_toggled(bool checked);
@@ -166,14 +149,11 @@ public slots:
     void on_spinB_smooth_force_a_valueChanged(double );
     void on_dual_quaternion_radio_toggled(bool checked);
     void on_implicit_skinning_checkBox_toggled(bool checked);
-    void on_display_oriented_bbox_toggled(bool checked);
     void on_doubleSpinBox_valueChanged(double );
     void on_box_potential_pit_toggled(bool checked);
     void on_spinBox_diffuse_smoothing_weights_iter_valueChanged(int );
     void on_actionReloadShaders_triggered();
-    void on_buton_uniform_point_cl_toggled(bool checked);
     void on_button_defects_point_cl_toggled(bool checked);
-    void on_vertices_state_toggled(bool checked);
     void on_spinB_step_length_valueChanged(double );
     void on_checkBox_collsion_on_toggled(bool checked);
     void on_pushB_attached_skeleton_released();
@@ -224,10 +204,6 @@ private slots:
     void on_pButton_supr_caps_released();
     void on_spinBox_2_valueChanged(int );
     void on_checkB_enable_raphson_toggled(bool checked);
-    void on_dSpinB_near_plane_valueChanged(double arg1);
-    void on_dSpinB_far_plane_valueChanged(double arg1);
-    void on_pushB_reset_camera_released();
-    void on_checkB_camera_tracking_toggled(bool checked);
     void on_color_smoothing_conservative_toggled(bool checked);
     void on_color_smoothing_laplacian_toggled(bool checked);
     void on_spinB_grid_res_valueChanged(int );

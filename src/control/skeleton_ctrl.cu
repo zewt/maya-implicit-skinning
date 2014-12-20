@@ -115,15 +115,11 @@ bool Skeleton_ctrl::select_joint(const Camera &cam, int x, int y, bool rest_pose
 {
     //y = Cuda_ctrl::_display._height - y;
     int nearest = g_skel->select_joint( cam, (float)x, (float)y, rest_pose );
-    if( nearest > -1 )
-    {
-        add_to_selection( nearest );
-        if(g_animesh->get_color_type() == EAnimesh::SSD_WEIGHTS)
-            g_animesh->set_color_ssd_weight(nearest);
-
-        return true;
-    }
+    if( nearest <= -1 )
     return false;
+
+    add_to_selection( nearest );
+    return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -140,8 +136,6 @@ bool Skeleton_ctrl::select_safely(const Camera &cam, int x, int y, bool rest_pos
         std::cout << "bone type : " << EBone::type_to_string(g_skel->bone_type(nearest)) << std::endl;//DEBUG
         std::cout << "bone id : " << nearest << std::endl;//DEBUG
         //DEBUG
-        if(g_animesh->get_color_type() == EAnimesh::SSD_WEIGHTS)
-            g_animesh->set_color_ssd_weight(nearest);
 
         return true;
     }

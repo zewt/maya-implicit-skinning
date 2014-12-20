@@ -70,8 +70,6 @@ extern Potential_plane_ctrl _potential_plane;
 
 // -----------------------------------------------------------------------------
 
-void load_mesh(const std::string file_name);
-
 void load_mesh( Mesh* mesh );
 
 bool is_mesh_loaded();

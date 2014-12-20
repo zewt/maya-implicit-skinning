@@ -124,304 +124,6 @@
                      </layout>
                     </widget>
                    </item>
-                   <item>
-                    <widget class="QWidget" name="widget_27" native="true">
-                     <layout class="QHBoxLayout" name="horizontalLayout_33">
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QLabel" name="lbl_near_plane">
-                        <property name="text">
-                         <string>Near: </string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QDoubleSpinBox" name="dSpinB_near_plane">
-                        <property name="decimals">
-                         <number>2</number>
-                        </property>
-                        <property name="minimum">
-                         <double>0.010000000000000</double>
-                        </property>
-                        <property name="value">
-                         <double>1.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QWidget" name="widget_29" native="true">
-                     <layout class="QHBoxLayout" name="horizontalLayout_35">
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QLabel" name="lbl_far_plane">
-                        <property name="text">
-                         <string> Far: </string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QDoubleSpinBox" name="dSpinB_far_plane">
-                        <property name="decimals">
-                         <number>0</number>
-                        </property>
-                        <property name="minimum">
-                         <double>1.000000000000000</double>
-                        </property>
-                        <property name="maximum">
-                         <double>100000.000000000000000</double>
-                        </property>
-                        <property name="singleStep">
-                         <double>10.000000000000000</double>
-                        </property>
-                        <property name="value">
-                         <double>300.000000000000000</double>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QWidget" name="widget_28" native="true">
-                     <layout class="QHBoxLayout" name="horizontalLayout_34">
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QPushButton" name="pushB_reset_camera">
-                        <property name="toolTip">
-                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set camera position to orgin and points torwards z.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                        </property>
-                        <property name="text">
-                         <string>Reset</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QCheckBox" name="checkB_camera_tracking">
-                        <property name="toolTip">
-                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Track the pivot point&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                        </property>
-                        <property name="text">
-                         <string>track</string>
-                        </property>
-                       </widget>
-                      </item>
-                     </layout>
-                    </widget>
-                   </item>
-                  </layout>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="box_animesh_color">
-             <property name="title">
-              <string>Animated mesh colors</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_3">
-              <item>
-               <layout class="QVBoxLayout" name="vert_layout_box_mesh">
-                <item>
-                 <widget class="QWidget" name="radio_grp_mesh_color" native="true">
-                  <layout class="QVBoxLayout" name="verticalLayout_6">
-                   <item>
-                    <widget class="QRadioButton" name="ssd_interpolation">
-                     <property name="toolTip">
-                      <string>When vertices are outside the support of the implicit surface we
-interpolate between SSD and implicit skinning. 
-Interpolation weights are shown on the mesh 
-(Red for full SSD yellow for full implicit skinning).</string>
-                     </property>
-                     <property name="statusTip">
-                      <string/>
-                     </property>
-                     <property name="whatsThis">
-                      <string/>
-                     </property>
-                     <property name="accessibleDescription">
-                      <string/>
-                     </property>
-                     <property name="text">
-                      <string>SSD interpolation</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="ssd_weights">
-                     <property name="toolTip">
-                      <string>Show ssd weights associated to the vertices for the selected
-joint. No weight is black, nan values are white, null weights are
-yellow and turns red for weights equal to 1.
-</string>
-                     </property>
-                     <property name="text">
-                      <string>SSD weights</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="color_smoothing">
-                     <property name="toolTip">
-                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Show areas which are candidates to be smooth in red.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To see currently smoothed areas enable &amp;quot;Animated smoothing&amp;quot;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Smoothing weights</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="color_smoothing_conservative">
-                     <property name="toolTip">
-                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Show smoothed areas in red and the other in yellow.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;smoothing occurs only in canditates areas showed with &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;&amp;quot;Smoothing weights&amp;quot;. Smoothing strength depends on the&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;bone angle relative to the rest position.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Smoothing conservative</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="color_smoothing_laplacian">
-                     <property name="text">
-                      <string>Smoothing laplace</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="base_potential">
-                     <property name="toolTip">
-                      <string>Color the mesh according to the potential associated 
-at each vertices. Smooth transition is done through from 
-red to green and then blue. Red is 0,
-green 0.5 and blue 1.
-Nan numbers are painted in white</string>
-                     </property>
-                     <property name="text">
-                      <string>Base potential</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="vertices_state">
-                     <property name="toolTip">
-                      <string>Paint the vertices with different colors depending
-on what condition stopped them during the fitting process.
-Red : colision (gradient divergence)
-Magenta : potential pit (going away from the initial iso-surface)
-Blue : stopped because fitting has reached its maximal number of steps
-Yellow : Vertex already located on th right iso-surface
-Green : Successfully fitted on the initial iso-surface.
-black: gradient norm is null we can't know were to march.</string>
-                     </property>
-                     <property name="text">
-                      <string>Vertices state</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="implicit_gradient">
-                     <property name="toolTip">
-                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Show the gradient of the implicit primitives at each &lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;mesh vertex.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Nan values are white&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Implicit gradient</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="cluster">
-                     <property name="toolTip">
-                      <string>Each vertex is colored according to the bone it belongs to.</string>
-                     </property>
-                     <property name="whatsThis">
-                      <string>Gives a color for each bone and their associated vertices</string>
-                     </property>
-                     <property name="text">
-                      <string>Clusters</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="color_nearest_joint">
-                     <property name="text">
-                      <string>Nearest joint</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="color_normals">
-                     <property name="toolTip">
-                      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Draw mesh normals (white are nan values)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                     </property>
-                     <property name="text">
-                      <string>Normals</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QRadioButton" name="color_grey">
-                     <property name="text">
-                      <string>Uniform grey</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QWidget" name="select_vert_widget" native="true">
-                  <layout class="QHBoxLayout" name="horizontalLayout_25">
-                   <property name="topMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="bottomMargin">
-                    <number>0</number>
-                   </property>
                   </layout>
                  </widget>
                 </item>
@@ -455,20 +157,6 @@ p, li { white-space: pre-wrap; }
                  <property name="bottomMargin">
                   <number>0</number>
                  </property>
-                 <item>
-                  <widget class="QRadioButton" name="buton_uniform_point_cl">
-                   <property name="toolTip">
-                    <string>Every point has the same color specified in :
-Customize-&gt;Colors-&gt;point color</string>
-                   </property>
-                   <property name="text">
-                    <string>Uniform</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
                  <item>
                   <widget class="QRadioButton" name="button_defects_point_cl">
                    <property name="toolTip">
@@ -521,16 +209,6 @@ Customize-&gt;Colors-&gt;point color</string>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QCheckBox" name="wireframe">
-                <property name="text">
-                 <string>Wireframe</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
@@ -540,26 +218,6 @@ Customize-&gt;Colors-&gt;point color</string>
               <string>Skeleton</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_12">
-              <item>
-               <widget class="QCheckBox" name="display_skeleton">
-                <property name="text">
-                 <string>Display skeleton</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="display_oriented_bbox">
-                <property name="text">
-                 <string>Display oriented bbox</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
               <item>
                <widget class="QCheckBox" name="checkB_aa_bbox">
                 <property name="text">
@@ -2542,7 +2200,6 @@ This is a post process step.</string>
      <addaction name="actionSave_ISM"/>
      <addaction name="actionSave_FBX"/>
     </widget>
-    <addaction name="actionLoad_model"/>
     <addaction name="separator"/>
     <addaction name="menuImport"/>
     <addaction name="menuExport"/>
@@ -2592,14 +2249,6 @@ This is a post process step.</string>
   <action name="actionSave_as_mesh">
    <property name="text">
     <string>Save as mesh</string>
-   </property>
-  </action>
-  <action name="actionLoad_model">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Load model</string>
    </property>
   </action>
   <action name="actionReloadShaders">

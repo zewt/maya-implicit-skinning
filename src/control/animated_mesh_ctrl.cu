@@ -168,10 +168,6 @@ void Animated_mesh_ctrl::set_ssd_weight(const Loader::Abs_skeleton& skel)
 void Animated_mesh_ctrl::init_rigid_ssd_weights()
 {
     _animesh->init_rigid_ssd_weights();
-
-    const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-    if( _animesh->get_color_type() == EAnimesh::SSD_WEIGHTS && set.size() > 0)
-        _animesh->set_color_ssd_weight( set[set.size()-1] );
 }
 
 // -----------------------------------------------------------------------------
@@ -230,14 +226,6 @@ void Animated_mesh_ctrl::update_clusters(EAnimesh::Cluster_type type,
                                          int nb_voxels)
 {
     _animesh->clusterize(type, nb_voxels);
-
-    const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-    if( _animesh->get_color_type() == EAnimesh::SSD_WEIGHTS )
-    {
-        if( set.size() > 0 )
-            _animesh->set_color_ssd_weight( set[set.size()-1] );
-    }else
-        _animesh->set_colors(_animesh->get_color_type());
 }
 
 // -----------------------------------------------------------------------------
@@ -252,19 +240,11 @@ void Animated_mesh_ctrl::deform_mesh()
 void Animated_mesh_ctrl::topology_diffuse_ssd_weights(float alpha, int nb_iter)
 {
     _animesh->topology_diffuse_ssd_weights(nb_iter, alpha);
-
-    const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-    if( _animesh->get_color_type() == EAnimesh::SSD_WEIGHTS && set.size() > 0)
-            _animesh->set_color_ssd_weight( set[set.size()-1] );
 }
 
 void Animated_mesh_ctrl::geodesic_diffuse_ssd_weights(float alpha, int nb_iter)
 {
     _animesh->geodesic_diffuse_ssd_weights(nb_iter, alpha);
-
-    const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-    if( _animesh->get_color_type() == EAnimesh::SSD_WEIGHTS && set.size() > 0)
-            _animesh->set_color_ssd_weight( set[set.size()-1] );
 }
 
 // -----------------------------------------------------------------------------
@@ -272,10 +252,6 @@ void Animated_mesh_ctrl::geodesic_diffuse_ssd_weights(float alpha, int nb_iter)
 void Animated_mesh_ctrl::heat_diffuse_ssd_weights(float heat)
 {
     _animesh->heat_diffuse_ssd_weights(heat);
-
-    const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
-    if( _animesh->get_color_type() == EAnimesh::SSD_WEIGHTS && set.size() > 0)
-            _animesh->set_color_ssd_weight( set[set.size()-1] );
 }
 
 // -----------------------------------------------------------------------------
@@ -740,13 +716,10 @@ void Animated_mesh_ctrl::color_vertex(int vert,
 // -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::color_uniform(float r, float g, float b, float a){
-    _animesh->set_colors(EAnimesh::USER_DEFINED, r, g, b, a);
 }
 void Animated_mesh_ctrl::color_ssd_weights(int joint_id){
-    _animesh->set_color_ssd_weight(joint_id);
 }
 void Animated_mesh_ctrl::color_type(EAnimesh::Color_type type){
-    _animesh->set_colors(type);
 }
 void Animated_mesh_ctrl::smooth_conservative(){
     _animesh->set_smoothing_type(EAnimesh::CONSERVATIVE);

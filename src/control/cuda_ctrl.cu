@@ -33,7 +33,6 @@
 #include "cuda_rendering.hpp"
 #include "cuda_utils_common.hpp"
 #include "obj_loader.hpp"
-#include "fbx_loader.hpp"
 #include "constants.hpp"
 #include "display_operator.hpp"
 #include "endianess.hpp"
@@ -55,59 +54,6 @@ Debug_ctrl           _debug;
 Graph_ctrl           _graph;
 Operators_ctrl       _operators;
 Color_ctrl           _color;
-
-// -----------------------------------------------------------------------------
-
-void load_mesh(const std::string file_name)
-{
-    delete _anim_mesh;
-    _anim_mesh = 0;
-    delete g_animesh;
-    g_animesh = 0;
-
-    delete g_mesh;
-    g_mesh = 0;
-
-    std::string ext = file_name;
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-    if( ext.find(".off") != std::string::npos )
-        g_mesh = new Mesh(file_name.c_str());
-    else if( ext.find(".obj") != std::string::npos )
-    {
-        g_mesh = new Mesh();
-        // Parse file
-        Obj_loader::Obj_file loader( file_name );
-        Loader::Abs_mesh mesh;
-        // compute abstract representation
-        loader.get_mesh( mesh );
-        // load for opengl
-        g_mesh->load( mesh, loader._path);
-    }
-    else if( ext.find(".fbx") != std::string::npos )
-    {
-        g_mesh = new Mesh();
-        Fbx_loader::Fbx_file loader( file_name );
-        Loader::Abs_mesh mesh;
-        loader.get_mesh( mesh );
-        g_mesh->load( mesh, loader._path);
-    }
-    else
-        assert(false); // Not the right type of mesh
-
-    //mesh -> add_noise(5, 0.03f);
-    g_mesh->center_and_resize(50.f);
-    g_mesh->check_integrity();
-
-    Color cl = _color.get(Color_ctrl::MESH_POINTS);
-    g_mesh->set_point_color_bo(cl.r, cl.g, cl.b, cl.a);
-
-    delete g_anim_cache;
-    g_anim_cache = new Point_cache_file(g_mesh->get_nb_vertices(), 100);
-
-    std::cout << "mesh loaded" << std::endl;
-}
-
-// -----------------------------------------------------------------------------
 
 void load_mesh( Mesh* mesh )
 {
@@ -247,9 +193,6 @@ void init_host()
     Constants::init();
     std::cout << "Initialize endianness system\n";
     Endianess::init();
-    std::cout << "Initialize fbx SDK environment\n";
-    Fbx_loader::init();
-    std::cout << "Initialize fbx SDK environment\n";
 
     std::cout << "Done\n";
 }
@@ -384,7 +327,6 @@ void cleanup()
     g_graph       = 0;
     g_mesh        = 0;
 
-    Fbx_loader::clean();
     Blending_env::clean_env();
     HRBF_env::clean_env();
     Precomputed_env::clean_env();

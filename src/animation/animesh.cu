@@ -174,7 +174,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     compute_mvc();
 
     update_base_potential();
-    set_colors(mesh_color);
 }
 
 // -----------------------------------------------------------------------------
@@ -469,9 +468,6 @@ void Animesh::init_ssd_interpolation_weights()
     d_ssd_interpolation_factor.copy_from(base_ssd_weights);
 
     init_vert_to_fit();
-
-    if( mesh_color == EAnimesh::SSD_INTERPOLATION)
-        set_colors( mesh_color );
 }
 
 // -----------------------------------------------------------------------------
