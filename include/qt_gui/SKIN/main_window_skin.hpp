@@ -73,18 +73,12 @@ private:
     // -------------------------------------------------------------------------
     /// @name Widgets setup
     // -------------------------------------------------------------------------
-    /// Populate the toolbar
-    void setup_toolbar();
     /// Connect toolbar_painting slots
     void setup_toolbar_painting();
-    /// Connect toolbar_frame slots
-    void setup_toolbar_frame();
     /// Populate 'comboB_operators'
     void setup_comboB_operators();
     /// Populate '_viewports'
     void setup_viewports();
-    /// Connect slots of settings_raytracing
-    void set_up_settings_raytracing();
     /// Hard coded window properties
     void setup_main_window();
 
@@ -120,33 +114,17 @@ public slots:
     /// @name MANUAL SLOTS
     // -------------------------------------------------------------------------
 
-    /// Redraw raytraced scene
-    void update_raytracing();
-    /// Redraw all opengl viewports
-    void update_viewports();
     /// Enable disable painting mode
     void paint_toggled(bool state);
     /// Update GUI relative to the active viewport
     void active_viewport(int id);
 
-    void selection_toolb_point();
-    void selection_toolb_circle();
-    void selection_toolb_square();
-    void viewport_toolb_single();
-    void viewport_toolb_doubleV();
-    void viewport_toolb_doubleH();
-    void viewport_toolb_four();
-    void rd_mode_toolb_tex();
-    void rd_mode_toolb_solid();
-    void rd_mode_toolb_wire();
-    void rd_mode_toolb_wire_transc();
     void show_all_gizmo(bool checked);
     void set_gizmo_trans();
     void set_gizmo_rot();
     void set_gizmo_trackball();
     void set_gizmo_scale();
     void toggle_fitting(bool checked);
-    void pivot_comboBox_currentIndexChanged(int index);
     void ctrl_presets_pushed();
 
 

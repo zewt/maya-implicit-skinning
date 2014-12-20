@@ -205,7 +205,6 @@ void OGL_widget_skin::mousePressEvent( QMouseEvent* event ){
     makeCurrent();
     emit clicked();
     _io->mousePressEvent(event);
-    _main_win->update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -213,7 +212,6 @@ void OGL_widget_skin::mousePressEvent( QMouseEvent* event ){
 void OGL_widget_skin::mouseReleaseEvent( QMouseEvent* event ){
     makeCurrent();
     _io->mouseReleaseEvent(event);
-    _main_win->update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -221,7 +219,6 @@ void OGL_widget_skin::mouseReleaseEvent( QMouseEvent* event ){
 void OGL_widget_skin::wheelEvent( QWheelEvent* event ){
     makeCurrent();
     _io->wheelEvent(event);
-    _main_win->update_viewports();
     event->accept();
 }
 
@@ -233,8 +230,6 @@ void OGL_widget_skin::mouseMoveEvent( QMouseEvent* event ){
     _mouse_y = event->y();
 
     _io->mouseMoveEvent(event);
-
-    _main_win->update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -242,8 +237,6 @@ void OGL_widget_skin::mouseMoveEvent( QMouseEvent* event ){
 void OGL_widget_skin::keyPressEvent( QKeyEvent* event ){
     makeCurrent();
     _io->keyPressEvent(event);
-    if( !event->isAutoRepeat() )
-        _main_win->update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -251,14 +244,12 @@ void OGL_widget_skin::keyPressEvent( QKeyEvent* event ){
 void OGL_widget_skin::keyReleaseEvent( QKeyEvent* event ){
     makeCurrent();
     _io->keyReleaseEvent(event);
-    _main_win->update_viewports();
 }
 
 // -----------------------------------------------------------------------------
 
 void OGL_widget_skin::enterEvent( QEvent* e){
     _is_mouse_in = true;
-    _main_win->update_viewports();
     e->ignore();
 }
 
@@ -266,7 +257,6 @@ void OGL_widget_skin::enterEvent( QEvent* e){
 
 void OGL_widget_skin::leaveEvent( QEvent* e){
     _is_mouse_in = false;
-    _main_win->update_viewports();
     e->ignore();
 }
 

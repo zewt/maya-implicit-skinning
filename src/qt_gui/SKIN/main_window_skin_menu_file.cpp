@@ -199,7 +199,6 @@ void Main_window_skin::on_actionLoad_keyframes_triggered()
             QMessageBox::information(this, "Error", "Unsupported file type: '"+ext+"'");
         }
     }
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -259,8 +258,6 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
             QMessageBox::information(this, "Error", "Unsupported file type: '"+ext+"'");
         }
     }
-
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -278,8 +275,6 @@ void Main_window_skin::on_actionLoad_mesh_triggered()
         enable_animesh( false );
         enable_mesh( true );
     }
-
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -352,8 +347,6 @@ void Main_window_skin::on_actionLoad_ISM_triggered()
 
     if( fileName.size() != 0)
         Cuda_ctrl::_anim_mesh->load_ism(fileName.toLatin1());
-
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -366,9 +359,6 @@ void Main_window_skin::on_actionLoad_model_triggered(bool)
                                                     tr("*.ism") );
     if( fileName.size() != 0)
     {
-        QGLWidget* wgl = _viewports->shared_viewport();
-        wgl->makeCurrent();
-
         QFileInfo fi(fileName);
         QString name         = fi.canonicalPath() + "/" + fi.completeBaseName();
         QString skel_name    = name;
@@ -417,7 +407,6 @@ void Main_window_skin::on_actionLoad_model_triggered(bool)
         // Enable GUI for animesh
         enable_animesh( true );
     }
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -442,8 +431,6 @@ void Main_window_skin::on_actionLoad_weights_triggered()
 
         enable_animesh( true );
     }
-
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -473,9 +460,6 @@ void Main_window_skin::on_actionLoad_FBX_triggered()
                                                     tr("*.fbx") );
     if( fileName.size() != 0)
     {
-        QGLWidget* wgl = _viewports->shared_viewport();
-        wgl->makeCurrent();
-
         QString name = fileName.section('.',0,0);
 
         // Load mesh
@@ -496,8 +480,6 @@ void Main_window_skin::on_actionLoad_FBX_triggered()
             return;
         }
     }
-
-    update_viewports();
 }
 
 // -----------------------------------------------------------------------------
@@ -519,63 +501,26 @@ void Main_window_skin::on_actionSave_FBX_triggered()
 
 // -----------------------------------------------------------------------------
 
+// Cuda_ctrl::_skeleton.load_pose
 void Main_window_skin::on_actionLoad_triggered()
 {
-
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load pose"),
-                                                    "./resource/meshes",
-                                                    tr("*.skel_pose") );
-    if( fileName.size() != 0){
-        Cuda_ctrl::_skeleton.load_pose( fileName.toStdString() );
-        update_viewports();
-    }
 }
-
-// -----------------------------------------------------------------------------
 
 void Main_window_skin::on_actionSave_triggered()
 {
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save pose"),
-                                                    "./resource/meshes",
-                                                    tr("*.skel_pose") );
-    if( fileName.size() != 0){
-        Cuda_ctrl::_skeleton.save_pose( fileName.toStdString() );
-    }
 }
 
 // -----------------------------------------------------------------------------
-
-#include "class_saver.hpp"
 
 // save camera pose
 void Main_window_skin::on_actionSave_2_triggered()
 {
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save camera pose"),
-                                                    "./resource/meshes",
-                                                    tr("*.cam") );
-    if( fileName.size() != 0){
-        OGL_widget_skin* wgl = _viewports->active_viewport();
-        save_class(wgl->camera(), fileName.toStdString() );
-    }
 }
 
 // -----------------------------------------------------------------------------
 
 void Main_window_skin::on_actionLoad_2_triggered()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load pose"),
-                                                    "./resource/meshes",
-                                                    tr("*.cam") );
-    if( fileName.size() != 0){
-
-        OGL_widget_skin* wgl = _viewports->active_viewport();
-        load_class(wgl->camera(), fileName.toStdString());
-        update_viewports();
-    }
 }
 
 // END FILE SLOTS ==============================================================
