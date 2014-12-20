@@ -53,8 +53,6 @@ float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2);
 
 Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     _mesh(m_), _skel(s_),
-    _do_bone_deform(s_->nb_joints(), true),
-    mesh_color(EAnimesh::BASE_POTENTIAL),
     mesh_smoothing(EAnimesh::LAPLACIAN),
     do_implicit_skinning(false),
     do_smooth_mesh(false),
@@ -120,12 +118,8 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     d_vals_buffer(_mesh->get_nb_vertices())
 {
 
-    ////////////////////////////////////////////////////////////////////////////////// HACK: DEBUG:
-    //_do_bone_deform[_skel->root()] = false;
-    ////////////////////////////////////////////////////////////////////////////////// HACK: DEBUG:
-
     // Compute nearest bone and nearest joint from each vertices
-    clusterize( EAnimesh::EUCLIDEAN );
+    clusterize();
 
     int nb_vert = _mesh->get_nb_vertices();
     Host::Array<EAnimesh::Vert_state> h_vert_state(nb_vert);
@@ -148,18 +142,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
 
     // Not mandatory but it is supposed to accelerate a little bit animation
     // when activated
-#if 0
-    // Modified mesh in order to vertices to be ordered by bone cluster
-    regroup_mesh_vertices(*m,
-                          d_vertices_nearest_bones,
-                          h_vertices_nearest_bones,
-                          d_vertices_nearest_joint,
-                          h_vertices_nearest_joint,
-                          vmap_old_new);
-
-    Color cl = Cuda_ctrl::_color.get(Color_ctrl::MESH_POINTS);
-    m->set_point_color_bo(cl.r, cl.g, cl.b, cl.a);
-#endif
 
     // Fill the attributes in device memory
     copy_mesh_data(*_mesh);
@@ -394,25 +376,6 @@ void Animesh::compute_mvc()
     d_edge_mvc.    copy_from( edge_mvc     );
 }
 
-// -----------------------------------------------------------------------------
-#if 0
-static bool is_cluster_ssd(const Skeleton* s, int id)
-{
-    bool ssd = s->bone_type( id ) == Bone_type::SSD;
-    const int pt = s->parent( id );
-    if( pt > -1 )
-    {
-        const std::vector<int>& sons = s->get_sons( pt );
-        for (unsigned j = 0; j < sons.size(); ++j)
-            ssd = ssd && (s->bone_type( sons[j] ) == Bone_type::SSD);
-    }
-
-    return ssd;
-}
-#endif
-
-// -----------------------------------------------------------------------------
-
 void Animesh::init_ssd_interpolation_weights()
 {
     int n = d_input_vertices.size();
@@ -422,46 +385,6 @@ void Animesh::init_ssd_interpolation_weights()
 
     Host::Array<float> base_ssd_weights(n);
     base_ssd_weights.copy_from(d_ssd_interpolation_factor);
-#if 0
-    for(int i = 0; i < n; i++)
-    {
-        base_ssd_weights[i] = 0.f;
-#if 1
-        const Point_cu vert = _mesh->get_vertex(i).to_point();
-        const int nearest = h_vertices_nearest_bones[i];
-        Bone_cu b = _skel->get_bone_rest_pose( nearest );
-        const float len = b.length() > 0.0001f ? b.length() : 1.f;
-
-        bool ssd = is_cluster_ssd(_skel, nearest);
-
-        bool fit;
-        if( ssd )
-            fit = false;
-         else
-        {
-            // cluster parent is ssd ?
-            int pt = _skel->get_parent( nearest );
-            bool pt_ssd = ( pt > -1 && is_cluster_ssd(_skel, pt));
-
-            // cluster son is ssd
-            const std::vector<int>& sons = _skel->get_sons( nearest );
-            bool s_ssd = ( sons.size() > 0 &&
-                           is_cluster_ssd(_skel, sons[0]) &&
-                           !_skel->is_leaf( sons[0]));
-
-            if( (b.dist_proj_to( vert )/len) < 0.5f )
-                fit = !pt_ssd; // Don't fit if parent cluster ssd
-            else
-                fit = !s_ssd; // Don't fit if son cluster ssd
-
-        }
-        base_ssd_weights[i] = fit ? 0.f : 1.f;
-#endif
-//        if(base_potential[i] <= 0.f) base_ssd_weights[i] = 1.f;
-//        else                         base_ssd_weights[i] = 0.f;
-
-    }
-#endif
     //_mesh->diffuse_along_mesh(base_ssd_weights.ptr(), 1.f, 2);
 
     d_ssd_interpolation_factor.copy_from(base_ssd_weights);
@@ -572,7 +495,7 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
         {
             const Bone* b = _skel->get_bone( j );
 
-            if( _skel->is_leaf(j) || !_do_bone_deform[j] )
+            if( _skel->is_leaf(j) )
                 continue;
 
             // Compute nearest bone
@@ -604,37 +527,9 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
 
 // -----------------------------------------------------------------------------
 
-void Animesh::regroup_mesh_vertices(Mesh& a_mesh,
-                                    DA_int& d_nearest_bones,
-                                    HA_int& nearest_bones,
-                                    DA_int& d_nearest_joints,
-                                    HA_int& nearest_joints,
-                                    HA_int& vmap_old_new)
+void Animesh::clusterize(int n_voxels)
 {
-    assert(false);
-
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::clusterize(EAnimesh::Cluster_type type, int n_voxels)
-{
-    if( type == EAnimesh::EUCLIDEAN )
-    {
-        clusterize_euclidean(h_vertices_nearest_bones,
-                             h_vertices_nearest_joint,
-                             nb_vertices_by_bones);
-    }
-    else
-    {
-        /*
-        clusterize_geodesic(h_vertices_nearest_bones,
-                            h_vertices_nearest_joint,
-                            nb_vertices_by_bones,
-                            n_voxels);
-                            */
-
-    }
+    clusterize_euclidean(h_vertices_nearest_bones, h_vertices_nearest_joint, nb_vertices_by_bones);
 
     init_verts_per_bone();
     update_nearest_bone_joint_in_device_mem();
@@ -792,51 +687,6 @@ void Animesh::init_smooth_factors(Cuda_utils::DA_float& d_smooth_factors)
     for(int i=0; i<nb_vert; i++)
         smooth_factors[i] = 0.0f;
 
-#if 0
-    // We compute at each joint the mean length of every bone connected to that
-    // joint, and store it in threshold array multiplied by a scale factor;
-    HA_float threshold(_skel->nb_joints());
-    const float scale = 0.2f;
-
-    for(int i = 0; i < _skel->nb_joints(); i++){
-        if(i == _skel->root()) continue;
-
-        float mean_length = _skel->get_bone(i)->_length;
-        const std::vector<int>& sons = _skel->get_sons(i);
-        for(unsigned p = 0; p < sons.size(); ++p)
-            mean_length += _skel->get_bone(sons[p])->_length;
-
-        mean_length /= (sons.size() + 1);
-        threshold[i] = mean_length * scale;
-    }
-
-
-    // Every vertices which projected distance on its nearest bone is below
-    // the threshold is smoothen
-    for(int i=0; i<nb_vert; i++)
-    {
-        const int nearest_joint = h_vertices_nearest_joint[i];
-
-        if(!_skel->is_leaf(nearest_joint))
-        {
-            Point_cu vert = Convs::to_point(_mesh->get_vertex(i));
-            const int nearest_bone = h_vertices_nearest_bones[i];
-
-            float dist;
-
-            const Bone* b = _skel->get_bone(nearest_bone);
-            if(nearest_bone == nearest_joint)
-                dist = b->dist_proj_to(vert);
-            else{
-                const Vec3_cu op = vert - (b->_org + b->_dir);
-                dist = op.dot(-b->_dir.normalized());
-            }
-
-            if(dist < threshold[nearest_joint])
-                smooth_factors[i] = 1.0f;
-        }
-    }
-#endif
     d_smooth_factors.copy_from(smooth_factors);
 }
 
@@ -889,7 +739,8 @@ void Animesh::set_bone_type(int id, int bone_type)
         Bone_precomputed* b = new Bone_precomputed( prev_bone->get_obbox() );
         b->get_primitive().fill_grid_with( _skel->get_bone(id) );
         bone = b;
-    }break;
+        break;
+    }
     case EBone::HRBF:     bone = new Bone_hrbf(rad);      break;
     case EBone::CYLINDER: bone = new Bone_cylinder();     break;
     case EBone::SSD:      bone = new Bone_ssd();          break;

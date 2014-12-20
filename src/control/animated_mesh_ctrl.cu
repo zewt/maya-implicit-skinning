@@ -200,13 +200,6 @@ void Animated_mesh_ctrl::set_implicit_skinning(bool s){
     _animesh->set_implicit_skinning(s);
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::switch_implicit_skinning(){
-    _animesh->switch_implicit_skinning();
-}
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::update_base_potential()
 {
     assert(_animesh != 0);
@@ -215,10 +208,9 @@ void Animated_mesh_ctrl::update_base_potential()
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::update_clusters(EAnimesh::Cluster_type type,
-                                         int nb_voxels)
+void Animated_mesh_ctrl::update_clusters(int nb_voxels)
 {
-    _animesh->clusterize(type, nb_voxels);
+    _animesh->clusterize(nb_voxels);
 }
 
 // -----------------------------------------------------------------------------
@@ -1203,19 +1195,6 @@ void Animated_mesh_ctrl::transform_caps(int bone_id, const Transfo& tr)
 
 static float4 colorToFloat4(const Color& cl){
     return make_float4(cl.r, cl.g, cl.b, cl.a);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_sample_color(Samp_id id, const Color& c)
-{
-    float4* ptr_cbo = 0;
-    _color_bo->map_to(ptr_cbo, GL_WRITE_ONLY);
-
-    int idx = compute_offset(id.bone_id) + id.samp_id;
-    ptr_cbo[idx] = colorToFloat4( c );
-
-    _color_bo->unmap();
 }
 
 // -----------------------------------------------------------------------------

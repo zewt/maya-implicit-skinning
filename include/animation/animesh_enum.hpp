@@ -76,13 +76,6 @@ enum Blending_type {
 
 // -----------------------------------------------------------------------------
 
-enum Cluster_type {
-    /// Clusterize the mesh computing the euclidean dist to each bone
-    EUCLIDEAN
-};
-
-// -----------------------------------------------------------------------------
-
 /// Painting modes for the different mesh attributes
 enum Paint_type {
     PT_SSD_INTERPOLATION,

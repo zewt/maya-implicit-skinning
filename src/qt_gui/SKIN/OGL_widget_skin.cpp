@@ -124,10 +124,6 @@ void OGL_widget_skin::paintGL()
 {
     makeCurrent(); // TODO: this call might be useless check doc
 
-    // Correct camera position if tracking is on
-    update_pivot();
-    update_camera();
-
     // Draw the scene
     bool need_to_refresh = display_loop(_render_ctx, &_cam);
 
@@ -146,14 +142,10 @@ void OGL_widget_skin::set_main_window(Main_window_skin* m)
     _main_win = m;
 }
 
-// -----------------------------------------------------------------------------
-
 Main_window_skin* OGL_widget_skin::get_main_window()
 {
     return _main_win;
 }
-
-// -----------------------------------------------------------------------------
 
 void OGL_widget_skin::mousePressEvent( QMouseEvent* event ){
     makeCurrent();
@@ -161,14 +153,10 @@ void OGL_widget_skin::mousePressEvent( QMouseEvent* event ){
     _io->mousePressEvent(event);
 }
 
-// -----------------------------------------------------------------------------
-
 void OGL_widget_skin::mouseReleaseEvent( QMouseEvent* event ){
     makeCurrent();
     _io->mouseReleaseEvent(event);
 }
-
-// -----------------------------------------------------------------------------
 
 void OGL_widget_skin::wheelEvent( QWheelEvent* event ){
     makeCurrent();
@@ -237,67 +225,3 @@ bool OGL_widget_skin::event(QEvent *myEvent)
 
     return QGLWidget::event(myEvent);
 }
-
-// -----------------------------------------------------------------------------
-
-static Vec3_cu cog_selection(bool skel_mode)
-{
-    using namespace Cuda_ctrl;
-
-    // if( skel_mode )
-    {
-        Vec3_cu p0 = _anim_mesh->cog_mesh_selection();
-        Vec3_cu p1 = _anim_mesh->cog_sample_selection();
-
-        int s_samp = _anim_mesh->get_selected_samples().size();
-        int s_mesh = _anim_mesh->get_nb_selected_points();
-
-        if( s_samp > 0 && s_mesh > 0)
-            return (p0 + p1) * 0.5f;
-        else if(s_samp > 0)
-            return p1;
-        else
-            return p0;
-    }
-    //    else
-    //    {
-
-    //    }
-}
-
-// -----------------------------------------------------------------------------
-
-static Vec3_cu bone_cog(int bone_id)
-{
-    const Bone* b = g_skel->get_bone( bone_id );
-    return (b->org() + b->end()) * 0.5f;
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_widget_skin::update_pivot()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_widget_skin::update_camera()
-{
-    if(!_track_pivot) return;
-
-    Vec3_cu ndir = _pivot - _cam.get_pos();
-    float dist   = ndir.normalize();
-    Vec3_cu up   = _cam.get_y().normalized();
-    Vec3_cu x    = (up.cross(ndir)).normalized();
-
-    Vec3_cu nup = (ndir.cross(x)).normalized();
-
-    if(_cam.get_far()*0.9 < dist)
-        _cam.set_far( dist + dist*0.1);
-
-    _cam.set_dir_and_up(ndir.x, ndir.y, ndir.z,
-                        nup.x , nup.y , nup.z);
-}
-
-
-// -----------------------------------------------------------------------------

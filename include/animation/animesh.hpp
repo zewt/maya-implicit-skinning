@@ -221,7 +221,7 @@ public:
     /// the mesh
     /// @param n_voxels : if using geodesic distance this specify the number
     /// of voxels used for the larger side of the mesh's bb
-    void clusterize(EAnimesh::Cluster_type type, int n_voxels = 25);
+    void clusterize(int n_voxels = 25);
 
     // -------------------------------------------------------------------------
     /// @name Import export
@@ -327,19 +327,10 @@ public:
 
     /// Switch between implicit skinning and basic ssd skinning
     inline void set_implicit_skinning  ( bool s) { do_implicit_skinning = s;                     }
-    inline void switch_implicit_skinning(      ) { do_implicit_skinning = !do_implicit_skinning; }
 
-    inline const Cuda_utils::DA_Vec3_cu& get_ssd_normals() const {
-        return d_ssd_normals;
-    }
-
-    inline const Cuda_utils::DA_Vec3_cu& get_rot_axis() const {
-        return d_rot_axis;
-    }
-
-    inline const Cuda_utils::DA_Vec3_cu& get_gradient() const {
-        return d_gradient;
-    }
+    inline const Cuda_utils::DA_Vec3_cu& get_ssd_normals() const { return d_ssd_normals; }
+    inline const Cuda_utils::DA_Vec3_cu& get_rot_axis() const { return d_rot_axis; }
+    inline const Cuda_utils::DA_Vec3_cu& get_gradient() const { return d_gradient; }
 
     inline int get_nearest_bone(int vert_idx){
         return h_vertices_nearest_bones[vert_idx];
@@ -350,13 +341,9 @@ public:
     // TO be deleted and moved in the ctrl
     void set_junction_radius(int bone_id, float rad);
 
-    void set_flip_propagation(int vid, bool s){
-        d_flip_propagation.set(vid, s);
-    }
+    void set_flip_propagation(int vid, bool s) { d_flip_propagation.set(vid, s); }
 
     void reset_flip_propagation();
-
-    inline EAnimesh::Color_type get_color_type(){ return mesh_color; }
 
     GlBuffer_obj* get_vbo_rest_pose(){
         return _vbo_input_vert;
@@ -387,20 +374,6 @@ private:
     /// Update the attributes 'd_nearest_bone_in_device_mem' and
     /// 'd_nearest_joint_in_device_mem'
     void update_nearest_bone_joint_in_device_mem();
-
-    /// In order to avoid too much discrepancy inside cuda kernels we regroup
-    /// vertices by bones.
-    /// Mapping of nearest bones (d_nearest_bones and nearest_bones) are updated
-    /// as the vertices are sorted.
-    /// @param map   the ith element of this array returns the new vertex
-    /// index in Mesh class after being sorted.
-    /// @param a_mesh The mesh to be sorted
-    void regroup_mesh_vertices(Mesh& a_mesh,
-                               Cuda_utils::DA_int& d_nearest_bones,
-                               Cuda_utils::HA_int& nearest_bones,
-                               Cuda_utils::DA_int& d_nearest_joint,
-                               Cuda_utils::HA_int& nearest_joint,
-                               Cuda_utils::HA_int& map);
 
     /// Compute a radius for each bone, given the distance of each vertex to
     /// their closest bone
@@ -539,11 +512,6 @@ private:
     Mesh*      _mesh;
     Skeleton*  _skel;
 
-    /// Does the bone intended to deform the mesh or only to be used for
-    /// kinematic purpose ? (meaning the bone weights/clusters will be ignored)
-    std::vector<bool> _do_bone_deform;
-
-    EAnimesh::Color_type  mesh_color;
     EAnimesh::Smooth_type mesh_smoothing;
 
     bool do_implicit_skinning;

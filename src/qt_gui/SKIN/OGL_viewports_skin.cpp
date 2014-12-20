@@ -18,16 +18,8 @@
  */
 #include "SKIN/OGL_viewports_skin.hpp"
 
-#include <QSplitter>
-
 #include "cuda_ctrl.hpp"
 #include "macros.hpp"
-
-// Export from global.hpp //////////
-extern std::string g_write_dir;
-///////////////////////////////////
-
-// -----------------------------------------------------------------------------
 
 void OGL_widget_skin_hidden::initializeGL(){
     OGL_widget_skin::init_glew();
@@ -89,42 +81,6 @@ OGL_viewports_skin::~OGL_viewports_skin(){
 
 /////////////////DEBUG
 /// The current skeleton
-#if 0
-// HARD CODED Anim
-extern Skeleton* g_skel;
-
-Kinematic* kinec(){ return g_skel->_kinec; }
-
-void rotate(const Vec3_cu& axis, float angle, int joint)
-{
-    /*-----------------
-      Compute rotation
-    ------------------*/
-    int pid = g_skel->parent(joint) > -1  ? g_skel->parent(joint) : joint;
-
-    Transfo pframe     = g_skel->joint_anim_frame( pid );
-    Transfo pframe_inv = pframe.fast_invert();
-
-    // Axis in world coordinates
-    Vec3_cu world_axis = axis;
-
-    // Joint origin in its parent joint coordinate system
-    Vec3_cu curr_joint_org = g_skel->joint_anim_frame(joint).get_translation();
-    Point_cu org = pframe_inv * curr_joint_org.to_point();
-
-    // Rotation of the joint in its parent joint coordinate system
-    Transfo tr = Transfo::rotate(org.to_vector(), pframe_inv * world_axis, angle);
-
-    Transfo curr_joint_lcl = kinec()->get_user_lcl_parent( joint );
-    // Concatenate last user defined transformation
-    Transfo usr = tr * curr_joint_lcl;
-
-    // Update the skeleton position
-    kinec()->set_user_lcl_parent( joint, usr );
-}
-#endif
-/////////////////DEBUG
-
 
 
 void OGL_viewports_skin::updateGL()
@@ -132,45 +88,10 @@ void OGL_viewports_skin::updateGL()
     using namespace Cuda_ctrl;
     _viewports[0]->makeCurrent();
 
-    // FPS Counting _______________
-    static int fpsCount = -1;
-    static int fpsLimit = 11;
-    static double fps_min = 100000.;
-    static double fps_max = 0.;
-    static double fps_avg = 0.;
-    static int nb_frames_avg = 0;
-    static unsigned elapsed = 0.;
-    if(fpsCount == -1) fpsCount = 0;
-    QTime  frame_timer;
-    frame_timer.start();
-    if(fpsCount == 0)
-        _fps_timer.start();
-    // _____________________________
-
-
     if(_skel_mode)
     {
         if(_anim_mesh != 0)
         {
-            #if 0
-            // HARD CODED Anim
-            const float step = 0.08f;
-            static int sign = 1;
-            static float acc  = 0;
-
-            acc = acc + sign*step;
-
-            if(acc > ((2.2f*M_PI) / 3.f))
-                sign *= -1;
-
-            if(acc <  0.f){
-                sign *= -1;
-                g_skel->reset();
-            }
-
-            rotate(Vec3_cu::unit_y(), step*sign, 11);
-            #endif
-
             // Transform HRBF samples for display and selection
             _anim_mesh->transform_samples( /*_skeleton.get_selection_set() */);
             // Animate the mesh :
@@ -183,48 +104,6 @@ void OGL_viewports_skin::updateGL()
         OGL_widget_skin* v = _viewports[i];
         v->updateGL();
     }
-
-    // FPS Counting ________________
-    double this_frame = frame_timer.elapsed();
-    fpsCount++;
-    if (fpsCount >= fpsLimit)
-    {
-        // We don't count the last frame.
-        fpsCount -= 1;
-        elapsed = _fps_timer.elapsed() - this_frame;
-
-        double ifps =  (double)fpsCount / ((double)elapsed / 1000.);
-        if(ifps < fps_min) fps_min = ifps;
-        if(ifps > fps_max) fps_max = ifps;
-        fps_avg += ifps;
-        nb_frames_avg++;
-        QString msg = QString::number(ifps) +" fps ";
-        msg = msg+"min: "+QString::number(fps_min)+" ";
-        msg = msg+"max: "+QString::number(fps_max)+" ";
-        msg = msg+"avg: "+QString::number(fps_avg/nb_frames_avg)+" ";
-        msg = msg+"Implicit Visualizer:"+QString::number(ifps)+"fps, ";
-
-        if(_current_viewport != 0)
-        {
-            double w = _current_viewport->camera()->width();
-            double h = _current_viewport->camera()->height();
-            double frame_to_Mrays = w*h*MULTISAMPX*MULTISAMPY*(1e-6);
-            msg = msg+QString::number(ifps*frame_to_Mrays)+" Mray/s";
-            msg = msg+" res:"+QString::number(width())+"x"+QString::number(height());
-        }
-
-        emit update_status(msg);
-
-        if(nb_frames_avg >= fpsLimit*2){
-            nb_frames_avg = 0;
-            fps_avg = 0.;
-            fps_min = 1000.;
-            fps_max = 0.;
-        }
-        fpsCount = 0;
-        elapsed = 0;
-    }
-    // _____________________________
 }
 
 // -----------------------------------------------------------------------------
@@ -241,13 +120,7 @@ void OGL_viewports_skin::set_viewports_layout(Layout_e setting)
 {
     erase_viewports();
 
-    switch(setting)
-    {
-    case SINGLE:  _main_layout = gen_single (); break;
-    case VDOUBLE: _main_layout = gen_vdouble(); break;
-    case HDOUBLE: _main_layout = gen_hdouble(); break;
-    case FOUR:    _main_layout = gen_four   (); break;
-    }
+    _main_layout = gen_single ();
 
     this->setLayout(_main_layout);
     first_viewport_as_active();
@@ -278,118 +151,6 @@ QLayout* OGL_viewports_skin::gen_single()
 
     return vlayout;
 }
-
-// -----------------------------------------------------------------------------
-
-QLayout* OGL_viewports_skin::gen_vdouble()
-{
-
-    QVBoxLayout* vlayout = new QVBoxLayout(this);
-    vlayout->setSpacing(0);
-    vlayout->setContentsMargins(0, 0, 0, 0);
-
-    QSplitter* splitter = new QSplitter(this);
-    splitter->setOrientation(Qt::Horizontal);
-    splitter->setContentsMargins(0, 0, 0, 0);
-    splitter->setHandleWidth(3);
-    vlayout->addWidget(splitter);
-
-    for(int i = 0; i < 2; i++){
-        Viewport_frame_skin* frame = new_viewport_frame(splitter, i);
-        _viewports_frame.push_back(frame);
-        QVBoxLayout* layout = new QVBoxLayout(frame);
-        layout->setSpacing(0);
-        layout->setContentsMargins(0, 0, 0, 0);
-        frame->setLayout(layout);
-
-        OGL_widget_skin* ogl = new_viewport(frame);
-        _viewports.push_back(ogl);
-        layout->addWidget(ogl);
-
-        splitter->addWidget(frame);
-    }
-
-    return vlayout;
-}
-
-// -----------------------------------------------------------------------------
-
-QLayout* OGL_viewports_skin::gen_hdouble()
-{
-
-    QVBoxLayout* vlayout = new QVBoxLayout(this);
-    vlayout->setSpacing(0);
-    vlayout->setContentsMargins(0, 0, 0, 0);
-
-    QSplitter* splitter = new QSplitter(this);
-    splitter->setOrientation(Qt::Vertical);
-    splitter->setContentsMargins(0, 0, 0, 0);
-    splitter->setHandleWidth(3);
-    vlayout->addWidget(splitter);
-
-    for(int i = 0; i < 2; i++){
-        Viewport_frame_skin* frame = new_viewport_frame(splitter, i);
-        _viewports_frame.push_back(frame);
-        QVBoxLayout* layout = new QVBoxLayout(frame);
-        layout->setSpacing(0);
-        layout->setContentsMargins(0, 0, 0, 0);
-        frame->setLayout(layout);
-
-        OGL_widget_skin* ogl = new_viewport(frame);
-        _viewports.push_back(ogl);
-        layout->addWidget(ogl);
-
-        splitter->addWidget(frame);
-    }
-    return vlayout;
-}
-
-// -----------------------------------------------------------------------------
-
-QLayout* OGL_viewports_skin::gen_four()
-{
-
-    QVBoxLayout* vlayout = new QVBoxLayout(this);
-    vlayout->setSpacing(0);
-    vlayout->setContentsMargins(0, 0, 0, 0);
-
-    QSplitter* vsplitter = new QSplitter(this);
-    vsplitter->setOrientation(Qt::Vertical);
-    vsplitter->setContentsMargins(0, 0, 0, 0);
-    vsplitter->setHandleWidth(3);
-    vlayout->addWidget(vsplitter);
-
-    int acc = 0;
-    for(int i = 0; i < 2; i++)
-    {
-        QSplitter* hsplitter = new QSplitter(this);
-        hsplitter->setOrientation(Qt::Horizontal);
-        hsplitter->setContentsMargins(0, 0, 0, 0);
-        hsplitter->setHandleWidth(3);
-        vsplitter->addWidget(hsplitter);
-
-        for(int j = 0; j < 2; j++)
-        {
-            Viewport_frame_skin* frame = new_viewport_frame(hsplitter, acc);
-            acc++;
-            _viewports_frame.push_back(frame);
-            QVBoxLayout* layout = new QVBoxLayout(frame);
-            layout->setSpacing(0);
-            layout->setContentsMargins(0, 0, 0, 0);
-            frame->setLayout(layout);
-
-            OGL_widget_skin* ogl = new_viewport(frame);
-            _viewports.push_back(ogl);
-            layout->addWidget(ogl);
-
-            hsplitter->addWidget(frame);
-        }
-    }
-
-    return vlayout;
-}
-
-// -----------------------------------------------------------------------------
 
 void OGL_viewports_skin::erase_viewports()
 {

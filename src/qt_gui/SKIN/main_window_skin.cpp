@@ -19,7 +19,6 @@
 #include "SKIN/main_window_skin.hpp"
 
 #include <QFileDialog>
-#include <QColorDialog>
 #include <QMessageBox>
 #include <QString>
 
@@ -39,7 +38,12 @@ extern Skeleton* g_skel;
 ///////////////////
 
 
-extern std::string g_icons_dir;
+// Forward def
+namespace Skeleton_env {
+void set_grid_res(Skel_id i, int res);
+}
+// END Forward def
+
 
 using namespace Cuda_ctrl;
 
@@ -48,49 +52,27 @@ using namespace Cuda_ctrl;
 Main_window_skin::Main_window_skin(QWidget *parent) :
     QMainWindow(parent)
 {
-    //--------------
     setupUi(this);
-    //--------------
-    setup_viewports();
-    setup_comboB_operators();
-    setup_main_window();
-    //--------------
+
+    _viewports = new OGL_viewports_skin(viewports_frame, this);
+    viewports_frame->layout()->addWidget(_viewports);
+
+    resize(1300, 800);
 
     // HACK: Because blending_env initialize to elbow too ...
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
-    update_ctrl_spin_boxes(shape);
 
     Fbx_loader::init();
 
-    // Desactivate GUI parts
-    enable_mesh   ( false );
+//    Skeleton_env::set_grid_res(0, 20); // FIXME: remove hardcoded skeleton ID
+
+//    Cuda_ctrl::_debug._smooth_mesh = true;
+//    Cuda_ctrl::_debug._smooth1_iter = 7;
+//    Cuda_ctrl::_debug._smooth1_force = 1.0f;
+//    Cuda_ctrl::_debug._smooth2_iter = 1;
+//    Cuda_ctrl::_debug._smooth2_force= 0.5f;
+//    Cuda_ctrl::_anim_mesh->set_nb_iter_smooting(7); // 1 ... 300
 }
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::setup_comboB_operators()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::setup_viewports()
-{
-    _viewports = new OGL_viewports_skin(viewports_frame, this);
-    viewports_frame->layout()->addWidget(_viewports);
-}
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::setup_main_window()
-{
-    setWindowTitle("Implicit skinning ");
-    resize(1300, 800);
-    QIcon icon(QString(g_icons_dir.c_str())+"/logo/red_logo_white.svg");
-    QWidget::setWindowIcon( icon );
-}
-
-// -----------------------------------------------------------------------------
 
 void Main_window_skin::choose_hrbf_samples(int bone_id)
 {
@@ -112,7 +94,8 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
                  // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
                  0); // dSpinB_max_fold->value() );
 
-    }break;
+        break;
+    }
 
     case 1:
     {
@@ -123,7 +106,8 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
                  0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
                  0); // dSpinB_max_fold->value() );
 
-    }break;
+        break;
+    }
 
     case 2:
     {
@@ -133,11 +117,8 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
     }
 }
 
-// -----------------------------------------------------------------------------
-
 void Main_window_skin::choose_hrbf_samples_selected_bones()
 {
-
     const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
 
     for(unsigned i = 0; i < set.size(); i++)
@@ -146,64 +127,23 @@ void Main_window_skin::choose_hrbf_samples_selected_bones()
     Cuda_ctrl::_anim_mesh->update_base_potential();
 }
 
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::update_ctrl_spin_boxes(const IBL::Ctrl_setup& shape)
-{
-    {
-        dSpinB_ctrl_p0_x->blockSignals(true);
-        dSpinB_ctrl_p0_y->blockSignals(true);
-        dSpinB_ctrl_p1_x->blockSignals(true);
-        dSpinB_ctrl_p1_y->blockSignals(true);
-        dSpinB_ctrl_p2_x->blockSignals(true);
-        dSpinB_ctrl_p2_y->blockSignals(true);
-        dSpinB_ctrl_slope0->blockSignals(true);
-        dSpinB_ctrl_slope1->blockSignals(true);
-    }
-
-    dSpinB_ctrl_p0_x->setValue(shape.p0().x);
-    dSpinB_ctrl_p0_y->setValue(shape.p0().y);
-
-    dSpinB_ctrl_p1_x->setValue(shape.p1().x);
-    dSpinB_ctrl_p1_y->setValue(shape.p1().y);
-
-    dSpinB_ctrl_p2_x->setValue(shape.p2().x);
-    dSpinB_ctrl_p2_y->setValue(shape.p2().y);
-
-    dSpinB_ctrl_slope0->setValue(shape.s0());
-    dSpinB_ctrl_slope1->setValue(shape.s1());
-
-    {
-        dSpinB_ctrl_p0_x->blockSignals(false);
-        dSpinB_ctrl_p0_y->blockSignals(false);
-        dSpinB_ctrl_p1_x->blockSignals(false);
-        dSpinB_ctrl_p1_y->blockSignals(false);
-        dSpinB_ctrl_p2_x->blockSignals(false);
-        dSpinB_ctrl_p2_y->blockSignals(false);
-        dSpinB_ctrl_slope0->blockSignals(false);
-        dSpinB_ctrl_slope1->blockSignals(false);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Main_window_skin::set_current_ctrl()
 {
     IBL::float2 p0;
-    p0.x = dSpinB_ctrl_p0_x->value();
-    p0.y = dSpinB_ctrl_p0_y->value();
+    p0.x = 0.20f; // -3 ... +3.0, step 0.05
+    p0.y = 1.00f; //    ... +1.0, step 0.05
 
     IBL::float2 p1;
-    p1.x = dSpinB_ctrl_p1_x->value();
-    p1.y = dSpinB_ctrl_p1_y->value();
+    p1.x = 0.70f; // dSpinB_ctrl_p1_x->value();
+    p1.y = 0.43f; // dSpinB_ctrl_p1_y->value();
 
     IBL::float2 p2;
-    p2.x = dSpinB_ctrl_p2_x->value();
-    p2.y = dSpinB_ctrl_p2_y->value();
+    p2.x = 1.20f; // dSpinB_ctrl_p2_x->value();
+    p2.y = 1.00f; // dSpinB_ctrl_p2_y->value();
 
     IBL::float2 s;
-    s.x = dSpinB_ctrl_slope0->value();
-    s.y = dSpinB_ctrl_slope1->value();
+    s.x = 1.0f; // dSpinB_ctrl_slope0->value();
+    s.y = 1.0f; // dSpinB_ctrl_slope1->value();
 
     IBL::Ctrl_setup shape(p0, p1, p2, s.x, s.y);
 
@@ -218,19 +158,9 @@ void Main_window_skin::set_current_ctrl()
     _anim_mesh->update_base_potential();
 }
 
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::paint_toggled(bool state)
-{
-}
-
-// MANUAL SLOTS ################################################################
-
 void Main_window_skin::toggle_fitting(bool checked){
     Cuda_ctrl::_anim_mesh->set_implicit_skinning(checked);
 }
-
-// AUTOMATIC SLOTS #############################################################
 
 void Main_window_skin::on_actionExit_triggered()
 {
@@ -243,37 +173,8 @@ void Main_window_skin::on_enable_smoothing_toggled(bool checked){
     Cuda_ctrl::_anim_mesh->set_do_smoothing(checked);
 }
 
-void Main_window_skin::on_spinBox_smooth_iter_valueChanged(int val){
-    Cuda_ctrl::_anim_mesh->set_nb_iter_smooting(val);
-}
-
 void Main_window_skin::on_spinB_smooth_force_a_valueChanged(double val){
     Cuda_ctrl::_anim_mesh->set_smooth_force_a(val);
-}
-
-void Main_window_skin::on_checkB_enable_smoothing_toggled(bool checked)
-{
-    Cuda_ctrl::_debug._smooth_mesh = checked;
-}
-
-void Main_window_skin::on_spinB_nb_iter_smooth1_valueChanged(int val)
-{
-    Cuda_ctrl::_debug._smooth1_iter = val;
-}
-
-void Main_window_skin::on_dSpinB_lambda_smooth1_valueChanged(double val)
-{
-    Cuda_ctrl::_debug._smooth1_force = val;
-}
-
-void Main_window_skin::on_spinB_nb_iter_smooth2_valueChanged(int val)
-{
-    Cuda_ctrl::_debug._smooth2_iter = val;
-}
-
-void Main_window_skin::on_dSpinB_lambda_smooth2_valueChanged(double val)
-{
-    Cuda_ctrl::_debug._smooth2_force= val;
 }
 
 // END SMOOTHING SLOTS =========================================================
@@ -413,58 +314,6 @@ void Main_window_skin::on_dSpinB_collision_depth_valueChanged(double val)
     Cuda_ctrl::_debug._collision_depth = val;
 }
 
-// CONTROLLER SPINBOXES ========================================================
-
-void Main_window_skin::on_dSpinB_ctrl_p0_x_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_p0_y_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_p1_x_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_p1_y_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_p2_x_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_p2_y_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_slope0_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-void Main_window_skin::on_dSpinB_ctrl_slope1_valueChanged(double )
-{
-    set_current_ctrl();
-    Cuda_ctrl::_display._raytrace_again = true;
-}
-
-// END CONTROLLER SPINBOXES ====================================================
-
 void Main_window_skin::on_checkB_cap_joint_toggled(bool checked)
 {
     const std::vector<int>& set = Cuda_ctrl::_skeleton.get_selection_set();
@@ -550,11 +399,6 @@ void Main_window_skin::on_spinBox_2_valueChanged(int val)
     Cuda_ctrl::_debug._slope_smooth_weight = val % 2 == 0 ? val : val + 1;
 }
 
-void Main_window_skin::on_checkB_enable_raphson_toggled(bool checked)
-{
-    Cuda_ctrl::_debug._raphson = checked;
-}
-
 void Main_window_skin::on_color_smoothing_conservative_toggled(bool checked)
 {
     if(checked){
@@ -567,24 +411,6 @@ void Main_window_skin::on_color_smoothing_laplacian_toggled(bool checked)
     if(checked){
         Cuda_ctrl::_anim_mesh->color_type(EAnimesh::ANIM_SMOOTH_LAPLACIAN);
     }
-}
-
-// Forward def
-namespace Skeleton_env {
-void set_grid_res(Skel_id i, int res);
-}
-// END Forward def
-
-void Main_window_skin::on_spinB_grid_res_valueChanged(int res)
-{
-    Skeleton_env::set_grid_res(0, res); // FIXME: remove hardcoded skeleton ID
-}
-
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::enable_mesh(bool state)
-{
 }
 
 void Main_window_skin::keyPressEvent( QKeyEvent* event )
@@ -881,7 +707,6 @@ void Main_window_skin::on_actionLoad_FBX_triggered()
 
     Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
     load_fbx_mesh( loader );
-    enable_mesh( true );
 
     load_fbx_skeleton_anims( loader );
 }

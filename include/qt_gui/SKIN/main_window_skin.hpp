@@ -52,14 +52,9 @@ public:
     void choose_hrbf_samples(int bone_id);
     void choose_hrbf_samples_selected_bones();
 
-    void update_ctrl_spin_boxes(const IBL::Ctrl_setup& shape);
-
     /// Set the controller for the current selected bone given the spinBox
     /// values
     void set_current_ctrl();
-
-    /// Wether activate/or deactivate GUI related to mesh
-    void enable_mesh(bool state);
 
     //void closeEvent(QCloseEvent*){ exit(0); }
 
@@ -67,49 +62,17 @@ public:
 
 private:
 
-    // -------------------------------------------------------------------------
-    /// @name Widgets setup
-    // -------------------------------------------------------------------------
-    /// Connect toolbar_painting slots
-    void setup_toolbar_painting();
-    /// Populate 'comboB_operators'
-    void setup_comboB_operators();
-    /// Populate '_viewports'
-    void setup_viewports();
-    /// Hard coded window properties
-    void setup_main_window();
-
-
-    // -------------------------------------------------------------------------
-    /// @name Tools
-    // -------------------------------------------------------------------------
-
-    /// Load skeleton and animation from a given fbx data structure
     bool load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loader);
-    /// mesh from fbx loader
     void load_fbx_mesh( Fbx_loader::Fbx_file& loader);
-    /// load skeleton '.skel'
     bool load_custom_skeleton(QString name);
-    /// load ssd weights '.weights'
     bool load_custom_weights(QString name);
 
-    // -------------------------------------------------------------------------
-    /// @name Attributes
-    // -------------------------------------------------------------------------
-
-    /// ComboBox to choose the type of selection (circle, square etc.)
-    QComboBox* _selection_comboBox;
-
-    /// The openGL viewports
     OGL_viewports_skin* _viewports;
 
 public slots:
     // -------------------------------------------------------------------------
     /// @name MANUAL SLOTS
     // -------------------------------------------------------------------------
-
-    /// Enable disable painting mode
-    void paint_toggled(bool state);
 
     void toggle_fitting(bool checked);
 
@@ -120,7 +83,6 @@ public slots:
     void on_actionLoad_mesh_triggered();
     void on_actionExit_triggered();
     void on_enable_smoothing_toggled(bool checked);
-    void on_spinBox_smooth_iter_valueChanged(int );
     void on_horizontalSlider_sliderMoved(int position);
     void on_ssd_raio_toggled(bool checked);
     void on_actionLoad_skeleton_triggered();
@@ -149,14 +111,6 @@ public slots:
     void on_choose_hrbf_samples_released();
     void on_spinBox_valueChanged(int );
     void on_dSpinB_collision_depth_valueChanged(double );
-    void on_dSpinB_ctrl_p0_x_valueChanged(double );
-    void on_dSpinB_ctrl_p0_y_valueChanged(double );
-    void on_dSpinB_ctrl_p1_x_valueChanged(double );
-    void on_dSpinB_ctrl_p1_y_valueChanged(double );
-    void on_dSpinB_ctrl_p2_x_valueChanged(double );
-    void on_dSpinB_ctrl_p2_y_valueChanged(double );
-    void on_dSpinB_ctrl_slope0_valueChanged(double );
-    void on_dSpinB_ctrl_slope1_valueChanged(double );
     void on_comboB_operators_currentIndexChanged(int );
     void on_dSpinB_opening_value_valueChanged(double );
     void on_checkB_cap_joint_toggled(bool checked);
@@ -166,11 +120,6 @@ private slots:
     void on_checkBox_update_base_potential_toggled(bool checked);
 
     void on_cBox_always_precompute_toggled(bool checked);
-    void on_checkB_enable_smoothing_toggled(bool checked);
-    void on_spinB_nb_iter_smooth1_valueChanged(int );
-    void on_dSpinB_lambda_smooth1_valueChanged(double );
-    void on_spinB_nb_iter_smooth2_valueChanged(int );
-    void on_dSpinB_lambda_smooth2_valueChanged(double );
     void on_spinB_max_res_valueChanged(int );
     void on_checkB_factor_siblings_toggled(bool checked);
     void on_pushB_empty_bone_released();
@@ -180,10 +129,8 @@ private slots:
     void on_pButton_add_caps_released();
     void on_pButton_supr_caps_released();
     void on_spinBox_2_valueChanged(int );
-    void on_checkB_enable_raphson_toggled(bool checked);
     void on_color_smoothing_conservative_toggled(bool checked);
     void on_color_smoothing_laplacian_toggled(bool checked);
-    void on_spinB_grid_res_valueChanged(int );
 };
 
 #endif // _MAIN_WINDOW_H_

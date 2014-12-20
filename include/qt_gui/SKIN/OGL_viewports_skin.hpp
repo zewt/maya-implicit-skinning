@@ -97,9 +97,6 @@ private:
     /// @name Tools
     // -------------------------------------------------------------------------
     QLayout* gen_single ();
-    QLayout* gen_vdouble();
-    QLayout* gen_hdouble();
-    QLayout* gen_four   ();
 
     /// suppress all viewports and layouts
     void erase_viewports();

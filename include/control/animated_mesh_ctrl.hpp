@@ -76,7 +76,7 @@ public:
 
     void update_base_potential();
 
-    void update_clusters(EAnimesh::Cluster_type type, int nb_voxels = 25);
+    void update_clusters(int nb_voxels = 25);
 
 
     /// Set how the mesh is colored when edited
@@ -139,7 +139,6 @@ public:
     void do_ssd_skinning();
     void do_dual_quat_skinning();
     void set_implicit_skinning(bool s);
-    void switch_implicit_skinning();
 
     //--------------------------------------------------------------------------
     /// @name SSD weights
@@ -271,8 +270,6 @@ private:
     /// Replace all the samples from the skeleton in the attrib '_sample_list'
     void copy_bone_samples_to_list();
 
-
-    void set_sample_color(Samp_id id, const Color& c);
 
     /// Change the vector size of attr _sample_anim_list.nodes and .n_nodes
     void resize_samples_anim(int bone_id, int size);

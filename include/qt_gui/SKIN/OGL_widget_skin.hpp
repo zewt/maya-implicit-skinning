@@ -49,9 +49,6 @@ public:
     OGL_widget_skin(QWidget *parent, Main_window_skin* m);
     ~OGL_widget_skin();
 
-    /// update the pivot position given the current mode of rotation
-    void update_pivot();
-
     // -------------------------------------------------------------------------
     /// @name Static tools
     // -------------------------------------------------------------------------
@@ -148,9 +145,6 @@ private:
 
     /// Factorize the initialization of some attributes
     void init();
-
-    /// if necessary updates camera position when tracking enabled
-    void update_camera();
 
     // -------------------------------------------------------------------------
     /// @name Attributes

@@ -19,7 +19,6 @@
 #include "loader.hpp"
 
 #include "fbx_loader.hpp"
-#include "obj_loader.hpp"
 #include "off_loader.hpp"
 #include "graph_loader.hpp"
 #include "std_utils.hpp"
@@ -50,8 +49,6 @@ Base_loader* make_loader(const std::string& file_name)
 
     if( ext == ".fbx")
         return new Fbx_loader::Fbx_file(file_name);
-    else if( ext == ".obj")
-        return new Obj_loader::Obj_file(file_name);
     else if( ext == ".off")
         return new Off_loader::Off_file(file_name);
     else if( ext == ".skel")

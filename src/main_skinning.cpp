@@ -34,11 +34,6 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // Set up and show widgets.
-#ifdef _MAIN_WINDOW_SKIN2_H_
-    Main_window_skin2 main_window;
-    main_window.show();
-#endif
-#ifdef _MAIN_WINDOW_SKIN_H_
     Main_window_skin main_window;
     main_window.show();
 
@@ -74,7 +69,6 @@ int main(int argc, char *argv[])
     CUDA_SAFE_CALL( cudaDeviceReset() );
     CUDA_SAFE_CALL(cudaGLSetGLDevice(device_id) );
     */
-#endif
 
     int qt_ret = app.exec();
     return qt_ret;

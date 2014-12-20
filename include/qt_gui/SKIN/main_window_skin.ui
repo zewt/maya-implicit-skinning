@@ -178,35 +178,6 @@
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QWidget" name="form_widget_smoot_iter" native="true">
-                   <layout class="QFormLayout" name="formLayout">
-                    <item row="0" column="1">
-                     <widget class="QSpinBox" name="spinBox_smooth_iter">
-                      <property name="buttonSymbols">
-                       <enum>QAbstractSpinBox::UpDownArrows</enum>
-                      </property>
-                      <property name="minimum">
-                       <number>1</number>
-                      </property>
-                      <property name="maximum">
-                       <number>300</number>
-                      </property>
-                      <property name="value">
-                       <number>7</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="0">
-                     <widget class="QLabel" name="lbl_nb_iter_smoothing">
-                      <property name="text">
-                       <string>Iterations</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QWidget" name="widget_force_a_b" native="true">
                    <property name="enabled">
                     <bool>false</bool>
