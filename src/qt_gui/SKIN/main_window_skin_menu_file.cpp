@@ -160,60 +160,6 @@ bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loade
     return true;
 }
 
-// FILE SLOT ===================================================================
-
-// XXX remove
-void Main_window_skin::on_actionLoad_keyframes_triggered()
-{
-    if( !Cuda_ctrl::is_animesh_loaded() ){
-        QMessageBox::information(this, "Error", "No animated mesh loaded");
-        return;
-    }
-
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load keyframes"),
-                                                    "./resource/meshes",
-                                                    tr("*.fbx") );
-    if( fileName.size() != 0)
-    {
-        QFileInfo fi(fileName);
-        QString ext = fi.suffix().toLower();
-
-        if(ext == "fbx")
-        {
-            // Parse file
-            Fbx_loader::Fbx_file loader( fileName.toStdString() );
-            // Load into our data representation
-            std::vector<Loader::Base_anim_eval*> anims;
-            loader.get_animations( anims );
-        }
-        else
-        {
-            QMessageBox::information(this, "Error", "Unsupported file type: '"+ext+"'");
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::on_actionSave_as_skeleton_triggered()
-{
-    if( !Cuda_ctrl::is_skeleton_loaded() ){
-        QMessageBox::information(this, "Error", "No skeleton to be saved");
-        return;
-    }
-
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save skeleton"),
-                                                    "./resource/meshes",
-                                                    tr("*.skel") );
-    if( fileName.size() != 0)
-        Cuda_ctrl::_graph.save_to_file(fileName.toLatin1());
-
-}
-
-// -----------------------------------------------------------------------------
-
 void Main_window_skin::on_actionLoad_skeleton_triggered()
 {
     if( !Cuda_ctrl::is_mesh_loaded() ){
@@ -424,23 +370,6 @@ void Main_window_skin::on_actionLoad_weights_triggered()
 
 // -----------------------------------------------------------------------------
 
-void Main_window_skin::on_actionSave_weights_triggered(bool checked)
-{
-    if( !Cuda_ctrl::is_animesh_loaded() ){
-        QMessageBox::information(this, "Error", "No animated mesh loaded");
-        return;
-    }
-
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save weights"),
-                                                    "./resource/meshes",
-                                                    tr("*.weights") );
-    if( fileName.size() != 0)
-        Cuda_ctrl::_anim_mesh->save_weights(fileName.toLatin1());
-}
-
-// -----------------------------------------------------------------------------
-
 void Main_window_skin::on_actionLoad_FBX_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
@@ -487,29 +416,3 @@ void Main_window_skin::on_actionSave_FBX_triggered()
     */
 
 }
-
-// -----------------------------------------------------------------------------
-
-// Cuda_ctrl::_skeleton.load_pose
-void Main_window_skin::on_actionLoad_triggered()
-{
-}
-
-void Main_window_skin::on_actionSave_triggered()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-// save camera pose
-void Main_window_skin::on_actionSave_2_triggered()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::on_actionLoad_2_triggered()
-{
-}
-
-// END FILE SLOTS ==============================================================

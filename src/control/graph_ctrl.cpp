@@ -26,6 +26,7 @@
 
 // -----------------------------------------------------------------------------
 
+// XXX: unused, we don't save the skeleton to disk
 void Graph_ctrl::save_to_file(const char* filename) const
 {
     g_graph->save_to_file(filename);

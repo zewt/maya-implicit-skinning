@@ -356,81 +356,6 @@ void Main_window_skin::on_checkB_factor_siblings_toggled(bool checked)
 
 // END RBF EDITION SLOTS =======================================================
 
-// HELP MENU ===================================================================
-
-void Main_window_skin::on_actionShortcuts_triggered()
-{
-}
-
-void Main_window_skin::on_actionAbout_triggered()
-{
-/*                             "Authors",
-                             "Coding, conception && research :\n"
-                             "(alphabetical order of first names)\n"
-                             "Damien Rohmer, Florian Canezin, Gael Guennebaud, Loic Barthe, Olivier Gourmel, Rodolphe Vaillant\n"
-                             "Logo, theme && icons\n"
-                             "Judith Belin\n");
-                             */
-}
-
-// END HELP MENU ===============================================================
-
-// INFOS =======================================================================
-
-void Main_window_skin::on_actionSkeleton_triggered()
-{
-    if(g_mesh != 0)
-    {
-        Skeleton_ctrl& skel = Cuda_ctrl::_skeleton;
-        QMessageBox::information(this,
-                                 "Skeleton informations",
-                                 "Nb joint: "+QString::number(skel.get_nb_joints())+"\n"+
-                                 "Hierachy: \n"+
-                                 QString( g_skel->to_string().c_str() )
-                                 );
-    }
-    else
-    {
-        QMessageBox::information(this, "Skeleton informations", "No skeleton to get infos from");
-    }
-}
-
-void Main_window_skin::on_actionMesh_triggered()
-{
-    if(g_mesh != 0)
-    {
-        QMessageBox::information(this,
-                                 "Mesh informations",
-                                 "Nb vertices: "+QString::number(g_mesh->get_nb_vertices())+"\n"
-                                 "Nb faces: "+QString::number(g_mesh->get_nb_faces())+"\n"
-                                 "Nb triangles: "+QString::number(g_mesh->get_nb_tri())+"\n"
-                                 "Nb quads: "+QString::number(g_mesh->get_nb_quad())+"\n"
-                                 "Manifold ? "+ QString(g_mesh->is_manifold() ? "Yes" : "No") +"\n"
-                                 "Closed ? "+ QString(g_mesh->is_closed() ? "Yes" : "No") +"\n"
-                                 "Defined materials ? "+ QString(g_mesh->has_materials() ? "Yes" : "No") +"\n"
-                                 "Bump map ? "+ QString(g_mesh->has_bumpmap() ? "Yes" : "No") +"\n"
-                                 );
-    }
-    else
-    {
-        QMessageBox::information(this, "Mesh informations", "No mesh to get infos from");
-    }
-}
-
-void Main_window_skin::on_actionResource_usage_triggered()
-{
-    double free, total;
-    Cuda_ctrl::get_mem_usage(total, free);
-    QMessageBox::information(this,
-                             "Resource usage",
-                             "Total device mem:   "+QString::number(total)+"MB\n"
-                             "Used device mem:   "+QString::number(total-free)+"MB\n"
-                             "Free device mem:   "+QString::number(free)+"MB\n"
-                             );
-}
-
-// END INFOS ===================================================================
-
 void Main_window_skin::on_reset_anim_released()
 {
     Cuda_ctrl::_skeleton.reset();
@@ -454,10 +379,6 @@ void Main_window_skin::on_debug_show_normal_toggled(bool checked)
 void Main_window_skin::on_debug_show_gradient_toggled(bool checked)
 {
     Cuda_ctrl::_debug._show_gradient = checked;
-}
-
-void Main_window_skin::on_actionColors_triggered()
-{
 }
 
 void Main_window_skin::on_doubleSpinBox_valueChanged(double val)
