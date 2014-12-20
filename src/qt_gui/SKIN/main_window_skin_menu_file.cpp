@@ -247,14 +247,12 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
             if( load_fbx_skeleton_anims( loader ) )
             {
                 enable_animesh( true );
-                _viewports->set_io(EOGL_widget::MESH_EDIT);
             }
         }
         else if( ext == "skel")
         {
             Cuda_ctrl::_graph.load_from_file(fileName.toLatin1());
             Cuda_ctrl::_skeleton.load( *g_graph );
-            _viewports->set_io(EOGL_widget::GRAPH);
         }
         else
         {
@@ -279,7 +277,6 @@ void Main_window_skin::on_actionLoad_mesh_triggered()
         Cuda_ctrl::erase_graph();
         enable_animesh( false );
         enable_mesh( true );
-        _viewports->set_io(EOGL_widget::GRAPH);
     }
 
     update_viewports();
@@ -396,7 +393,6 @@ void Main_window_skin::on_actionLoad_model_triggered(bool)
             skel_loaded = load_fbx_skeleton_anims( loader );
             if( skel_loaded )
             {
-                _viewports->set_io(EOGL_widget::MESH_EDIT);
                 enable_animesh( true );
             }
         }
@@ -420,7 +416,6 @@ void Main_window_skin::on_actionLoad_model_triggered(bool)
 
         // Enable GUI for animesh
         enable_animesh( true );
-        _viewports->set_io(EOGL_widget::MESH_EDIT);
     }
     update_viewports();
 }
@@ -445,7 +440,6 @@ void Main_window_skin::on_actionLoad_weights_triggered()
         else
             Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toLatin1() );
 
-        _viewports->set_io(EOGL_widget::MESH_EDIT);
         enable_animesh( true );
     }
 
@@ -492,13 +486,9 @@ void Main_window_skin::on_actionLoad_FBX_triggered()
             Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
             load_fbx_mesh( loader );
             enable_mesh( true );
-            _viewports->set_io(EOGL_widget::GRAPH);
 
             if( load_fbx_skeleton_anims( loader ) )
-            {
-                _viewports->set_io(EOGL_widget::MESH_EDIT);
                 enable_animesh( true );
-            }
         }
         else
         {

@@ -481,11 +481,6 @@ void OGL_viewports_skin::set_io(EOGL_widget::IO_t io_type)
     }
 
     _skel_mode = _skel_mode || state;
-
-    for(unsigned i = 0; i < _viewports.size(); i++){
-        _viewports[i]->set_io(io_type);
-        _viewports[i]->set_draw_skeleton(state);
-    }
 }
 
 // -----------------------------------------------------------------------------

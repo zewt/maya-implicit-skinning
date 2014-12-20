@@ -23,15 +23,9 @@
 #include <iostream>
 
 #include "SKIN/main_window_skin.hpp"
-#include "SKIN/IO_RBF.hpp"
-#include "SKIN/IO_disable_skin.hpp"
-#include "SKIN/IO_graph.hpp"
-#include "SKIN/IO_skeleton.hpp"
-#include "SKIN/IO_mesh_edit.hpp"
+#include "SKIN/IO_interface_skin.hpp"
 
 #include "opengl_stuff.hpp"
-
-//#include <QtOpenGL>
 
 // -----------------------------------------------------------------------------
 #include "skeleton.hpp"
@@ -63,7 +57,7 @@ void OGL_widget_skin::init()
     _track_pivot = false;
 
     _msge_stack  = new Msge_stack(this);
-    _io          = new IO_disable_skin(this);
+    _io          = new IO_interface_skin(this);
     _heuristic   = new Selection_nearest<int>();
 
     _refresh_screen_timer = new QTimer(this);
@@ -173,17 +167,6 @@ void OGL_widget_skin::paintGL()
 void OGL_widget_skin::set_io(EOGL_widget::IO_t io_type)
 {
     makeCurrent();
-    delete _io;
-
-    switch(io_type)
-    {
-    case EOGL_widget::RBF:         _io = new IO_RBF(this);         break;
-    case EOGL_widget::DISABLE:     _io = new IO_disable_skin(this);     break;
-    case EOGL_widget::GRAPH:       _io = new IO_graph(this);       break;
-    case EOGL_widget::SKELETON:    _io = new IO_skeleton(this);    break;
-    case EOGL_widget::MESH_EDIT:   _io = new IO_mesh_edit(this);   break;
-    default:          _io = 0; break;
-    }
     updateGL();
 }
 

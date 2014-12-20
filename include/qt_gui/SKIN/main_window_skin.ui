@@ -2657,17 +2657,6 @@ This is a post process step.</string>
     <bool>false</bool>
    </attribute>
   </widget>
-  <widget class="Toolbar_painting" name="toolBar_painting">
-   <property name="windowTitle">
-    <string>Paint</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>RightToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
   <action name="actionLoad_mesh">
    <property name="text">
     <string>Load mesh</string>
@@ -2818,11 +2807,6 @@ This is a post process step.</string>
    <class>Toolbar</class>
    <extends>QToolBar</extends>
    <header>qt_gui/common/toolbars/toolbar.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>Toolbar_painting</class>
-   <extends>QToolBar</extends>
-   <header>qt_gui/common/toolbars/toolbar_painting.hpp</header>
   </customwidget>
   <customwidget>
    <class>Settings_raytracing</class>

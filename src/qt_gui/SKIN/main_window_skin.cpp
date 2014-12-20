@@ -54,7 +54,6 @@ Main_window_skin::Main_window_skin(QWidget *parent) :
     //--------------
     setup_viewports();
     setup_toolbar();
-    setup_toolbar_painting();
     setup_toolbar_frame();
     setup_comboB_operators();
     set_up_settings_raytracing();
@@ -110,16 +109,6 @@ void Main_window_skin::setup_toolbar_frame()
 {
     QObject::connect(toolBar_frame, SIGNAL(update_gl()),
                      this         , SLOT(update_viewports()));
-}
-
-// -----------------------------------------------------------------------------
-
-void Main_window_skin::setup_toolbar_painting()
-{
-    QObject::connect(toolBar_painting->_enable_paint, SIGNAL(toggled(bool)),
-                     this                           , SLOT(paint_toggled(bool)));
-
-    toolBar_painting->hide();
 }
 
 // -----------------------------------------------------------------------------
