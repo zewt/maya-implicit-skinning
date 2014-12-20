@@ -24,12 +24,10 @@
 #include <QTimer>
 #include <QTime>
 
-#include "selection_heuristic.hpp"
 #include "port_glew.h"
 #include "camera.hpp"
 #include "cuda_rendering.hpp"
 
-#include "common/msge_stack.hpp"
 #include <QtOpenGL/QGLWidget>
 #include "common/OGL_widget_enum.hpp"
 
@@ -94,8 +92,6 @@ public:
     /// @return true if raytracing enable
     bool raytrace() const { return _render_ctx->_raytrace;    }
 
-    Select_type<int>* get_heuristic(){ return _heuristic; }
-
     Camera* camera(){ return &_cam; }
 
     Vec3_cu pivot() const { return _pivot; }
@@ -112,9 +108,6 @@ public:
     // -------------------------------------------------------------------------
     /// @name Public attributes
     // -------------------------------------------------------------------------
-
-    /// use to draw temporary message on screen
-    Msge_stack* _msge_stack;
 
     /// wether the camera tracks the pivot point or not
     bool _track_pivot;
@@ -133,12 +126,6 @@ public slots:
     // -------------------------------------------------------------------------
     /// @name Slots
     // -------------------------------------------------------------------------
-
-    /// Change the input/output handler to another behavior
-    void set_io(EOGL_widget::IO_t io_type);
-
-    /// set the selection mode
-    void set_selection(EOGL_widget::Select_t select_mode);
 
  protected:
     // -------------------------------------------------------------------------
@@ -201,11 +188,6 @@ private:
     /// mode of rotation: defines what's the standard behavior to compute
     /// automatically the pivot point
     EOGL_widget::Pivot_t _pivot_mode;
-
-    /// Current heuristic for mesh's points selection. Which defines the
-    /// selection area (point, square, circle etc.) used to select the mesh's
-    /// points.
-    Select_type<int>* _heuristic;
 
     /// use to redraw screen at regular intervalles
     QTimer* _refresh_screen_timer;

@@ -43,7 +43,6 @@ void OGL_widget_skin_hidden::initializeGL(){
 OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
     QFrame(w),
     _skel_mode(false),
-    _io_type(EOGL_widget::DISABLE),
     _current_viewport(0),
     _main_layout(0),
     _main_window(m),
@@ -263,7 +262,6 @@ void OGL_viewports_skin::set_viewports_layout(Layout_e setting)
 
     this->setLayout(_main_layout);
     first_viewport_as_active();
-    set_io(_io_type);
 }
 
 // -----------------------------------------------------------------------------
@@ -462,28 +460,6 @@ Vec_viewports& OGL_viewports_skin::get_viewports()
 {
     return _viewports;
 }
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::set_io(EOGL_widget::IO_t io_type)
-{
-    _io_type = io_type;
-    bool state;
-    switch(io_type)
-    {
-    case EOGL_widget::RBF:       state = true;  break;
-    case EOGL_widget::DISABLE:   state = false; break;
-    case EOGL_widget::GRAPH:     state = false; break;
-    case EOGL_widget::SKELETON:  state = true;  break;
-    case EOGL_widget::MESH_EDIT: state = true;  break;
-    case EOGL_widget::BLOB:      state = false;  break;
-    default:                    state = true;  break;
-    }
-
-    _skel_mode = _skel_mode || state;
-}
-
-// -----------------------------------------------------------------------------
 
 void OGL_viewports_skin::set_pivot_mode(EOGL_widget::Pivot_t m)
 {

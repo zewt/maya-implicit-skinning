@@ -27,7 +27,6 @@
 #include "vec3_cu.hpp"
 #include "mesh.hpp"
 #include "color.hpp"
-#include "selection_heuristic.hpp"
 #include "animesh_enum.hpp"
 #include "transfo.hpp"
 #include "bone_type.hpp"
@@ -161,29 +160,6 @@ public:
     /// @name Mesh_selection
     //--------------------------------------------------------------------------
 
-    /// select mesh's points given it's identifier 'vert_id'
-    /// vertex is added to the previous selection
-    /// @param vert_id : the vertex identifier
-    void select(int vert_id);
-
-    /// select mesh's points given x and y mouse position and selection
-    /// heuristic, selected points are added to the previous selection
-    /// @return if at least point has been selected
-    bool select(const Camera& cam,
-                int x, int y,
-                Select_type<int>* heuristic,
-                bool rest_pose);
-
-    /// unselect mesh's points given x and y mouse position and selection
-    /// heuristic, unselected points are removed to the previous selection
-    /// @return if a point has been unselected
-    bool unselect(const Camera& cam,
-                  int x, int y,
-                  Select_type<int>* heuristic,
-                  bool rest_pose);
-
-    void reset_selection();
-
     /// Compute the center of gravity of the points currently selected
     Vec3_cu cog_mesh_selection();
 
@@ -259,28 +235,6 @@ public:
     //--------------------------------------------------------------------------
     /// @name HRBF Samples Selection
     //--------------------------------------------------------------------------
-
-    /// select hrbf's samples given x and y mouse position and selection
-    /// heuristic, selected points are added to the previous selection
-    /// @return if at least point has been selected
-    bool select_samples(const Camera& c,
-                        int x, int y,
-                        Select_type<Samp_id>* heuristic,
-                        bool rest_pose);
-
-    /// unselect hrbf's samples given x and y mouse position and selection
-    /// heuristic, unselected samples are removed to the previous selection
-    /// @return if a point has been unselected
-    bool unselect_samples(const Camera& c,
-                          int x, int y,
-                          Select_type<Samp_id>* heuristic,
-                          bool rest_pose);
-
-    void reset_samples_selection();
-
-    /// Remove the selected samples, update bones, reset selection
-    void delete_selected_samples();
-
     const std::vector<Samp_id>& get_selected_samples(){
         return _selected_samples;
     }
@@ -323,21 +277,6 @@ private:
 
 
     void set_sample_color(Samp_id id, const Color& c);
-
-    /// Fill heuristic with the selection
-    /// @param rest_pose wether we use the rest position or not for selection
-    void samples_selection(const Camera& c,
-                           int x, int y,
-                           Select_type<Samp_id>* heuristic,
-                           bool rest_pose);
-
-    /// add a sample to the selection list and color it
-    /// this method check for doubles before adding
-    void add_sample_to_selection(Samp_id id);
-
-    /// removes a sample from the last selection do nothing if the sample
-    /// was not selected
-    void remove_sample_from_selection(Samp_id id);
 
     /// Change the vector size of attr _sample_anim_list.nodes and .n_nodes
     void resize_samples_anim(int bone_id, int size);

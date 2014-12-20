@@ -68,9 +68,6 @@ public:
     /// set_viewports_layout()
     Vec_viewports& get_viewports();
 
-    /// sets io for all viewports
-    void set_io(EOGL_widget::IO_t io_type);
-
     /// sets pivot for all viewports
     void set_pivot_mode(EOGL_widget::Pivot_t m);
 
@@ -125,8 +122,6 @@ private:
     /// @name Attributes
     // -------------------------------------------------------------------------
     bool _skel_mode;
-
-    EOGL_widget::IO_t _io_type;
 
     /// Vector of OGL_widget
     Vec_viewports _viewports;

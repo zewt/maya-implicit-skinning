@@ -622,41 +622,6 @@ void Animesh::regroup_mesh_vertices(Mesh& a_mesh,
 
 // -----------------------------------------------------------------------------
 
-void Animesh::select(int x, int y, Select_type<int>* selection_set, bool rest_pose)
-{
-    selection_set->reset();
-    const int nb_points = d_input_vertices.size();
-
-    // Copy vertices to host
-    Host::Array<float> h_vert(nb_points*3);
-    float* vertices = 0;
-    vertices = rest_pose ? (float*)d_input_vertices.ptr() : (float*)d_output_vertices.ptr();
-    mem_cpy_dth(h_vert.ptr(), vertices, nb_points*3);
-
-    GLint viewport[4];
-    GLdouble modelview[16];
-    GLdouble projection[16];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-    GLdouble vx, vy, vz;
-    float depth;
-    // Read depth buffer at mouse position
-    glReadPixels( x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-    for(int i = 0; i < nb_points; i++)
-    {
-        gluProject(h_vert[i*3], h_vert[i*3+1], h_vert[i*3+2],
-                   modelview, projection, viewport,
-                   &vx, &vy, &vz);
-
-        selection_set->test(i,
-                            Vec3_cu((float)vx, (float)vy, (float)vz),
-                            Vec3_cu((float)x , (float)y , depth    ) );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Animesh::clusterize(EAnimesh::Cluster_type type, int n_voxels)
 {
     if( type == EAnimesh::EUCLIDEAN )

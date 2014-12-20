@@ -56,13 +56,10 @@ void OGL_widget_skin::init()
 
     _track_pivot = false;
 
-    _msge_stack  = new Msge_stack(this);
     _io          = new IO_interface_skin(this);
-    _heuristic   = new Selection_nearest<int>();
 
     _refresh_screen_timer = new QTimer(this);
     connect(_refresh_screen_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-    connect(&(_msge_stack->get_timer()), SIGNAL(timeout()), this, SLOT(updateGL()));
 
     initializeGL();
 }
@@ -91,9 +88,7 @@ OGL_widget_skin::~OGL_widget_skin()
 {
     makeCurrent();
     delete _io;
-    delete _heuristic;
     delete _refresh_screen_timer;
-    delete _msge_stack;
     delete _render_ctx;
 }
 
@@ -148,44 +143,7 @@ void OGL_widget_skin::paintGL()
         _refresh_screen_timer->setSingleShot(true);
         _refresh_screen_timer->start(1);
     }
-
-    if(_heuristic->_type == Selection::CIRCLE && _is_mouse_in)
-    {
-        Selection_circle<int>* h = (Selection_circle<int>*)_heuristic;
-        glColor3f(0.f, 0.f, 0.f);
-        draw_circle(_cam.width(), _cam.height(), _mouse_x, _mouse_y, h->_rad);
-    }
-
-    // Draw latest messages
-    Color cl = Cuda_ctrl::_color.get(Color_ctrl::VIEWPORTS_MSGE);
-    glColor4f(cl.r, cl.g, cl.b, cl.a);
-    _msge_stack->draw(5, this->height()-35);
 }
-
-// -----------------------------------------------------------------------------
-
-void OGL_widget_skin::set_io(EOGL_widget::IO_t io_type)
-{
-    makeCurrent();
-    updateGL();
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_widget_skin::set_selection(EOGL_widget::Select_t select_mode)
-{
-    delete _heuristic;
-    switch(select_mode)
-    {
-    case EOGL_widget::MOUSE:     _heuristic = new Selection_nearest<int>(); break;
-    case EOGL_widget::CIRCLE:    _heuristic = new Selection_circle<int>();  break;
-    case EOGL_widget::BOX:       _heuristic = 0; break;
-    case EOGL_widget::FREE_FORM: _heuristic = 0; break;
-    default:        _heuristic = 0; break;
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void OGL_widget_skin::set_main_window(Main_window_skin* m)
 {

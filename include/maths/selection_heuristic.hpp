@@ -40,14 +40,6 @@
 // TODO: the template is not ideal to handle things we should nor store the
 // identifier of the points.
 
-namespace Selection {
-
-enum Heuristic_t {
-    NEAREST, CIRCLE /*, SQUARE, FREE_FORM*/
-};
-
-};
-
 template<typename ID_t>
 class Select_type {
 public:
@@ -73,9 +65,6 @@ public:
 
     virtual int nb_selected() { return _selection.size(); }
 
-    /// Indicates which specialization implements this interface
-    Selection::Heuristic_t _type;
-
 protected:
     /// list of selected points
     std::vector<ID_t> _selection;
@@ -84,81 +73,5 @@ protected:
 };
 // =============================================================================
 
-
-/** @class Selection_nearest
-
-  @brief select the nearest point to the mouse
-
-  @see Select_type
-*/
-template<typename ID_t>
-class Selection_nearest : public Select_type<ID_t> {
-public:
-    Selection_nearest() :
-        Select_type<ID_t>(),
-        _threshold(7.f)
-    {
-        _dst = std::numeric_limits<float>::infinity();
-        this->_type = Selection::NEAREST;
-    }
-
-    void reset(){
-        Select_type<ID_t>::reset();
-        _dst = std::numeric_limits<float>::infinity();
-    }
-
-    void test(ID_t id, const Vec3_cu& point, const Vec3_cu& mouse){
-        float dx = mouse.x - point.x;
-        float dy = mouse.y - point.y;
-
-        float distance = (dx*dx + dy*dy);
-        if( (distance < _dst) && ((mouse.z+this->_z_eps) >= point.z) ){
-            _dst = distance;
-            _id  = id;
-        }
-    }
-
-    ID_t* get_selected_points() { return &(_id);                            }
-    int   nb_selected        () { return (sqrt(_dst) < _threshold) ? 1 : 0; }
-
-private:
-    float _dst;        ///< latest ditance from mouse measured by test()
-    float _threshold;  ///< threshold distance to select a point
-    ID_t  _id;
-};
-// =============================================================================
-
-
-/** @class Selection_nearest
-
-  @brief select points inside the circle centered at the mouse position
-
-  @see Select_type
-*/
-template<typename ID_t>
-class Selection_circle : public Select_type<ID_t> {
-public:
-    Selection_circle() :
-        Select_type<ID_t>(),
-        _rad(35.f)
-    {
-        this->_type = Selection::CIRCLE;
-    }
-
-    void test(ID_t id, const Vec3_cu& point, const Vec3_cu& mouse){
-        float dx = mouse.x - point.x;
-        float dy = mouse.y - point.y;
-
-        float distance = sqrt(dx*dx + dy*dy);
-
-        float depth;
-        glReadPixels((int)point.x, (int)point.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        if( (distance < _rad) && ((depth+this->_z_eps) >= point.z) )
-            this->_selection.push_back(id);
-    }
-
-    float _rad; ///< circle radius for selection
-};
-// =============================================================================
 
 #endif // SELECTTION_HEURISTIC_HPP__

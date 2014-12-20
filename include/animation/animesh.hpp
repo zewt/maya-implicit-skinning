@@ -23,7 +23,6 @@
 
 #include "animesh_enum.hpp"
 #include "cuda_utils.hpp"
-#include "selection_heuristic.hpp"
 #include "gl_mesh.hpp"
 #include "mesh.hpp"
 #include "camera.hpp"
@@ -184,10 +183,6 @@ public:
 
     /// @deprecated
     void draw_points_rest_pose() const;
-
-    /// @param rest_pose wether the selection is made for animated pose
-    /// or rest pose
-    void select(int x, int y, Select_type<int>* selection_set, bool rest_pose);
 
     /// Paint the attribute defined by 'mode'. Painting is done by projecting
     /// mesh's vertices with cuda

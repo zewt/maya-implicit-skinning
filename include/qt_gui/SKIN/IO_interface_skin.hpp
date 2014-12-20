@@ -85,7 +85,6 @@ public:
 
     /// Draw a message on the viewport
     void push_msge(const QString& str){
-        _gl_widget->_msge_stack->push(str, true);
     }
 
     // -------------------------------------------------------------------------
