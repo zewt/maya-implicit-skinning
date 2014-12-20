@@ -2605,17 +2605,6 @@ This is a post process step.</string>
    <addaction name="menuCam"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="Toolbar" name="toolBar">
-   <property name="windowTitle">
-    <string>Tools</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-  </widget>
   <action name="actionLoad_mesh">
    <property name="text">
     <string>Load mesh</string>
@@ -2750,13 +2739,6 @@ This is a post process step.</string>
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>Toolbar</class>
-   <extends>QToolBar</extends>
-   <header>qt_gui/common/toolbars/toolbar.hpp</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections>
   <connection>

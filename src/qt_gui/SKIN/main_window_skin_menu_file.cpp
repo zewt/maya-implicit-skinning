@@ -31,7 +31,6 @@
 #include <cassert>
 #include <algorithm>
 
-#include "common/tools/popup_ok_cancel.hpp"
 #include "cuda_ctrl.hpp"
 #include "vec3_cu.hpp"
 #include "gl_mesh.hpp"
@@ -163,6 +162,7 @@ bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loade
 
 // FILE SLOT ===================================================================
 
+// XXX remove
 void Main_window_skin::on_actionLoad_keyframes_triggered()
 {
     if( !Cuda_ctrl::is_animesh_loaded() ){
@@ -284,16 +284,12 @@ void Main_window_skin::on_actionSave_as_mesh_triggered()
                                                     "./resource/meshes",
                                                     tr("*.off *obj") );
 
-    Diag_ok_cancel diag("Invert index ?",
-                        "Do you want to invert the mesh index",
-                        this);
-
     if( fileName.size() != 0 )
     {
        QFileInfo fi(fileName);
        QString ext = fi.suffix().toLower();
        if(ext == "off")
-           g_mesh->export_off(fileName.toLatin1(), diag.exec());
+           g_mesh->export_off(fileName.toLatin1(), false);
        else if( ext == "obj" )
        {
            Loader::Abs_mesh abs_mesh;

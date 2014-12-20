@@ -24,7 +24,6 @@
 #include <QString>
 
 #include "blending_lib/generator.hpp"
-#include "common/tools/popup_ok_cancel.hpp"
 #include "vec3_cu.hpp"
 #include "camera.hpp"
 #include "display_operator.hpp"
