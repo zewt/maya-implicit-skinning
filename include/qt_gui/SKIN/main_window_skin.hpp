@@ -25,7 +25,6 @@
 #include <map>
 
 #include "fbx_loader.hpp"
-#include "common/customize/colors.hpp"
 #include "ui_main_window_skin.h"
 #include "common/widgets/preset_controllers.hpp"
 
@@ -112,9 +111,6 @@ private:
 
     /// The openGL viewports
     OGL_viewports_skin* _viewports;
-
-    /// Popup window to change various colors (point, background etc.)
-    Colors_dialog* _color_diag;
 
     /// A custom widget to handle controller presets
     Preset_ctrl* _ctrl_presets;

@@ -64,8 +64,6 @@ Main_window_skin::Main_window_skin(QWidget *parent) :
     QObject::connect(widget_ctrl_presets, SIGNAL( preset_pushed()       ),
                      this               , SLOT  ( ctrl_presets_pushed() ));
 
-    _color_diag = new Colors_dialog(this);
-
     // HACK: Because blending_env initialize to elbow too ...
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
     update_ctrl_spin_boxes(shape);
@@ -749,7 +747,6 @@ void Main_window_skin::on_debug_show_gradient_toggled(bool checked)
 
 void Main_window_skin::on_actionColors_triggered()
 {
-    _color_diag->exec();
 }
 
 void Main_window_skin::on_doubleSpinBox_valueChanged(double val)
