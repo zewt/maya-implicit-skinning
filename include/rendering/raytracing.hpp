@@ -319,11 +319,6 @@ void raytrace_kernel( const Raytracing::Context* ctx )
 
     p_color = color + p_color * (1.f - alpha);
 
-    if( ctx->enable_env_map){
-        float4 col = Textures_env::sample_envmap(ray._dir);
-        p_color *= Vec3_cu(col.x, col.y, col.z);
-    }
-
     float t_plane = CUDART_INF_F;
     // Drawing potential plane
     if(ctx->potential_2d)

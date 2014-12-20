@@ -23,7 +23,6 @@
 #include "port_glew.h"
 #include "shader.hpp"
 #include "macros.hpp"
-#include "glshoot.hpp"
 #include "mesh.hpp"
 #include "vbo_primitives.hpp"
 #include "gl_mesh.hpp"
@@ -83,7 +82,6 @@ enum{ COLOR = 0,
       DEPTH,
       MAP,
       NORMAL_MAP, ///< scene normals
-      NOISE,
       NB_TEX      // Keep that at the end
      };
 
@@ -123,13 +121,6 @@ extern Shader_prog* g_phong_list[NB_PHONG_SHADERS];
 
 // -----------------------------------------------------------------------------
 
-extern bool g_shooting_state;
-extern bool g_save_anim;
-extern GlShoot* g_oglss;
-
-
-/// The directory where screenshots are written
-extern std::string g_write_dir;
 /// Path to store various caches (mostly blending operators)
 extern std::string g_cache_dir;
 /// Path to store the app configuration

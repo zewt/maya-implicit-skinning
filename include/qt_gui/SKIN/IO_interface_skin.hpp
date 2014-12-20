@@ -48,8 +48,6 @@ extern Skeleton* g_skel;
 extern Animesh* g_animesh;
 // -------
 
-extern bool g_shooting_state;
-extern bool g_save_anim;
 #include "camera.hpp"
 /////////////////////////////////////////////////////////////
 

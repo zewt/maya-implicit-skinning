@@ -148,10 +148,6 @@ public slots:
     void on_pushB_attached_skeleton_released();
     void on_choose_hrbf_samples_released();
     void on_spinBox_valueChanged(int );
-    void on_dSpinB_min_dist_samples_valueChanged(double );
-    void on_dSpinB_max_fold_valueChanged(double );
-    void on_dSpinB_max_dist_joint_valueChanged(double );
-    void on_dSpinB_max_dist_parent_valueChanged(double );
     void on_dSpinB_collision_depth_valueChanged(double );
     void on_dSpinB_ctrl_p0_x_valueChanged(double );
     void on_dSpinB_ctrl_p0_y_valueChanged(double );

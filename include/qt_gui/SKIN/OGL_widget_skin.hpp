@@ -110,8 +110,6 @@ signals:
 
     /// Emited on mouse press events
     void clicked();
-    /// Emited for each frame (only if (g_save_anim || g_shooting_state))
-    void drawing();
 
 public slots:
     // -------------------------------------------------------------------------

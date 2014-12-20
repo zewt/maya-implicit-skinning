@@ -37,7 +37,6 @@
 #include "display_operator.hpp"
 #include "endianess.hpp"
 #include "cuda_main_kernels.hpp"
-#include "textures_env.hpp"
 #include "skeleton_env.hpp"
 #include "blending_env.hpp"
 
@@ -313,7 +312,6 @@ void cleanup()
     erase_shaders();
     // End OpenGL ----------
 
-    Textures_env::clean_env();
     Constants::free();
 
     delete g_skel; // Skeleton must be deleted before blending env

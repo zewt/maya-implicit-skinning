@@ -103,8 +103,8 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
         Cuda_ctrl::_anim_mesh->choose_hrbf_samples_poisson
                 (bone_id,
                  // Set a distance threshold from sample to the joints to choose them.
-                 -0.02, // dSpinB_max_dist_joint->value(),
-                 -0.02, // dSpinB_max_dist_parent->value(),
+                 -0.02f, // dSpinB_max_dist_joint->value(),
+                 -0.02f, // dSpinB_max_dist_parent->value(),
                  0, // dSpinB_min_dist_samples->value(),
                  // Minimal number of samples.  (this value is used only whe the value min dist is zero)
                  50, // spinB_nb_samples_psd->value(), 20-1000
@@ -118,8 +118,8 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
     {
         Cuda_ctrl::_anim_mesh->choose_hrbf_samples_ad_hoc
                 (bone_id,
-                 -0.02, // dSpinB_max_dist_joint->value(),
-                 -0.02, // dSpinB_max_dist_parent->value(),
+                 -0.02f, // dSpinB_max_dist_joint->value(),
+                 -0.02f, // dSpinB_max_dist_parent->value(),
                  0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
                  0); // dSpinB_max_fold->value() );
 

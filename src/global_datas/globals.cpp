@@ -42,7 +42,7 @@ GLuint g_gl_quad;
 
 // -----------------------------------------------------------------------------
 
-GLuint g_gl_Tex[5];
+GLuint g_gl_Tex[4];
 GLuint g_ctrl_frame_tex;
 GLuint g_op_frame_tex;
 GLuint g_op_tex;
@@ -68,14 +68,9 @@ Shader_prog* g_phong_list[NB_PHONG_SHADERS];
 // -----------------------------------------------------------------------------
 
 //std::string write_dir = "/export/home/magritte/vaillant/ppm_img";
-std::string g_write_dir  = "./resource";
 std::string g_cache_dir  = "./resource/app_cache";
 std::string g_config_dir = "./resource/app_config";
 std::string g_icons_dir  = "./resource/icons";
-
-bool g_shooting_state = false;
-bool g_save_anim = false;
-GlShoot* g_oglss;
 
 // -----------------------------------------------------------------------------
 

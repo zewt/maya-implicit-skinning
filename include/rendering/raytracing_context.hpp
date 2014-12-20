@@ -68,8 +68,6 @@ struct Context {
 
     /// Enable disable lighting
     bool enable_lighting;
-    /// Use environment map
-    bool enable_env_map;
     /// Background color if no environment map
     Color background;
     /// defines which pixels are to be drawn in progressive mode

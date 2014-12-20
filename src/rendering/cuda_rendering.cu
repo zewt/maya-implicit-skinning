@@ -735,16 +735,6 @@ bool display_loop(Render_context_cu* ctx, const Camera* cam)
         if( _operators.get_display_controller() ) draw_controller();
         if( _operators.get_display_operator()   ) draw_operator(321, 0, s, s);
     }
-
-
-    if(g_save_anim && g_animesh != 0 && g_anim_cache != 0)
-    {
-        std::vector<float> mesh_frame;
-        g_animesh->get_anim_vertices_aifo(mesh_frame);
-
-        if(mesh_frame.size() > 0)
-            g_anim_cache->add_frame(&(mesh_frame[0]));
-    }
 #endif
 
     return refresh;

@@ -225,7 +225,6 @@ int reset_buffers(const Camera& cam,
     ctx.plane_org       = _potential_plane._org.to_point();
     ctx.step_len        = _display._ray_marching_step_length;
     ctx.nb_reflexion    = 0;
-    ctx.enable_env_map  = _display._env_map;
     Potential_colors p_cl;
     p_cl.intern_color = _color.get(Color_ctrl::POTENTIAL_IN);
     p_cl.extern_color = _color.get(Color_ctrl::POTENTIAL_OUT);

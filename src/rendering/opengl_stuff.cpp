@@ -18,8 +18,6 @@
  */
 #include "globals.hpp"
 #include "cuda_gl_interop_wrapper.hpp"
-#include "ppm_loader.hpp"
-#include "glshoot.hpp"
 #include "opengl_stuff.hpp"
 #include "glsave.hpp"
 #include "cuda_ctrl.hpp"
@@ -293,31 +291,6 @@ void init_opengl()
                            0) );
     ////////////////////////////
 
-    glActiveTexture(GL_TEXTURE2);////////////////////////////////////////
-    glAssert( glBindTexture(GL_TEXTURE_2D, g_gl_Tex[NOISE]) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
-
-    ////////////////////
-    int* noise_ptr = 0;
-    int some_x, some_y;
-    if( !Ppm_loader::read("./resource/textures/noise.ppm", some_x, some_y, noise_ptr) ){
-        printf("Not loading noise texture\n");
-    } else {
-        glAssert( glTexImage2D(GL_TEXTURE_2D,
-                               0,
-                               GL_RGBA,
-                               some_x,
-                               some_y,
-                               0,
-                               GL_RGBA,
-                               GL_UNSIGNED_BYTE,
-                               noise_ptr) );
-    }
-    delete[] noise_ptr;
-    noise_ptr = 0;
     glActiveTexture(GL_TEXTURE0);
     ////////////////////////////
 
@@ -327,24 +300,6 @@ void init_opengl()
     glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
     glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
 
-    int* img_envmap = 0;
-    int envmapx, envmapy;
-    if( !Ppm_loader::read("./resource/textures/skymap.ppm", envmapx, envmapy, img_envmap) ){
-        printf("Not loading skymap texture\n");
-    } else {
-        glAssert( glTexImage2D(GL_TEXTURE_2D,
-                               0,
-                               GL_RGBA,
-                               envmapx,
-                               envmapy,
-                               0,
-                               GL_RGBA,
-                               GL_UNSIGNED_BYTE,
-                               img_envmap) );
-    }
-    delete[] img_envmap;
-    img_envmap = 0;
-
     //controller frame
     glAssert( glGenTextures(1, &g_ctrl_frame_tex) );
     glAssert( glBindTexture(GL_TEXTURE_2D, g_ctrl_frame_tex) );
@@ -352,46 +307,6 @@ void init_opengl()
     glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP) );
     glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
     glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
-    int* frame_img = 0;
-    int framex, framey;
-    if( !Ppm_loader::read_with_alpha("resource/textures/controller_frame.ppm", framex, framey, frame_img) ){
-        printf("error loading controller frame\n");
-    } else {
-        glAssert( glTexImage2D(GL_TEXTURE_2D,
-                               0,
-                               GL_RGBA,
-                               framex,
-                               framey,
-                               0,
-                               GL_RGBA,
-                               GL_UNSIGNED_BYTE,
-                               frame_img) );
-    }
-    free(frame_img);
-    frame_img = 0;
-
-    glAssert( glGenTextures(1, &g_op_frame_tex) );
-    glAssert( glBindTexture(GL_TEXTURE_2D, g_op_frame_tex) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR) );
-
-    if( !Ppm_loader::read_with_alpha("resource/textures/operator_frame.ppm", framex, framey, frame_img)) {
-        printf("error loading operator frame\n");
-    } else {
-        glAssert( glTexImage2D(GL_TEXTURE_2D,
-                               0,
-                               GL_RGBA,
-                               framex,
-                               framey,
-                               0,
-                               GL_RGBA,
-                               GL_UNSIGNED_BYTE,
-                               frame_img) );
-    }
-    free(frame_img);
-    frame_img = 0;
 
     glAssert( glBindTexture(GL_TEXTURE_2D, 0) );
 
@@ -479,18 +394,6 @@ void draw_operator(int x, int y, int w, int h)
     glEnd();
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBindTexture(GL_TEXTURE_2D, g_op_frame_tex);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.f,1.f);
-    glVertex2f(0.f,0.f);
-    glTexCoord2f(1.f,1.f);
-    glVertex2f(1.f,0.f);
-    glTexCoord2f(1.f,0.f);
-    glVertex2f(1.f,1.f);
-    glTexCoord2f(0.f,0.f);
-    glVertex2f(0.f,1.f);
-    glEnd();
 
     glDisable (GL_BLEND);
     glPopMatrix();

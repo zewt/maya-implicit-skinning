@@ -134,9 +134,6 @@ void OGL_widget_skin::paintGL()
     //test_inter(_cam.get_pos());//DEBUG======================================================
 
 
-    if(g_save_anim || g_shooting_state)
-        emit drawing();
-
     if( need_to_refresh )
     {
         _refresh_screen_timer->setSingleShot(true);

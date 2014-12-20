@@ -24,9 +24,6 @@
 #include "macros.hpp"
 
 // Export from global.hpp //////////
-#include "glshoot.hpp"
-extern GlShoot* g_oglss;
-extern bool g_shooting_state;
 extern std::string g_write_dir;
 ///////////////////////////////////
 
@@ -74,7 +71,6 @@ OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
 
     Cuda_ctrl::cuda_start( op );
     Cuda_ctrl::init_opengl_cuda();
-    g_oglss = new GlShoot(10, 10, g_write_dir, "shot");
 
     set_viewports_layout(SINGLE);
     QObject::connect(this, SIGNAL(active_viewport_changed(int)),
@@ -87,7 +83,6 @@ OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
 // -----------------------------------------------------------------------------
 
 OGL_viewports_skin::~OGL_viewports_skin(){
-    delete g_oglss;
 }
 
 // -----------------------------------------------------------------------------
@@ -187,12 +182,6 @@ void OGL_viewports_skin::updateGL()
     {
         OGL_widget_skin* v = _viewports[i];
         v->updateGL();
-        // Screenshot of the active viewport
-        if(g_shooting_state && v == active_viewport())
-        {
-            g_oglss->set_img_size(v->width(), v->height());
-            g_oglss->shoot();
-        }
     }
 
     // FPS Counting ________________
