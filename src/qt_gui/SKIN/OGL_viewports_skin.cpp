@@ -461,14 +461,6 @@ Vec_viewports& OGL_viewports_skin::get_viewports()
     return _viewports;
 }
 
-void OGL_viewports_skin::set_pivot_mode(EOGL_widget::Pivot_t m)
-{
-    for(unsigned i = 0; i < _viewports.size(); i++)
-        _viewports[i]->set_pivot_mode(m);
-}
-
-// -----------------------------------------------------------------------------
-
 void OGL_viewports_skin::incr_frame_count()
 {
     _frame_count++;

@@ -52,7 +52,6 @@ void OGL_widget_skin::init()
 {
     _pivot_user = Vec3_cu(0.f, 0.f, 0.f);
     _pivot = Vec3_cu(0.f, 0.f, 0.f);
-    _pivot_mode = EOGL_widget::JOINT;
 
     _track_pivot = false;
 
@@ -281,36 +280,6 @@ static Vec3_cu bone_cog(int bone_id)
 
 void OGL_widget_skin::update_pivot()
 {
-    using namespace Cuda_ctrl;
-    const std::vector<int>& set = _skeleton.get_selection_set();
-
-    if(_pivot_mode == EOGL_widget::FREE)
-        return;
-    else if(_pivot_mode == EOGL_widget::SELECTION)
-    {
-        if( _anim_mesh != 0 )
-            _pivot = cog_selection(_render_ctx->_skeleton);
-    }
-    else if(_pivot_mode == EOGL_widget::USER)
-        _pivot = _pivot_user;
-    else if(_pivot_mode == EOGL_widget::BONE)
-    {
-        if(set.size() > 0) _pivot = bone_cog(set[set.size()-1]);
-    }
-    else if(_pivot_mode == EOGL_widget::JOINT)
-    {
-        Vec3_cu v;
-        if(set.size() > 0){
-            int idx = set[set.size()-1];
-            if(idx > -1){
-                v = Cuda_ctrl::_skeleton.joint_pos(idx);
-                _pivot = Vec3_cu(v.x, v.y, v.z);
-            }
-        }else if(_graph.get_selected_node() > -1 ) {
-            v = _graph.get_vertex( _graph.get_selected_node() );
-            _pivot = Vec3_cu(v.x, v.y, v.z);
-        }
-    }
 }
 
 // -----------------------------------------------------------------------------

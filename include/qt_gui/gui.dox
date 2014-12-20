@@ -1,7 +1,0 @@
-/**
-    @page GUI
-   
-    The project offers severals Qt GUI. In order to factorize code it is recommended
-    to break down new GUI into severals widgets. Use the folder common to put what's most likely to
-    be used in several GUIs.
-*/

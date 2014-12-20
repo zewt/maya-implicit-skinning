@@ -29,7 +29,6 @@
 #include "cuda_rendering.hpp"
 
 #include <QtOpenGL/QGLWidget>
-#include "common/OGL_widget_enum.hpp"
 
 // FORWARD DEFS ----------------------------------------------------------------
 // Can't include the header because of interdependencies between IO_interface
@@ -93,14 +92,6 @@ public:
     bool raytrace() const { return _render_ctx->_raytrace;    }
 
     Camera* camera(){ return &_cam; }
-
-    Vec3_cu pivot() const { return _pivot; }
-
-    EOGL_widget::Pivot_t pivot_mode() const { return _pivot_mode; }
-
-    void set_pivot_user(const Vec3_cu& v){ _pivot_user = v; }
-
-    void set_pivot_mode(EOGL_widget::Pivot_t m){ _pivot_mode = m; }
 
     void set_main_window(Main_window_skin* m);
     Main_window_skin* get_main_window();
@@ -184,10 +175,6 @@ private:
 
     /// Pivot point defined by the user
     Vec3_cu _pivot_user;
-
-    /// mode of rotation: defines what's the standard behavior to compute
-    /// automatically the pivot point
-    EOGL_widget::Pivot_t _pivot_mode;
 
     /// use to redraw screen at regular intervalles
     QTimer* _refresh_screen_timer;

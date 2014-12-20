@@ -68,9 +68,6 @@ public:
     /// set_viewports_layout()
     Vec_viewports& get_viewports();
 
-    /// sets pivot for all viewports
-    void set_pivot_mode(EOGL_widget::Pivot_t m);
-
     /// @return the active frame
     OGL_widget_skin* active_viewport(){ return _current_viewport; }
 
