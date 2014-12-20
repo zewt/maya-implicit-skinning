@@ -490,22 +490,6 @@ void OGL_viewports_skin::set_io(EOGL_widget::IO_t io_type)
 
 // -----------------------------------------------------------------------------
 
-void OGL_viewports_skin::set_gizmo(Gizmo::Gizmo_t type)
-{
-    for(unsigned i = 0; i < _viewports.size(); i++)
-        _viewports[i]->set_gizmo(type);
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::show_gizmo(bool state)
-{
-    for(unsigned i = 0; i < _viewports.size(); i++)
-        _viewports[i]->_draw_gizmo = state;
-}
-
-// -----------------------------------------------------------------------------
-
 void OGL_viewports_skin::set_pivot_mode(EOGL_widget::Pivot_t m)
 {
     for(unsigned i = 0; i < _viewports.size(); i++)

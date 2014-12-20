@@ -71,12 +71,6 @@ public:
     /// sets io for all viewports
     void set_io(EOGL_widget::IO_t io_type);
 
-    /// sets gizmo type (rotation, scaling, translation) for all viewports
-    void set_gizmo(Gizmo::Gizmo_t type);
-
-    /// Show/hide gizmo for all viewports
-    void show_gizmo(bool state);
-
     /// sets pivot for all viewports
     void set_pivot_mode(EOGL_widget::Pivot_t m);
 

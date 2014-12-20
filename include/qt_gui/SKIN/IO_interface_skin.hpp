@@ -64,10 +64,8 @@ public:
       _is_right_pushed(false),
       _is_left_pushed(false),
       _is_mid_pushed(false),
-      _is_gizmo_grabed(false),
       _movement_speed(1.f),
       _rot_speed(0.01f),
-      _gizmo_tr(),
       _gl_widget(gl_widget),
       _cam(gl_widget->camera()),
       _main_win(gl_widget->get_main_window())
@@ -105,9 +103,6 @@ public:
         _is_right_pushed = (event->button() == Qt::RightButton);
         _is_left_pushed  = (event->button() == Qt::LeftButton);
         _is_mid_pushed   = (event->button() == Qt::MidButton);
-
-        if( _gl_widget->_draw_gizmo && _is_left_pushed )
-            _is_gizmo_grabed = gizmo()->select_constraint(*_cam, x, y);
     }
 
     // -------------------------------------------------------------------------
@@ -116,11 +111,6 @@ public:
         _is_right_pushed = (event->button() == Qt::RightButton) ? false : _is_right_pushed;
         _is_left_pushed  = (event->button() == Qt::LeftButton)  ? false : _is_left_pushed;
         _is_mid_pushed   = (event->button() == Qt::MidButton)   ? false : _is_mid_pushed;
-
-        if(!_is_left_pushed){
-            gizmo()->reset_constraint();
-            _is_gizmo_grabed = false;
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -130,8 +120,6 @@ public:
         using namespace Cuda_ctrl;
         const int x = event->x();
         const int y = event->y();
-
-        _gizmo_tr = gizmo()->slide(*_cam, x, y);
 
         if(_is_right_pushed)
         {
@@ -392,9 +380,6 @@ public:
     /// every frame
     virtual void update_frame_gizmo(){ }
 
-    /// Shortcut function to get the gizmo
-    Gizmo* gizmo(){ return _gl_widget->gizmo(); }
-
     /// Shortcut to get the skeleton's kinematic
     Kinematic* kinec(){ return g_skel->_kinec; }
 
@@ -416,7 +401,6 @@ public:
     bool _is_right_pushed;  ///< is mouse right button pushed
     bool _is_left_pushed;   ///< is mouse left button pushed
     bool _is_mid_pushed;    ///< is mouse middle
-    bool _is_gizmo_grabed;  ///< is a gizmo constraint selected
 
     float _movement_speed;  ///< speed of the camera movements
     float _rot_speed;       ///< rotation speed of the camera
@@ -428,9 +412,6 @@ public:
     GLdouble _modelview [16];
     GLdouble _projection[16];
     /// @}
-
-    /// Gizmo transformation when grabed
-    TRS _gizmo_tr;
 
     OGL_widget_skin*  _gl_widget;
     Camera*           _cam;

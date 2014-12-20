@@ -89,14 +89,6 @@ void Main_window_skin::setup_toolbar()
     QObject::connect(view->toolB_doubleH, SIGNAL(pressed()), this, SLOT(viewport_toolb_doubleH()));
     QObject::connect(view->toolB_four, SIGNAL(pressed()), this, SLOT(viewport_toolb_four()));
 
-    // Connect toolButtons for gizmo
-    Widget_gizmo* gizmo = toolBar->_wgt_gizmo;
-    QObject::connect(gizmo->toolB_show_gizmo, SIGNAL(toggled(bool)), this, SLOT(show_all_gizmo(bool)));
-    QObject::connect(gizmo->toolB_translate, SIGNAL(pressed()), this, SLOT(set_gizmo_trans()));
-    QObject::connect(gizmo->toolB_rotate, SIGNAL(pressed()), this, SLOT(set_gizmo_rot()));
-    QObject::connect(gizmo->toolB_trackball, SIGNAL(pressed()), this, SLOT(set_gizmo_trackball()));
-    QObject::connect(gizmo->toolB_scale, SIGNAL(pressed()), this, SLOT(set_gizmo_scale()));
-
     // Connect toolButtons for the rendering mode
     Widget_render_mode* render = toolBar->_wgt_rd_mode;
     QObject::connect(render->toolB_wire_transc, SIGNAL(pressed()), this, SLOT(rd_mode_toolb_wire_transc()));
@@ -410,27 +402,11 @@ void Main_window_skin::rd_mode_toolb_wire_transc()
     update_viewports();
 }
 
-void Main_window_skin::show_all_gizmo(bool checked)
-{
-    _viewports->show_gizmo(checked);
-    update_viewports();
-}
-
-void Main_window_skin::set_gizmo_trans(){
-    _viewports->set_gizmo(Gizmo::TRANSLATION);
-}
-
-void Main_window_skin::set_gizmo_rot(){
-    _viewports->set_gizmo(Gizmo::ROTATION);
-}
-
-void Main_window_skin::set_gizmo_trackball(){
-    _viewports->set_gizmo(Gizmo::TRACKBALL);
-}
-
-void Main_window_skin::set_gizmo_scale(){
-    _viewports->set_gizmo(Gizmo::SCALE);
-}
+void Main_window_skin::show_all_gizmo(bool checked) {}
+void Main_window_skin::set_gizmo_trans() {}
+void Main_window_skin::set_gizmo_rot() {}
+void Main_window_skin::set_gizmo_trackball() {}
+void Main_window_skin::set_gizmo_scale() {}
 
 void Main_window_skin::toggle_fitting(bool checked){
     Cuda_ctrl::_anim_mesh->set_implicit_skinning(checked);

@@ -96,7 +96,6 @@ public:
                 _potential_plane._setup = false;
             else
             {
-                if(!_is_gizmo_grabed)
                 {
                     const bool rest = _gl_widget->rest_pose();
                     if( _is_ctrl_pushed )
@@ -159,66 +158,6 @@ public:
         if(_is_mid_pushed && _joint > -1)
         {
             //...
-        }
-
-        if(_is_left_pushed)
-        {
-            Vec2_cu m_pos    ((float)x     , (float)y     );
-            Vec2_cu m_clicked((float)_old_x, (float)_old_y);
-
-            if(_joint > -1 &&  _janim_on && (m_pos - m_clicked).norm() > 1.5f )
-            {
-                // Get local transformation of the gizmo
-                TRS giz_tr = _gizmo_tr;
-
-                /*-----------------
-                  Compute rotation
-                ------------------*/
-                int pid = g_skel->parent(_joint) > -1  ? g_skel->parent(_joint) : _joint;
-
-                Transfo pframe     = g_skel->joint_anim_frame( pid );
-                Transfo pframe_inv = pframe.fast_invert();
-
-                // Axis in world coordinates
-                Vec3_cu world_axis = gizmo()->old_frame() * giz_tr._axis;
-
-                // Joint origin in its parent joint coordinate system
-                Point_cu org = pframe_inv * _curr_joint_org.to_point();
-
-                // Rotation of the joint in its parent joint coordinate system
-                Transfo tr = Transfo::rotate(org.to_vector(), pframe_inv * world_axis, giz_tr._angle);
-
-                /*---------------------
-                  Compute Translation
-                ----------------------*/
-
-                // Translation in world coordinates
-                Vec3_cu world_trans = gizmo()->old_frame() * giz_tr._translation;
-
-                // Translation of the joint in its parent coordinate system
-                tr = Transfo::translate( pframe_inv * world_trans ) * tr;
-
-                // Concatenate last user defined transformation
-                Transfo usr = tr * _curr_joint_lcl;
-
-                // Update the skeleton position
-                kinec()->set_user_lcl_parent( _joint, usr );
-
-                // Update gizmo orientation
-                //update_frame_gizmo();
-            }
-
-            if(_move_joint_mode && _last_vertex > -1)
-            {
-                GLdouble ccx, ccy, ccz;
-                float cx = x, cy = _cam->height()-y, cz = _mouse_z;
-                gluUnProject(cx, cy, cz,
-                             _modelview, _projection, _viewport,
-                             &ccx, &ccy, &ccz);
-                Vec3_cu pos = Vec3_cu(ccx, ccy, ccz);
-                _graph.set_vertex( _last_vertex, pos);
-                _skeleton.set_joint_pos( _last_vertex, pos );
-            }
         }
 
         _old_x = x;
@@ -373,10 +312,6 @@ public:
 
     virtual void update_frame_gizmo()
     {
-        if(_joint > -1 ) {
-            Transfo tr = g_skel->joint_anim_frame( _joint );
-            gizmo()->set_transfo( tr );
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -395,14 +330,11 @@ private:
 
         _joint = -1;
         _last_vertex  = -1;
-        gizmo()->show( false );
         if(set.size() > 0)
         {
             int idx = set[set.size()-1];
             _last_vertex  = idx;
             _joint = idx;
-
-            gizmo()->show( true );
 
             _curr_joint_lcl = kinec()->get_user_lcl_parent( _joint );
             _curr_joint_org = g_skel->joint_anim_frame(_joint).get_translation();

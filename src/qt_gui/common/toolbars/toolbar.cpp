@@ -32,11 +32,6 @@ Toolbar::Toolbar(QWidget* parent) :
     this->addWidget( _wgt_viewport );
     this->addSeparator();
 
-    // Adding toolButtons for gizmo
-    _wgt_gizmo = new Widget_gizmo(this);
-    this->addWidget( _wgt_gizmo );
-    this->addSeparator();
-
     // Adding toolButtons for the rendering mode
     _wgt_rd_mode = new Widget_render_mode(this);
     this->addWidget( _wgt_rd_mode );

@@ -30,10 +30,6 @@
 #include "SKIN/IO_mesh_edit.hpp"
 
 #include "opengl_stuff.hpp"
-#include "gizmo_trans.hpp"
-#include "gizmo_rot.hpp"
-#include "gizmo_trackball.hpp"
-#include "gizmo_scale.hpp"
 
 //#include <QtOpenGL>
 
@@ -64,13 +60,11 @@ void OGL_widget_skin::init()
     _pivot = Vec3_cu(0.f, 0.f, 0.f);
     _pivot_mode = EOGL_widget::JOINT;
 
-    _draw_gizmo  = true;
     _track_pivot = false;
 
     _msge_stack  = new Msge_stack(this);
     _io          = new IO_disable_skin(this);
     _heuristic   = new Selection_nearest<int>();
-    _gizmo       = new Gizmo_trans();
 
     _refresh_screen_timer = new QTimer(this);
     connect(_refresh_screen_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
@@ -107,7 +101,6 @@ OGL_widget_skin::~OGL_widget_skin()
     delete _refresh_screen_timer;
     delete _msge_stack;
     delete _render_ctx;
-    delete _gizmo;
 }
 
 // -----------------------------------------------------------------------------
@@ -169,32 +162,10 @@ void OGL_widget_skin::paintGL()
         draw_circle(_cam.width(), _cam.height(), _mouse_x, _mouse_y, h->_rad);
     }
 
-    if(_draw_gizmo){
-        _io->update_frame_gizmo();
-        _gizmo->draw(_cam);
-    }
-
     // Draw latest messages
     Color cl = Cuda_ctrl::_color.get(Color_ctrl::VIEWPORTS_MSGE);
     glColor4f(cl.r, cl.g, cl.b, cl.a);
     _msge_stack->draw(5, this->height()-35);
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_widget_skin::set_gizmo(Gizmo::Gizmo_t type)
-{
-    Gizmo* tmp = _gizmo;
-    switch(type)
-    {
-    case Gizmo::TRANSLATION: _gizmo = new Gizmo_trans();     break;
-    case Gizmo::SCALE:       _gizmo = new Gizmo_scale();     break;
-    case Gizmo::ROTATION:    _gizmo = new Gizmo_rot();       break;
-    case Gizmo::TRACKBALL:   _gizmo = new Gizmo_trackball(); break;
-    }
-    _gizmo->copy(tmp);
-    delete tmp;
-    updateGL();
 }
 
 // -----------------------------------------------------------------------------

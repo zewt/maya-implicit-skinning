@@ -27,7 +27,6 @@
 #include "selection_heuristic.hpp"
 #include "port_glew.h"
 #include "camera.hpp"
-#include "gizmo.hpp"
 #include "cuda_rendering.hpp"
 
 #include "common/msge_stack.hpp"
@@ -110,22 +109,12 @@ public:
     void set_main_window(Main_window_skin* m);
     Main_window_skin* get_main_window();
 
-    const Gizmo* gizmo() const { return _gizmo; }
-          Gizmo* gizmo()       { return _gizmo; }
-
-    /// Choose the type of gizmo (rotation translation scale). Origin and
-    /// orientation are kept fropm the old gizmo
-    void set_gizmo(Gizmo::Gizmo_t type);
-
     // -------------------------------------------------------------------------
     /// @name Public attributes
     // -------------------------------------------------------------------------
 
     /// use to draw temporary message on screen
     Msge_stack* _msge_stack;
-
-    /// wether we draw the gizmo or not
-    bool _draw_gizmo;
 
     /// wether the camera tracks the pivot point or not
     bool _track_pivot;
@@ -212,9 +201,6 @@ private:
     /// mode of rotation: defines what's the standard behavior to compute
     /// automatically the pivot point
     EOGL_widget::Pivot_t _pivot_mode;
-
-    /// 3d manipulator to move objects of the scene
-    Gizmo* _gizmo;
 
     /// Current heuristic for mesh's points selection. Which defines the
     /// selection area (point, square, circle etc.) used to select the mesh's

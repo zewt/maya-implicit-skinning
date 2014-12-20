@@ -39,7 +39,6 @@ public:
     }
 
     virtual ~IO_RBF(){
-        _gl_widget->gizmo()->reset_constraint();
         Cuda_ctrl::_anim_mesh->reset_samples_selection();
     }
 
@@ -56,7 +55,6 @@ public:
         if(event->button() == Qt::LeftButton )
         {
             // No axis has been choose we test for normal selection
-            if( !_is_gizmo_grabed )
             {
                 if(_is_ctrl_pushed)
                     // Add to previous selection
@@ -69,36 +67,7 @@ public:
                     _anim_mesh->reset_samples_selection();
                     select_samples(x, y);
                 }
-
-                if(are_samples_selected()){
-                    set_frame_pos();
-                    set_frame_axis();
-                    _old_tr = gizmo()->frame();
-                }
             }
-        }
-
-    }
-
-    // -------------------------------------------------------------------------
-
-    virtual void mouseReleaseEvent( QMouseEvent* event ){
-        IO_mesh_edit::mouseReleaseEvent(event);
-        using namespace Cuda_ctrl;
-        //const int x = event->x();
-        //const int y = event->y();
-
-        if( !_is_left_pushed && are_samples_selected() )
-        {
-            Transfo g = gizmo_global_transfo();
-            _anim_mesh->transform_selected_samples(  g );
-            Cuda_ctrl::_anim_mesh->update_base_potential();
-            Cuda_ctrl::_display._raytrace_again = true;
-
-            set_frame_pos();
-            set_frame_axis();
-            _old_tr = gizmo()->frame();
-            _gizmo_tr = TRS();
         }
 
     }
@@ -172,13 +141,6 @@ public:
 
     void update_frame_gizmo()
     {
-        if( !are_samples_selected() )
-            IO_skeleton::update_frame_gizmo();
-        else
-        {
-            Transfo global_tr = gizmo_global_transfo();
-            gizmo()->set_transfo( global_tr * _old_tr );
-        }
     }
 
 
@@ -189,12 +151,7 @@ private:
 
     Transfo gizmo_global_transfo()
     {
-        TRS tr = _gizmo_tr;
-        Vec3_cu v   = gizmo()->old_frame() * tr._translation;
-        Vec3_cu a   = gizmo()->old_frame() * tr._axis;
-        Vec3_cu org = _old_tr.get_org();
-
-        return Transfo::translate( v ) * Transfo::rotate(org ,a, tr._angle);
+        return Transfo::identity();
     }
 
     // -------------------------------------------------------------------------
@@ -277,8 +234,6 @@ private:
             cog = cog + get_sample( list[i] );
 
         cog = cog * (1.f/(float)list.size());
-
-        gizmo()->set_org( cog );
     }
 
     // -------------------------------------------------------------------------
@@ -312,8 +267,6 @@ private:
                 fx.coordinate_system(fy, fz);
             }
         }
-
-        gizmo()->set_frame( Mat3_cu(fx, fy, fz) );
     }
 
     // -------------------------------------------------------------------------
