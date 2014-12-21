@@ -24,7 +24,6 @@
 #define HRBF_CORE_HPP__
 
 #include <Eigen/LU>
-#include <Eigen/Cholesky>
 #include <vector>
 #include <iostream>
 
