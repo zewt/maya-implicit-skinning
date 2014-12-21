@@ -24,6 +24,8 @@
 #include <cuda_runtime_api.h>
 #include <cuda_runtime.h>
 #include "cuda_compiler_interop.hpp"
+#include "memory_debug.hpp"
+#include "memory_debug.inl"
 
 /** @namespace Cuda_utils::Common
     @brief Structures and functions shortcut to work on both device and host
