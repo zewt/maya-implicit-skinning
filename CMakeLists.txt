@@ -29,10 +29,10 @@ else()
 endif()
 
 if( "${CUDA_COMPUTE_CAPABILITY}" STREQUAL "" )
-    message(FATAL_ERROR "Please define the symbol CUDA_COMPUTE_CAPABILITY with -D (you can set it to sm_10 sm_13 sm_XX etc.) (cf. your GPU documentation)")
-else()
-    message("CUDA compute capability defined to ${CUDA_COMPUTE_CAPABILITY}")
+    set(CUDA_COMPUTE_CAPABILITY sm_20)
 endif()
+
+message("CUDA compute capability defined to ${CUDA_COMPUTE_CAPABILITY}")
 # END SETUP CUDA ---------------------------------------------------------------
 
 
