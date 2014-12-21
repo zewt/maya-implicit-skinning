@@ -23,7 +23,6 @@
 #include "vec3_cu.hpp"
 
 #include "blob.hpp"
-#include "cylinder.hpp"
 #include "plane.hpp"
 #include "hermiteRBF.hpp"
 
@@ -74,42 +73,6 @@ struct BlobPrimitive : public ImplicitPrimitive
     }
 
     S_Blob *_blob;
-};
-
-struct CylinderPrimitive : public ImplicitPrimitive
-{
-    CylinderPrimitive() : ImplicitPrimitive(), _cylinder(new S_Cylinder()) {
-        updateBbox();
-    }
-
-    ~CylinderPrimitive(){
-        delete _cylinder;
-    }
-
-    float f(const Point_cu &p) const{
-        return _cylinder->f(p);
-    }
-
-    Vec3_cu gf(const Point_cu &p) const {
-        return _cylinder->gf(p);
-    }
-
-    float fngf(Vec3_cu &gf, const Point_cu &p) const {
-        return _cylinder->fngf(gf, p);
-    }
-
-    void updateBbox(){
-        // init bbox with segment points
-        _bbox = BBox_cu(_cylinder->get_origin(), _cylinder->get_origin() + _cylinder->get_dir());
-        // extend it using radius
-        float radius = _cylinder->get_potential_radius();
-        Vec3_cu extent = Vec3_cu(radius, radius, radius);
-        Point_cu pmin = _bbox.pmin - extent;
-        Point_cu pmax = _bbox.pmax + extent;
-        _bbox = BBox_cu(pmin, pmax);
-    }
-
-    S_Cylinder *_cylinder;
 };
 
 struct PlanePrimitive : public ImplicitPrimitive

@@ -30,7 +30,6 @@ enum Bone_t {
     SSD,
     HRBF,
     PRECOMPUTED,
-    CYLINDER
 };
 
 } // END BONE_TYPE NAMESPACE ===================================================

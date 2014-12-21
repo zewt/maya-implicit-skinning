@@ -91,34 +91,6 @@ static void draw_junction_sphere(bool rest_pose)
 
 // -----------------------------------------------------------------------------
 
-static void draw_cylinder()
-{
-    using namespace Cuda_ctrl;
-    const std::vector<int>& selection_set = _skeleton.get_selection_set();
-
-    for(unsigned int i = 0; i<selection_set.size(); i++)
-    {
-        int id = selection_set[i];
-        if( g_skel->bone_type(id) == EBone::CYLINDER )
-        {
-            const Bone* b = g_skel->get_bone(id);
-            float rad = b->radius();
-            glMatrixMode(GL_MODELVIEW);
-
-            glPushMatrix();
-            Transfo tr_trans = b->get_frame().transpose();
-            glMultMatrixf(tr_trans.m);
-            glRotatef(90.f, 0.f, 1.f, 0.f);
-            glScalef(rad, rad, b->length());
-            g_primitive_printer.draw(g_cylinder_cage_vbo);
-            glPopMatrix();
-        }
-
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 static void draw_hrbf_points(bool rest_pose)
 {
     using namespace Cuda_ctrl;
@@ -327,7 +299,6 @@ static void plain_objects(const Camera* cam, const Render_context_cu* ctx,
         draw_mesh_points(cam, ctx->_rest_pose);
         draw_grid_lines(cam);
 
-        draw_cylinder();
         draw_voxels();
 
         if(_debug._show_normals)

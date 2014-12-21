@@ -227,7 +227,7 @@ static void update_device_grid()
 
 // -----------------------------------------------------------------------------
 
-/// Fill device array : hd_bone_types; hd_bone; hd_bone_hrbf; hd_bone_cylinder;
+/// Fill device array : hd_bone_types; hd_bone; hd_bone_hrbf;
 /// hd_bone_precomputed; hd_bulge_strength;
 static void fill_separated_bone_types(const std::vector<Bone*>& generic_bones)
 {
@@ -242,9 +242,6 @@ static void fill_separated_bone_types(const std::vector<Bone*>& generic_bones)
         const int btype = b->get_type();
         switch( btype )
         {
-        case EBone::CYLINDER:
-            hd_bone_arrays->hd_bone_cylinder[i] = ((Bone_cylinder*)b)->get_cylinder();
-            break;
         case EBone::HRBF:
             hd_bone_arrays->hd_bone_hrbf[i] = ((Bone_hrbf*)b)->get_hrbf();
             break;

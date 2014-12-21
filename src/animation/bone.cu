@@ -27,45 +27,6 @@ OBBox_cu Bone::get_obbox() const { return OBBox_cu(); }
 
 BBox_cu Bone::get_bbox() const { return BBox_cu(); }
 
-
-// END Bone CLASS ==============================================================
-
-// Bone_cylinder CLASS =========================================================
-
-OBBox_cu Bone_cylinder::get_obbox() const
-{
-    OBBox_cu obbox;
-    obbox._tr = get_frame();
-    Transfo bbox_tr_inv = obbox._tr.fast_invert();
-
-    Point_cu pmin = bbox_tr_inv *  _org;
-    Point_cu pmax = bbox_tr_inv * (_org + _dir);
-
-
-    float off = 2.f * _radius;
-    pmin = pmin + Vec3_cu(-off, -off, -off);
-    pmax = pmax + Vec3_cu( off,  off,  off);
-
-    obbox._bb = BBox_cu(pmin, pmax);
-    return obbox;
-}
-
-// -----------------------------------------------------------------------------
-
-BBox_cu Bone_cylinder::get_bbox() const
-{
-    Point_cu p0 = _org;
-    Point_cu p1 = (_org + _dir);
-
-    float off = 2.f * _radius;
-    p0 = p0 + Vec3_cu(-off, -off, -off);
-    p1 = p1 + Vec3_cu( off,  off,  off);
-
-    return BBox_cu(p0, p1);
-}
-
-// END Bone_cylinder CLASS =====================================================
-
 // Bone_hrbf CLASS =============================================================
 
 // If defined enable bbox constructions visualitions with opengl
@@ -349,7 +310,6 @@ std::string type_to_string(int type)
 {
     std::string res = "";
     switch( type ){
-    case EBone::CYLINDER:    res = "implicit cylinder";     break;
     case EBone::HRBF:        res = "hermite rbf";           break;
     case EBone::SSD:         res = "ssd";                   break;
     case EBone::PRECOMPUTED: res = "precomputed primitive"; break;

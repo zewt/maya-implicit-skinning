@@ -742,7 +742,6 @@ void Animesh::set_bone_type(int id, int bone_type)
         break;
     }
     case EBone::HRBF:     bone = new Bone_hrbf(rad);      break;
-    case EBone::CYLINDER: bone = new Bone_cylinder();     break;
     case EBone::SSD:      bone = new Bone_ssd();          break;
 
     default: //unknown bone type !

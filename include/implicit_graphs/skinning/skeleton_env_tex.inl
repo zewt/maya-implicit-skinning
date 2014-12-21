@@ -36,7 +36,6 @@ static void bind_local()
     {
         hd_bone_arrays->hd_bone.            device_array().bind_tex(tex_bone            );
         hd_bone_arrays->hd_bone_hrbf.       device_array().bind_tex(tex_bone_hrbf       );
-        hd_bone_arrays->hd_bone_cylinder.   device_array().bind_tex(tex_bone_cylinder   );
         hd_bone_arrays->hd_bone_precomputed.device_array().bind_tex(tex_bone_precomputed);
         hd_bone_arrays->hd_bone_types.      device_array().bind_tex(tex_bone_type       );
     }
@@ -55,7 +54,6 @@ static void unbind_local()
 {
     CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone)             );
     CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_hrbf)        );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_cylinder)    );
     CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_precomputed) );
 
     CUDA_SAFE_CALL( cudaUnbindTexture(&tex_blending_list)    );
@@ -172,17 +170,6 @@ Bone_cu fetch_bone_cu(DBone_id i)
 // -----------------------------------------------------------------------------
 
 __device__ static inline
-Cylinder fetch_bone_cylinder(DBone_id i)
-{
-    struct {float4 a,b;} s;
-    s.a = tex1Dfetch(tex_bone_cylinder, 2*i.id()  );
-    s.b = tex1Dfetch(tex_bone_cylinder, 2*i.id()+1);
-    return *reinterpret_cast<Cylinder*>(&s);
-}
-
-// -----------------------------------------------------------------------------
-
-__device__ static inline
 HermiteRBF fetch_bone_hrbf(DBone_id i)
 {
     int internal = tex1Dfetch(tex_bone_hrbf, i.id());
@@ -218,13 +205,6 @@ float fetch_and_eval_bone(DBone_id bone_id, Vec3_cu& gf, const Point_cu& x)
         HermiteRBF hrbf = fetch_bone_hrbf(bone_id);
         return hrbf.fngf(gf, x);
     }
-    #if 1
-    else if( bone_type == EBone::CYLINDER)
-    {
-        Cylinder cyl = fetch_bone_cylinder(bone_id);
-        return cyl.fngf(gf, x);
-    }
-    #endif
     else if( bone_type == EBone::PRECOMPUTED)
     {
         Precomputed_prim prim = fetch_bone_precomputed(bone_id);

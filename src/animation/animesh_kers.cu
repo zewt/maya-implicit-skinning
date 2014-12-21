@@ -49,7 +49,6 @@ void transform_SSD(const Point_cu* in_verts,
                    const Vec3_cu* in_normals,
                    int nb_verts,
                    Vec3_cu* out_verts,
-                   Vec3_cu* out_verts2,
                    Vec3_cu* out_normals,
                    const Transfo* transfos,
                    const float* weights,
@@ -76,7 +75,6 @@ void transform_SSD(const Point_cu* in_verts,
         // Compute animated position
         Vec3_cu vi = (t * in_verts[p]).to_vector();
         out_verts [p] = vi;
-        out_verts2[p] = vi;
         // Compute animated normal
         out_normals[p] = t.fast_invert().transpose() * in_normals[p];
     }
@@ -89,7 +87,6 @@ void transform_dual_quat( const Point_cu* in_verts,
                           const Vec3_cu* in_normals,
                           int nb_verts,
                           Vec3_cu* out_verts,
-                          Vec3_cu* out_verts2,
                           Vec3_cu* out_normals,
                           const Dual_quat_cu* dual_quat,
                           const float* weights,
@@ -138,7 +135,6 @@ void transform_dual_quat( const Point_cu* in_verts,
         // Compute animated position
         Vec3_cu vi = dq_blend.transform( in_verts[p] ).to_vector();
         out_verts [p] = vi;
-        out_verts2[p] = vi;
         // Compute animated normal
         out_normals[p] = dq_blend.rotate( in_normals[p] );
     }

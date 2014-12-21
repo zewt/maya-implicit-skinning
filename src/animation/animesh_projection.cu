@@ -322,8 +322,7 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
 
 void Animesh::geometric_deformation(EAnimesh::Blending_type t,
                                     const Cuda_utils::DA_Point_cu& d_in,
-                                    Vec3_cu* out,
-                                    Vec3_cu* out2)
+                                    Vec3_cu* out)
 {
     const int block_size = 16;
     const int grid_size  = (d_in.size() + block_size - 1) / block_size;
@@ -335,7 +334,6 @@ void Animesh::geometric_deformation(EAnimesh::Blending_type t,
              d_base_gradient.ptr(),
              d_in.size(),
              out,
-             out2,
              d_ssd_normals.ptr(),
              _skel->d_dual_quat(),
              d_weights.ptr(),
@@ -349,7 +347,6 @@ void Animesh::geometric_deformation(EAnimesh::Blending_type t,
              d_base_gradient.ptr(),
              d_in.size(),
              out,
-             out2,
              d_ssd_normals.ptr(),
              _skel->d_transfos(),
              d_weights.ptr(),
@@ -363,6 +360,8 @@ void Animesh::geometric_deformation(EAnimesh::Blending_type t,
 
 void Animesh::ssd_lerp(Vec3_cu* out_verts)
 {
+    d_ssd_vertices.copy_from(d_output_vertices);
+
     const int nb_vert_to_fit = d_vert_to_fit_base.size();
     if( nb_vert_to_fit == 0) return;
     const int block_size = 16;
@@ -384,21 +383,17 @@ void Animesh::ssd_lerp(Vec3_cu* out_verts)
 void Animesh::transform_vertices(EAnimesh::Blending_type type)
 {
     using namespace Cuda_ctrl;
-    //Timer time;
-    //time.start();
 
     const int nb_vert    = d_input_vertices.size();
 
-    Vec3_cu* ssd_verts    = (Vec3_cu*)d_ssd_vertices.ptr();
-    Vec3_cu* out_verts    = (Vec3_cu*)d_output_vertices.ptr();
     Vec3_cu* out_normals  = (Vec3_cu*)d_output_normals.ptr();
     Vec3_cu* out_tangents = (Vec3_cu*)d_output_tangents.ptr();
-//    Vec3_cu* ssd_normals  = (Vec3_cu*)d_ssd_normals.ptr();
 
 #if 0
     d_output_vertices.copy_from(d_input_vertices);
 #else
-    geometric_deformation(type, d_input_vertices, out_verts, ssd_verts);
+    Vec3_cu* out_verts    = (Vec3_cu*)d_output_vertices.ptr();
+    geometric_deformation(type, d_input_vertices, out_verts);
 #endif
 
     if(do_implicit_skinning)
@@ -409,7 +404,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
         const int nb_steps = Cuda_ctrl::_debug._nb_step;
 
         Cuda_utils::DA_int* curr = &d_vert_to_fit;
-#if 1
 
         if(do_smooth_mesh)
         {
@@ -440,15 +434,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
                 fit_mesh(nb_vert_to_fit, curr->ptr(), true/*full fit*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth1_force);
             }
         }
-
-#else
-        // First fitting
-        if(nb_vert_to_fit > 0){
-            d_vert_to_fit.copy_from(d_vert_to_fit_base);
-            //compute_normals(output_vertices, ssd_normals);
-            fit_mesh(nb_vert_to_fit, curr->ptr(), true/*full fit*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth1_force);
-        }
-#endif
 
 #if 1
         // Smooth the initial guess
@@ -491,11 +476,9 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
                           out_verts,
                           out_normals,
                           out_tangents,
-                          &(_mesh->_vbo),
-                          &(_mesh->_normals_bo),
-                          &(_mesh->_tangents_bo));
-
-    //std::cout << "transform :" << (float)time.stop()/1000.f << std::endl;$
+                          &_mesh->_vbo,
+                          &_mesh->_normals_bo,
+                          &_mesh->_tangents_bo);
 }
 
 // -----------------------------------------------------------------------------

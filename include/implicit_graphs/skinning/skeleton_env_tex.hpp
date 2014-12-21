@@ -84,7 +84,6 @@ texture<int, 1, cudaReadModeElementType> tex_bone_type;
 /// Bones of same cluster are stored consecutively
 texture<float4, 1, cudaReadModeElementType> tex_bone;
 texture<int   , 1, cudaReadModeElementType> tex_bone_hrbf;
-texture<float4, 1, cudaReadModeElementType> tex_bone_cylinder;
 texture<int   , 1, cudaReadModeElementType> tex_bone_precomputed;
 
 // -----------------------------------------------------------------------------
@@ -135,12 +134,6 @@ Cluster_cu fetch_blending_list(Cluster_id i);
 /// @see get_idx_device_bone()
 __device__ static inline
 Bone_cu fetch_bone_cu(DBone_id i);
-
-/// Read data of a bone of type cylinder
-/// @warning User must ensure that the bone i is of the right type with
-/// fetch_bone_type() otherwise returned value is undefined
-__device__ static inline
-Cylinder fetch_bone_cylinder(DBone_id i);
 
 /// Read data of a bone of type hrbf
 /// @warning User must ensure that the bone i is of the right type with

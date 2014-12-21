@@ -230,29 +230,6 @@ protected:
 
 // =============================================================================
 
-#include "cylinder.hpp"
-
-/** @class Bone_cylinder
-  @brief Subclass of a Bone.
-*/
-class Bone_cylinder : public Bone {
-public:
-    Bone_cylinder() : Bone() { }
-
-    ~Bone_cylinder(){  }
-
-    /// Implicit cylinder is constructed from the bone data. Changing the bone
-    /// properties change the cylinder properties. (thereby no setter is needed)
-    Cylinder get_cylinder() const { return Cylinder(_org, _org+_dir, _radius); }
-
-    EBone::Bone_t get_type() const { return EBone::CYLINDER; }
-
-    OBBox_cu get_obbox() const;
-
-    BBox_cu get_bbox() const;
-};
-// =============================================================================
-
 #include "hermiteRBF.hpp"
 
 /** @class Bone_hrbf

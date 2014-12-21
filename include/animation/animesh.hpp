@@ -417,11 +417,9 @@ private:
     /// @param t : type of the deformation
     /// @param in : input vertices to deform
     /// @param out : output vertices deformed with 't' method
-    /// @param out2: identical as 'out'
     void geometric_deformation(EAnimesh::Blending_type t,
                                const Cuda_utils::DA_Point_cu& d_in,
-                               Vec3_cu* out,
-                               Vec3_cu* out2);
+                               Vec3_cu* out);
 
     /// Interpolates between out_verts and ssd_position (in place)
     void ssd_lerp(Vec3_cu* out_verts);
