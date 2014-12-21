@@ -83,33 +83,9 @@ INCLUDE_DIRECTORIES(
     include/implicit_graphs/skinning
   )
 
-# List of all Qt header files i.e classes which are tagged as Q_OBJECT
 file(
     GLOB_RECURSE
-    qobject_headers
-    include/qt_gui/common/customize/colors.hpp
-    include/qt_gui/common/msge_stack.hpp
-    include/qt_gui/common/popup/hrbf_setup.hpp
-    include/qt_gui/common/toolbars/*.hpp
-    include/qt_gui/common/tools/*.hpp
-    include/qt_gui/common/widgets/*.hpp
     include/qt_gui/SKIN/main_window_skin.hpp
-    include/qt_gui/SKIN/OGL_viewports_skin.hpp
-    include/qt_gui/SKIN/OGL_widget_skin.hpp
-    include/scene_tree/IO_selection.hpp # <- TODO to be moved in qt_gui folder
-)
-
-# List of Qt .ui files
-file(
-    GLOB_RECURSE
-    qt_ui_files
-    include/qt_gui/common/*.ui
-    include/qt_gui/common/customize/*.ui
-    include/qt_gui/common/popup/*.ui
-    include/qt_gui/common/widgets/*.ui
-    include/qt_gui/common/toolbars/*.ui
-    include/qt_gui/common/tools/*.ui
-    include/qt_gui/SKIN/*.ui
 )
 
 # List of nvcc sources
@@ -117,19 +93,15 @@ file(
     GLOB_RECURSE
     cuda_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/src/animation/*.cu
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/environment_map/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/blending_lib/cuda_interface/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gl_utils/*.cu
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/maths/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/control/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/cuda_utils/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/global_datas/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/primitives/precomputed_prim/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/primitives/hrbf/*.cu
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/scene_tree/*.cu
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/implicit_graphs/CSG/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/implicit_graphs/skinning/*.cu
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu
 )
@@ -149,13 +121,6 @@ file(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/cuda_utils/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rendering/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scene_tree/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/gizmo2/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/gizmo_deprecated/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/customize/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/popup/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/toolbars/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/common/widgets/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/qt_gui/SKIN/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/primitives/hrbf/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/parsers/*.cpp
