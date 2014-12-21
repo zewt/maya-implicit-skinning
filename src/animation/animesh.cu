@@ -22,9 +22,7 @@
 #include "macros.hpp"
 #include "vec3_cu.hpp"
 #include "distance_field.hpp"
-#include "color_ctrl.hpp"
 #include "conversions.hpp"
-#include "glbuffer_object.hpp"
 #include "std_utils.hpp"
 #include "skeleton.hpp"
 
@@ -35,12 +33,6 @@
 #include <cstring>
 #include <limits>
 #include <cmath>
-
-// -----------------------------------------------------------------------------
-
-namespace Cuda_ctrl{
-    extern Color_ctrl _color;
-}
 
 using namespace Cuda_utils;
 
@@ -63,7 +55,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     smooth_force_a(0.5f),
     smooth_force_b(0.5f),
     smooth_smear(0.f),
-    _vox_mesh(0),
     d_input_smooth_factors(_mesh->get_nb_vertices()),
     d_smooth_factors_conservative(_mesh->get_nb_vertices(), 0.f),
     d_smooth_factors_laplacian(_mesh->get_nb_vertices()),
@@ -263,18 +254,6 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     d_ssd_normals.copy_from(input_normals);
     d_flip_propagation.copy_from(flip_prop);
 
-    _vbo_input_vert   = new GlBuffer_obj( _mesh->get_vbos_size()*3, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
-    _nbo_input_normal = new GlBuffer_obj( _mesh->get_vbos_size()*3, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
-
-    _vbo_input_vert->cuda_register();
-    _nbo_input_normal->cuda_register();
-
-    update_opengl_buffers(nb_vert, (Vec3_cu*)d_input_vertices.ptr(), (Vec3_cu*)d_ssd_normals.ptr(), 0,
-                          _vbo_input_vert, _nbo_input_normal, 0);
-
-    _vbo_input_vert->cuda_unregister();
-    _nbo_input_normal->cuda_unregister();
-
     HA_int h_edge_list(a_mesh.get_nb_edges());
     HA_int h_edge_list_offsets(2*nb_vert);
     for(int i = 0; i < a_mesh.get_nb_edges(); i++){
@@ -389,49 +368,6 @@ void Animesh::init_ssd_interpolation_weights()
     d_ssd_interpolation_factor.copy_from(base_ssd_weights);
 
     init_vert_to_fit();
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::export_off(const char* filename) const
-{
-
-    // FIXME: take into acount quads
-    // FIXME: use vmap_old_new to write index and vertices in the old order
-    assert(false);
-
-    using namespace std;
-    ofstream file(filename);
-
-    if(!file.is_open()){
-        cerr << "Error exporting file " << filename << endl;
-        exit(1);
-    }
-
-    file << "OFF" << endl;
-    file << _mesh -> get_nb_vertices() << ' ' << _mesh -> get_nb_faces() << " 0" << endl;
-    Vec3_cu* output_vertices;
-    _mesh->_vbo.cuda_map_to(output_vertices);
-    float* vertices = new float[3 * _mesh -> get_nb_vertices()];
-    CUDA_SAFE_CALL(cudaMemcpy(vertices,
-                              output_vertices,
-                              3 * _mesh -> get_nb_vertices() * sizeof(float),
-                              cudaMemcpyDeviceToHost));
-    _mesh->_vbo.cuda_unmap();
-    for(int i = 0; i < _mesh -> get_nb_vertices(); i++){
-        file << vertices[3 * i] << ' '
-             << vertices[3 * i + 1] << ' '
-             << vertices[3 * i + 2] << ' ' << endl;
-    }
-
-    for(int i = 0; i < _mesh -> get_nb_faces(); i++) {
-        int a = _mesh -> get_tri(3*i);
-        int b = _mesh -> get_tri(3*i+1);
-        int c = _mesh -> get_tri(3*i+2);
-        file << "3 " << a << ' ' << b << ' ' << c << endl;
-    }
-
-    file.close();
 }
 
 // -----------------------------------------------------------------------------
@@ -1095,43 +1031,6 @@ int Animesh::pack_vert_to_fit_gpu(
     return new_nb_vert_to_fit;
 }
 
-// -----------------------------------------------------------------------------
-
-void Animesh::update_opengl_buffers(int nb_vert,
-                                    const Vec3_cu* vert,
-                                    const Vec3_cu* normals,
-                                    const Vec3_cu* tangents,
-                                    GlBuffer_obj* vbo,
-                                    GlBuffer_obj* nbo,
-                                    GlBuffer_obj* tbo)
-{
-    const int block_s = 16;
-    const int grid_s  = (nb_vert + block_s - 1) / block_s;
-
-    Vec3_cu* cuda_vbo = 0;
-    Vec3_cu* cuda_nbo = 0;
-    Vec3_cu* cuda_tbo = 0;
-    vbo->cuda_map_to(cuda_vbo);
-    nbo->cuda_map_to(cuda_nbo);
-    if(tangents != 0 && tbo != 0)
-        tbo->cuda_map_to(cuda_tbo);
-
-    // Unpacking vertices and normals for the rendering of the mesh
-    // (because of texture vertices which has multiple texture coordinates
-    // mut be duplicated)
-    Animesh_kers::unpack_vert_and_normals<<<grid_s, block_s >>>
-        (vert, normals, tangents, d_packed_vert_map.ptr(), cuda_vbo, cuda_nbo, cuda_tbo, nb_vert);
-
-    CUDA_CHECK_ERRORS();
-
-    vbo->cuda_unmap();
-    nbo->cuda_unmap();
-    if(tangents != 0 && tbo != 0)
-        tbo->cuda_unmap();
-}
-
-// -----------------------------------------------------------------------------
-
 void Animesh::reset_flip_propagation(){
     int nb_vert = _mesh->get_nb_vertices();
     Host::Array<bool> flip_prop(nb_vert);
@@ -1141,5 +1040,3 @@ void Animesh::reset_flip_propagation(){
 
     d_flip_propagation.copy_from(flip_prop);
 }
-
-// -----------------------------------------------------------------------------

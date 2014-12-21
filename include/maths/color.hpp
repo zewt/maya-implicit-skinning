@@ -21,7 +21,6 @@
 
 #include "vec3_cu.hpp"
 #include "cuda_compiler_interop.hpp"
-#include "port_glew.h"
 /**
   @name Color
   @brief storing and handling RBGA colors
@@ -109,10 +108,6 @@ struct Color{
     IF_CUDA_DEVICE_HOST
     void set(float r_, float g_, float b_, float a_){
         r = r_; g = g_; b = b_; a = a_;
-    }
-
-    void set_gl_state() const {
-        glColor4f(r, g, b, a);
     }
 
     // -------------------------------------------------------------------------

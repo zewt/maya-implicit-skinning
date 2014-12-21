@@ -63,8 +63,6 @@ public:
     Animated_mesh_ctrl(Animesh* am);
     ~Animated_mesh_ctrl();
 
-    void draw_rotation_axis();
-
     void enable_update_base_potential(bool state);
 
     void set_auto_precompute(bool s){ _auto_precompute = s; }
@@ -84,10 +82,6 @@ public:
     void color_uniform(float r, float g, float b, float a);
     void color_ssd_weights(int joint_id);
     //@}
-
-
-    /// set a mesh point color (this is independant of the mesh color itself)
-    void color_vertex(int vert, float r, float g, float b, float a);
 
     const Mesh* get_mesh() const;
     int get_nearest_bone(int vert_idx);
@@ -214,16 +208,6 @@ public:
     /// all samples are transformed
     void transform_samples(const std::vector<int>& bone_ids = std::vector<int>());
 
-
-    /// draw the hrbf samples given the list of bone ids 'list'
-    /// @param draw_normals if true draw the normals with GL_LINES
-    /// @param rest_pose if true draw the samples in rest pose
-    void draw_hrbf_points(const std::vector<int>& list,
-                          bool draw_normals,
-                          bool rest_pose);
-
-    void draw_caps(const Cap& cap);
-
     //--------------------------------------------------------------------------
     /// @name HRBF Samples Selection
     //--------------------------------------------------------------------------
@@ -249,9 +233,6 @@ public:
     /// @name Class Tools
     // -------------------------------------------------------------------------
 private:
-    /// add a point to the selection list and color it
-    /// this method check for doubles before adding it
-    void add_to_selection(int id);
 
     /// removes a point from the last selection do nothing if the point was not
     /// selected
@@ -270,13 +251,6 @@ private:
 
     /// Change the vector size of attr _sample_anim_list.nodes and .n_nodes
     void resize_samples_anim(int bone_id, int size);
-
-    /// update buffer objects size when samples are added or deleted, it also
-    /// updates gl buffer position and normals in rest position
-    void update_gl_buffers_size(int size);
-
-    /// update vbo storing rest position of points and normals
-    void update_vbo_rest_pose(int size);
 
     /// How many samples for every bone
     int compute_nb_samples();
@@ -386,17 +360,6 @@ private:
     /// List of samples in animated position (
     /// @warning animated position is only valid for currently selected bones
     std::vector<HSample_list> _sample_anim_list;
-
-    /// Samples normals (GL_LINES) to be drawn
-    GlBuffer_obj* _normals_bo;
-    /// Samples normals (GL_LINES) in rest pose
-    GlBuffer_obj* _rest_nbo;
-    /// Samples in animated position
-    GlBuffer_obj* _anim_bo;
-    /// Samples in rest pose
-    GlBuffer_obj* _rest_bo;
-    /// Samples color
-    GlBuffer_obj* _color_bo;
 
     Animesh* _animesh;
     Skeleton* _skel;

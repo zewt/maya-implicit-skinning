@@ -23,7 +23,6 @@
 
 #include "animesh_enum.hpp"
 #include "cuda_utils.hpp"
-#include "gl_mesh.hpp"
 #include "mesh.hpp"
 
 // -----------------------------------------------------------------------------
@@ -220,11 +219,6 @@ public:
     /// @deprecated
     void export_weights(const char* filename);
 
-    /// Export the mesh for the current position of the skeleton
-    /// (i.e mesh is export from the current vbo used to draw it)
-    /// @deprecated
-    void export_off(const char* filename) const;
-
     // -------------------------------------------------------------------------
     /// @name SSD Related
     // -------------------------------------------------------------------------
@@ -328,20 +322,10 @@ public:
 
     void reset_flip_propagation();
 
-    GlBuffer_obj* get_vbo_rest_pose(){
-        return _vbo_input_vert;
-    }
-
-    GlBuffer_obj* get_nbo_rest_pose(){
-        return _nbo_input_normal;
-    }
-
     const Mesh*     get_mesh() const { return _mesh; }
     const Skeleton* get_skel() const { return _skel; }
 
     Skeleton* get_skel(){ return _skel; }
-
-    const Gl_mesh_quad* get_vox_mesh() const { return _vox_mesh; }
 
 private:
     // -------------------------------------------------------------------------
@@ -439,23 +423,6 @@ private:
             Cuda_utils::Device::Array<int>& packed_vert_to_fit,
             int nb_vert_to_fit);
 
-    /// Updating vbo nbo tbo with d_vert, d_normals and d_tangents.
-    /// vertices with multiple texture coordinates are duplicated
-    /// @param nb_vert size of the arrays. It's not necesarily the same as the
-    /// buffer objects
-    /// @param d_tangents array of tangents of size nb_vert if equal 0 this
-    /// parameter is ignored
-    /// @param tbo buffer object of tangents if equal 0 this parameter is
-    /// ignored
-    /// @warning buffer objects are to be registered in cuda context
-    void update_opengl_buffers(int nb_vert,
-                               const Vec3_cu* d_vert,
-                               const Vec3_cu* d_normals,
-                               const Vec3_cu* d_tangents,
-                               GlBuffer_obj* vbo,
-                               GlBuffer_obj* nbo,
-                               GlBuffer_obj* tbo);
-
     /// Copy the attributes of 'a_mesh' into the attributes of the animated
     /// mesh in device memory
     void copy_mesh_data(const Mesh& a_mesh);
@@ -509,9 +476,6 @@ private:
     float smooth_force_b; ///< must be between [0 1] only for humphrey smoothing
     float smooth_smear;   ///< between [-1 1]
 
-    /// Mesh of voxels for display purpose
-    Gl_mesh_quad* _vox_mesh;
-
     /// Smoothing weights associated to each vertex
     Cuda_utils::Device::Array<float> d_input_smooth_factors;
     /// Animated smoothing weights associated to each vertex
@@ -534,11 +498,6 @@ private:
     /// neigh_i. v = sum from 0 to nb_neigh { mvc_i * neigh_i } )
     /// @note to look up this list you need to use 'd_edge_list_offsets'
     Cuda_utils::Device::Array<float> d_edge_mvc;
-
-    /// VBO of the Mesh in resting position
-    GlBuffer_obj* _vbo_input_vert;
-    /// NBO of the mesh in resting position
-    GlBuffer_obj* _nbo_input_normal;
 
     std::vector<float> h_junction_radius;
 

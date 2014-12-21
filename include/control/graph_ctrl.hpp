@@ -59,9 +59,6 @@ public:
     void set_selected_node(int n){ _selected_node = n;    }
     void reset_selection()       { _selected_node = -1;   }
 
-    /// @return if a vertex has been selected
-    bool select_node(int x, int y);
-
 private:
     int _selected_node;
 };

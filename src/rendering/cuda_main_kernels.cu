@@ -18,8 +18,6 @@
  */
 #include "cuda_main_kernels.hpp"
 
-#include <GL/glew.h>
-
 /// @name Cuda textures importation
 /// @{
 #include "blending_env_tex.hpp"
@@ -48,10 +46,8 @@
 #include "animesh_potential.hpp"
 /// @}
 
+
 #include "cuda_current_device.hpp"
-#include "port_cuda_gl_interop.h"
-
-
 
 #include "globals.hpp"
 

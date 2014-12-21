@@ -23,16 +23,13 @@
 
 #include "constants.hpp"
 #include "blending_env_tex_interface.hpp"
-#include "opengl_stuff.hpp"
 
-#include "potential_plane_ctrl.hpp"
 #include "animated_mesh_ctrl.hpp"
 #include "operators_ctrl.hpp"
 #include "skeleton_ctrl.hpp"
 #include "display_ctrl.hpp"
 #include "debug_ctrl.hpp"
 #include "graph_ctrl.hpp"
-#include "color_ctrl.hpp"
 #include "path_ctrl.hpp"
 
 /** @brief Mouse, keyboard, screen interface and more for the cuda library
@@ -60,12 +57,8 @@ extern Debug_ctrl         _debug;
 extern Graph_ctrl         _graph;
 /// Control for blending operators (bulge in contact, clean union etc.)
 extern Operators_ctrl    _operators;
-/// List of colors used to display the model, the points, mesh wires etc.
-extern Color_ctrl         _color;
 /// List of paths used in the application
 extern Path_ctrl          _paths;
-/// Control potential plane position
-extern Potential_plane_ctrl _potential_plane;
 
 // -----------------------------------------------------------------------------
 
@@ -87,8 +80,6 @@ void load_animesh_and_ssd_weights(const char* filename);
 void get_mem_usage(double& total, double& free);
 
 // -----------------------------------------------------------------------------
-
-GLuint init_tex_operator( int width, int height );
 
 void init_opengl_cuda();
 

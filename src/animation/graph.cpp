@@ -26,12 +26,7 @@
 #include <map>
 #include <stack>
 
-// -----------------------------------------------------------------------------
-
 #include "std_utils.hpp"
-#include "port_glew.h"
-
-// -----------------------------------------------------------------------------
 
 static bool rec_is_cycles(std::vector<bool>& seen,
                           const std::vector< std::vector< int > > neighs,
@@ -138,40 +133,6 @@ void Graph::clear()
     _offset = Vec3_cu::zero();
     _scale  = 1.f;
 }
-
-// -----------------------------------------------------------------------------
-
-int Graph::get_window_nearest(float x, float y, float& dist)
-{
-    int res = -1;
-    float dst2 = std::numeric_limits<float>::infinity();
-    GLint viewport[4];
-    GLdouble modelview[16];
-    GLdouble projection[16];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX , modelview);
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);
-    GLdouble vx, vy, vz;
-    for(unsigned i = 0; i < _vertices.size(); i++)
-    {
-        Vec3_cu& v = _vertices[i];
-        GLdouble ivx = (GLdouble)v.x, ivy = (GLdouble)v.y, ivz = (GLdouble)v.z;
-
-        gluProject(ivx, ivy, ivz, modelview, projection, viewport, &vx, &vy, &vz);
-
-        float dx = (float)vx - x;
-        float dy = (float)vy - y;
-        float d2 = dx * dx + dy * dy;
-        if(d2 < dst2){
-            dst2 = d2;
-            res = i;
-        }
-    }
-    dist = sqrtf(dst2);
-    return res;
-}
-
-// -----------------------------------------------------------------------------
 
 void Graph::save_to_file(const char* filename) const
 {

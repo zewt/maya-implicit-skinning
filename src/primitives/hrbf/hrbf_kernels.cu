@@ -20,7 +20,6 @@
 
 #include "hrbf_env.hpp"
 #include "hrbf_env_interface.hpp"
-#include "glbuffer_object.hpp"
 #include "conversions.hpp"
 
 #include <iostream>

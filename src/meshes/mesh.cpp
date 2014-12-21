@@ -27,7 +27,6 @@
 #include <deque>
 #include <map>
 
-#include "glsave.hpp"
 #include "glassert.h"
 #include "macros.hpp"
 #include "mesh.hpp"
@@ -63,16 +62,7 @@ Mesh::Mesh() :
     _size_unpacked_vert_array(-1),
     _unpacked_tri(0),
     _unpacked_quad(0),
-    _packed_vert_map(0),
-    _vbo(GL_ARRAY_BUFFER),
-    _normals_bo(GL_ARRAY_BUFFER),
-    _tangents_bo(GL_ARRAY_BUFFER),
-    _color_bo(GL_ARRAY_BUFFER),
-    _tex_bo(GL_ARRAY_BUFFER),
-    _point_color_bo(GL_ARRAY_BUFFER),
-    _index_bo_tri(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_quad(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_point(GL_ELEMENT_ARRAY_BUFFER)
+    _packed_vert_map(0)
 {
 }
 
@@ -104,16 +94,7 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _size_unpacked_vert_array( vert.size() / 3),
     _unpacked_tri(0),
     _unpacked_quad(0),
-    _packed_vert_map(0),
-    _vbo(GL_ARRAY_BUFFER),
-    _normals_bo(GL_ARRAY_BUFFER),
-    _tangents_bo(GL_ARRAY_BUFFER),
-    _color_bo(GL_ARRAY_BUFFER),
-    _tex_bo(GL_ARRAY_BUFFER),
-    _point_color_bo(GL_ARRAY_BUFFER),
-    _index_bo_tri(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_quad(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_point(GL_ELEMENT_ARRAY_BUFFER)
+    _packed_vert_map(0)
 {
 
     if(_nb_vert > 0)
@@ -149,7 +130,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     }
 
 
-    init_vbos();
     compute_piv();
     compute_face_index();
     compute_edges();
@@ -175,17 +155,7 @@ Mesh::Mesh(const Mesh& m) :
     _quad_list_per_vert(m._quad_list_per_vert),
     _size_unpacked_vert_array(m._size_unpacked_vert_array),
     _unpacked_tri_list_per_vert(m._unpacked_tri_list_per_vert),
-    _unpacked_quad_list_per_vert(m._unpacked_quad_list_per_vert),
-
-    _vbo(GL_ARRAY_BUFFER),
-    _normals_bo(GL_ARRAY_BUFFER),
-    _tangents_bo(GL_ARRAY_BUFFER),
-    _color_bo(GL_ARRAY_BUFFER),
-    _tex_bo(GL_ARRAY_BUFFER),
-    _point_color_bo(GL_ARRAY_BUFFER),
-    _index_bo_tri(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_quad(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_point(GL_ELEMENT_ARRAY_BUFFER)
+    _unpacked_quad_list_per_vert(m._unpacked_quad_list_per_vert)
 {
 
     _vert            = new float[ _nb_vert*3 ];
@@ -243,6 +213,7 @@ Mesh::Mesh(const Mesh& m) :
         _edge_list[i] = m._edge_list[i];
 
     if( m._has_normals || m._has_tex_coords || m._tangents != 0)
+    {
         for(int i = 0; i < _size_unpacked_vert_array; i++)
         {
             if(_has_normals){
@@ -262,8 +233,7 @@ Mesh::Mesh(const Mesh& m) :
                 _tex_coords[i*2+1] = m._tex_coords[i*2+1];
             }
         }
-
-    init_vbos();
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -294,16 +264,7 @@ Mesh::Mesh(const char* filename) :
     _size_unpacked_vert_array(-1),
     _unpacked_tri(0),
     _unpacked_quad(0),
-    _packed_vert_map(0),
-    _vbo(GL_ARRAY_BUFFER),
-    _normals_bo(GL_ARRAY_BUFFER),
-    _tangents_bo(GL_ARRAY_BUFFER),
-    _color_bo(GL_ARRAY_BUFFER),
-    _tex_bo(GL_ARRAY_BUFFER),
-    _point_color_bo(GL_ARRAY_BUFFER),
-    _index_bo_tri(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_quad(GL_ELEMENT_ARRAY_BUFFER),
-    _index_bo_point(GL_ELEMENT_ARRAY_BUFFER)
+    _packed_vert_map(0)
 {
     using namespace std;
     int nil;
@@ -420,7 +381,6 @@ Mesh::Mesh(const char* filename) :
     compute_face_index();
     compute_edges();
     compute_normals();
-    init_vbos();
 
     _is_initialized = true;
 }
@@ -467,23 +427,6 @@ void Mesh::free_mesh_data()
     _quad_list_per_vert.clear();
     _unpacked_tri_list_per_vert.clear();
     _unpacked_quad_list_per_vert.clear();
-
-    //////////////// Register buffer
-    if(_nb_vert > 0){
-        _vbo.cuda_unregister();
-        _normals_bo.cuda_unregister();
-        _color_bo.cuda_unregister();
-
-        if(_nb_tri  > 0) _index_bo_tri. cuda_unregister();
-        if(_nb_quad > 0) _index_bo_quad.cuda_unregister();
-
-        if(_has_tex_coords)
-        {
-            _tex_bo.cuda_unregister();
-            _tangents_bo.cuda_unregister();
-        }
-    }
-    //////////////// End Register buffer
 }
 
 // -----------------------------------------------------------------------------
@@ -574,50 +517,6 @@ void Mesh::compute_piv()
 
 // -----------------------------------------------------------------------------
 
-void Mesh::center_and_resize(float max_size)
-{
-    float xmin, ymin, zmin;
-    float xmax, ymax, zmax;
-    xmin = ymin = zmin =  std::numeric_limits<float>::infinity();
-    xmax = ymax = zmax = -std::numeric_limits<float>::infinity();
-
-    for(int i = 0; i < _nb_vert; i++){
-        float x = _vert[3*i  ];
-        float y = _vert[3*i+1];
-        float z = _vert[3*i+2];
-        //printf("%f %f %f\n",x,y,z);
-        xmin = (x < xmin)? x : xmin;
-        xmax = (x > xmax)? x : xmax;
-        ymin = (y < ymin)? y : ymin;
-        ymax = (y > ymax)? y : ymax;
-        zmin = (z < zmin)? z : zmin;
-        zmax = (z > zmax)? z : zmax;
-    }
-    float dx = xmax - xmin;
-    float dy = ymax - ymin;
-    float dz = zmax - zmin;
-    float du = (dx > dy)?((dx > dz)?dx:dz):((dy>dz)?dy:dz);
-    float scale_f = max_size / du;
-    _scale = scale_f;
-    _offset.x = - 0.5f * (xmax + xmin);
-    _offset.y = - 0.5f * (ymax + ymin);
-    _offset.z = - 0.5f * (zmax + zmin);
-    for(int i = 0; i < _nb_vert; i++)
-    {
-        float& x = _vert[3*i  ];
-        float& y = _vert[3*i+1];
-        float& z = _vert[3*i+2];
-        x = (x + _offset.x) * scale_f;
-        y = (y + _offset.y) * scale_f;
-        z = (z + _offset.z) * scale_f;
-    }
-
-    // update the vbo
-    update_unpacked_vert();
-}
-
-// -----------------------------------------------------------------------------
-
 void Mesh::compute_normals()
 {
     delete[] _normals;
@@ -695,130 +594,7 @@ void Mesh::compute_normals()
             _normals[p_idx*3 + 2] = new_normals[i*3 + 2];
         }
     }
-     _normals_bo.set_data(n_size, _normals, GL_STATIC_DRAW);
     delete[] new_normals;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::compute_tangents()
-{
-    delete[] _tangents;
-    float* new_tangents = new float[_nb_vert * 3];
-
-    _has_normals = true;
-    for(int i = 0; i < 3 * _nb_vert; i++){
-        new_tangents[i] = 0.0f;
-    }
-
-    for(int i = 0; i < _nb_tri; i++)
-    {
-        Tri_idx idx  = *(Tri_idx*)(_tri+i*3);
-        Tri_idx uidx = *(Tri_idx*)(_unpacked_tri+i*3);
-
-        Vec3_cu va = *(Vec3_cu*)(_vert+idx.a*3);
-        Vec3_cu vb = *(Vec3_cu*)(_vert+idx.b*3);
-        Vec3_cu vc = *(Vec3_cu*)(_vert+idx.c*3);
-
-        Tex_coords ta = *(Tex_coords*)(_tex_coords+uidx.a*2);
-        Tex_coords tb = *(Tex_coords*)(_tex_coords+uidx.b*2);
-        Tex_coords tc = *(Tex_coords*)(_tex_coords+uidx.c*2);
-
-        Vec3_cu v1 = Vec3_cu(vb.x - va.x, vb.y - va.y, vb.z - va.z);
-        Vec3_cu v2 = Vec3_cu(vc.x - va.x, vc.y - va.y, vc.z - va.z);
-
-        Tex_coords st1 = Tex_coords(tb.u - ta.u, tb.v - ta.v);
-        Tex_coords st2 = Tex_coords(tc.u - ta.u, tc.v - ta.v);
-
-        float coef = 1.f / (st1.u * st2.v - st2.u * st1.v);
-        float tangent[3];
-        tangent[0] = coef * ((v1.x * st2.v)  + (v2.x * -st1.v));
-        tangent[1] = coef * ((v1.y * st2.v)  + (v2.y * -st1.v));
-        tangent[2] = coef * ((v1.z * st2.v)  + (v2.z * -st1.v));
-
-        for(int j = 0; j < 3; j++)
-        {
-            new_tangents[idx.a*3 + j] += tangent[j];
-            new_tangents[idx.b*3 + j] += tangent[j];
-            new_tangents[idx.c*3 + j] += tangent[j];
-        }
-    }
-
-    for(int i = 0; i < _nb_quad; i++){
-        // TODO: check this code with a 'bump mapped' quad mesh
-        Quad_idx idx  = *(Quad_idx*)(_quad+i*4);
-        Quad_idx uidx = *(Quad_idx*)(_unpacked_quad+i*4);
-
-        Vec3_cu va = *(Vec3_cu*)(_vert+idx.a*3);
-        Vec3_cu vb = *(Vec3_cu*)(_vert+idx.b*3);
-        Vec3_cu vc = *(Vec3_cu*)(_vert+idx.c*3);
-        Vec3_cu vd = *(Vec3_cu*)(_vert+idx.d*3);
-
-        Tex_coords ta = *(Tex_coords*)(_tex_coords+uidx.a*2);
-        Tex_coords tb = *(Tex_coords*)(_tex_coords+uidx.b*2);
-        Tex_coords tc = *(Tex_coords*)(_tex_coords+uidx.c*2);
-        Tex_coords td = *(Tex_coords*)(_tex_coords+uidx.d*2);
-
-        // Tangent of the triangle abc
-        Vec3_cu v1 = Vec3_cu(vb.x - va.x, vb.y - va.y, vb.z - va.z);
-        Vec3_cu v2 = Vec3_cu(vc.x - va.x, vc.y - va.y, vc.z - va.z);
-
-        Tex_coords st1 = Tex_coords(tb.u - ta.u, tb.v - ta.v);
-        Tex_coords st2 = Tex_coords(tc.u - ta.u, tc.v - ta.v);
-
-        float coef = 1.f / (st1.u * st2.v - st2.u * st1.v);
-        float tangent_0[3];
-        tangent_0[0] = coef * ((v1.x * st2.v)  + (v2.x * -st1.v));
-        tangent_0[1] = coef * ((v1.y * st2.v)  + (v2.y * -st1.v));
-        tangent_0[2] = coef * ((v1.z * st2.v)  + (v2.z * -st1.v));
-
-        // Tangent of the triangle acd
-        v1 = Vec3_cu(va.x - vc.x, va.y - vc.y, va.z - vc.z);
-        v2 = Vec3_cu(vd.x - vc.x, vd.y - vc.y, vd.z - vc.z);
-
-        st1 = Tex_coords(ta.u - tc.u, ta.v - tc.v);
-        st2 = Tex_coords(td.u - tc.u, td.v - tc.v);
-
-        coef = 1.f / (st1.u * st2.v - st2.u * st1.v);
-        float tangent_1[3];
-        tangent_1[0] = coef * ((v1.x * st2.v)  + (v2.x * -st1.v));
-        tangent_1[1] = coef * ((v1.y * st2.v)  + (v2.y * -st1.v));
-        tangent_1[2] = coef * ((v1.z * st2.v)  + (v2.z * -st1.v));
-
-        for(int j = 0; j < 3; j++)
-        {
-            new_tangents[idx.a*3 + j] += tangent_0[j];
-            new_tangents[idx.b*3 + j] += tangent_0[j];
-            new_tangents[idx.c*3 + j] += tangent_0[j];
-
-            new_tangents[idx.a*3 + j] += tangent_1[j];
-            new_tangents[idx.c*3 + j] += tangent_1[j];
-            new_tangents[idx.d*3 + j] += tangent_1[j];
-        }
-    }
-
-    // unpack the tangents we've just calculated in new_tangents
-    int n_size = _size_unpacked_vert_array * 3;
-    _tangents = new float [n_size];
-
-    for(int i = 0; i < _nb_vert; i++)
-    {
-        const Packed_data d = _packed_vert_map[i];
-        for(int j = 0; j < d.nb_ocurrence; j++)
-        {
-            const int p_idx = d.idx_data_unpacked + j;
-            float tx = new_tangents[i*3    ];
-            float ty = new_tangents[i*3 + 1];
-            float tz = new_tangents[i*3 + 2];
-            float norm = sqrtf(tx * tx + ty * ty + tz * tz);
-
-            _tangents[p_idx*3    ] = tx / norm;
-            _tangents[p_idx*3 + 1] = ty / norm;
-            _tangents[p_idx*3 + 2] = tz / norm;
-        }
-    }
-    _tangents_bo.set_data(n_size, _tangents, GL_STATIC_DRAW);
-    delete[] new_tangents;
 }
 
 // -----------------------------------------------------------------------------
@@ -1031,133 +807,12 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
 
     if( !_has_normals )
         compute_normals();
-    if(_has_tex_coords)
-        compute_tangents();
     // Initialize VBOs
-    init_vbos();
     compute_piv();
     compute_face_index();
     compute_edges();
     _is_initialized = true;
 }
-
-// -----------------------------------------------------------------------------
-
-void Mesh::smoothen_mesh(float smooth_factor,
-                         int nb_iter,
-                         int nb_min_neighbours)
-{
-    if(nb_iter == 0) return;
-
-    float* vertices_data     = _vert;
-    float* new_vertices_data = new float[3*_nb_vert];
-    int*   vert_neig         = new int[_nb_vert];
-
-    for(int k = 0; k < nb_iter; k++)
-    {
-        for(int i = 0; i < _nb_vert; i++)
-        {
-            new_vertices_data[3*i  ] = 0.f;
-            new_vertices_data[3*i+1] = 0.f;
-            new_vertices_data[3*i+2] = 0.f;
-            vert_neig[i] = 0;
-        }
-
-        for(int i = 0; i < _nb_tri; i++)
-        {
-            int a = _tri[3*i  ];
-            int b = _tri[3*i+1];
-            int c = _tri[3*i+2];
-            new_vertices_data[3*a  ] += vertices_data[3*b  ] + vertices_data[3*c  ];
-            new_vertices_data[3*a+1] += vertices_data[3*b+1] + vertices_data[3*c+1];
-            new_vertices_data[3*a+2] += vertices_data[3*b+2] + vertices_data[3*c+2];
-
-            new_vertices_data[3*b  ] += vertices_data[3*a  ] + vertices_data[3*c  ];
-            new_vertices_data[3*b+1] += vertices_data[3*a+1] + vertices_data[3*c+1];
-            new_vertices_data[3*b+2] += vertices_data[3*a+2] + vertices_data[3*c+2];
-
-            new_vertices_data[3*c  ] += vertices_data[3*b  ] + vertices_data[3*a  ];
-            new_vertices_data[3*c+1] += vertices_data[3*b+1] + vertices_data[3*a+1];
-            new_vertices_data[3*c+2] += vertices_data[3*b+2] + vertices_data[3*a+2];
-
-            vert_neig[a] += 2;
-            vert_neig[b] += 2;
-            vert_neig[c] += 2;
-        }
-
-        for(int i = 0; i < _nb_quad; i++)
-        {
-            int a = _quad[4*i  ];
-            int b = _quad[4*i+1];
-            int c = _quad[4*i+2];
-            int d = _quad[4*i+3];
-            new_vertices_data[3*a  ] += vertices_data[3*b  ] + vertices_data[3*d  ];
-            new_vertices_data[3*a+1] += vertices_data[3*b+1] + vertices_data[3*d+1];
-            new_vertices_data[3*a+2] += vertices_data[3*b+2] + vertices_data[3*d+2];
-
-            new_vertices_data[3*b  ] += vertices_data[3*a  ] + vertices_data[3*c  ];
-            new_vertices_data[3*b+1] += vertices_data[3*a+1] + vertices_data[3*c+1];
-            new_vertices_data[3*b+2] += vertices_data[3*a+2] + vertices_data[3*c+2];
-
-            new_vertices_data[3*c  ] += vertices_data[3*b  ] + vertices_data[3*d  ];
-            new_vertices_data[3*c+1] += vertices_data[3*b+1] + vertices_data[3*d+1];
-            new_vertices_data[3*c+2] += vertices_data[3*b+2] + vertices_data[3*d+2];
-
-            new_vertices_data[3*d  ] += vertices_data[3*a  ] + vertices_data[3*c  ];
-            new_vertices_data[3*d+1] += vertices_data[3*a+1] + vertices_data[3*c+1];
-            new_vertices_data[3*d+2] += vertices_data[3*a+2] + vertices_data[3*c+2];
-
-            vert_neig[a] += 2;
-            vert_neig[b] += 2;
-            vert_neig[c] += 2;
-            vert_neig[d] += 2;
-        }
-
-        for(int i = 0; i < _nb_vert; i++)
-        {
-            if(vert_neig[i] > nb_min_neighbours && !_is_side[i])
-            {
-                float iv = 1.f / vert_neig[i];
-                new_vertices_data[3*i  ] *= iv;
-                new_vertices_data[3*i+1] *= iv;
-                new_vertices_data[3*i+2] *= iv;
-            }
-            else
-            {
-                new_vertices_data[3*i  ] = vertices_data[3*i  ];
-                new_vertices_data[3*i+1] = vertices_data[3*i+1];
-                new_vertices_data[3*i+2] = vertices_data[3*i+2];
-            }
-
-            float u = smooth_factor;
-            vertices_data[3*i  ] = vertices_data[3*i  ] * (1.f-u) + new_vertices_data[3*i  ] * u;
-            vertices_data[3*i+1] = vertices_data[3*i+1] * (1.f-u) + new_vertices_data[3*i+1] * u;
-            vertices_data[3*i+2] = vertices_data[3*i+2] * (1.f-u) + new_vertices_data[3*i+2] * u;
-        }
-
-
-        float* tmp = new_vertices_data;
-        new_vertices_data = vertices_data;
-        vertices_data = tmp;
-    }
-
-    if((nb_iter%2) == 0)
-    {
-        _vert = vertices_data;
-        delete[] new_vertices_data;
-    }
-    else
-    {
-        _vert = new_vertices_data;
-        delete[] vertices_data;
-    }
-
-    delete[] vert_neig;
-    // update the vbo
-    update_unpacked_vert();
-}
-
-// -----------------------------------------------------------------------------
 
 std::pair<int, int> Mesh::pair_from_tri(int index_tri, int current_vert)
 {
@@ -1474,152 +1129,6 @@ void Mesh::diffuse_along_mesh(float* vertices_attributes, int nb_iter) const
     }
     delete[] new_attribs;
     delete[] nb_neighbours;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::add_noise(int fq, float amp){
-    for(int i = 0; i < _nb_vert; i++){
-        const Vec3_cu c = get_vertex(i);
-        float u = c.x;
-        float r = sqrtf(c.y * c.y + c.z * c.z);
-        float v = atan2(c.y, c.z);
-        float dr = cosf(u*fq/r) * cosf(v*fq) * amp;
-        _vert[3*i  ] += (c.x * dr);
-        _vert[3*i+1] += (c.y * dr);
-        _vert[3*i+2] += (c.z * dr);
-    }
-    // update the vbo
-    update_unpacked_vert();
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::set_point_color_bo(int i, float r, float g, float b, float a){
-    assert(i < _nb_vert);
-    float* color_ptr;
-    _point_color_bo.map_to(color_ptr, GL_WRITE_ONLY);
-
-    const Packed_data d = _packed_vert_map[i];
-    for(int j = 0; j < d.nb_ocurrence; j++)
-    {
-        const int p_idx = d.idx_data_unpacked + j;
-        color_ptr[p_idx*4  ] = r;
-        color_ptr[p_idx*4+1] = g;
-        color_ptr[p_idx*4+2] = b;
-        color_ptr[p_idx*4+3] = a;
-    }
-    _point_color_bo.unmap();
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::set_color_bo(float r, float g, float b, float a){
-    const int size = _size_unpacked_vert_array;
-    float* colors = new float[4 * size];
-    for(int i = 0; i < size; i++)
-    {
-        colors[i*4  ]  = r;
-        colors[i*4+1]  = g;
-        colors[i*4+2]  = b;
-        colors[i*4+3]  = a;
-    }
-    _color_bo.set_data( 4 * size, colors, GL_STATIC_DRAW);
-    delete[] colors;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::set_point_color_bo(float r, float g, float b, float a)
-{
-    const int size = _size_unpacked_vert_array;
-    float* colors = new float[4 * size];
-    for(int i = 0; i < size; i++){
-        colors[i*4  ]  = r;
-        colors[i*4+1]  = g;
-        colors[i*4+2]  = b;
-        colors[i*4+3]  = a;
-    }
-    _point_color_bo.set_data( 4 * size, colors, GL_STATIC_DRAW);
-    delete[] colors;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::init_vbos()
-{
-    assert(_vert != 0);
-    assert(_size_unpacked_vert_array != 0);
-    assert(_nb_vert > 0);
-
-    _vbo.set_data(_size_unpacked_vert_array*3, 0, GL_STATIC_DRAW);
-    update_unpacked_vert();
-    if(_nb_tri > 0)
-        _index_bo_tri. set_data( 3 * _nb_tri , _unpacked_tri , GL_STATIC_DRAW);
-
-    if(_nb_quad > 0)
-        _index_bo_quad.set_data( 4 * _nb_quad, _unpacked_quad, GL_STATIC_DRAW);
-
-    const int size = _size_unpacked_vert_array;
-    if(_has_normals){
-        _normals_bo. set_data(3 * size, _normals , GL_STATIC_DRAW);
-        _tangents_bo.set_data(3 * size, _tangents, GL_STATIC_DRAW);
-    }
-
-    if(_has_tex_coords)
-        _tex_bo.set_data(2 * size, _tex_coords, GL_STATIC_DRAW);
-
-    float* colors      = new float[ 4 * size];
-    int*   point_index = new int  [ _nb_vert ];
-    for(int i = 0; i < size; i++)
-    {
-         colors[i*4] = colors[i*4+1] = colors[i*4+2] = colors[i*4+3] = 1.f;
-        if( i < _nb_vert)
-            point_index[i] = _packed_vert_map[i].idx_data_unpacked;
-    }
-    _index_bo_point.set_data(     _nb_vert, point_index, GL_STATIC_DRAW);
-    _point_color_bo.set_data( 4 * size   , colors     , GL_STATIC_DRAW);
-
-    for(int i = 0; i < size; i++) colors[i*4+3] = 0.99f;
-
-    _color_bo.set_data( 4 * size, colors, GL_STATIC_DRAW);
-
-    delete[] colors;
-    delete[] point_index;
-
-    // Register VBOs
-    _vbo.cuda_register();
-    _normals_bo.cuda_register();
-    _color_bo.cuda_register();
-
-    if(_nb_tri  > 0) _index_bo_tri. cuda_register();
-    if(_nb_quad > 0) _index_bo_quad.cuda_register();
-
-    if(_has_tex_coords)
-    {
-        _tex_bo.cuda_register();
-        _tangents_bo.cuda_register();
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::update_unpacked_vert()
-{
-    float* vert_gpu = 0;
-    _vbo.map_to(vert_gpu, GL_WRITE_ONLY);
-    for(int i = 0; i < _nb_vert; i++)
-    {
-        const Packed_data d = _packed_vert_map[i];
-        for(int j = 0; j < d.nb_ocurrence; j++)
-        {
-            const int p_idx = d.idx_data_unpacked + j;
-            vert_gpu[p_idx*3    ] = _vert[i*3    ];
-            vert_gpu[p_idx*3 + 1] = _vert[i*3 + 1];
-            vert_gpu[p_idx*3 + 2] = _vert[i*3 + 2];
-        }
-    }
-    _vbo.unmap();
 }
 
 // -----------------------------------------------------------------------------

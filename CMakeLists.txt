@@ -12,15 +12,6 @@ FIND_PACKAGE(Qt5OpenGL REQUIRED)
 FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(OpenGL REQUIRED)
 
-SET(QT_USE_QTOPENGL 1)
-set(QT_USE_QTDBUS TRUE)
-#SET(QT_USE_QTXML 1)
-
-IF(WIN32)
-    SET (QT_USE_MOTIF 0)
-ENDIF()
-
-#INCLUDE(${QT_USE_FILE})
 # END CHECK DEPENDANCIES -------------------------------------------------------
 
 
@@ -287,14 +278,6 @@ endif()
 # Build static libraries
 #-------------------------------------------------------------------------------
 
-# List of .ui files in order to generate associated .h
-QT5_WRAP_UI(host_sources ${qt_ui_files})
-
-# for moc :
-# The below macro generates moc files from qobject_headers when needed and
-# add to the variable host_sources the corresponding generated .cpp
-QT5_WRAP_CPP(host_sources ${qobject_headers})
-
 # Work around CMake: the same CUDA helpers exist upstream, and it's a different
 # version that never actually links cuda.lib.
 set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY})
@@ -309,7 +292,7 @@ TARGET_LINK_LIBRARIES(implicit_framework
     ${LIB_CUDA} cuda_lib
     Qt5::Widgets
     Qt5::OpenGL
-    ${OpenGL} ${GLEW} ${glu} ${QT_LIBRARIES} ${FBX} -ldl -lpthread)
+    ${OpenGL} ${GLEW} ${glu} ${FBX} -ldl -lpthread)
 
 TARGET_LINK_LIBRARIES(cuda_lib implicit_framework)
 

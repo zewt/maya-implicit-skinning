@@ -18,8 +18,6 @@
  */
 #include "globals.hpp"
 
-GLuint g_op_frame_tex;
-GLuint g_op_tex;
 std::string g_cache_dir  = "./resource/app_cache";
 Mesh* g_mesh = 0;
 

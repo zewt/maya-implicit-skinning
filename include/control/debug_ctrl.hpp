@@ -19,7 +19,6 @@
 #ifndef DEBUG_CTRL_HPP__
 #define DEBUG_CTRL_HPP__
 
-#include "port_glew.h"
 #include <vector>
 
 class Debug_ctrl {

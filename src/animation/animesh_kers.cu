@@ -1070,39 +1070,6 @@ void diffuse_values(float* d_values,
 // -----------------------------------------------------------------------------
 
 __global__
-void unpack_vert_and_normals(const Vec3_cu* packed_vert,
-                             const Vec3_cu* packed_normals,
-                             const Vec3_cu* packed_tangents,
-                             const Mesh::Packed_data* packed_vert_map,
-                             Vec3_cu* unpacked_vert,
-                             Vec3_cu* unpacked_normals,
-                             Vec3_cu* unpacked_tangents,
-                             int nb_vert)
-{
-    int p = blockIdx.x * blockDim.x + threadIdx.x;
-    if(p < nb_vert)
-    {
-        Vec3_cu pv = packed_vert[p];
-        Vec3_cu pn = packed_normals[p];
-        Vec3_cu pt;
-        if(unpacked_tangents != 0)
-            pt = packed_tangents[p];
-
-        Mesh::Packed_data d = packed_vert_map[p];
-        int idx = d.idx_data_unpacked;
-        for(int i = 0; i < d.nb_ocurrence; i++)
-        {
-            unpacked_vert    [idx+i] = pv;
-            unpacked_normals [idx+i] = pn;
-            if(unpacked_tangents != 0)
-                unpacked_tangents[idx+i] = pt;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-__global__
 void fill_index(DA_int array)
 {
     int p = blockIdx.x * blockDim.x + threadIdx.x;

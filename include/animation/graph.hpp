@@ -69,20 +69,6 @@ struct Graph {
   void clear();
 
   //----------------------------------------------------------------------------
-  /// @name Graph gui
-  //----------------------------------------------------------------------------
-
-  /// Get the nearest vertex from window position (x,y).
-  /// This is used to perfom vertex selection
-  /// @param[out] dist the distance between the mouse and the screen projection
-  /// of the selected vertex
-  /// @return the selected vertex id
-  int get_window_nearest(float x, float y, float& dist);
-
-  /// Try to find the
-  // void mirror(int i);
-
-  //----------------------------------------------------------------------------
   /// @name Import/export
   //----------------------------------------------------------------------------
 

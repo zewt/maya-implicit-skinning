@@ -53,12 +53,6 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
         _bone_anim_caps[i].jcap.enable = false;
         _bone_anim_caps[i].pcap.enable = false;
     }
-
-    _normals_bo = new GlBuffer_obj(GL_ARRAY_BUFFER);
-    _rest_nbo   = new GlBuffer_obj(GL_ARRAY_BUFFER);
-    _anim_bo    = new GlBuffer_obj(GL_ARRAY_BUFFER);
-    _rest_bo    = new GlBuffer_obj(GL_ARRAY_BUFFER);
-    _color_bo   = new GlBuffer_obj(GL_ARRAY_BUFFER);
 }
 
 // -----------------------------------------------------------------------------
@@ -66,35 +60,6 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
 Animated_mesh_ctrl::~Animated_mesh_ctrl()
 {
     Cuda_utils::free_d(_d_selected_points);
-    delete _normals_bo;
-    delete _anim_bo;
-    delete _rest_bo;
-    delete _color_bo;
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::draw_rotation_axis()
-{
-    if( !_draw_rot_axis || _skel == 0 || _animesh == 0)
-        return;
-
-    const int nb_joints = _skel->nb_joints();
-    Cuda_utils::HA_Vec3_cu h_rot (nb_joints);
-    Cuda_utils::HA_Vec3_cu h_half(nb_joints);
-    _skel->compute_joints_half_angles(h_half, h_rot);
-
-    glAssert( glColor3f(1.f, 0.f, 0.f) );
-    glBegin(GL_LINES);
-    for(int i = 0; i < _skel->nb_joints(); i++)
-    {
-        Vec3_cu v   = _skel->joint_pos(i);
-        Vec3_cu rot = h_rot[i].normalized()*1.f;
-
-        glVertex3f(v.x - rot.x, v.y - rot.y, v.z - rot.z);
-        glVertex3f(v.x + rot.x, v.y + rot.y, v.z + rot.z);
-    }
-    glEnd();
 }
 
 // -----------------------------------------------------------------------------
@@ -556,7 +521,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
     }
     */
 
-    update_gl_buffers_size( compute_nb_samples() );
     _animesh->update_base_potential();
 }
 
@@ -597,43 +561,6 @@ Vec3_cu Animated_mesh_ctrl::cog_mesh_selection()
     return cog;
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::add_to_selection(int id)
-{
-    // Check for doubles
-    bool state = false;
-    for(unsigned int i=0; i<_selected_points.size(); i++)
-        state = state || (_selected_points[i] == id);
-
-    if(!state)
-    {
-        Color cl = Cuda_ctrl::_color.get(Color_ctrl::MESH_SELECTED_POINTS);
-        _selected_points.push_back(id);
-        g_mesh->set_point_color_bo(id, cl.r, cl.g, cl.b, cl.a);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::remove_from_selection(int id)
-{
-    std::vector<int>::iterator it = _selected_points.begin();
-    unsigned int i = 0;
-    for(; it<_selected_points.end(); ++it, ++i)
-        if( (*it) == id )
-            break;
-
-    if(i < _selected_points.size())
-    {
-        Color cl = Cuda_ctrl::_color.get(Color_ctrl::MESH_POINTS);
-        g_mesh->set_point_color_bo(*it, cl.r, cl.g, cl.b, cl.a);
-        _selected_points.erase(it);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::update_device_selection()
 {
     Cuda_utils::free_d( _d_selected_points );
@@ -658,16 +585,6 @@ void Animated_mesh_ctrl::set_nb_iter_smooting(int nb_iter)
         _nb_iter = nb_iter;
     }
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::color_vertex(int vert,
-                                      float r, float g, float b, float a)
-{
-    g_mesh->set_point_color_bo(vert, r, g, b, a);
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::color_uniform(float r, float g, float b, float a){
 }
@@ -757,7 +674,6 @@ void Animated_mesh_ctrl::copy_bone_samples_to_list()
                 set_bone_type( i, EBone::PRECOMPUTED );
         }
     }
-    update_gl_buffers_size(acc);
     //transform_samples();
 }
 
@@ -915,7 +831,6 @@ void Animated_mesh_ctrl::choose_hrbf_samples_ad_hoc(int bone_id,
                 _sample_list[bone_id].n_nodes);
 
     update_bone_samples(bone_id);
-    update_gl_buffers_size( compute_nb_samples() );
 }
 
 // -----------------------------------------------------------------------------
@@ -945,7 +860,6 @@ void Animated_mesh_ctrl::choose_hrbf_samples_poisson(int bone_id,
                 _sample_list[bone_id].n_nodes);
 
     update_bone_samples(bone_id);
-    update_gl_buffers_size( compute_nb_samples() );
 }
 
 // -----------------------------------------------------------------------------
@@ -984,7 +898,6 @@ void Animated_mesh_ctrl::delete_sample(int bone_id, int idx)
     it = _sample_list[bone_id].n_nodes.begin();
     _sample_list[bone_id].n_nodes.erase( it+idx );
     update_bone_samples(bone_id);
-    update_gl_buffers_size( compute_nb_samples() );
 }
 
 // -----------------------------------------------------------------------------
@@ -995,7 +908,6 @@ void Animated_mesh_ctrl::empty_samples(int bone_id)
     _sample_list[bone_id].n_nodes.clear();
 
     update_bone_samples(bone_id);
-    update_gl_buffers_size( compute_nb_samples() );
 }
 
 // -----------------------------------------------------------------------------
@@ -1008,7 +920,6 @@ int Animated_mesh_ctrl::add_sample(int bone_id,
     _sample_list[bone_id].n_nodes.push_back(n);
 
     update_bone_samples(bone_id);
-    update_gl_buffers_size( compute_nb_samples() );
 
     return _sample_list[bone_id].nodes.size()-1;
 }
@@ -1031,7 +942,6 @@ void Animated_mesh_ctrl::add_samples(int bone_id,
     }
 
     update_bone_samples(bone_id);
-    update_gl_buffers_size( compute_nb_samples() );
 }
 
 // -----------------------------------------------------------------------------
@@ -1106,14 +1016,6 @@ void Animated_mesh_ctrl::set_pcap(int bone_id, bool state)
 
 void Animated_mesh_ctrl::transform_samples(const std::vector<int>& bone_ids)
 {
-    Vec3_cu* vbo_ptr = 0;
-    Vec3_cu* nbo_ptr = 0;
-
-    if(_anim_bo->size() != 0){
-        _anim_bo->   map_to(vbo_ptr, GL_WRITE_ONLY);
-        _normals_bo->map_to(nbo_ptr, GL_WRITE_ONLY);
-    }
-
     int acc = 0;
     int nb_bones = bone_ids.size() == 0 ? _sample_list.size() : bone_ids.size();
     for(int i = 0; i < nb_bones; i++)
@@ -1137,20 +1039,10 @@ void Animated_mesh_ctrl::transform_samples(const std::vector<int>& bone_ids)
             _sample_anim_list[bone_id].nodes  [j] = pos;
             _sample_anim_list[bone_id].n_nodes[j] = nor;
 
-            // update vbo
-            vbo_ptr[acc] = pos;
-
-            nbo_ptr[acc*2 + 0] = pos;
-            nbo_ptr[acc*2 + 1] = pos + nor;
             acc++;
         }
 
         transform_caps(bone_id, tr);
-    }
-
-    if(_anim_bo->size() != 0){
-        _anim_bo->   unmap();
-        _normals_bo->unmap();
     }
 }
 
@@ -1246,8 +1138,6 @@ void Animated_mesh_ctrl::transform_selected_samples(const Transfo& t)
 
     for(unsigned i = 0; i < update_bone.size(); i++)
         if( update_bone[i] ) update_bone_samples(i);
-
-    update_vbo_rest_pose( compute_nb_samples() );
 }
 
 // -----------------------------------------------------------------------------
@@ -1268,62 +1158,6 @@ Vec3_cu Animated_mesh_ctrl::cog_sample_selection()
     cog = cog / (float)(size == 0 ? 1 : size);
     return cog;
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::update_vbo_rest_pose(int size)
-{
-    std::vector<Vec3_cu> buff_nodes  (size    );
-    std::vector<Vec3_cu> buff_normals(size * 2);
-    int acc = 0;
-    for(unsigned i = 0; i < _sample_list.size(); i++)
-    {
-        for(unsigned j = 0; j < _sample_list[i].nodes.size(); j++)
-        {
-            Vec3_cu p = _sample_list[i].nodes  [j];
-            Vec3_cu n = _sample_list[i].n_nodes[j];
-
-            buff_nodes[acc] = p;
-
-            buff_normals[acc*2 + 0] = p;
-            buff_normals[acc*2 + 1] = p+n;
-            acc++;
-        }
-    }
-
-    _rest_bo-> set_data(size * 3    , &(buff_nodes[0])  , GL_STATIC_DRAW);
-    _rest_nbo->set_data(size * 3 * 2, &(buff_normals[0]), GL_STATIC_DRAW);
-    _normals_bo->set_data(size* 3 * 2/*two points for a line*/, 0, GL_STATIC_DRAW);
-
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::update_gl_buffers_size(int size)
-{
-    if( size == 0 ) return;
-
-    // update vbo
-    update_vbo_rest_pose( size );
-    _anim_bo-> set_data(size * 3, 0, GL_STATIC_DRAW);
-
-    // update cbo
-    std::vector<Color> color(size);
-    int idx = 0;
-    for(unsigned i = 0; i < _sample_list.size(); i++)
-    {
-        Color cl = Color::pseudo_rand(i);
-        for(unsigned j = 0; j < _sample_list[i].nodes.size(); j++)
-        {
-            assert(idx < size);
-            color[idx] = cl;
-            idx++;
-        }
-    }
-    _color_bo->set_data(size*4, &(color[0]));
-}
-
-// -----------------------------------------------------------------------------
 
 int Animated_mesh_ctrl::compute_nb_samples()
 {
@@ -1358,141 +1192,3 @@ void Animated_mesh_ctrl::precompute_all_bones()
             _animesh->set_bone_type( i, EBone::PRECOMPUTED);
     }
 }
-
-// -----------------------------------------------------------------------------
-
-
-void Animated_mesh_ctrl::draw_caps(const Cap& cap)
-{
-    if(!cap.enable) return;
-
-    GLPointSizeSave save_point_size;
-
-    glColor3f(1.f, 0.f, 0.f);
-    glPointSize(15.f);
-
-    glBegin(GL_POINTS);
-    for( unsigned i = 0; i < cap.nodes.size(); i++)
-    {
-        Vec3_cu v = cap.nodes[i];
-        glVertex3f(v.x, v.y, v.z);
-    }
-    glEnd();
-
-    GLLineWidthSave save_width;
-    glLineWidth( 1.5f );
-    glBegin(GL_LINES);
-    for( unsigned i = 0; i < cap.nodes.size(); i++)
-    {
-        Vec3_cu v = cap.nodes  [i];
-        Vec3_cu n = cap.n_nodes[i];
-        glVertex3f(v.x, v.y, v.z);
-        v = v + n;
-        glVertex3f(v.x, v.y, v.z);
-    }
-    glEnd();
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::draw_hrbf_points(const std::vector<int>& list,
-                                          bool draw_normals,
-                                          bool rest_pose)
-{
-
-    GLEnabledSave save_point(GL_POINT_SMOOTH, true, true );
-    GLEnabledSave save_light(GL_LIGHTING,     true, false);
-    GLEnabledSave save_tex  (GL_TEXTURE_2D,   true, false);
-
-    glAssert( glPointSize(10.f) );
-    glAssert( glPushMatrix() );
-    glAssert( glEnableClientState(GL_VERTEX_ARRAY) );
-
-    _color_bo->bind();
-    glAssert( glColorPointer(4,GL_FLOAT,0,0) );
-
-    std::vector<int> done(_skel->nb_joints(), false);
-    for(unsigned i = 0; i < list.size(); i++)
-    {
-        int bone_id = list[i];
-
-        int parent = _skel->parent( bone_id );
-        if( _factor_bones && parent != -1)
-        {
-            const std::vector<int>& sons = _skel->get_sons( parent );
-            assert(sons.size() > 0);
-            if(done[ sons[0] ] )
-                continue;
-            else
-            {
-                bone_id = sons[0];
-                done[bone_id] = true;
-            }
-        }
-
-        int dep  = compute_offset(bone_id);
-        int size = _sample_list[bone_id].nodes.size();
-
-        // Draw points
-        glAssert( glEnableClientState(GL_COLOR_ARRAY) );
-        rest_pose ? _rest_bo->bind() : _anim_bo->bind() ;
-        glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-        glAssert( glDrawArrays(GL_POINTS, dep, size) );
-
-        // draw normals
-        if(draw_normals)
-        {
-            glAssert( glDisableClientState(GL_COLOR_ARRAY) );
-            rest_pose ? _rest_nbo->bind() : _normals_bo->bind();
-            glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-            Color cl = Color::pseudo_rand(bone_id);
-            glColor3f(cl.r, cl.g, cl.b);
-            glAssert( glDrawArrays(GL_LINES, dep*2, size*2) );
-        }
-
-        // draw caps
-        if(rest_pose){
-            draw_caps(_bone_caps[ list[i] ].jcap);
-            draw_caps(_bone_caps[ bone_id ].pcap);
-        }
-        else
-        {
-            draw_caps(_bone_anim_caps[ list[i] ].jcap);
-            draw_caps(_bone_anim_caps[ bone_id ].pcap);
-        }
-    }
-
-
-
-#if 0
-    if(draw_normals)
-    {
-        glAssert( glDisableClientState(GL_COLOR_ARRAY) );
-        rest_pose ? _rest_nbo->bind() : _normals_bo->bind();
-        glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-
-        for(unsigned i = 0; i < list.size(); i++)
-        {
-            int bone_id = list[i];
-
-            int dep  = compute_offset(bone_id);
-            int size = _sample_list[bone_id].nodes.size();
-
-            Color cl = Color::pseudo_rand(bone_id);
-            glColor3f(cl.r, cl.g, cl.b);
-            glAssert( glDrawArrays(GL_LINES, dep*2, size*2) );
-        }
-    }
-#endif
-
-    // clean up
-    _color_bo->unbind();
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-    glAssert( glColorPointer (4, GL_FLOAT, 0, 0) );
-
-    glAssert( glDisableClientState(GL_VERTEX_ARRAY) );
-    glAssert( glDisableClientState(GL_COLOR_ARRAY) );
-    glAssert( glPopMatrix() );
-}
-
-// -----------------------------------------------------------------------------

@@ -20,16 +20,10 @@
 #define GLOBAL_HPP__
 
 #include <string>
-#include "port_glew.h"
 #include "macros.hpp"
 #include "mesh.hpp"
-#include "gl_mesh.hpp"
 
 #include "blending_env_type.hpp"
-
-/// Textures used to display controller and operator frames
-extern GLuint g_op_frame_tex;
-extern GLuint g_op_tex;
 
 /// Path to store various caches (mostly blending operators)
 extern std::string g_cache_dir;

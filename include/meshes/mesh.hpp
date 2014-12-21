@@ -25,12 +25,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "glbuffer_object.hpp"
-#include "shader.hpp"
 #include "vec3_cu.hpp"
-
-// FORWARD DEFINTIONS  ---------------------------------------------------------
-class GlTex2D;
 
 namespace Loader{
     struct Abs_mesh;
@@ -188,15 +183,6 @@ public:
     /// @name Surface deformations
     //  ------------------------------------------------------------------------
 
-    /// Center about the center of gravity and resize the mesh to the given
-    /// length 'size'
-    void center_and_resize(float size);
-
-    /// Smoothen the mesh (make the surface less rough)
-    void smoothen_mesh(float smooth_factor,
-                       int nb_iter,
-                       int nb_min_neighbours = 0);
-
     /// Diffuse some vertex attributes along the mesh.
     /// Each vertex is associated to an attribute defined by the array
     /// "vertices_attributes[]". For each vertex the mean sum of its first ring
@@ -211,25 +197,9 @@ public:
                             float locked_value,
                             int nb_iter) const;
 
-    /// Add noise to the mesh
-    void add_noise(int fq, float amp);
-
     //  ------------------------------------------------------------------------
     /// @name Getter & Setters
     //  ------------------------------------------------------------------------
-
-    /// Set the color of the ith vertices when the mesh points are displayed
-    /// @warning slow method for large data don't use this use directly the
-    /// buffer object
-    void set_point_color_bo(int i, float r, float g, float b, float a);
-
-    /// Set the color_bo attribute to the given rgba color.
-    /// @see color_bo
-    void set_color_bo(float r, float g, float b, float a);
-
-    /// Set the point_color_bo attribute to the given rgba color.
-    /// @see point_color_bo
-    void set_point_color_bo(float r, float g, float b, float a);
 
     /// Get the offset
     inline const Vec3_cu& get_offset() const{ return _offset; }
@@ -328,8 +298,6 @@ private:
     /// Compute the normals on CPU
     void compute_normals();
 
-    void compute_tangents();
-
     /// For each vertex compute the list of faces it belongs to and stores it
     /// in the attributes 'tri_list_per_vert' and 'quad_list_per_vert'.
     void compute_face_index();
@@ -337,13 +305,6 @@ private:
     /// Compute the list of the mesh edges
     /// updates 'edge_list' and 'edge_list_offsets'
     void compute_edges();
-
-    /// initialize all the vbos with their corresponding CPU array attributes
-    void init_vbos();
-
-    /// updates the vbo with the vertex position in 'vert'.
-    /// @warning slow method it is done on CPU
-    void update_unpacked_vert();
 
     // Mesh edges computation tool functions.
     //{
@@ -456,29 +417,6 @@ private:
     /// packed_vert_map[packed_vert_idx] = mapping to unpacked.
     /// size of 'packed_vert_map' equals 'nb_vert'
     Packed_data* _packed_vert_map;
-
-public:
-    /// @name Buffer object data
-    /// @brief size of these buffers are 'size_unpacked_vert_array'
-    /// @{
-    GlBuffer_obj _vbo;
-    GlBuffer_obj _normals_bo;
-    GlBuffer_obj _tangents_bo;
-    GlBuffer_obj _color_bo;
-    GlBuffer_obj _tex_bo;
-    /// color of mesh's points when points are displayed
-    GlBuffer_obj _point_color_bo;
-    /// @}
-
-    /// @name Buffer object index
-    /// @{
-    /// Size of this buffer is 'nb_tri'
-    GlBuffer_obj _index_bo_tri;
-    /// Size of this buffer is 'nb_quad'
-    GlBuffer_obj _index_bo_quad;
-    /// Size of this buffer is 'nb_vert'
-    GlBuffer_obj _index_bo_point;
-    /// @}
 };
 
 #endif // MESH_HPP__

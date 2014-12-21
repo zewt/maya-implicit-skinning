@@ -19,8 +19,6 @@
 #include "SKIN/main_window_skin.hpp"
 //#include "SKIN_V2/main_window_skin2.hpp"
 
-#include <QtGui>
-
 /**
  * @file main_csg.cpp
  *
@@ -30,11 +28,8 @@
 #include <math.h>
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-
     // Set up and show widgets.
     Main_window_skin main_window;
-    main_window.show();
 
 /*
     OGL_widget_skin_hidden* _hidden = new OGL_widget_skin_hidden(0);
@@ -69,6 +64,5 @@ int main(int argc, char *argv[])
     CUDA_SAFE_CALL(cudaGLSetGLDevice(device_id) );
     */
 
-    int qt_ret = app.exec();
-    return qt_ret;
+    return 0;
 }

@@ -82,32 +82,6 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
 
 void Animesh::compute_tangents(const Vec3_cu* vertices, Vec3_cu* tangents)
 {
-    // TODO: optimize the tangent computation by precomputed coefficients
-    // only related top connexity and uv coords.
-    int* map_tri   = 0;
-    int* map_quad  = 0;
-    float* map_tex = 0;
-    if(_mesh->_nb_tri  > 0) _mesh->_index_bo_tri. cuda_map_to(map_tri);
-    if(_mesh->_nb_quad > 0) _mesh->_index_bo_quad.cuda_map_to(map_quad);
-    _mesh->_tex_bo.cuda_map_to(map_tex);
-
-    Animesh_kers::compute_tangents(d_input_tri.ptr(),
-                                   d_input_quad.ptr(),
-                                   map_tri,
-                                   map_quad,
-                                   d_piv,
-                                   _mesh->get_nb_tri(),
-                                   _mesh->get_nb_quad(),
-                                   vertices,
-                                   map_tex,
-                                   d_unpacked_tangents,
-                                   _mesh->_max_faces_per_vertex,
-                                   tangents);
-
-    if(_mesh->_nb_tri  > 0) _mesh->_index_bo_tri. cuda_unmap();
-    if(_mesh->_nb_quad > 0) _mesh->_index_bo_quad.cuda_unmap();
-    _mesh->_tex_bo.cuda_unmap();
-    CUDA_CHECK_ERRORS();
 }
 
 // -----------------------------------------------------------------------------
@@ -466,16 +440,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
         compute_tangents(out_verts, out_normals);
 //    else
 //        out_tangents = 0;
-
-    // Fill the buffer objects with the deformed vertices.
-    // vertex with multiple texture coordinates are duplicated
-    update_opengl_buffers(nb_vert,
-                          out_verts,
-                          out_normals,
-                          out_tangents,
-                          &_mesh->_vbo,
-                          &_mesh->_normals_bo,
-                          &_mesh->_tangents_bo);
 }
 
 // -----------------------------------------------------------------------------

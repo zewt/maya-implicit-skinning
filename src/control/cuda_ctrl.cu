@@ -24,10 +24,8 @@
 #include <string>
 
 #include "skeleton.hpp"
-#include "port_glew.h"
 #include "globals.hpp"
 #include "cuda_globals.hpp"
-#include "opengl_stuff.hpp"
 #include "animesh.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
@@ -42,14 +40,12 @@ namespace Cuda_ctrl {
 // =============================================================================
 
 Path_ctrl            _paths;
-Potential_plane_ctrl _potential_plane;
 Animated_mesh_ctrl*  _anim_mesh = 0;
 Skeleton_ctrl        _skeleton;
 Display_ctrl         _display;
 Debug_ctrl           _debug;
 Graph_ctrl           _graph;
 Operators_ctrl       _operators;
-Color_ctrl           _color;
 
 void load_mesh( Mesh* mesh )
 {
@@ -63,12 +59,7 @@ void load_mesh( Mesh* mesh )
 
     g_mesh = mesh;
 
-    //g_mesh->add_noise(5, 0.03f);
-    g_mesh->center_and_resize(50.f);
     g_mesh->check_integrity();
-
-    Color cl = _color.get(Color_ctrl::MESH_POINTS);
-    g_mesh->set_point_color_bo(cl.r, cl.g, cl.b, cl.a);
 
     std::cout << "mesh loaded" << std::endl;
 }
@@ -209,50 +200,11 @@ void set_default_controller_parameters()
     //Blending_env::set_global_ctrl_shape(shape);
 }
 
-// -----------------------------------------------------------------------------
-
-GLuint init_tex_operator( int width, int height )
-{
-    float* tex = compute_tex_operator(width, height,
-                                      Cuda_ctrl::_display._operator_type,
-                                      Cuda_ctrl::_display._operator_mode,
-                                      Cuda_ctrl::_display._opening_angle,
-                                      Cuda_ctrl::_display._custom_op_id );
-
-    glAssert( glBindBuffer(GL_ARRAY_BUFFER, 0) );
-    GLuint tex_id;
-    glAssert( glGenTextures(1, &tex_id) );
-    glAssert( glBindTexture(GL_TEXTURE_2D, tex_id) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) );
-    glAssert( glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST) );
-
-    //printf("tex ptr %d\n", tex);
-    glAssert( glTexImage2D(GL_TEXTURE_2D,
-                           0,
-                           GL_RGBA,
-                           width,
-                           height,
-                           0,
-                           GL_RGBA,
-                           GL_FLOAT,
-                           tex) );
-
-    glAssert( glBindTexture(GL_TEXTURE_2D, 0) );
-    delete[] tex;
-    return tex_id;
-}
-
-// -----------------------------------------------------------------------------
-
 void init_opengl_cuda()
 {
     // NOTE this function should not call ANY cuda API functions
     g_mesh  = new Mesh();
     g_graph = new Graph(g_mesh->get_offset(), g_mesh->get_scale());
-
-    g_op_tex = init_tex_operator(100, 100);
 }
 
 // -----------------------------------------------------------------------------
@@ -278,17 +230,6 @@ void cleanup()
 {
     cudaDeviceSynchronize();
     CUDA_CHECK_ERRORS();
-
-    // OpenGL ---------------
-    glAssert( glBindTexture(GL_TEXTURE_2D, 0) );
-    glAssert( glBindBuffer(GL_ARRAY_BUFFER, 0) );
-    glAssert( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
-    glUseProgram( 0 );
-
-    glAssert( glDeleteTextures(1, &g_op_frame_tex) );
-    glAssert( glDeleteTextures(1, &g_op_tex) );
-
-    // End OpenGL ----------
 
     Constants::free();
 

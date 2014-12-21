@@ -88,19 +88,3 @@ void Graph_ctrl::set_vertex(int id, Vec3_cu v){
 void Graph_ctrl::center_vertex(int )
 {
 }
-
-// -----------------------------------------------------------------------------
-
-bool Graph_ctrl::select_node(int x, int y)
-{
-    float dst;
-    //y = Cuda_ctrl::_display._height - y;
-    int nearest = g_graph->get_window_nearest((float)x, (float)y, dst);
-    if(dst < 8.f){
-        _selected_node = nearest;
-        return true;
-    }
-    return false;
-}
-
-// -----------------------------------------------------------------------------

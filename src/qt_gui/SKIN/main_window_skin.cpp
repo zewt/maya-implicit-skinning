@@ -18,17 +18,14 @@
  */
 #include "SKIN/main_window_skin.hpp"
 
-#include <QFileDialog>
-#include <QString>
-
 #include <cassert>
 #include <algorithm>
+#include <string>
 
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
 #include "display_operator.hpp"
 #include "cuda_ctrl.hpp"
-#include "gl_mesh.hpp"
 #include "loader.hpp"
 #include "fbx_loader.hpp"
 #include "conversions.hpp"
@@ -41,50 +38,10 @@ extern Graph* g_graph;
 #include "skeleton.hpp"
 extern Skeleton* g_skel;
 
+using namespace std;
 using namespace Cuda_ctrl;
 
 
-
-#include "port_glew.h"
-
-#include <QGLWidget>
-
-class OGL_widget_skin_hidden : public QGLWidget {
-public:
-    OGL_widget_skin_hidden(QWidget *w): QGLWidget(w)
-    {
-        updateGL();
-        makeCurrent();
-
-        glewInit();
-        int state = glewIsSupported("GL_VERSION_2_0 "
-                                    "GL_VERSION_1_5 "
-                                    "GL_ARB_vertex_buffer_object "
-                                    "GL_ARB_pixel_buffer_object");
-        if(!state) {
-            fprintf(stderr, "Cannot initialize glew: required OpenGL extensions missing.");
-            exit(-1);
-        }
-    
-        setGeometry(0,0,0,0);
-        hide();
-
-        assert(isValid());
-
-        // Initialize cuda context
-        std::vector<Blending_env::Op_t> op;
-    //    op.push_back( Blending_env::B_TCH );
-        op.push_back( Blending_env::B_D  );
-        op.push_back( Blending_env::U_OH );
-        op.push_back( Blending_env::C_D  );
-
-    //    for (int i=(int)Blending_env::BINARY_3D_OPERATOR_BEGIN+1; i<(int)Blending_env::BINARY_3D_OPERATOR_END; ++i)
-    //        op.push_back( Blending_env::Op_t(i) );
-
-        Cuda_ctrl::cuda_start( op );
-        Cuda_ctrl::init_opengl_cuda();
-    }
-};
 
 /*
 void OGL_viewports_skin::updateGL()
@@ -110,17 +67,23 @@ void OGL_viewports_skin::updateGL()
 
 // -----------------------------------------------------------------------------
 
-Main_window_skin::Main_window_skin(QWidget *parent) :
-    QMainWindow(parent)
+Main_window_skin::Main_window_skin()
 {
-    setupUi(this);
+    // Initialize cuda context
+    std::vector<Blending_env::Op_t> op;
+//    op.push_back( Blending_env::B_TCH );
+    op.push_back( Blending_env::B_D  );
+    op.push_back( Blending_env::U_OH );
+    op.push_back( Blending_env::C_D  );
 
-    _hidden = new OGL_widget_skin_hidden(viewports_frame);
+//    for (int i=(int)Blending_env::BINARY_3D_OPERATOR_BEGIN+1; i<(int)Blending_env::BINARY_3D_OPERATOR_END; ++i)
+//        op.push_back( Blending_env::Op_t(i) );
+
+    Cuda_ctrl::cuda_start( op );
+    Cuda_ctrl::init_opengl_cuda();
 
 //    _viewports = new OGL_viewports_skin(viewports_frame, this);
 //    viewports_frame->layout()->addWidget(_viewports);
-
-    resize(1300, 800);
 
     // HACK: Because blending_env initialize to elbow too ...
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
@@ -141,7 +104,7 @@ void Main_window_skin::choose_hrbf_samples(int bone_id)
 {
     if( g_skel->is_leaf(bone_id) ) return;
 
-    switch( cBox_sampling_type->currentIndex())
+    switch(0)
     {
     case 0:
     {
@@ -449,16 +412,6 @@ void Main_window_skin::on_color_smoothing_laplacian_toggled(bool checked)
     }
 }
 
-void Main_window_skin::keyPressEvent( QKeyEvent* event )
-{
-
-}
-
-
-
-
-
-
 
 
 
@@ -544,28 +497,14 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
     if( !Cuda_ctrl::is_mesh_loaded() )
         return;
 
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load skeleton"),
-                                                    "./resource/meshes",
-                                                    tr("*.skel *.fbx") );
-    if( fileName.size() != 0)
+    string filename = "foo.fbx";
+    if( filename.size() != 0)
     {
-        QFileInfo fi(fileName);
-        QString ext = fi.suffix().toLower();
+        // Parse file
+        Fbx_loader::Fbx_file loader( filename.c_str() );
 
-        if(ext == "fbx")
-        {
-            // Parse file
-            Fbx_loader::Fbx_file loader( fileName.toStdString() );
-
-            // Load into our data representation
-            load_fbx_skeleton_anims( loader );
-        }
-        else if( ext == "skel")
-        {
-            Cuda_ctrl::_graph.load_from_file(fileName.toLatin1());
-            Cuda_ctrl::_skeleton.load( *g_graph );
-        }
+        // Load into our data representation
+        load_fbx_skeleton_anims( loader );
     }
 }
 
@@ -576,17 +515,10 @@ void Main_window_skin::on_actionSave_as_mesh_triggered()
     if( !Cuda_ctrl::is_mesh_loaded() )
         return;
 
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save mesh"),
-                                                    "./resource/meshes",
-                                                    tr("*.off") );
-
-    if( fileName.size() != 0 )
+    string filename = "foo.off";
+    if( filename.size() != 0 )
     {
-       QFileInfo fi(fileName);
-       QString ext = fi.suffix().toLower();
-       if(ext == "off")
-           g_mesh->export_off(fileName.toLatin1(), false);
+       g_mesh->export_off(filename.c_str(), false);
     }
 }
 
@@ -597,12 +529,9 @@ void Main_window_skin::on_actionSave_ISM_triggered()
     if( !Cuda_ctrl::is_animesh_loaded() )
         return;
 
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Save ism"),
-                                                    "./resource/meshes",
-                                                    tr("*.ism") );
-    if( fileName.size() != 0)
-        Cuda_ctrl::_anim_mesh->save_ism(fileName.toLatin1());
+    string filename = "foo.ism";
+    if(filename.size() != 0)
+        Cuda_ctrl::_anim_mesh->save_ism(filename.c_str());
 }
 
 // -----------------------------------------------------------------------------
@@ -612,13 +541,9 @@ void Main_window_skin::on_actionLoad_ISM_triggered()
     if( !Cuda_ctrl::is_animesh_loaded() )
         return;
 
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load ism"),
-                                                    "./resource/meshes",
-                                                    tr("*.ism") );
-
-    if( fileName.size() != 0)
-        Cuda_ctrl::_anim_mesh->load_ism(fileName.toLatin1());
+    string filename = "foo.ism";
+    if( filename.size() != 0)
+        Cuda_ctrl::_anim_mesh->load_ism(filename.c_str());
 }
 
 // -----------------------------------------------------------------------------
@@ -628,17 +553,14 @@ void Main_window_skin::on_actionLoad_weights_triggered()
     if( !Cuda_ctrl::is_animesh_loaded() )
         return;
 
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load skinning weights"),
-                                                    "./resource/meshes",
-                                                    tr("*.weights *.csv") );
-    if( fileName.size() == 0)
+    string filename = "foo.weights";
+    if( filename.size() == 0)
         return;
 
     if(Cuda_ctrl::is_animesh_loaded())
-        Cuda_ctrl::_anim_mesh->load_weights(fileName.toLatin1());
+        Cuda_ctrl::_anim_mesh->load_weights(filename.c_str());
     else
-        Cuda_ctrl::load_animesh_and_ssd_weights( fileName.toLatin1() );
+        Cuda_ctrl::load_animesh_and_ssd_weights( filename.c_str() );
 }
 
 // -----------------------------------------------------------------------------
@@ -648,21 +570,11 @@ void Main_window_skin::on_actionLoad_mesh_triggered()
 
 void Main_window_skin::on_actionLoad_FBX_triggered()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Load from FBX"),
-                                                    "./resource/meshes",
-                                                    tr("*.fbx") );
-    if( fileName.size() == 0)
-        return;
-    QString name = fileName.section('.',0,0);
-
-    // Load mesh
-    QString mesh_name = name;
-    mesh_name.append(".fbx");
-    if( !QFile::exists(mesh_name) )
+    string filename = "foo.fbx";
+    if( filename.size() == 0)
         return;
 
-    Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
+    Fbx_loader::Fbx_file loader(filename);
     load_fbx_mesh( loader );
 
     load_fbx_skeleton_anims( loader );

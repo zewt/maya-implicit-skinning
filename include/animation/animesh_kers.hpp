@@ -229,18 +229,6 @@ void copy_arrays(const T* d_in, T* d_out, int n)
 __global__
 void fill_index(DA_int array);
 
-/// For rendering some vertives needs to be duplicated because of multiples
-/// textures coordinates. This kernels does that.
-__global__
-void unpack_vert_and_normals(const Vec3_cu* packed_vert,
-                             const Vec3_cu* packed_normals,
-                             const Vec3_cu* packed_tangents,
-                             const Mesh::Packed_data* packed_vert_map,
-                             Vec3_cu* unpacked_vert,
-                             Vec3_cu* unpacked_normals,
-                             Vec3_cu* unpacked_tangents,
-                             int nb_vert);
-
 /// @param d_in_vertices vertices to be smoothed
 /// @param d_in_normals normals associated to the array d_in_vertices
 /// @param d_out_vector Correction vector to aply to vertices in the final stage

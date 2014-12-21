@@ -22,14 +22,7 @@
 #include <map>
 
 #include "fbx_loader.hpp"
-#include "ui_main_window_skin.h"
 #include "controller.hpp"
-
-// FORWARD DEFS ----------------------------------------------------------------
-// Forward def because of the interdependencie between MainWindow and
-// OGL_viewports
-class OGL_widget_skin_hidden;
-// END FORWARD DEFS ------------------------------------------------------------
 
 /** @class MainWindow
   @brief The qt main window
@@ -38,11 +31,9 @@ class OGL_widget_skin_hidden;
   The class is implemented through severals main_window_xxx.cpp to seperate
   different parts of the window implementation wich is large
 */
-class Main_window_skin : public QMainWindow, public Ui::MainWindow_skin {
-    Q_OBJECT
-
+class Main_window_skin {
 public:
-    Main_window_skin(QWidget *parent = 0);
+    Main_window_skin();
 
     void choose_hrbf_samples(int bone_id);
     void choose_hrbf_samples_selected_bones();
@@ -53,16 +44,12 @@ public:
 
     //void closeEvent(QCloseEvent*){ exit(0); }
 
-    void keyPressEvent( QKeyEvent* event );
-
 private:
 
     bool load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loader);
     void load_fbx_mesh( Fbx_loader::Fbx_file& loader);
 
-    OGL_widget_skin_hidden* _hidden;
-
-public slots:
+public:
     // -------------------------------------------------------------------------
     /// @name MANUAL SLOTS
     // -------------------------------------------------------------------------
@@ -105,7 +92,7 @@ public slots:
     void on_checkB_cap_joint_toggled(bool checked);
     void on_checkB_capparent_toggled(bool checked);
     void on_dSpinB_hrbf_radius_valueChanged(double );
-private slots:
+private:
     void on_checkBox_update_base_potential_toggled(bool checked);
 
     void on_cBox_always_precompute_toggled(bool checked);

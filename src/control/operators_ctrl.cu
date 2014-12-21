@@ -21,7 +21,6 @@
 #include "blending_env.hpp"
 #include "constants.hpp"
 #include "globals.hpp"
-#include "opengl_stuff.hpp"
 #include "cuda_ctrl.hpp"
 #include "blending_env_tex_interface.hpp"
 #include "n_ary_constant_interface.hpp"
@@ -32,17 +31,12 @@
 
 void Operators_ctrl::update_bulge(){
     Blending_env::update_3D_bulge();
-    // TODO: make proper attributes for the resolution :
-    glDeleteTextures( 1, &g_op_tex);
-    g_op_tex = Cuda_ctrl::init_tex_operator(_disp_size, _disp_size);
 }
 
 // -----------------------------------------------------------------------------
 
 void Operators_ctrl::update_displayed_operator_texture()
 {
-    glDeleteTextures( 1, &g_op_tex);
-    g_op_tex = Cuda_ctrl::init_tex_operator(_disp_size, _disp_size);
 }
 
 // -----------------------------------------------------------------------------
