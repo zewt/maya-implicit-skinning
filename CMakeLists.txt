@@ -225,16 +225,16 @@ endif()
 set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY})
 
 # build all .cu files into a static lib cuda_lib
-CUDA_ADD_LIBRARY( cuda_lib STATIC  ${cuda_sources} )
+CUDA_ADD_LIBRARY( implicit_framework STATIC  ${cuda_sources}  ${host_sources})
 
 # Build all .cpp and qt codes into a static lib implicit_framework
-ADD_LIBRARY( implicit_framework STATIC ${host_sources} )
+#ADD_LIBRARY( implicit_framework STATIC ${host_sources} )
 # Libraries implicit_framework needs to be linked against:
 TARGET_LINK_LIBRARIES(implicit_framework
-    ${LIB_CUDA} cuda_lib
+    ${LIB_CUDA} 
     ${OpenGL} ${glu} ${FBX} -ldl -lpthread)
 
-TARGET_LINK_LIBRARIES(cuda_lib implicit_framework)
+TARGET_LINK_LIBRARIES(implicit_framework)
 
 # END BUILD LIBRARIES ----------------------------------------------------------
 
@@ -246,7 +246,7 @@ TARGET_LINK_LIBRARIES(cuda_lib implicit_framework)
 ADD_EXECUTABLE(implicit_skinning
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main_skinning.cpp )
 # Specify the dependency.
-TARGET_LINK_LIBRARIES(implicit_skinning implicit_framework cuda_lib )
+TARGET_LINK_LIBRARIES(implicit_skinning implicit_framework)
 
 
 # Generating PTX files.
