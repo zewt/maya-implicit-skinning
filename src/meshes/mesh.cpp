@@ -39,7 +39,6 @@
 Mesh::Mesh() :
     _is_initialized(false),
     _is_closed(true),
-    _has_tex_coords(false),
     _has_normals(false),
     _is_manifold(true),
     _offset(0.f,0.f,0.f),
@@ -58,7 +57,6 @@ Mesh::Mesh() :
     _edge_list_offsets(0),
     _normals(0),
     _tangents(0),
-    _tex_coords(0),
     _size_unpacked_vert_array(-1),
     _unpacked_tri(0),
     _unpacked_quad(0),
@@ -71,7 +69,6 @@ Mesh::Mesh() :
 Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _is_initialized(true),
     _is_closed(true),
-    _has_tex_coords(false),
     _has_normals(false),
     _is_manifold(true),
     _offset(0.f,0.f,0.f),
@@ -90,7 +87,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _edge_list_offsets(0),
     _normals(0),
     _tangents(0),
-    _tex_coords(0),
     _size_unpacked_vert_array( vert.size() / 3),
     _unpacked_tri(0),
     _unpacked_quad(0),
@@ -141,7 +137,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
 Mesh::Mesh(const Mesh& m) :
     _is_initialized(m._is_initialized),
     _is_closed(m._is_closed),
-    _has_tex_coords(m._has_tex_coords),
     _has_normals(m._has_normals),
     _is_manifold(m._is_manifold),
     _offset(m._offset),
@@ -172,7 +167,6 @@ Mesh::Mesh(const Mesh& m) :
 
     _normals    = _has_normals     ? new float [_size_unpacked_vert_array * 3] : 0;
     _tangents   = m._tangents != 0 ? new float [_size_unpacked_vert_array * 3] : 0;
-    _tex_coords = _has_tex_coords  ? new float [_size_unpacked_vert_array * 2] : 0;
 
     _unpacked_tri  = new int[_nb_tri  * 3];
     _unpacked_quad = new int[_nb_quad * 4];
@@ -212,7 +206,7 @@ Mesh::Mesh(const Mesh& m) :
     for(int i = 0; i < _nb_edges; i++)
         _edge_list[i] = m._edge_list[i];
 
-    if( m._has_normals || m._has_tex_coords || m._tangents != 0)
+    if( m._has_normals || m._tangents != 0)
     {
         for(int i = 0; i < _size_unpacked_vert_array; i++)
         {
@@ -227,11 +221,6 @@ Mesh::Mesh(const Mesh& m) :
                 _tangents[i*3+1] = m._tangents[i*3+1];
                 _tangents[i*3+2] = m._tangents[i*3+2];
             }
-
-            if(_has_tex_coords){
-                _tex_coords[i*2  ] = m._tex_coords[i*2  ];
-                _tex_coords[i*2+1] = m._tex_coords[i*2+1];
-            }
         }
     }
 }
@@ -241,7 +230,6 @@ Mesh::Mesh(const Mesh& m) :
 Mesh::Mesh(const char* filename) :
     _is_initialized(false),
     _is_closed(true),
-    _has_tex_coords(false),
     _has_normals(false),
     _is_manifold(true),
     _offset(0.f,0.f,0.f),
@@ -260,7 +248,6 @@ Mesh::Mesh(const char* filename) :
     _edge_list_offsets(0),
     _normals(0),
     _tangents(0),
-    _tex_coords(0),
     _size_unpacked_vert_array(-1),
     _unpacked_tri(0),
     _unpacked_quad(0),
@@ -402,7 +389,6 @@ void Mesh::free_mesh_data()
     delete[] _quad;
     delete[] _normals;
     delete[] _tangents;
-    delete[] _tex_coords;
     delete[] _packed_vert_map;
     delete[] _unpacked_tri;
     delete[] _unpacked_quad;
@@ -415,7 +401,6 @@ void Mesh::free_mesh_data()
     _quad              = 0;
     _normals           = 0;
     _tangents          = 0;
-    _tex_coords        = 0;
     _packed_vert_map   = 0;
     _unpacked_tri      = 0;
     _unpacked_quad     = 0;
@@ -634,65 +619,6 @@ void Mesh::compute_face_index()
 
 // -----------------------------------------------------------------------------
 
-void Mesh::save(Loader::Abs_mesh& mesh)
-{
-    // FIXME: handling quads:
-
-    // Copy vertices array
-    mesh._vertices.clear();
-    mesh._vertices.resize( _nb_vert );
-    for(unsigned i = 0; i < mesh._vertices.size(); ++i){
-        Vec3_cu v(_vert[i*3], _vert[i*3+1], _vert[i*3+2]);
-        mesh._vertices[i] = Loader::Vertex(v.x, v.y, v.z);
-    }
-
-    // Copy normals array
-    mesh._normals.clear();
-    mesh._normals.resize( _size_unpacked_vert_array );
-    for(unsigned i = 0; i < mesh._normals.size(); ++i){
-        Vec3_cu v(_normals[i*3], _normals[i*3+1], _normals[i*3+2]);
-        mesh._normals[i] = Loader::Normal(v.x, v.y, v.z);
-    }
-
-    // Copy texture coordinates array
-    mesh._texCoords.clear();
-    mesh._texCoords.resize( _size_unpacked_vert_array );
-    for(unsigned i = 0; i < mesh._texCoords.size(); ++i)
-        mesh._texCoords[i] = Loader::TexCoord( _tex_coords[i*2], _tex_coords[i*2+1] );
-
-    // Copy face index array
-    mesh._triangles.clear();
-    mesh._triangles.resize( _nb_tri );
-    for(unsigned i = 0; i < mesh._triangles.size(); ++i){
-        Loader::Tri_face F;
-        // Vertex index
-        F.v[0] = _tri[i*3];  F.v[1] = _tri[i*3+1];  F.v[2] = _tri[i*3+2];
-        // Normal index
-        const int* ptr = _unpacked_tri;
-        F.n[0] = ptr[i*3]; F.n[1] = ptr[i*3+1]; F.n[2] = ptr[i*3+2];
-        // Tex coords index
-        F.t[0] = ptr[i*3]; F.t[1] = ptr[i*3+1]; F.t[2] = ptr[i*3+2];
-
-        mesh._triangles[i] = F;
-    }
-
-    // copy groups (we don't actually handle groups so we just one big root
-    // group which contains all the materials groups)
-    mesh._groups.clear();
-    mesh._groups.resize( 1 );
-
-    Loader::Group G;
-    G._start_face = 0;
-    G._end_face = mesh._triangles.size();
-    //G.start_point = 0;
-    //G._end_point = 0;
-    G._name = "_";
-
-    mesh._groups[0] = G;
-}
-
-// -----------------------------------------------------------------------------
-
 void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
 {
     _is_initialized = false;
@@ -721,7 +647,7 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
     // Build the list of texture coordinates indices and normals indices per
     // vertices indices.
     // Also we copy the packed triangle index in '_tri'
-    std::vector<std::map<std::pair<int,int>,int> > pair_per_vert(_nb_vert);
+    std::vector<std::map<int,int> > pair_per_vert(_nb_vert);
     std::vector<int> nb_pair_per_vert(_nb_vert, 0);
     for( int i = 0; i < _nb_tri; i++)
     {
@@ -730,16 +656,14 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
             // Fill triangle index
             int v_idx = mesh._triangles[i].v[j];
             int n_idx = mesh._triangles[i].n[j];
-            int t_idx = mesh._triangles[i].t[j];
 
             _is_connected[v_idx] = true;
             _tri[i*3+j] = v_idx;
 
-            std::pair<int, int> pair(t_idx, n_idx);
-            std::map<std::pair<int, int>,int>& map = pair_per_vert[v_idx];
-            if( map.find(pair) == map.end() )
+            std::map<int,int>& map = pair_per_vert[v_idx];
+            if( map.find(n_idx) == map.end() )
             {
-                map[pair] = nb_pair_per_vert[v_idx];
+                map[n_idx] = nb_pair_per_vert[v_idx];
                 nb_pair_per_vert[v_idx]++;
             }
         }
@@ -766,10 +690,8 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
 
     _size_unpacked_vert_array = off;
     _normals    = new float [_size_unpacked_vert_array * 3];
-    _tex_coords = new float [_size_unpacked_vert_array * 2];
 
     // Copy triangles index, normals and texture coordinates
-    _has_tex_coords = false;
     _has_normals    = false;
     for( int i = 0; i < _nb_tri; i++)
     {
@@ -777,10 +699,8 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
         {
             int v_idx = mesh._triangles[i].v[j];
             int n_idx = mesh._triangles[i].n[j];
-            int t_idx = mesh._triangles[i].t[j];
 
-            std::pair<int, int> pair(t_idx, n_idx);
-            int off = pair_per_vert[v_idx][pair];
+            int off = pair_per_vert[v_idx][n_idx];
 
             assert(off < _packed_vert_map[v_idx].nb_ocurrence);
 
@@ -794,13 +714,6 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
             else
                 *((Loader::Normal*)(_normals+v_unpacked*3)) = Loader::Normal();
 
-            // Fill texture coordinates as there index match the unpacked vertex array
-            if( t_idx != -1 )
-                *((Loader::TexCoord*)(_tex_coords+v_unpacked*2)) = mesh._texCoords[t_idx];
-            else
-                *((Loader::TexCoord*)(_tex_coords+v_unpacked*2)) = Loader::TexCoord();
-
-            _has_tex_coords = _has_tex_coords || (t_idx != -1);
             _has_normals    = _has_normals    || (n_idx != -1);
         }
     }
@@ -1156,14 +1069,3 @@ Vec3_cu Mesh::get_mean_normal(int i) const {
     }
     return mean;
 }
-
-// -----------------------------------------------------------------------------
-
-Mesh::Tex_coords Mesh::get_tex_coords(int i, int n) const {
-    assert(_has_tex_coords);
-    int idx = _packed_vert_map[i].idx_data_unpacked + n;
-    assert(n < _packed_vert_map[i].nb_ocurrence);
-    return Tex_coords(_tex_coords[2*idx], _tex_coords[2*idx+1]);
-}
-
-// -----------------------------------------------------------------------------

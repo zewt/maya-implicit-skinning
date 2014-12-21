@@ -101,9 +101,6 @@ Loader::Vertex to_lvertex(const KFbxVector4& vec);
 /// FBxVector4 to our loader normal type
 Loader::Normal to_lnormal(const KFbxVector4& vec);
 
-/// FBxVector2 to our loader texture coordinate type
-Loader::TexCoord to_ltexcoord(const KFbxVector2& vec);
-
 /// @return the string corresponding to the mapping mode
 std::string to_string(KFbxGeometryElement::EMappingMode type);
 

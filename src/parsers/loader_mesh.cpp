@@ -23,11 +23,7 @@ namespace Loader {
 void Abs_mesh::clear(){
     _vertices.clear();
     _normals.clear();
-    _texCoords.clear();
     _triangles.clear();
-    _groups.clear();
-    _render_faces._tris. clear();
-    _render_faces._quads.clear();
 }
 
 }

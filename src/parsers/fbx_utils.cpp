@@ -338,13 +338,6 @@ Loader::Normal to_lnormal( const KFbxVector4& vec)
 
 // -----------------------------------------------------------------------------
 
-Loader::TexCoord to_ltexcoord(const KFbxVector2& vec)
-{
-    return Loader::TexCoord((float)vec[0], (float)vec[1]);
-}
-
-// -----------------------------------------------------------------------------
-
 std::string to_string(KFbxGeometryElement::EMappingMode type)
 {
     std::string str;

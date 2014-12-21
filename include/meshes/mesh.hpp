@@ -172,9 +172,6 @@ public:
     /// Load a mesh from the abstract representation of our file loader
     void load(const Loader::Abs_mesh& mesh, const std::string& mesh_path);
 
-    /// Save a mesh into the abstract representation
-    void save(Loader::Abs_mesh& mesh);
-
     //  ------------------------------------------------------------------------
     /// @name Drawing the mesh
     //  ------------------------------------------------------------------------
@@ -225,12 +222,6 @@ public:
     /// @see get_normal()
     Vec3_cu get_mean_normal(int i) const;
 
-    /// Get the texture coordinates at vertex no. i
-    /// @param n sometimes a vertex has multiples texture coordinates
-    /// the parameter 'n' is a way to fetch at the ith vertex the nth normal.
-    /// @see get_nb_tex_coords()
-    Tex_coords get_tex_coords(int i, int n = 0) const;
-
     /// Get the offsets for primitive no. i
     PrimIdxVertices get_piv(int i) const {
         return PrimIdxVertices(_piv[4*i], _piv[4*i +1], _piv[4*i + 2],  _piv[4*i + 3]);
@@ -278,7 +269,6 @@ public:
     bool is_vert_on_side(int i) const { return _is_side[i]; }
 
     bool is_closed()      const { return _is_closed;      }
-    bool has_tex_coords() const { return _has_tex_coords; }
     bool has_normals()    const { return _has_normals;    }
     bool is_manifold()    const { return _is_manifold;    }
 
@@ -328,7 +318,6 @@ private:
 
     bool _is_initialized;    ///< is the mesh renderable (means every attributes is filled correctly)
     bool _is_closed;         ///< is the mesh closed
-    bool _has_tex_coords;    ///< do the mesh has texture coordinates loaded
     bool _has_normals;       ///< do the mesh has normals loaded
 
     /// When false it is sure the mesh is not 2-manifold. But true does not
@@ -392,7 +381,6 @@ private:
 
     float* _normals;     ///< Normal direction list [N0x N0y N0z N1x N1y N1z ...]
     float* _tangents;    ///< Tangent direction list [T0x T0y T0z T1x T1y T1z ...]
-    float* _tex_coords;  ///< Texture coordinates list [T0u T0v T1u T1v ...]
 
     /// size of the vbo for the rendering. '_normals' and '_tangents' size are
     /// 3*size_unpacked_vert_array and '_tex_coords' is 2*size_unpacked_vert_array

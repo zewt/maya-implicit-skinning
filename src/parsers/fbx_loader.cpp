@@ -145,75 +145,6 @@ void importNormals_byPolygonVertex( KFbxMesh* fbx_mesh,
     }
 }
 
-// -----------------------------------------------------------------------------
-
-void importTexCoords_byControlPoint( KFbxMesh* lMesh,
-                                     KFbxGeometryElementUV* elt_UV,
-                                     Loader::Abs_mesh& mesh,
-                                     std::map< std::pair<int, int>, int>& idx_UV,
-                                     int v_size )
-{
-    KFbxVector2 uv;
-    int nb_uv = mesh._texCoords.size();
-    mesh._texCoords.resize( nb_uv + elt_UV->GetDirectArray().GetCount() );
-    if (elt_UV->GetReferenceMode() == KFbxGeometryElement::eDIRECT) {
-        for (int i=0; i<lMesh->GetControlPointsCount(); ++i){
-            uv = elt_UV->GetDirectArray().GetAt(i);
-            mesh._texCoords[ nb_uv + i ] = Fbx_utils::to_ltexcoord( uv );
-            idx_UV[ std::pair<int, int>( v_size + i, -1 ) ] = nb_uv + i;
-        }
-    } else {
-        for (int i=0; i<lMesh->GetControlPointsCount(); ++i){
-            uv = elt_UV->GetDirectArray().GetAt( elt_UV->GetIndexArray().GetAt(i) );
-            mesh._texCoords[ nb_uv + i ] = Fbx_utils::to_ltexcoord( uv );
-            idx_UV[ std::pair<int, int>( v_size + i, -1 ) ] = nb_uv + i;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void importTexCoords_byPolygonVertex( KFbxMesh* lMesh,
-                                      KFbxGeometryElementUV* elt_UV,
-                                      Loader::Abs_mesh& mesh,
-                                      std::map< std::pair<int, int>, int>& idx_UV,
-                                      int v_size )
-{
-    KFbxVector2 uv;
-    // map of indices of normals, in order to quickly know if already seen
-    std::map<int, int> seenCoords;
-    std::map<int, int>::iterator it;
-    int lIndexByPolygonVertex = 0;
-    for(int p = 0; p < lMesh->GetPolygonCount(); p++)
-    {
-        int lPolygonSize = lMesh->GetPolygonSize(p);
-        for(int i = 0; i < lPolygonSize; i++)
-        {
-            int lTexCoordIndex = 0;
-            if( elt_UV->GetReferenceMode() == KFbxGeometryElement::eDIRECT )
-                lTexCoordIndex = lIndexByPolygonVertex;
-            if(elt_UV->GetReferenceMode() == KFbxGeometryElement::eINDEX_TO_DIRECT)
-                lTexCoordIndex = elt_UV->GetIndexArray().GetAt(lIndexByPolygonVertex);
-
-            // record the normal if not already seen
-            it = seenCoords.find(lTexCoordIndex);
-            if( it == seenCoords.end() )
-            {
-                uv = elt_UV->GetDirectArray().GetAt(lTexCoordIndex);
-                mesh._texCoords.push_back ( Fbx_utils::to_ltexcoord( uv ) );
-                seenCoords[lTexCoordIndex] = mesh._texCoords.size()-1;
-                // record vertice to normal mapping
-                idx_UV[ std::pair<int, int>( v_size + lMesh->GetPolygonVertex(p, i), p ) ] = mesh._texCoords.size()-1;
-            }else
-                idx_UV[ std::pair<int, int>( v_size + lMesh->GetPolygonVertex(p, i), p ) ] = it->second;
-
-            lIndexByPolygonVertex++;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void fill_mesh(KFbxMesh* fbx_mesh, KFbxNode* node, Loader::Abs_mesh& mesh)
 {
     // deal with non triangular mesh
@@ -269,41 +200,6 @@ void fill_mesh(KFbxMesh* fbx_mesh, KFbxNode* node, Loader::Abs_mesh& mesh)
         }
     }
 
-    // texCoords ###############################################################
-    // map the indice of face and vertice to indice of normal
-    std::map< std::pair<int, int>, int> idx_uv;
-    KFbxGeometryElementUV* elt_uv;
-    bool isUVByControlPoint = true;
-
-    int nb_elt_uv = fbx_mesh->GetElementUVCount();
-
-    if( nb_elt_uv > 1){
-        std::cerr << "WARNING FBX : there is more than one layer for texture coordinates";
-        std::cerr << "We only handle the first layer" << std::endl;
-    }
-
-    if( nb_elt_uv > 0 )
-    {
-        // Fetch first element
-        elt_uv = fbx_mesh->GetElementUV();
-        type = elt_uv->GetMappingMode();
-
-        if( type == KFbxGeometryElement::eBY_CONTROL_POINT )
-        {
-            importTexCoords_byControlPoint( fbx_mesh, elt_uv, mesh, idx_uv, v_size );
-        }
-        else if( type == KFbxGeometryElement::eBY_POLYGON_VERTEX )
-        {
-            isUVByControlPoint = false;
-            importTexCoords_byPolygonVertex( fbx_mesh, elt_uv, mesh, idx_uv, v_size );
-        }
-        else
-        {
-            std::cerr << "ERROR FBX: mapping mode'" << Fbx_utils::to_string(type);
-            std::cerr << "'for tex coords is not handled" << std::endl;
-        }
-    }
-
     // triangles ###############################################################
     int f_size = mesh._triangles.size();
     mesh._triangles.resize( f_size + fbx_mesh->GetPolygonCount() );
@@ -315,20 +211,9 @@ void fill_mesh(KFbxMesh* fbx_mesh, KFbxNode* node, Loader::Abs_mesh& mesh)
             // register the vertice's normal indice
             if (fbx_mesh->GetElementNormalCount() )
                 f.n[verticeIndex] = idx_normals[ std::pair<int, int>(f.v[verticeIndex], isNormalByControlPoint?-1:faceIndex) ];
-            // register the vertice's texcoords indice
-            if ( fbx_mesh->GetElementUVCount() )
-                f.t[verticeIndex] = idx_uv[ std::pair<int, int>(f.v[verticeIndex], isUVByControlPoint?-1:faceIndex) ];
         }
         mesh._triangles[ f_size + faceIndex] = f;
     }
-
-
-    // material groups & groups ################################################
-    Loader::Group g;
-    g._start_face = f_size;
-    g._end_face = mesh._triangles.size();
-    mesh._groups.push_back ( g );
-    /////////////////////////////////////////////
 }
 
 //------------------------------------------------------------------------------
