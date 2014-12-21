@@ -110,6 +110,10 @@ file(
 file(
     GLOB_RECURSE
     host_sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*/*.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*/*/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*/*/*.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/animation/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/animation/pinocchio/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/control/*.cpp
@@ -223,6 +227,14 @@ endif()
 # Work around CMake: the same CUDA helpers exist upstream, and it's a different
 # version that never actually links cuda.lib.
 set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY})
+
+# Fix up CMake's broken default project organization.  It wants to put headers
+# in a separate "Header Files" group, which isn't usable since you have to jump
+# all over the place to find anything.  Put header files next to their corresponding
+# source files.  The files themselves need to be rearranged in this way, too.
+# Also, group CUDA files together, or it'll put them at the top.
+source_group("CUDA" REGULAR_EXPRESSION .*\\.cu$)
+source_group("Source" REGULAR_EXPRESSION ".*\\.(cpp|hpp|h)$")
 
 # build all .cu files into a static lib cuda_lib
 CUDA_ADD_LIBRARY( implicit_framework STATIC  ${cuda_sources}  ${host_sources})
