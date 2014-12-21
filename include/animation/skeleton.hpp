@@ -26,7 +26,6 @@
 #include "joint_type.hpp"
 #include "transfo.hpp"
 #include "cuda_utils.hpp"
-#include "kinematic.hpp"
 #include "blending_lib/controller.hpp"
 #include "skeleton_env_type.hpp"
 
@@ -91,11 +90,9 @@ struct Abs_skeleton;
         ...
     }
     @endcode
-
-    Animating the skeleton is done through the class interface Kinematic.
-    Hence '_kinec' attribute of the skeleton provides means to move bones
  */
 struct Skeleton {
+
 
   /// Build skeleton from a graph
   Skeleton(const Graph& g, int root = 0);
@@ -139,16 +136,6 @@ struct Skeleton {
 
   /// get skeleton hierachy with bone types in string
   std::string to_string();
-
-  //----------------------------------------------------------------------------
-  /// @name IO
-  //----------------------------------------------------------------------------
-
-  /// Save user transfo
-  void save_pose(const std::string& filepath);
-
-  /// Load user transfo
-  void load_pose(const std::string& filepath);
 
   //----------------------------------------------------------------------------
   /// @name Setters
@@ -288,13 +275,6 @@ struct Skeleton {
 
   float get_hrbf_radius(Bone::Id bone_id);
 
-  /// Skeleton kinematic handler.
-  /// Animate the skeleton through this interface
-  /// @note this helps to seperating code between pure skeleton data
-  /// and kinematic algorithms. Might even enable in the future to use
-  /// class polymorphism in order to specialize kinematic behavior.
-  Kinematic* _kinec;
-
   //----------------------------------------------------------------------------
   /// @name Class tools
   //----------------------------------------------------------------------------
@@ -308,12 +288,6 @@ private:
 
   /// Create and initilize a skeleton in the environment Skeleton_env
   void init_skel_env();
-
-  friend class Kinematic; // allowskinematic to access update_anim_pose()
-
-  /// Compute the global trannsformations '_h_transfos' with the current
-  /// kinematic pose. Then updates position of the skeleton's bones
-  void update_anim_pose();
 
   /// Given a set of global transformation at each joints animate the skeleton.
   /// animated bones frames dual quaternions are updated as well as device

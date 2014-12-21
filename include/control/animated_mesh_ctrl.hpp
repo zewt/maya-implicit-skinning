@@ -245,10 +245,6 @@ private:
     /// also allocates the '_anim_samples_list' for nodes and n_nodes
     void update_bone_samples(int bone_id);
 
-    /// Replace all the samples from the skeleton in the attrib '_sample_list'
-    void copy_bone_samples_to_list();
-
-
     /// Change the vector size of attr _sample_anim_list.nodes and .n_nodes
     void resize_samples_anim(int bone_id, int size);
 

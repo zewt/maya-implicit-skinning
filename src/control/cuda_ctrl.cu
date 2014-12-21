@@ -29,7 +29,6 @@
 #include "animesh.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
-#include "display_operator.hpp"
 #include "endianess.hpp"
 #include "cuda_main_kernels.hpp"
 #include "skeleton_env.hpp"
@@ -39,10 +38,8 @@
 namespace Cuda_ctrl {
 // =============================================================================
 
-Path_ctrl            _paths;
 Animated_mesh_ctrl*  _anim_mesh = 0;
 Skeleton_ctrl        _skeleton;
-Display_ctrl         _display;
 Debug_ctrl           _debug;
 Graph_ctrl           _graph;
 Operators_ctrl       _operators;
@@ -110,42 +107,6 @@ void load_animesh_and_ssd_weights(const char* filename)
 
     g_animesh->update_base_potential();
 }
-
-// -----------------------------------------------------------------------------bool loadBlobScene( std::string file );
-bool saveBlobScene( std::string file );
-void addBlob();
-bool removeBlob();
-void selectAllBlobs();
-void cleanBlobScene();
-// -----------------------------------------------------------------------------
-void setBlobRadius_selected( float r );
-void setBlobRadius_all( float r );
-void setBlobAlpha_selected( float a );
-void setBlobAlpha_all( float a );
-// -----------------------------------------------------------------------------
-void setBlobOperatorType(std::string type);
-void show_one( bool show );
-// -----------------------------------------------------------------------------
-void setRicciN(float n);
-// -----------------------------------------------------------------------------
-void setBlobCaniAlpha_selected( float a );
-void setBlobCaniAlpha_all( float a );
-void setBlobCaniW_selected( float w );
-void setBlobCaniW_all( float w );
-void use_cani_old_function( bool use );
-// -----------------------------------------------------------------------------
-void addEdge();
-void deleteEdge();
-void showWyvillGraph(bool show);
-void addWyvillGroup( std::string type );
-void deleteWyvillGroup(int group_idx);
-void addSelectionToGroup(int group_idx);
-void removeSelectionFromGroup(int group_idx);
-// -----------------------------------------------------------------------------
-void setBlobRestrictedBlendW_selected(float wA0A0);
-void setBlobRestrictedBlendW_all(float wA0A0);
-void setBlobRestrictedBlendInterW(float wA0A1, float wA1A0);
-void use_deform_mk( bool use );
 
 void load_animesh()
 {

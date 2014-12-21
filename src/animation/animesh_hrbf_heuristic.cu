@@ -23,7 +23,6 @@
 #include "timer.hpp"
 #include "quick_sort.hpp"
 #include "conversions.hpp"
-#include "gen_mesh.hpp"
 #include "utils_sampling.hpp"
 #include "skeleton.hpp"
 
@@ -247,42 +246,6 @@ void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
 
     _am->_skel->unreset();
 }
-
-// -----------------------------------------------------------------------------
-
-#if 0
-/// @param rad circles's radius
-/// @param p circle center
-/// @param n planes normal the circle lies in
-/// @param out_verts vector where circle vertices will be pushed
-/// @param out_verts vector where circle normals will be pushed
-static void add_circle(float rad,
-                       const Vec3_cu& p,
-                       const Vec3_cu& n,
-                       std::vector<Vec3_cu>& out_verts,
-                       std::vector<Vec3_cu>& out_normals)
-{
-    // Generates the circle in the xy plane
-    Gen_mesh::Line_data* circle = Gen_mesh::circle( rad, 10);
-    // Compute circle
-    Vec3_cu x, y, z;
-    z = n;
-    z.coordinate_system(x, y);
-    Transform tr(Mat3_cu(x, y, z), p);
-
-
-    for(int i = 0; i < circle->nb_vert; i++)
-    {
-        Point_cu  p = {circle->vertex [i*3], circle->vertex [i*3+1], circle->vertex [i*3+2]};
-        Vec3_cu n = {circle->normals[i*3], circle->normals[i*3+1], circle->normals[i*3+2]};
-
-        out_verts.  push_back( tr * p );
-        out_normals.push_back( tr * n );
-    }
-
-    delete circle;
-}
-#endif
 
 // -----------------------------------------------------------------------------
 

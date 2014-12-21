@@ -27,10 +27,8 @@
 #include "animated_mesh_ctrl.hpp"
 #include "operators_ctrl.hpp"
 #include "skeleton_ctrl.hpp"
-#include "display_ctrl.hpp"
 #include "debug_ctrl.hpp"
 #include "graph_ctrl.hpp"
-#include "path_ctrl.hpp"
 
 /** @brief Mouse, keyboard, screen interface and more for the cuda library
 
@@ -49,16 +47,12 @@ namespace Cuda_ctrl{
 extern Animated_mesh_ctrl* _anim_mesh;
 /// Control for the skeleton
 extern Skeleton_ctrl      _skeleton;
-/// Control display settings (projection ortho/perspective, resolution etc.)
-extern Display_ctrl       _display;
 /// Control for the debug mode
 extern Debug_ctrl         _debug;
 /// Control for the current graph (save it load it etc.)
 extern Graph_ctrl         _graph;
 /// Control for blending operators (bulge in contact, clean union etc.)
 extern Operators_ctrl    _operators;
-/// List of paths used in the application
-extern Path_ctrl          _paths;
 
 // -----------------------------------------------------------------------------
 

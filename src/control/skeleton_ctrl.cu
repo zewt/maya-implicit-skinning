@@ -25,22 +25,6 @@
 #include "conversions.hpp"
 #include "skeleton.hpp"
 
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::load_pose(const std::string& filepath)
-{
-    g_skel->load_pose( filepath );
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::save_pose(const std::string& filepath)
-{
-    g_skel->save_pose( filepath );
-}
-
-// -----------------------------------------------------------------------------
-
 int Skeleton_ctrl::root()
 {
     return g_skel->root();
@@ -171,19 +155,6 @@ int Skeleton_ctrl::get_parent(int bone_id){
 
 int Skeleton_ctrl::get_bone_type(int bone_id){
     return g_skel->bone_type(bone_id);
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::set_pose(Loader::Base_anim_eval* evaluator, int frame)
-{
-    if( g_skel == 0) return;
-
-    std::vector<Transfo> trs( g_skel->nb_joints() );
-    for(int i = 0; i < g_skel->nb_joints(); i++)
-        trs[i] = evaluator->eval_lcl( i, frame );
-
-    g_skel->_kinec->set_pose_lcl( trs );
 }
 
 // -----------------------------------------------------------------------------

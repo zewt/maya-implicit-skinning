@@ -38,7 +38,6 @@ public:
     virtual ~Base_anim_eval(){ }
 
     /// @return the local frame of the ith bone for the ith frame
-    virtual Transfo eval_lcl(int bone_id, int frame) = 0;
     virtual int nb_frames () const = 0;
 
     /// frame rate in seconds
@@ -59,9 +58,6 @@ public:
         Base_anim_eval( name )
     { }
 
-    Transfo eval_lcl(int bone_id, int frame){
-        return _lcl_frames[frame][bone_id];
-    }
 
     int nb_frames () const { return _lcl_frames.size();}
 

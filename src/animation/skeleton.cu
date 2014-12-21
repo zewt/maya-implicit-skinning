@@ -143,7 +143,6 @@ void Skeleton::init(int nb_joints)
 
     _scale = 1.f;
     _offset = Vec3_cu::zero();
-    _kinec  = new Kinematic(*this);
 }
 
 // -----------------------------------------------------------------------------
@@ -151,7 +150,6 @@ void Skeleton::init(int nb_joints)
 void Skeleton::init_skel_env()
 {
     _skel_id = Skeleton_env::new_skel_instance(_root, _anim_bones, _parents);
-    update_anim_pose();
     Skeleton_env::update_joints_data(_skel_id, _joints_data);
     Skeleton_env::update_bones_data (_skel_id, _anim_bones );
 }
@@ -219,7 +217,6 @@ Skeleton::~Skeleton()
         if( ctrl_id >= 0)
             Blending_env::delete_ctrl_instance(ctrl_id);
     }
-    delete _kinec;
 
     Skeleton_env::delete_skel_instance( _skel_id );
 }
@@ -355,7 +352,6 @@ void Skeleton::set_bone(int i, Bone* b)
     _anim_bones[i] = b;
 
 //    // TODO: to be deleted update_hrbf_id_to_bone_id();
-    update_anim_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -363,7 +359,6 @@ void Skeleton::set_bone(int i, Bone* b)
 void Skeleton::set_bone_radius(int i, float radius)
 {
     _anim_bones[i]->set_radius(radius);
-    update_anim_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -384,7 +379,6 @@ void Skeleton::set_bone_hrbf_radius(int i, float radius)
     if(bone_type(i) == EBone::HRBF)
     {
         ((Bone_hrbf*)_anim_bones[i])->set_hrbf_radius(radius);
-        update_anim_pose();
     }
 }
 
@@ -414,7 +408,6 @@ void Skeleton::set_joint_rest_pos(int joint_id, const Point_cu& pt)
     _frames[joint_id].set_translation( pt.to_vector() );
     _lcl_frames[joint_id] = _frames[joint_id].fast_invert();
     fill_bones();
-    update_anim_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -431,7 +424,6 @@ void Skeleton::set_offset_scale(const Vec3_cu& offset, float scale)
         _anim_bones[i]->set_length( _anim_bones[i]->length() * scale );
     }
     fill_bones();
-    update_anim_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -448,21 +440,6 @@ Vec3_cu Skeleton::joint_rest_pos(int joint){
     assert(joint >= 0        );
     assert(joint <  _nb_joints);
     return _frames[joint].get_translation();
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::save_pose(const std::string& filepath)
-{
-    write_array( &(_h_transfos[0]), _h_transfos.size(), filepath );
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::load_pose(const std::string& filepath)
-{
-    read_array( &(_h_transfos[0]), _h_transfos.size(), filepath );
-    update_bones_pose( _h_transfos );
 }
 
 // -----------------------------------------------------------------------------
@@ -491,17 +468,6 @@ void Skeleton::transform_precomputed_prim(const HPLA_tr &global_transfos )
         }
 
     Precomputed_env::update_device_transformations();
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::update_anim_pose()
-{
-
-    // Compute the global transformation of each joint
-    _kinec->compute_transfo_gl( _h_transfos.ptr() );
-    // update animated pose
-    update_bones_pose( _h_transfos );
 }
 
 // -----------------------------------------------------------------------------

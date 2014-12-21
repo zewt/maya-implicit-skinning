@@ -23,6 +23,7 @@
 #include "globals.hpp"
 #include "cuda_ctrl.hpp"
 #include "blending_env_tex_interface.hpp"
+#include "n_ary.hpp"
 #include "n_ary_constant_interface.hpp"
 
 

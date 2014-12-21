@@ -42,9 +42,6 @@ public:
     {
     }
 
-    void load_pose(const std::string& filepath);
-    void save_pose(const std::string& filepath);
-
     void load(const Graph& g_graph);
 
     void load(const Loader::Abs_skeleton& abs_skel);
@@ -63,10 +60,6 @@ public:
     // -------------------------------------------------------------------------
     /// @name Setters
     // -------------------------------------------------------------------------
-
-    /// Given an animation evaluator and a time, set the skeleton to the
-    /// corresponding pose.
-    void set_pose(Loader::Base_anim_eval* evaluator, int frame);
 
     void set_joint_blending(int i, EJoint::Joint_t type);
 

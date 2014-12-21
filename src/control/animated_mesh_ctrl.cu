@@ -512,15 +512,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
             set_bone_type(i, t);
     }
 
-    /*
-    for(int i = 0; i < _skel->nb_joints(); i++)
-    {
-        const int t = bones_type[i];
-        if( !(_auto_precompute && t == EBone::HRBF) )// In auto precompute we forbid HRBF
-            set_bone_type(i, t);
-    }
-    */
-
     _animesh->update_base_potential();
 }
 
@@ -645,36 +636,6 @@ void Animated_mesh_ctrl::reset_invert_propagation()
 
 int Animated_mesh_ctrl::get_nearest_bone(int vert_idx){
     return _animesh->get_nearest_bone(vert_idx);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::copy_bone_samples_to_list()
-{
-    _sample_list.clear();
-
-    int nb_joints = _skel->nb_joints();
-    int acc       = 0;
-    _sample_list.resize( nb_joints );
-    for(int i = 0; i < nb_joints; i++)
-    {
-        if(_skel->bone_type(i) == EBone::HRBF)
-        {
-            const Bone_hrbf* b = (const Bone_hrbf*)_skel->get_bone(i);
-            const HermiteRBF h = b->get_hrbf();
-
-            h.get_samples( _sample_list[i].nodes   );
-            h.get_normals( _sample_list[i].n_nodes );
-
-            int nb_samples = _sample_list[i].nodes.size();
-            resize_samples_anim(i, nb_samples);
-
-            acc += nb_samples;
-            if(_auto_precompute)
-                set_bone_type( i, EBone::PRECOMPUTED );
-        }
-    }
-    //transform_samples();
 }
 
 // -----------------------------------------------------------------------------
@@ -1188,7 +1149,7 @@ void Animated_mesh_ctrl::precompute_all_bones()
     for(int i = 0; i < _skel->nb_joints(); i++)
     {
         int type = _skel->bone_type( i );
-        if(EBone::PRECOMPUTED != type && EBone::SSD != type)
+        if(type != EBone::PRECOMPUTED && type != EBone::SSD)
             _animesh->set_bone_type( i, EBone::PRECOMPUTED);
     }
 }

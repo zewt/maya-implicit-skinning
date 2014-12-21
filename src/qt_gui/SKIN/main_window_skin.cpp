@@ -24,7 +24,6 @@
 
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
-#include "display_operator.hpp"
 #include "cuda_ctrl.hpp"
 #include "loader.hpp"
 #include "fbx_loader.hpp"
@@ -222,7 +221,6 @@ void Main_window_skin::on_spinBox_bulge_in_contact_force_valueChanged(double mag
         Cuda_ctrl::_operators.set_bulge_magnitude((float)mag);
 
     Cuda_ctrl::_operators.update_displayed_operator_texture();
-    Cuda_ctrl::_display._raytrace_again = true;
 }
 
 void Main_window_skin::on_update_bulge_in_contact_released()
@@ -236,7 +234,6 @@ void Main_window_skin::on_update_bulge_in_contact_released()
 
 void Main_window_skin::on_rbf_edition_toggled(bool checked)
 {
-    Cuda_ctrl::_display._edit_hrbf_samples = checked;
 }
 
 void Main_window_skin::on_checkB_factor_siblings_toggled(bool checked)
@@ -352,7 +349,6 @@ void Main_window_skin::on_cBox_always_precompute_toggled(bool checked)
 
 void Main_window_skin::on_spinB_max_res_valueChanged(int val)
 {
-    Cuda_ctrl::_display._nb_samples_res = val;
 }
 
 
@@ -433,15 +429,11 @@ void Main_window_skin::on_comboB_operators_currentIndexChanged(int idx)
 
 
 
-    Cuda_ctrl::_display._operator_type = Blending_env::MAX;
-//    Cuda_ctrl::_display._operator_mode = Blending_env::Op_mode(m); // TODO
-
     Cuda_ctrl::_operators.update_displayed_operator_texture();
 }
 
 void Main_window_skin::on_dSpinB_opening_value_valueChanged(double val)
 {
-    Cuda_ctrl::_display._opening_angle = val;
     Cuda_ctrl::_operators.update_displayed_operator_texture();
 }
 

@@ -26,10 +26,6 @@
  * @brief Some macro utilities with CUDA related to the currently used GPU
  */
 
-/// @return true if the sizes are under the GPU limits
-bool check_kernel_size(CUdevice device, const int3 block_size, const int3 grid_size);
-bool check_kernel_size(CUdevice device, int block_size, int grid_size);
-
 /// Current device
 /// @return current active device (driver identifier)
 CUdevice get_cu_device();
@@ -52,18 +48,5 @@ CUdevice get_cu_device();
 #define CUDA_CHECK_KERNEL_SIZE(block, grid) do{}while(0)
 
 #endif
-
-
-/// @brief macro shortcut to launch a CUDA kernel on a linear array
-/// with error checking
-#define CUDA_LAUNCH_ARRAY(kernel_name, block_size, array_size, ...) \
-    do{ \
-        const int bl = (block_size); \
-        const int gr = (((array_size) + (block_size) - 1) / (block_size)); \
-        CUDA_CHECK_KERNEL_SIZE(bl, gr); \
-        kernel_name<<<gr, bl>>>(__VA_ARGS__); \
-        CUDA_CHECK_ERRORS(); \
-    }while(0)
-
 
 #endif // CUDA_CURRENT_DEVICE_HPP_
