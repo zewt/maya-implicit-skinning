@@ -64,13 +64,6 @@ public:
     /// 'setting'
     void set_viewports_layout(Layout_e setting);
 
-    /// @warning the list is undefined if used after a call to
-    /// set_viewports_layout()
-    Vec_viewports& get_viewports();
-
-    /// @return the active frame
-    OGL_widget_skin* active_viewport(){ return _current_viewport; }
-
     QGLWidget* shared_viewport(){ return _hidden; }
 
     // -------------------------------------------------------------------------
@@ -98,33 +91,19 @@ private:
     // -------------------------------------------------------------------------
     QLayout* gen_single ();
 
-    /// suppress all viewports and layouts
-    void erase_viewports();
-
-    /// Creates a new viewport with the correct signals slots connections
-    OGL_widget_skin* new_viewport(Viewport_frame_skin* ogl_frame);
-
     /// Creates a new viewport frame with the correct signals slots connections
     Viewport_frame_skin* new_viewport_frame(QWidget* parent, int id);
 
     /// Sets the frame color by replacing its styleSheet color
     void set_frame_border_color(Viewport_frame_skin* f, int r, int g, int b);
 
-    void first_viewport_as_active();
-
     // -------------------------------------------------------------------------
     /// @name Attributes
     // -------------------------------------------------------------------------
     bool _skel_mode;
 
-    /// Vector of OGL_widget
-    Vec_viewports _viewports;
-
     /// List of frames associated to the viewports
     std::vector<Viewport_frame_skin*> _viewports_frame;
-
-    /// The active viewport
-    OGL_widget_skin* _current_viewport;
 
     /// opengl shared context between all viewports
     /// (in order to share VBO textures etc.)

@@ -44,14 +44,10 @@ void Animesh::update_base_potential()
     const int grid_size =
             (nb_verts + block_size - 1) / block_size;
 
-    _skel->reset();
-
     Animesh_kers::compute_base_potential<<<grid_size, block_size>>>
         (d_input_vertices.ptr(), nb_verts, d_base_potential.ptr(), d_base_gradient.ptr());
 
     CUDA_CHECK_ERRORS();
-
-    _skel->unreset();
 
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
 }

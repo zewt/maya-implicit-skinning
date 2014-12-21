@@ -21,8 +21,22 @@
 #include "cuda_ctrl.hpp"
 #include "macros.hpp"
 
+static void init_glew()
+{
+    glewInit();
+    int state = glewIsSupported("GL_VERSION_2_0 "
+                                "GL_VERSION_1_5 "
+                                "GL_ARB_vertex_buffer_object "
+                                "GL_ARB_pixel_buffer_object");
+    if(!state) {
+        fprintf(stderr, "Cannot initialize glew: required OpenGL extensions missing.");
+        exit(-1);
+    }
+}
+
 void OGL_widget_skin_hidden::initializeGL(){
-    OGL_widget_skin::init_glew();
+    init_glew();
+
     //QGLWidget::initializeGL();
     init_opengl();
 }
@@ -32,7 +46,6 @@ void OGL_widget_skin_hidden::initializeGL(){
 OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
     QFrame(w),
     _skel_mode(false),
-    _current_viewport(0),
     _main_layout(0),
     _main_window(m),
     _frame_count(0)
@@ -44,7 +57,7 @@ OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
     _hidden->updateGL();
     _hidden->makeCurrent();
 
-    OGL_widget_skin::init_glew();
+    init_glew();
 
     _hidden->setGeometry(0,0,0,0);
     _hidden->hide();
@@ -65,11 +78,6 @@ OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
     Cuda_ctrl::init_opengl_cuda();
 
     set_viewports_layout(SINGLE);
-    QObject::connect(this, SIGNAL(active_viewport_changed(int)),
-                     m   , SLOT(active_viewport(int)) );
-
-    QObject::connect(this        , SIGNAL(update_status(QString)),
-                     m->statusbar, SLOT(showMessage(QString)) );
 }
 
 // -----------------------------------------------------------------------------
@@ -86,7 +94,6 @@ OGL_viewports_skin::~OGL_viewports_skin(){
 void OGL_viewports_skin::updateGL()
 {
     using namespace Cuda_ctrl;
-    _viewports[0]->makeCurrent();
 
     if(_skel_mode)
     {
@@ -98,19 +105,11 @@ void OGL_viewports_skin::updateGL()
             _anim_mesh->deform_mesh();
         }
     }
-
-    for(unsigned i = 0; i < _viewports.size(); i++)
-    {
-        OGL_widget_skin* v = _viewports[i];
-        v->updateGL();
-    }
 }
 
 // -----------------------------------------------------------------------------
 
 void OGL_viewports_skin::enterEvent( QEvent* e){
-    if(_current_viewport != 0)
-        _current_viewport->setFocus();
     e->ignore();
 }
 
@@ -118,12 +117,9 @@ void OGL_viewports_skin::enterEvent( QEvent* e){
 
 void OGL_viewports_skin::set_viewports_layout(Layout_e setting)
 {
-    erase_viewports();
-
     _main_layout = gen_single ();
 
     this->setLayout(_main_layout);
-    first_viewport_as_active();
 }
 
 // -----------------------------------------------------------------------------
@@ -142,46 +138,11 @@ QLayout* OGL_viewports_skin::gen_single()
         layout->setContentsMargins(0, 0, 0, 0);
         frame->setLayout(layout);
 
-        OGL_widget_skin* ogl = new_viewport(frame);
-        _viewports.push_back(ogl);
-        layout->addWidget(ogl);
-
         vlayout->addWidget(frame);
     }
 
     return vlayout;
 }
-
-void OGL_viewports_skin::erase_viewports()
-{
-    for(unsigned i = 0; i < _viewports.size(); i++)
-    {
-        _viewports[i]->close();
-        delete _viewports[i];
-    }
-
-    // We don't need to delete the frames because qt will do it when deleting
-    // the main layout
-    _viewports_frame.clear();
-    _viewports.clear();
-    delete _main_layout;
-    _main_layout = 0;
-}
-
-// -----------------------------------------------------------------------------
-
-OGL_widget_skin* OGL_viewports_skin::new_viewport(Viewport_frame_skin* ogl_frame)
-{
-    OGL_widget_skin* ogl = new OGL_widget_skin(ogl_frame, _hidden, _main_window);
-    QObject::connect(ogl, SIGNAL(drawing()), this, SLOT(incr_frame_count()));
-    QObject::connect(ogl, SIGNAL( clicked() ), ogl_frame, SLOT( activate() ));
-    ogl->setMinimumSize(4, 4);
-    // initialize openGL and paint widget :
-    ogl->updateGL();
-    return ogl;
-}
-
-// -----------------------------------------------------------------------------
 
 Viewport_frame_skin* OGL_viewports_skin::new_viewport_frame(QWidget* parent, int id)
 {
@@ -206,11 +167,6 @@ void OGL_viewports_skin::set_frame_border_color(Viewport_frame_skin* f, int r, i
 
 // -----------------------------------------------------------------------------
 
-Vec_viewports& OGL_viewports_skin::get_viewports()
-{
-    return _viewports;
-}
-
 void OGL_viewports_skin::incr_frame_count()
 {
     _frame_count++;
@@ -225,22 +181,4 @@ void OGL_viewports_skin::active_viewport_slot(int id)
         set_frame_border_color(_viewports_frame[i], 0, 0, 0);
 
     set_frame_border_color(_viewports_frame[id], 255, 0, 0);
-    _current_viewport = _viewports[id];
-
-    _current_viewport->setFocus();
-    _current_viewport->makeCurrent();
-    emit active_viewport_changed(id);
 }
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::first_viewport_as_active()
-{
-    assert(_viewports.size() > 0);
-    _current_viewport = _viewports[0];
-    set_frame_border_color(_viewports_frame[0], 255, 0, 0);
-    _current_viewport->setFocus();
-    _current_viewport->makeCurrent();
-}
-
-// -----------------------------------------------------------------------------
