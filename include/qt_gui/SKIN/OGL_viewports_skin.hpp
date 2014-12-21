@@ -23,13 +23,12 @@
 #include <vector>
 #include <QLayout>
 
+#include "port_glew.h"
+
+#include <QGLWidget>
+
 #include "main_window_skin.hpp"
-#include "OGL_widget_skin.hpp"
 
-
-class Viewport_frame_skin;
-
-typedef  std::vector<OGL_widget_skin*> Vec_viewports;
 
 // =============================================================================
 class OGL_widget_skin_hidden : public QGLWidget {
@@ -55,100 +54,24 @@ public:
     /// Updates all viewports
     void updateGL();
 
-    // -------------------------------------------------------------------------
-    /// @name Getter & Setters
-    // -------------------------------------------------------------------------
-    enum Layout_e { SINGLE, VDOUBLE, HDOUBLE, FOUR };
-
-    /// Erase all viewports and rebuild them according to the specified layout
-    /// 'setting'
-    void set_viewports_layout(Layout_e setting);
-
     QGLWidget* shared_viewport(){ return _hidden; }
 
-    // -------------------------------------------------------------------------
-    /// @name Events
-    // -------------------------------------------------------------------------
-    void enterEvent( QEvent* e);
-
-    // -------------------------------------------------------------------------
-    /// @name Qt Signals & Slots
-    // -------------------------------------------------------------------------
 private slots:
-    /// Designed to be called each time a single viewport draws one frame.
-    void incr_frame_count();
-    void active_viewport_slot(int id);
 
 signals:
-    void frame_count_changed(int);
     void active_viewport_changed(int id);
     /// Update status bar
     void update_status(QString);
 
 private:
     // -------------------------------------------------------------------------
-    /// @name Tools
-    // -------------------------------------------------------------------------
-    QLayout* gen_single ();
-
-    /// Creates a new viewport frame with the correct signals slots connections
-    Viewport_frame_skin* new_viewport_frame(QWidget* parent, int id);
-
-    /// Sets the frame color by replacing its styleSheet color
-    void set_frame_border_color(Viewport_frame_skin* f, int r, int g, int b);
-
-    // -------------------------------------------------------------------------
     /// @name Attributes
     // -------------------------------------------------------------------------
     bool _skel_mode;
 
-    /// List of frames associated to the viewports
-    std::vector<Viewport_frame_skin*> _viewports_frame;
-
     /// opengl shared context between all viewports
     /// (in order to share VBO textures etc.)
     OGL_widget_skin_hidden* _hidden;
-
-    /// Layout containing all viewports
-    QLayout* _main_layout;
-
-    /// main widow the widget's belongs to
-    Main_window_skin* _main_window;
-
-    /// sum of frames drawn by the viewports
-    int _frame_count;
-
-    /// Fps counting timer
-    QTime  _fps_timer;
 };
-// =============================================================================
-
-class Viewport_frame_skin : public QFrame {
-    Q_OBJECT
-public:
-
-    Viewport_frame_skin(QWidget* w, int id) : QFrame(w), _id(id)
-    {
-        setFrameShape(QFrame::Box);
-        setFrameShadow(QFrame::Plain);
-        setLineWidth(1);
-        setStyleSheet(QString::fromUtf8("color: rgb(0, 0, 0);"));
-    }
-
-
-    int id() const { return _id; }
-
-signals:
-    void active(int);
-
-private slots:
-    void activate(){
-        emit active(_id);
-    }
-
-private:
-    int _id;
-};
-// =============================================================================
 
 #endif // OGL_VIEWPORTS_HPP__

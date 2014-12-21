@@ -28,8 +28,6 @@
 #include "ui_main_window_skin.h"
 #include "controller.hpp"
 
-#include "OGL_widget_skin.hpp"
-
 // FORWARD DEFS ----------------------------------------------------------------
 // Forward def because of the interdependencie between MainWindow and
 // OGL_viewports

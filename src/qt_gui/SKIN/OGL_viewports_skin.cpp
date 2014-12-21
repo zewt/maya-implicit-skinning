@@ -34,10 +34,9 @@ static void init_glew()
     }
 }
 
-void OGL_widget_skin_hidden::initializeGL(){
+void OGL_widget_skin_hidden::initializeGL()
+{
     init_glew();
-
-    //QGLWidget::initializeGL();
     init_opengl();
 }
 
@@ -45,10 +44,7 @@ void OGL_widget_skin_hidden::initializeGL(){
 
 OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
     QFrame(w),
-    _skel_mode(false),
-    _main_layout(0),
-    _main_window(m),
-    _frame_count(0)
+    _skel_mode(false)
 {
 
     // Initialize opengl shared context
@@ -76,109 +72,21 @@ OGL_viewports_skin::OGL_viewports_skin(QWidget* w, Main_window_skin* m) :
 
     Cuda_ctrl::cuda_start( op );
     Cuda_ctrl::init_opengl_cuda();
-
-    set_viewports_layout(SINGLE);
 }
-
-// -----------------------------------------------------------------------------
 
 OGL_viewports_skin::~OGL_viewports_skin(){
 }
-
-// -----------------------------------------------------------------------------
-
-/////////////////DEBUG
-/// The current skeleton
-
 
 void OGL_viewports_skin::updateGL()
 {
     using namespace Cuda_ctrl;
 
-    if(_skel_mode)
-    {
-        if(_anim_mesh != 0)
-        {
-            // Transform HRBF samples for display and selection
-            _anim_mesh->transform_samples( /*_skeleton.get_selection_set() */);
-            // Animate the mesh :
-            _anim_mesh->deform_mesh();
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::enterEvent( QEvent* e){
-    e->ignore();
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::set_viewports_layout(Layout_e setting)
-{
-    _main_layout = gen_single ();
-
-    this->setLayout(_main_layout);
-}
-
-// -----------------------------------------------------------------------------
-
-QLayout* OGL_viewports_skin::gen_single()
-{
-    QVBoxLayout* vlayout = new QVBoxLayout(this);
-    vlayout->setSpacing(0);
-    vlayout->setContentsMargins(0, 0, 0, 0);
-
-    {
-        Viewport_frame_skin* frame = new_viewport_frame(this, 0);
-        _viewports_frame.push_back(frame);
-        QVBoxLayout* layout = new QVBoxLayout(frame);
-        layout->setSpacing(0);
-        layout->setContentsMargins(0, 0, 0, 0);
-        frame->setLayout(layout);
-
-        vlayout->addWidget(frame);
-    }
-
-    return vlayout;
-}
-
-Viewport_frame_skin* OGL_viewports_skin::new_viewport_frame(QWidget* parent, int id)
-{
-    Viewport_frame_skin* frame = new Viewport_frame_skin(parent, id);
-    QObject::connect(frame, SIGNAL( active(int) ),
-                     this , SLOT  ( active_viewport_slot(int)) );
-
-    return frame;
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::set_frame_border_color(Viewport_frame_skin* f, int r, int g, int b)
-{
-    QString str = "color: rgb("+
-            QString::number(r)+", "+
-            QString::number(g)+", "+
-            QString::number(b)+");";
-
-    f->setStyleSheet( str );
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::incr_frame_count()
-{
-    _frame_count++;
-    emit frame_count_changed(_frame_count);
-}
-
-// -----------------------------------------------------------------------------
-
-void OGL_viewports_skin::active_viewport_slot(int id)
-{
-    for(unsigned i = 0; i < _viewports_frame.size(); i++)
-        set_frame_border_color(_viewports_frame[i], 0, 0, 0);
-
-    set_frame_border_color(_viewports_frame[id], 255, 0, 0);
+    if(!_skel_mode)
+        return;
+    if(_anim_mesh == NULL)
+        return;
+    // Transform HRBF samples for display and selection
+    _anim_mesh->transform_samples();
+    // Animate the mesh :
+    _anim_mesh->deform_mesh();
 }
