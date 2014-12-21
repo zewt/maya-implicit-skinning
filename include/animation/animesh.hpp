@@ -378,8 +378,6 @@ private:
     /// Compute normals in 'normals' and the vertices position in 'vertices'
     void compute_normals(const Vec3_cu* vertices, Vec3_cu* normals);
 
-    void compute_tangents(const Vec3_cu* vertices, Vec3_cu* tangents);
-
     ///  geometric deformation of vertices (SSD, dual quat ...)
     /// @param t : type of the deformation
     /// @param in : input vertices to deform
@@ -513,7 +511,6 @@ private:
     Cuda_utils::Device::Array<Point_cu>  d_output_vertices;
     /// final normals
     Cuda_utils::Device::Array<Vec3_cu> d_output_normals;
-    Cuda_utils::Device::Array<Vec3_cu> d_output_tangents;
 
     /// Points of the mesh animated by ssd
     Cuda_utils::Device::Array<Point_cu>  d_ssd_vertices;
@@ -527,8 +524,6 @@ private:
     /// there are different from the mesh's real topology as some of the vertices
     /// are duplicated for rendering because of textures
     Cuda_utils::Device::Array<int> d_input_tri;
-    /// quad index in device mem. @see  d_input_tri
-    Cuda_utils::Device::Array<int> d_input_quad;
 
     /// List of first ring neighborhoods for a vertices, this list has to be
     /// read with the help of d_edge_list_offsets[] array @see d_edge_list_offsets

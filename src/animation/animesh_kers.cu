@@ -186,23 +186,6 @@ compute_normal_tri(const Mesh::PrimIdx& pi, const Vec3_cu* prim_vertices) {
 
 // -----------------------------------------------------------------------------
 
-__device__ Vec3_cu
-compute_normal_quad(const Mesh::PrimIdx& pi, const Vec3_cu* prim_vertices) {
-    const Point_cu va = Convs::to_point(prim_vertices[pi.a]);
-    const Point_cu vb = Convs::to_point(prim_vertices[pi.b]);
-    const Point_cu vc = Convs::to_point(prim_vertices[pi.c]);
-    const Point_cu vd = Convs::to_point(prim_vertices[pi.d]);
-    Vec3_cu vab = (vb - va);
-    Vec3_cu vbc = (vc - vb);
-    Vec3_cu vcd = (vd - vc);
-    Vec3_cu vda = (va - vb);
-
-    return ((vda - vbc).cross(vab - vcd)).normalized();
-    //return Vec3_cu(1,1,1).normalized();
-}
-
-// -----------------------------------------------------------------------------
-
 /** Assign the normal of each face to each of its vertices
   */
 __global__ void
@@ -230,86 +213,6 @@ compute_unpacked_normals_tri(const int* faces,
     }
 }
 
-// -----------------------------------------------------------------------------
-/*
-void
-compute_unpacked_normals_tri_debug_cpu(const int* d_faces,
-                                       Device::Array< Mesh::PrimIdxVertices> d_piv,
-                                       int nb_faces,
-                                       const Vec3_cu* vertices,
-                                       Device::Array<Vec3_cu> d_unpacked_normals,
-                                       int unpack_factor,
-                                       int blockDim,
-                                       int gridDim
-                                       )
-{
-    HA_int faces(nb_faces*3);
-    mem_cpy_dth(faces.ptr(), d_faces, faces.size());
-    Host::Array< PrimIdxVertices > piv(d_piv.size());
-    piv.copy_from(d_piv);
-
-    HA_Vec3_cu unpacked_normals(d_unpacked_normals.size());
-    unpacked_normals.copy_from(d_unpacked_normals);
-
-    for(int blockIdx = 0; blockIdx < blockDim; blockIdx++ )
-        for(int threadIdx = 0; threadIdx < gridDim; threadIdx++ )
-        {
-            int n = nb_faces;
-            int p = blockIdx * blockDim + threadIdx;
-            if(p < n){
-                Mesh::PrimIdx pidx;
-                pidx.a = faces[3*p];
-                pidx.b = faces[3*p + 1];
-                pidx.c = faces[3*p + 2];
-                Mesh::PrimIdxVertices pivp = piv[p];
-                Vec3_cu nm = {0.f,0.f,0.f};// = compute_normal_tri(pidx, vertices);//////////
-                int ia = pidx.a * unpack_factor + pivp.ia;
-                int ib = pidx.b * unpack_factor + pivp.ib;
-                int ic = pidx.c * unpack_factor + pivp.ic;
-                unpacked_normals[ia] = nm;
-                unpacked_normals[ib] = nm;
-                unpacked_normals[ic] = nm;
-            }
-        }
-    d_unpacked_normals.copy_from(unpacked_normals);
-}
-*/
-// -----------------------------------------------------------------------------
-
-__global__ void
-compute_unpacked_normals_quad(const int* faces,
-                              Device::Array< Mesh::PrimIdxVertices> piv,
-                              int nb_faces,
-                              int piv_offset,
-                              const Vec3_cu* vertices,
-                              Device::Array<Vec3_cu> unpacked_normals,
-                              int unpack_factor){
-    int n = nb_faces;
-    int p = blockIdx.x * blockDim.x + threadIdx.x;
-    if(p < n)
-    {
-        Mesh::PrimIdx pidx;
-        pidx.a = faces[4*p];
-        pidx.b = faces[4*p + 1];
-        pidx.c = faces[4*p + 2];
-        pidx.d = faces[4*p + 3];
-        Mesh::PrimIdxVertices pivp = piv[p + piv_offset];
-        Vec3_cu nm = compute_normal_quad(pidx, vertices);
-        int ia = pidx.a * unpack_factor + pivp.ia;
-        int ib = pidx.b * unpack_factor + pivp.ib;
-        int ic = pidx.c * unpack_factor + pivp.ic;
-        int id = pidx.d * unpack_factor + pivp.id;
-        unpacked_normals[ia] = nm;
-        unpacked_normals[ib] = nm;
-        unpacked_normals[ic] = nm;
-        unpacked_normals[id] = nm;
-        //unpacked_normals[p] = Vec3_cu(pivp.ia, pivp.ib, pivp.ic);
-    }
-
-}
-
-// -----------------------------------------------------------------------------
-
 /// Average the normals assigned to each vertex
 __global__
 void pack_normals( Device::Array<Vec3_cu> unpacked_normals,
@@ -331,10 +234,8 @@ void pack_normals( Device::Array<Vec3_cu> unpacked_normals,
 
 /// Compute the normals of the mesh using the normal at each face
 void compute_normals(const int* tri,
-                     const int* quad,
                      Device::Array<Mesh::PrimIdxVertices> piv,
                      int nb_tri,
-                     int nb_quad,
                      const Vec3_cu* vertices,
                      Device::Array<Vec3_cu> unpacked_normals,
                      int unpack_factor,
@@ -349,9 +250,6 @@ void compute_normals(const int* tri,
 
     const int nb_threads_compute_tri = nb_tri;
     const int grid_size_compute_tri = (nb_threads_compute_tri + block_size - 1) / block_size;
-
-    const int nb_threads_compute_quad = nb_quad;
-    const int grid_size_compute_quad = (nb_threads_compute_quad + block_size - 1) / block_size;
 
     CUDA_CHECK_KERNEL_SIZE(block_size, grid_size_clean);
     clean_unpacked_normals<<< grid_size_clean, block_size>>>(unpacked_normals);
@@ -377,16 +275,6 @@ void compute_normals(const int* tri,
                                     block_size,
                                     grid_size_compute_tri);
 #endif
-        CUDA_CHECK_ERRORS();
-    }
-    if(nb_quad > 0){
-        compute_unpacked_normals_quad<<< grid_size_compute_quad, block_size>>>
-                                     (quad,
-                                      piv,
-                                      nb_quad,
-                                      nb_tri,
-                                      vertices,
-                                      unpacked_normals,unpack_factor);
         CUDA_CHECK_ERRORS();
     }
 
@@ -425,160 +313,6 @@ compute_tangent_tri(const Mesh::PrimIdx& pi,
     tangent.z = coef * ((e1.z * st2.y)  + (e2.z * -st1.y));
 
     return tangent;
-}
-
-// -----------------------------------------------------------------------------
-
-__device__ Vec3_cu
-compute_tangent_quad(const Mesh::PrimIdx& pi, const Vec3_cu* prim_vertices) {
-    const Point_cu va = Convs::to_point(prim_vertices[pi.a]);
-    const Point_cu vb = Convs::to_point(prim_vertices[pi.b]);
-    const Point_cu vc = Convs::to_point(prim_vertices[pi.c]);
-    const Point_cu vd = Convs::to_point(prim_vertices[pi.d]);
-    Vec3_cu vab = (vb - va);
-    Vec3_cu vbc = (vc - vb);
-    Vec3_cu vcd = (vd - vc);
-    Vec3_cu vda = (va - vb);
-
-    return ((vda - vbc).cross(vab - vcd)).normalized();
-    //return Vec3_cu(1,1,1).normalized();
-}
-
-// -----------------------------------------------------------------------------
-
-/** Assign the normal of each face to each of its vertices
-  */
-__global__ void
-compute_unpacked_tangents_tri(const int* faces,
-                              const int* unpacked_faces,
-                              Device::Array<Mesh::PrimIdxVertices> piv,
-                              int nb_faces,
-                              const Vec3_cu* vertices,
-                              const float* tex_coords,
-                              Device::Array<Vec3_cu> unpacked_tangents,
-                              int unpack_factor)
-{
-    int n = nb_faces;
-    int p = blockIdx.x * blockDim.x + threadIdx.x;
-    if(p < n){
-        Mesh::PrimIdx pidx;
-        pidx.a = faces[3*p    ];
-        pidx.b = faces[3*p + 1];
-        pidx.c = faces[3*p + 2];
-        Mesh::PrimIdx upidx;
-        upidx.a = unpacked_faces[3*p    ];
-        upidx.b = unpacked_faces[3*p + 1];
-        upidx.c = unpacked_faces[3*p + 2];
-        Mesh::PrimIdxVertices pivp = piv[p];
-        Vec3_cu nm = compute_tangent_tri(pidx, upidx, vertices, tex_coords);
-        int ia = pidx.a * unpack_factor + pivp.ia;
-        int ib = pidx.b * unpack_factor + pivp.ib;
-        int ic = pidx.c * unpack_factor + pivp.ic;
-        unpacked_tangents[ia] = nm;
-        unpacked_tangents[ib] = nm;
-        unpacked_tangents[ic] = nm;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-__global__ void
-compute_unpacked_tangents_quad(const int* faces,
-                               const int* unpacked_faces,
-                               Device::Array< Mesh::PrimIdxVertices> piv,
-                               int nb_faces,
-                               int piv_offset,
-                               const Vec3_cu* vertices,
-                               const float* tex_coords,
-                               Device::Array<Vec3_cu> unpacked_tangents,
-                               int unpack_factor)
-{
-    int n = nb_faces;
-    int p = blockIdx.x * blockDim.x + threadIdx.x;
-    if(p < n){
-        Mesh::PrimIdx pidx;
-        pidx.a = faces[4*p];
-        pidx.b = faces[4*p + 1];
-        pidx.c = faces[4*p + 2];
-        pidx.d = faces[4*p + 3];
-        Mesh::PrimIdxVertices pivp = piv[p + piv_offset];
-        Vec3_cu nm = compute_tangent_quad(pidx, vertices);
-        int ia = pidx.a * unpack_factor + pivp.ia;
-        int ib = pidx.b * unpack_factor + pivp.ib;
-        int ic = pidx.c * unpack_factor + pivp.ic;
-        int id = pidx.d * unpack_factor + pivp.id;
-        unpacked_tangents[ia] = nm;
-        unpacked_tangents[ib] = nm;
-        unpacked_tangents[ic] = nm;
-        unpacked_tangents[id] = nm;
-        //unpacked_normals[p] = Vec3_cu(pivp.ia, pivp.ib, pivp.ic);
-    }
-
-}
-
-// -----------------------------------------------------------------------------
-
-void compute_tangents(const int* tri,
-                      const int* quad,
-                      const int* unpacked_tri,
-                      const int* unpacked_quad,
-                      Device::Array<Mesh::PrimIdxVertices> piv,
-                      int nb_tri,
-                      int nb_quad,
-                      const Vec3_cu* vertices,
-                      const float* tex_coords,
-                      Device::Array<Vec3_cu> unpacked_tangents,
-                      int unpack_factor,
-                      Vec3_cu* out_tangents)
-{
-
-    const int block_size = 512;
-    const int nb_threads_clean = unpacked_tangents.size();
-    const int grid_size_clean = (nb_threads_clean + block_size - 1) / block_size;
-    const int nb_threads_pack = unpacked_tangents.size() / unpack_factor;
-    const int grid_size_pack = (nb_threads_pack + block_size - 1) / block_size;
-
-    const int nb_threads_compute_tri = nb_tri;
-    const int grid_size_compute_tri = (nb_threads_compute_tri + block_size - 1) / block_size;
-
-    const int nb_threads_compute_quad = nb_quad;
-    const int grid_size_compute_quad = (nb_threads_compute_quad + block_size - 1) / block_size;
-
-    CUDA_CHECK_KERNEL_SIZE(block_size, grid_size_clean);
-    clean_unpacked_normals<<< grid_size_clean, block_size>>>(unpacked_tangents);
-
-    CUDA_CHECK_ERRORS();
-
-    if(nb_tri > 0){
-        compute_unpacked_tangents_tri<<< grid_size_compute_tri, block_size>>>
-                                   (tri,
-                                    unpacked_tri,
-                                    piv,
-                                    nb_tri,
-                                    vertices,
-                                    tex_coords,
-                                    unpacked_tangents,unpack_factor);
-        CUDA_CHECK_ERRORS();
-    }
-    if(nb_quad > 0){
-        assert(false);
-        // TODO: handle quads
-        compute_unpacked_tangents_quad<<< grid_size_compute_quad, block_size>>>
-                                     (quad,
-                                      unpacked_quad,
-                                      piv,
-                                      nb_quad,
-                                      nb_tri,
-                                      vertices,
-                                      tex_coords,
-                                      unpacked_tangents,unpack_factor);
-        CUDA_CHECK_ERRORS();
-    }
-
-    pack_normals<<< grid_size_pack, block_size>>>(unpacked_tangents,
-                                                  unpack_factor,
-                                                  out_tangents);
-    CUDA_CHECK_ERRORS();
 }
 
 // -----------------------------------------------------------------------------

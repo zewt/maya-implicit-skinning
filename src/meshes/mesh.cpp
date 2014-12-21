@@ -38,9 +38,7 @@
 
 Mesh::Mesh() :
     _is_initialized(false),
-    _is_closed(true),
     _has_normals(false),
-    _is_manifold(true),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
     _nb_vert(0),
@@ -51,7 +49,6 @@ Mesh::Mesh() :
     _is_connected(0),
     _is_side(0),
     _tri(0),
-    _quad(0),
     _piv(0),
     _edge_list(0),
     _edge_list_offsets(0),
@@ -59,7 +56,6 @@ Mesh::Mesh() :
     _tangents(0),
     _size_unpacked_vert_array(-1),
     _unpacked_tri(0),
-    _unpacked_quad(0),
     _packed_vert_map(0)
 {
 }
@@ -68,9 +64,7 @@ Mesh::Mesh() :
 
 Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _is_initialized(true),
-    _is_closed(true),
     _has_normals(false),
-    _is_manifold(true),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
     _nb_vert( vert.size() / 3),
@@ -81,7 +75,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _is_connected(0),
     _is_side(0),
     _tri(0),
-    _quad(0),
     _piv(0),
     _edge_list(0),
     _edge_list_offsets(0),
@@ -89,7 +82,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _tangents(0),
     _size_unpacked_vert_array( vert.size() / 3),
     _unpacked_tri(0),
-    _unpacked_quad(0),
     _packed_vert_map(0)
 {
 
@@ -136,9 +128,7 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
 
 Mesh::Mesh(const Mesh& m) :
     _is_initialized(m._is_initialized),
-    _is_closed(m._is_closed),
     _has_normals(m._has_normals),
-    _is_manifold(m._is_manifold),
     _offset(m._offset),
     _scale(m._scale),
     _max_faces_per_vertex(m._max_faces_per_vertex),
@@ -147,10 +137,7 @@ Mesh::Mesh(const Mesh& m) :
     _nb_quad(m._nb_quad),
     _nb_edges(m._nb_edges),
     _tri_list_per_vert(m._tri_list_per_vert),
-    _quad_list_per_vert(m._quad_list_per_vert),
-    _size_unpacked_vert_array(m._size_unpacked_vert_array),
-    _unpacked_tri_list_per_vert(m._unpacked_tri_list_per_vert),
-    _unpacked_quad_list_per_vert(m._unpacked_quad_list_per_vert)
+    _size_unpacked_vert_array(m._size_unpacked_vert_array)
 {
 
     _vert            = new float[ _nb_vert*3 ];
@@ -159,7 +146,6 @@ Mesh::Mesh(const Mesh& m) :
     _packed_vert_map = new Packed_data[_nb_vert];
 
     _tri       = new int[3 * _nb_tri             ];
-    _quad      = new int[4 * _nb_quad            ];
     _piv       = new int[4 * (_nb_tri + _nb_quad)];
     _edge_list = new int[_nb_edges               ];
 
@@ -169,7 +155,6 @@ Mesh::Mesh(const Mesh& m) :
     _tangents   = m._tangents != 0 ? new float [_size_unpacked_vert_array * 3] : 0;
 
     _unpacked_tri  = new int[_nb_tri  * 3];
-    _unpacked_quad = new int[_nb_quad * 4];
 
     for(int i = 0; i < _nb_vert; i++)
     {
@@ -192,12 +177,6 @@ Mesh::Mesh(const Mesh& m) :
     {
         _tri[i] = m._tri[i];
         _unpacked_tri[i] = m._unpacked_tri[i];
-    }
-
-    for(int i = 0; i < _nb_quad*4; i++)
-    {
-        _quad[i] = m._quad[i];
-        _unpacked_quad[i] = m._unpacked_quad[i];
     }
 
     for(int i = 0; i < 4*(_nb_tri + _nb_quad); i++)
@@ -229,9 +208,7 @@ Mesh::Mesh(const Mesh& m) :
 
 Mesh::Mesh(const char* filename) :
     _is_initialized(false),
-    _is_closed(true),
     _has_normals(false),
-    _is_manifold(true),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
     _nb_vert(0),
@@ -242,7 +219,6 @@ Mesh::Mesh(const char* filename) :
     _is_connected(0),
     _is_side(0),
     _tri(0),
-    _quad(0),
     _piv(0),
     _edge_list(0),
     _edge_list_offsets(0),
@@ -250,7 +226,6 @@ Mesh::Mesh(const char* filename) :
     _tangents(0),
     _size_unpacked_vert_array(-1),
     _unpacked_tri(0),
-    _unpacked_quad(0),
     _packed_vert_map(0)
 {
     using namespace std;
@@ -357,13 +332,6 @@ Mesh::Mesh(const char* filename) :
             _tri[i] = _unpacked_tri[i] = tri_index[i];
     }
 
-    if( _nb_quad > 0){
-        _quad          = new int   [_nb_quad * 4 ];
-        _unpacked_quad = new int   [_nb_quad * 4 ];
-        for(int i = 0; i < _nb_quad*4; i++)
-            _quad[i] = _unpacked_quad[i] = quad_index[i];
-    }
-
     compute_piv();
     compute_face_index();
     compute_edges();
@@ -386,32 +354,25 @@ void Mesh::free_mesh_data()
     delete[] _is_connected;
     delete[] _vert;
     delete[] _tri;
-    delete[] _quad;
     delete[] _normals;
     delete[] _tangents;
     delete[] _packed_vert_map;
     delete[] _unpacked_tri;
-    delete[] _unpacked_quad;
     delete[] _piv;
     delete[] _edge_list;
     delete[] _edge_list_offsets;
     _is_connected      = 0;
     _vert              = 0;
     _tri               = 0;
-    _quad              = 0;
     _normals           = 0;
     _tangents          = 0;
     _packed_vert_map   = 0;
     _unpacked_tri      = 0;
-    _unpacked_quad     = 0;
     _piv               = 0;
     _edge_list         = 0;
     _edge_list_offsets = 0;
 
     _tri_list_per_vert.clear();
-    _quad_list_per_vert.clear();
-    _unpacked_tri_list_per_vert.clear();
-    _unpacked_quad_list_per_vert.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -442,17 +403,6 @@ void Mesh::export_off(const char* filename, bool invert_index) const
         else
             file << "3 " << a << ' ' << b << ' ' << c << endl;
     }
-
-    for(int i = 0; i < _nb_quad; i++) {
-        int a = _quad[4*i  ];
-        int b = _quad[4*i+1];
-        int c = _quad[4*i+2];
-        int d = _quad[4*i+3];
-        if(invert_index)
-            file << "4 " << d << ' ' << c << ' ' << b << ' ' << a << endl;
-        else
-            file << "4 " << a << ' ' << b << ' ' << c << ' ' << d << endl;
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -478,23 +428,6 @@ void Mesh::compute_piv()
         _piv[4*i+2] = pic[ic]++;
         if(imax < pic[ic]) imax = pic[ic];
         _piv[4*i+3] = 0;
-    }
-
-    for(int i = 0; i < _nb_quad; i++){
-        int j = i + _nb_tri;
-        int ia = _quad[4*i    ];
-        int ib = _quad[4*i + 1];
-        int ic = _quad[4*i + 2];
-        int id = _quad[4*i + 3];
-
-        _piv[4*j] = pic[ia]++;
-        if(imax < pic[ia]) imax = pic[ia];
-        _piv[4*j+1] = pic[ib]++;
-        if(imax < pic[ib]) imax = pic[ib];
-        _piv[4*j+2] = pic[ic]++;
-        if(imax < pic[ic]) imax = pic[ic];
-        _piv[4*j+3] = pic[id]++;
-        if(imax < pic[id]) imax = pic[id];
     }
     _max_faces_per_vertex = imax;
     delete [] pic;
@@ -529,28 +462,6 @@ void Mesh::compute_normals()
         new_normals[3 * va] += fnx;	new_normals[3 * va + 1] += fny;	new_normals[3 * va + 2] += fnz;
         new_normals[3 * vb] += fnx;	new_normals[3 * vb + 1] += fny;	new_normals[3 * vb + 2] += fnz;
         new_normals[3 * vc] += fnx;	new_normals[3 * vc + 1] += fny;	new_normals[3 * vc + 2] += fnz;
-    }
-
-    for(int i = 0; i < _nb_quad; i++){
-        int va = _quad[4*i  ];
-        int vb = _quad[4*i+1];
-        int vc = _quad[4*i+2];
-        int vd = _quad[4*i+3];
-        float xa = _vert[3*va], ya = _vert[3*va+1], za = _vert[3*va+2];
-        float xb = _vert[3*vb], yb = _vert[3*vb+1], zb = _vert[3*vb+2];
-        float xc = _vert[3*vc], yc = _vert[3*vc+1], zc = _vert[3*vc+2];
-        float xd = _vert[3*vd], yd = _vert[3*vd+1], zd = _vert[3*vd+2];
-        float x0 = xb - xa + xc - xd, y0 = yb - ya + yc - yd, z0 = zb - za + zc - zd;
-        float x1 = xd - xa + xc - xb, y1 = yd - ya + yc - yb, z1 = zd - za + zc - zb;
-        float nx = y0 * z1 - z0 * y1;
-        float ny = z0 * x1 - x0 * z1;
-        float nz = x0 * y1 - y0 * x1;
-        float norm = -sqrtf(nx * nx + ny * ny + nz * nz);
-        nx /= norm; ny /= norm, nz /= norm;
-        new_normals[3 * va] += nx; new_normals[3 * va + 1] += ny; new_normals[3 * va + 2] += nz;
-        new_normals[3 * vb] += nx; new_normals[3 * vb + 1] += ny; new_normals[3 * vb + 2] += nz;
-        new_normals[3 * vc] += nx; new_normals[3 * vc + 1] += ny; new_normals[3 * vc + 2] += nz;
-        new_normals[3 * vd] += nx; new_normals[3 * vd + 1] += ny; new_normals[3 * vd + 2] += nz;
     }
 
     std::cout << "normals :\n";
@@ -588,31 +499,14 @@ void Mesh::compute_face_index()
 {
     assert(_size_unpacked_vert_array > 0);
 
-    _unpacked_tri_list_per_vert.clear();
-    _unpacked_quad_list_per_vert.clear();
     _tri_list_per_vert.clear();
-    _quad_list_per_vert.clear();
     _tri_list_per_vert. resize(_nb_vert);
-    _quad_list_per_vert.resize(_nb_vert);
-    _unpacked_tri_list_per_vert.resize(_size_unpacked_vert_array);
-    _unpacked_quad_list_per_vert.resize(_size_unpacked_vert_array);
 
     for(int i = 0; i < _nb_tri; i++){
         for(int j = 0; j < 3; j++){
             int v = _tri[3*i +j ];
             assert(v>=0);
             _tri_list_per_vert[v].push_back(i);
-            v = _unpacked_tri[3*i + j ];
-            _unpacked_tri_list_per_vert[v].push_back(i);
-        }
-    }
-
-    for(int i = 0; i < _nb_quad; i++){
-        for(int j = 0; j < 4; j++){
-            int v = _quad[4*i + j];
-            _quad_list_per_vert[v].push_back(i);
-            v = _unpacked_quad[4*i + j];
-            _unpacked_quad_list_per_vert[v].push_back(i);
         }
     }
 }
@@ -630,9 +524,7 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
 
     _vert          = new float [_nb_vert * 3];
     _tri           = new int   [_nb_tri  * 3];
-    _quad          = 0;
     _unpacked_tri  = new int   [_nb_tri  * 3];
-    _unpacked_quad = 0;
 
     _is_connected = new bool[_nb_vert];
     _is_side      = new bool[_nb_vert];
@@ -718,6 +610,8 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
         }
     }
 
+    // XXX: We could ignore input normals, so we wouldn't be affected by normals set to special
+    // values for lighting purposes and we wouldn't interact as much with the host.
     if( !_has_normals )
         compute_normals();
     // Initialize VBOs
@@ -740,26 +634,6 @@ std::pair<int, int> Mesh::pair_from_tri(int index_tri, int current_vert)
     }
 
     return std::pair<int, int>(ids[0], ids[1]);
-}
-
-// -----------------------------------------------------------------------------
-
-std::pair<int, int> Mesh::pair_from_quad(int index_quad, int current_vert, int n)
-{
-    assert(n == 1 || n == 0);
-
-    int ids[3] = {-1, -1, -1};
-    for(int i=0; i<4; i++){
-        int vert_id = _quad[index_quad*4 + i];
-        if(vert_id == current_vert){
-            ids[0] = _quad[index_quad*4 + (i+1)%4];
-            ids[1] = _quad[index_quad*4 + (i+2)%4];
-            ids[2] = _quad[index_quad*4 + (i+3)%4];
-            break;
-        }
-    }
-
-    return std::pair<int, int>(ids[0+n], ids[1+n]);
 }
 
 // -----------------------------------------------------------------------------
@@ -811,8 +685,6 @@ void Mesh::compute_edges()
     Timer t;
     t.start();
 
-    _not_manifold_verts.clear();
-    _on_side_verts.clear();
     delete[] _is_side;
     _is_side = new bool[_nb_vert];
     for(int i = 0; i < _nb_vert; i++)
@@ -834,12 +706,6 @@ void Mesh::compute_edges()
         // fill pairs with the first ring of neighborhood of quads and triangles
         for(unsigned int j=0; j<_tri_list_per_vert[i].size(); j++)
             list_pairs.push_back(pair_from_tri(_tri_list_per_vert[i][j], i));
-
-        for(unsigned int j=0; j<_quad_list_per_vert[i].size(); j++)
-        {
-            list_pairs.push_back(pair_from_quad(_quad_list_per_vert[i][j], i, 0));
-            list_pairs.push_back(pair_from_quad(_quad_list_per_vert[i][j], i, 1));
-        }
 
         // Try to build the ordered list of the first ring of neighborhood of i
         std::deque<int> ring;
@@ -875,15 +741,10 @@ void Mesh::compute_edges()
         {
             std::cerr << "WARNING : The mesh is clearly not 2-manifold !\n";
             std::cerr << "Check vertex index : " << i << std::endl;
-            _is_manifold = false;
-            _not_manifold_verts.push_back(i);
         }
-
 
         if(ring[0] != ring[ring.size()-1]){
             _is_side[i] = true;
-            _on_side_verts.push_back(i);
-            _is_closed = false;
         }else
             ring.pop_back();
 
@@ -908,8 +769,6 @@ void Mesh::compute_edges()
         for(int j = 0; j <  size; j++)
             _edge_list[k++] = neighborhood_list[i][j];
     }
-
-    if(!_is_closed) std::cout << "Mesh is not a closed mesh\n";
 
     std::cout << "Mesh edges computed in: " << t.stop() << " sec" << std::endl;
 }
@@ -951,100 +810,6 @@ void Mesh::check_integrity()
     }
 #endif
 }
-
-// -----------------------------------------------------------------------------
-
-void Mesh::diffuse_along_mesh(float* vertices_attributes,
-                              float locked_value,
-                              int nb_iter) const
-{
-    float* new_attribs   = new float[_nb_vert];
-    int*   nb_neighbours = new int  [_nb_vert];
-    for(int k = 0; k < nb_iter; k++)
-    {
-        for(int i = 0; i < _nb_vert; i++){
-            new_attribs[i] = 0.f;
-            nb_neighbours[i] = 0;
-        }
-        for(int i = 0; i < _nb_tri; i++){
-            int a = _tri[3 * i];
-            int b = _tri[3 * i + 1];
-            int c = _tri[3 * i + 2];
-            new_attribs[a] += vertices_attributes[b] + vertices_attributes[c];
-            new_attribs[b] += vertices_attributes[c] + vertices_attributes[a];
-            new_attribs[c] += vertices_attributes[a] + vertices_attributes[b];
-            nb_neighbours[a] += 2;
-            nb_neighbours[b] += 2;
-            nb_neighbours[c] += 2;
-        }
-        for(int i = 0; i < _nb_quad; i++){
-            int a = _quad[4 * i];
-            int b = _quad[4 * i + 1];
-            int c = _quad[4 * i + 2];
-            int d = _quad[4 * i + 3];
-            new_attribs[a] += vertices_attributes[b] + vertices_attributes[d];
-            new_attribs[b] += vertices_attributes[c] + vertices_attributes[a];
-            new_attribs[c] += vertices_attributes[b] + vertices_attributes[d];
-            new_attribs[d] += vertices_attributes[c] + vertices_attributes[a];
-            nb_neighbours[a] += 2;
-            nb_neighbours[b] += 2;
-            nb_neighbours[c] += 2;
-            nb_neighbours[d] += 2;
-        }
-        for(int i = 0; i < _nb_vert; i++){
-            if(vertices_attributes[i] != locked_value){
-                vertices_attributes[i] = new_attribs[i] / nb_neighbours[i];
-            }
-        }
-    }
-    delete[] new_attribs;
-    delete[] nb_neighbours;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::diffuse_along_mesh(float* vertices_attributes, int nb_iter) const
-{
-    float* new_attribs   = new float[_nb_vert];
-    int*   nb_neighbours = new int[_nb_vert];
-    for(int k = 0; k < nb_iter; k++){
-        for(int i = 0; i < _nb_vert; i++){
-            new_attribs  [i] = 0.f;
-            nb_neighbours[i] = 0;
-        }
-        for(int i = 0; i < _nb_tri; i++){
-            int a = _tri[3 * i    ];
-            int b = _tri[3 * i + 1];
-            int c = _tri[3 * i + 2];
-            new_attribs[a] += vertices_attributes[b] + vertices_attributes[c];
-            new_attribs[b] += vertices_attributes[c] + vertices_attributes[a];
-            new_attribs[c] += vertices_attributes[a] + vertices_attributes[b];
-            nb_neighbours[a] += 2;
-            nb_neighbours[b] += 2;
-            nb_neighbours[c] += 2;
-        }
-        for(int i = 0; i < _nb_quad; i++){
-            int a = _quad[4 * i    ];
-            int b = _quad[4 * i + 1];
-            int c = _quad[4 * i + 2];
-            int d = _quad[4 * i + 3];
-            new_attribs[a] += vertices_attributes[b] + vertices_attributes[d];
-            new_attribs[b] += vertices_attributes[c] + vertices_attributes[a];
-            new_attribs[c] += vertices_attributes[b] + vertices_attributes[d];
-            new_attribs[d] += vertices_attributes[c] + vertices_attributes[a];
-            nb_neighbours[a] += 2;
-            nb_neighbours[b] += 2;
-            nb_neighbours[c] += 2;
-            nb_neighbours[d] += 2;
-        }
-        for(int i = 0; i < _nb_vert; i++)
-            vertices_attributes[i] = new_attribs[i] / nb_neighbours[i];
-    }
-    delete[] new_attribs;
-    delete[] nb_neighbours;
-}
-
-// -----------------------------------------------------------------------------
 
 Vec3_cu Mesh::get_normal(int i, int n) const {
     assert(_has_normals);

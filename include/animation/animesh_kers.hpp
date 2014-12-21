@@ -127,28 +127,12 @@ void fill_grid_with_fngf(int bone_id,
 
 /// Compute on GPU the normals of the mesh using the normal at each face
 void compute_normals(const int* tri,
-                     const int* quad,
                      Device::Array<Mesh::PrimIdxVertices> piv,
                      int nb_tri,
-                     int nb_quad,
                      const Vec3_cu* vertices,
                      Device::Array<Vec3_cu> unpacked_normals,
                      int unpack_factor,
                      Vec3_cu* out_normals);
-
-/// Compute the tangents at each face
-void compute_tangents(const int* tri,
-                      const int* quad,
-                      const int* unpacked_tri,
-                      const int* unpacked_quad,
-                      Device::Array<Mesh::PrimIdxVertices> piv,
-                      int nb_tri,
-                      int nb_quad,
-                      const Vec3_cu* vertices,
-                      const float* tex_coords,
-                      Device::Array<Vec3_cu> unpacked_tangents,
-                      int unpack_factor,
-                      Vec3_cu* out_tangents);
 
 /// Tangential relaxation of the vertices. Each vertex is expressed with the
 /// mean value coordinates (mvc) of its neighborhood. While animating we try

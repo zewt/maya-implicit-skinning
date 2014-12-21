@@ -67,12 +67,10 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
 //    d_input_normals(m->get_nb_vertices()),
     d_output_vertices(_mesh->get_nb_vertices()),
     d_output_normals(_mesh->get_nb_vertices()),
-    d_output_tangents(_mesh->get_nb_vertices()),
     d_ssd_normals(_mesh->get_nb_vertices()),
     d_ssd_vertices(_mesh->get_nb_vertices()),
     d_gradient(_mesh->get_nb_vertices()),
     d_input_tri(_mesh->get_nb_tri()*3),
-    d_input_quad(_mesh->get_nb_quad()*4),
     d_edge_list(_mesh->get_nb_edges()),
     d_edge_list_offsets(2 * _mesh->get_nb_vertices()),
     d_joints(), d_weights(),
@@ -224,11 +222,6 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
 
     const Mesh::Packed_data* d = a_mesh.get_packed_vert_map();
     Cuda_utils::mem_cpy_htd(d_packed_vert_map.ptr(), d, nb_vert);
-    if(a_mesh._has_tex_coords)
-    {
-        Vec3_cu* t = (Vec3_cu*)a_mesh._tangents;
-        Cuda_utils::mem_cpy_htd(d_output_tangents.ptr(), t, nb_vert);
-    }
 
     Host::Array<Point_cu > input_vertices(nb_vert);
     Host::Array<Vec3_cu>   input_normals (nb_vert);
@@ -267,7 +260,6 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     d_edge_list_offsets.copy_from(h_edge_list_offsets);
 
     Cuda_utils::mem_cpy_htd(d_input_tri. ptr(), a_mesh._tri , a_mesh._nb_tri*3 );
-    Cuda_utils::mem_cpy_htd(d_input_quad.ptr(), a_mesh._quad, a_mesh._nb_quad*4);
 }
 
 // -----------------------------------------------------------------------------

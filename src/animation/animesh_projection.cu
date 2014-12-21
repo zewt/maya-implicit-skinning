@@ -78,23 +78,13 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
     //update_base_potential();
 }
 
-// -----------------------------------------------------------------------------
-
-void Animesh::compute_tangents(const Vec3_cu* vertices, Vec3_cu* tangents)
-{
-}
-
-// -----------------------------------------------------------------------------
-
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)
 {
     if(_mesh->get_nb_faces() > 0)
     {
         Animesh_kers::compute_normals(d_input_tri.ptr(),
-                                      d_input_quad.ptr(),
                                       d_piv,
                                       _mesh->get_nb_tri(),
-                                      _mesh->get_nb_quad(),
                                       vertices,
                                       d_unpacked_normals,
                                       _mesh->_max_faces_per_vertex,
@@ -357,7 +347,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
     const int nb_vert    = d_input_vertices.size();
 
     Vec3_cu* out_normals  = (Vec3_cu*)d_output_normals.ptr();
-    Vec3_cu* out_tangents = (Vec3_cu*)d_output_tangents.ptr();
 
 #if 0
     d_output_vertices.copy_from(d_input_vertices);
@@ -434,12 +423,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
     }
 
     compute_normals(out_verts, out_normals);
-
-    // XXX: needed?
-//    if(_mesh->_has_tex_coords && _mesh->_has_bumpmap)
-        compute_tangents(out_verts, out_normals);
-//    else
-//        out_tangents = 0;
 }
 
 // -----------------------------------------------------------------------------

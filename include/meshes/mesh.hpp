@@ -104,10 +104,6 @@ public:
         int a, b, c;
     };
 
-    struct Quad_idx {
-        int a, b, c, d;
-    };
-
     /// @struct PrimIdx
     /// The class of a primitive (triangle or quad).
     /// Each attribute is the index of a vertex.
@@ -165,34 +161,12 @@ public:
     Mesh(const char* filename);
 
     /// @param filename      path and name for the file to be writen
-    /// @param invert_index  wether the quads and triangles index are to be
+    /// @param invert_index  whether the triangles index are to be
     /// inverted (i.e write in clockwise order or counter clockwise)
     void export_off(const char* filename, bool invert_index = false) const;
 
     /// Load a mesh from the abstract representation of our file loader
     void load(const Loader::Abs_mesh& mesh, const std::string& mesh_path);
-
-    //  ------------------------------------------------------------------------
-    /// @name Drawing the mesh
-    //  ------------------------------------------------------------------------
-
-    //  ------------------------------------------------------------------------
-    /// @name Surface deformations
-    //  ------------------------------------------------------------------------
-
-    /// Diffuse some vertex attributes along the mesh.
-    /// Each vertex is associated to an attribute defined by the array
-    /// "vertices_attributes[]". For each vertex the mean sum of its first ring
-    /// of neighborhood is computed, the operation is repeated "nb_iter" times.
-    /// @return The new vertices attributes in "vertices_attributes[]" array
-    void diffuse_along_mesh(float* vertices_attributes, int nb_iter) const;
-
-    /// Diffuse some vertex attributes along the mesh. see method above.
-    /// this method is the same but does not change attributes values which
-    /// equals to "locked_value"
-    void diffuse_along_mesh(float* vertices_attributes,
-                            float locked_value,
-                            int nb_iter) const;
 
     //  ------------------------------------------------------------------------
     /// @name Getter & Setters
@@ -229,18 +203,10 @@ public:
 
     /// Get the index at i
     int get_tri (int i) const { return _tri [i]; }
-    int get_quad(int i) const { return _quad[i]; }
 
     const int* get_tri_index () const { return _tri;  }
-    const int* get_quad_index() const { return _quad; }
 
     const float* get_vertices() const { return _vert; }
-
-    /// List of vertex indices which are connected to not manifold triangles
-    const std::vector<int>& get_not_manifold_list() const { return _not_manifold_verts; }
-
-    /// List of vertices on a side of the mesh
-    const std::vector<int>& get_on_side_list() const { return _on_side_verts; }
 
     const Packed_data* get_packed_vert_map() const { return _packed_vert_map; }
 
@@ -254,6 +220,16 @@ public:
         return _edge_list_offsets[i];
     }
 
+    int get_first_neighbor(int i) const {
+        assert(i < _nb_vert);
+        return _edge_list_offsets[i*2];
+    }
+
+    int get_num_neighbors(int i) const {
+        assert(i < _nb_vert);
+        return _edge_list_offsets[i*2 + 1];
+    }
+
     int get_nb_vertices() const { return _nb_vert;                  }
     int get_nb_tri()      const { return _nb_tri;                   }
     int get_nb_quad()     const { return _nb_quad;                  }
@@ -262,15 +238,12 @@ public:
     int get_vbos_size()   const { return _size_unpacked_vert_array; }
 
     /// @return false if the ith vertex belongs to at least one primitive
-    /// i.e triangle or quad
     bool is_disconnect(int i) const { return !_is_connected[i]; }
 
     /// Is the ith vertex on the mesh boundary
     bool is_vert_on_side(int i) const { return _is_side[i]; }
 
-    bool is_closed()      const { return _is_closed;      }
     bool has_normals()    const { return _has_normals;    }
-    bool is_manifold()    const { return _is_manifold;    }
 
 private:
 
@@ -289,7 +262,7 @@ private:
     void compute_normals();
 
     /// For each vertex compute the list of faces it belongs to and stores it
-    /// in the attributes 'tri_list_per_vert' and 'quad_list_per_vert'.
+    /// in the attribute 'tri_list_per_vert'
     void compute_face_index();
 
     /// Compute the list of the mesh edges
@@ -302,12 +275,6 @@ private:
     /// return the pair corresponding to the vertex index opposite to 'current_vert'
     std::pair<int, int> pair_from_tri(int index_tri, int current_vert);
 
-    /// Same as pair_from_tri() but with quads. 'n' is between [0 1] and tells
-    /// if the first or the seccond pair of vertex is to be chosed.
-    std::pair<int, int> pair_from_quad(int index_quad, int current_vert, int n);
-    //}
-
-
     //  ------------------------------------------------------------------------
     /// @name Attributes
     //  ------------------------------------------------------------------------
@@ -317,14 +284,7 @@ private:
     //  ------------------------------------------------------------------------
 
     bool _is_initialized;    ///< is the mesh renderable (means every attributes is filled correctly)
-    bool _is_closed;         ///< is the mesh closed
     bool _has_normals;       ///< do the mesh has normals loaded
-
-    /// When false it is sure the mesh is not 2-manifold. But true does not
-    /// ensure mesh is 2-manifold (for instance self intersection are not detected
-    /// and when is_closed == false, is_manifold remains true). Mainly
-    /// topological defects are detected with is_manifold == false.
-    bool _is_manifold;
 
     Vec3_cu _offset;
     float  _scale;
@@ -342,26 +302,20 @@ private:
     // TODO: use a structure to hold vertices properties.
     float* _vert;        ///< Vertex position list [V0x V0y V0z V1x V1y V1z ...]
 
-    bool* _is_connected; ///< Does the ith vertex belongs to a tri or a quad
+    bool* _is_connected; ///< Does the ith vertex belongs to a tri
     bool* _is_side;      ///< Does the ith vertex belongs to a mesh boundary
 
     int* _tri;           ///< triangle index
-    int* _quad;          ///< quad index
 
     /// list of triangles index connected to a vertices.
     /// tri_list_per_vert[index_vert][nb_connected_triangles] = index triangle in
     /// attribute 'tri'
     std::vector<std::vector<int> > _tri_list_per_vert;
-    /// list of quads index connected to a vertices.
-    /// quad_list_per_vert[index_vert][nb_connected_quads] = index quad in
-    /// attribute 'quad'
-    std::vector<std::vector<int> > _quad_list_per_vert;
 
     /// ?
     int* _piv;
 
     /// list of neighbours of each vertex
-    /// N.B : quads are triangulated before creating this list of neighbours
     /// @see edge_list_offsets
     int* _edge_list;
 
@@ -370,8 +324,6 @@ private:
     /// @see edge_list
     int* _edge_list_offsets;
 
-    /// List of packed vertex index which presents topological defects.
-    std::vector<int> _not_manifold_verts;
     /// List of vertex on the side of the mesh
     std::vector<int> _on_side_verts;
 
@@ -387,16 +339,6 @@ private:
     int _size_unpacked_vert_array;
 
     int* _unpacked_tri;  ///< unpacked triangle index ( size == nb_tri)
-    int* _unpacked_quad; ///< unpacked quad index (size == nb_quad)
-
-    /// list of triangles index connected to a vertices.
-    /// unpacked_tri_list_per_vert[index_vert][nb_connected_triangles] = index triangle in
-    /// attribute 'unpacked_tri'
-    std::vector<std::vector<int> > _unpacked_tri_list_per_vert;
-    /// list of quads index connected to a vertices.
-    /// unpacked_quad_list_per_vert[index_vert][nb_connected_quads] = index quad in
-    /// attribute 'unpacked_quad'
-    std::vector<std::vector<int> > _unpacked_quad_list_per_vert;
 
     /// Mapping between the packed array of vertices 'vert' and the unpacked
     /// array of vertices 'vbo'. because vertices have multiple texture
