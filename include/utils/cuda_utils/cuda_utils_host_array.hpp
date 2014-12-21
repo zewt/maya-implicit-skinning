@@ -75,7 +75,7 @@ struct PL_Type<T,false>{
 template <class T, bool page_locked>
 struct ArrayTemplate : Cuda_utils::Common::Array<T>{
 
-    inline virtual ~ArrayTemplate();
+    virtual ~ArrayTemplate();
 
     template <class B, bool pg_lk>
     friend struct Cuda_utils::Host::ArrayTemplate;
@@ -120,7 +120,7 @@ struct ArrayTemplate : Cuda_utils::Common::Array<T>{
     //@}
 
     /// Erase the array
-    inline void erase();
+    void erase();
 
     /// Copy from another array
     /// returns 0 if succeeded
@@ -210,7 +210,7 @@ struct Array : ArrayTemplate<T,false>{
 
     inline Array(int nb_elt, const T& elt): BaseT(nb_elt, elt) {}
 
-    virtual inline ~Array(){}
+    virtual ~Array(){}
 
 private:
     typedef ArrayTemplate<T,false> BaseT;
