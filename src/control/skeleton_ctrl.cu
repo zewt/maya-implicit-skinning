@@ -111,88 +111,6 @@ Transfo Skeleton_ctrl::bone_anim_frame(int id_bone)
 
 // -----------------------------------------------------------------------------
 
-bool Skeleton_ctrl::select_joint(const Camera &cam, int x, int y, bool rest_pose)
-{
-    //y = Cuda_ctrl::_display._height - y;
-    int nearest = g_skel->select_joint( cam, (float)x, (float)y, rest_pose );
-    if( nearest <= -1 )
-    return false;
-
-    add_to_selection( nearest );
-    return true;
-}
-
-// -----------------------------------------------------------------------------
-
-bool Skeleton_ctrl::select_safely(const Camera &cam, int x, int y, bool rest_pose)
-{
-    //y = Cuda_ctrl::_display._height - y;
-    int nearest = g_skel->select_joint( cam, (float)x, (float)y, rest_pose );
-    if(nearest > -1)
-    {
-        reset_selection();
-        add_to_selection( nearest );
-        //DEBUG
-        std::cout << "bone type : " << EBone::type_to_string(g_skel->bone_type(nearest)) << std::endl;//DEBUG
-        std::cout << "bone id : " << nearest << std::endl;//DEBUG
-        //DEBUG
-
-        return true;
-    }
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-
-bool Skeleton_ctrl::unselect(const Camera &cam, int x, int y, bool rest_pose)
-{
-    //y = Cuda_ctrl::_display._height - y;
-    int nearest = g_skel->select_joint( cam, (float)x, (float)y, rest_pose );
-    if(nearest > -1){
-        remove_from_selection( nearest );
-        return true;
-    }
-    return false;
-}
-
-// -----------------------------------------------------------------------------
-
-bool Skeleton_ctrl::select_joint(int joint_id)
-{
-    bool state = false;
-    for(unsigned i = 0; i < _selected_joints.size(); ++i){
-        if(_selected_joints[i] == joint_id){
-            state = true;
-            break;
-        }
-    }
-    add_to_selection( joint_id );
-    return state;
-}
-
-// -----------------------------------------------------------------------------
-
-int Skeleton_ctrl::select_all()
-{
-    // Select all joints but keep the last selection last in the vector
-    int id = -1;
-    if( _selected_joints.size() > 0)
-        id = _selected_joints[ _selected_joints.size()-1 ];
-
-    _selected_joints.clear();
-    int nb_joints = g_skel->nb_joints();
-    for(int i = 0; i < nb_joints; i++){
-        if( i == id ) continue;
-        _selected_joints.push_back(i);
-    }
-
-    if(id != -1) _selected_joints.push_back(id);
-
-    return nb_joints;
-}
-
-// -----------------------------------------------------------------------------
-
 void Skeleton_ctrl::reset_selection()
 {
     _selected_joints.clear();
@@ -208,20 +126,6 @@ void Skeleton_ctrl::add_to_selection(int id)
         state = state || (_selected_joints[i] == id);
 
     if(!state) _selected_joints.push_back(id);
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::remove_from_selection(int id)
-{
-    std::vector<int>::iterator it = _selected_joints.begin();
-    unsigned int i = 0;
-    for(; it<_selected_joints.end(); ++it, ++i)
-        if( (*it) == id )
-            break;
-
-    if(i < _selected_joints.size())
-        _selected_joints.erase(it);
 }
 
 // -----------------------------------------------------------------------------

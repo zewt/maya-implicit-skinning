@@ -28,11 +28,9 @@
 #include "cuda_utils.hpp"
 #include "kinematic.hpp"
 #include "blending_lib/controller.hpp"
-#include "glpick.hpp"
 #include "skeleton_env_type.hpp"
 
 // Forward definitions ---------------------------------------------------------
-class Camera;
 struct Graph;
 namespace Loader {
 struct Abs_skeleton;
@@ -141,24 +139,6 @@ struct Skeleton {
 
   /// get skeleton hierachy with bone types in string
   std::string to_string();
-
-  //----------------------------------------------------------------------------
-  /// @name OpenGL
-  /// @deprecated use GL_skeleton instead
-  //----------------------------------------------------------------------------
-
-  /// Draw the skeleton
-  /// @param selected_joints list of selected joints to be highlighted
-  /// @param rest_pose draw the skeleton in animated position or rest pose
-  void draw(const Camera& cam,
-            const std::vector<int>& selected_joints,
-            bool rest_pose);
-
-  /// Get the nearest joint of the skeleton from window position (x,y)
-  int select_joint(const Camera &cam,
-                   float x,
-                   float y,
-                   bool rest_pose);
 
   //----------------------------------------------------------------------------
   /// @name IO
@@ -373,12 +353,6 @@ private:
   /// '_anim_bones' according to the frames positions.
   void fill_bones();
 
-  /// @param selected_joints : list of joints to highlight
-  /// @param rest_pose : do we draw the skeleton in rest pose
-  void subdraw(const Camera& cam,
-               const std::vector<int>& selected_joints,
-               bool rest_pose);
-
   void rec_to_string(int id, int depth, std::string& str);
 
   //----------------------------------------------------------------------------
@@ -451,9 +425,6 @@ private:
 
   /// hrbf radius to go from global to compact support
   std::vector<float> _hrbf_radius;
-
-  /// Handler for openGL picking
-  GLPick  _pick; // <- TODO: to be deleted
 };
 
 #endif // SKELETON_HPP__

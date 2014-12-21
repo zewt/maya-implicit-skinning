@@ -132,31 +132,6 @@ struct Material {
 
 //------------------------------------------------------------------------------
 
-struct MaterialGroup {
-    /// the material applied to a set of faces
-    unsigned _material_idx;
-    /// the starting index of the face to which the material is applied
-    unsigned _start_face;
-    /// the ending index of the face to which the material is applied
-    unsigned _end_face;
-
-    /*
-    /// start index for points to which the material is applied
-    unsigned _start_point;
-    /// end index for points to which the material is applied
-    unsigned _end_point;
-    */
-
-    /// ctors
-    MaterialGroup() : _material_idx(0), _start_face(0), _end_face(0) { }
-
-    MaterialGroup(int idx, int start, int end) :
-        _material_idx(idx), _start_face(start), _end_face(end)
-    { }
-};
-
-//------------------------------------------------------------------------------
-
 struct Group {
     /// start index for faces in the group
     unsigned _start_face;
@@ -173,15 +148,11 @@ struct Group {
     /// name of the group
     std::string _name;
 
-    /// a set of material groupings within this surface. ie, which
-    /// materials are assigned to which faces within this group.
-    std::vector<MaterialGroup> _assigned_mats;
-
     /// ctors
-    Group() : _start_face(0),_end_face(0),_name(""),_assigned_mats() {    }
+    Group() : _start_face(0),_end_face(0),_name("") {    }
 
     Group(const std::string& name, int start, int end) :
-        _start_face(start), _end_face(end), _name(name), _assigned_mats() {    }
+        _start_face(start), _end_face(end), _name(name) {    }
 };
 
 //------------------------------------------------------------------------------

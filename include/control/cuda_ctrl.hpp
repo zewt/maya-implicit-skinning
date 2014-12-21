@@ -22,7 +22,6 @@
 #include <string>
 
 #include "constants.hpp"
-#include "cuda_rendering.hpp"
 #include "blending_env_tex_interface.hpp"
 #include "opengl_stuff.hpp"
 
@@ -106,13 +105,5 @@ void cuda_start(const std::vector<Blending_env::Op_t>& op);
 void cleanup();
 
 }// END CUDA_CTRL NAMESPACE ====================================================
-
-// TODO: to be put in the Cuda_ctrl namespace
-/// @return wether rendering is complete or not. When false this means
-/// display_loop() needs to be called again to complete the rendering. This is
-/// because raytracing can be done progressively and not all pixels are computed
-/// at the same time. The intermediate results of raytracing are always blurred.
-extern bool display_loop(Render_context_cu* ctx);
-
 
 #endif // CUDA_CTRL_HPP_

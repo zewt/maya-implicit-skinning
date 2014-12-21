@@ -21,14 +21,10 @@
 
 #include "vec3_cu.hpp"
 #include "point_cu.hpp"
-#include "material_cu.hpp"
 
 struct Graph;
 struct Skeleton;
 struct Animesh;
-class Camera;
-
-extern Material_cu g_ray_material;
 
 /** Various global variables used in cuda source files
  */
@@ -41,15 +37,5 @@ extern Skeleton* g_skel;
 
 /// The current animated mesh
 extern Animesh* g_animesh;
-
-
-/// Return true if one of the given parameters has changed or some other scene
-/// parameters since the last call of this function.
-/// N.B: the first call returns always true
-bool has_changed(const Camera& cam,
-                 const Vec3_cu& v_plane,
-                 const Point_cu& p_plane,
-                 int width,
-                 int height);
 
 #endif // CUDA_GLOBALS_HPP__

@@ -30,11 +30,9 @@
 #include "glsave.hpp"
 #include "std_utils.hpp"
 #include "class_saver.hpp"
-#include "camera.hpp"
 #include "graph.hpp"
 #include "loader_skel.hpp"
 #include "globals.hpp"
-#include "glpick.hpp"
 
 // -----------------------------------------------------------------------------
 
@@ -108,8 +106,6 @@ static Graph gen_bone_graph(const Graph& g, int root)
 
 void Skeleton::init(int nb_joints)
 {
-    _pick = GLPick(nb_joints);
-    _pick._pick_size = 3.0f;
     _nb_joints = nb_joints;
     _children.resize(nb_joints);
     _parents.resize(nb_joints);
@@ -441,29 +437,6 @@ void Skeleton::set_offset_scale(const Vec3_cu& offset, float scale)
 
 // -----------------------------------------------------------------------------
 
-void Skeleton::draw(const Camera& cam,
-                    const std::vector<int>& selected_joints,
-                    bool rest_pose)
-{
-    subdraw( cam, selected_joints, rest_pose);
-
-    glColor3f(0.f, 0.f, 0.7f);
-    glLineStipple(5, 0xAAAA);
-    GLEnabledSave save_line(GL_LINE_STIPPLE, true, true);
-    for(int i = 0; i < _nb_joints; i++)
-    {
-        if(i == _root) continue;
-        const Point_cu p0 = _anim_bones[i]->org();
-        const Point_cu p1 = _anim_bones[_parents[i]]->end();
-        glBegin(GL_LINES);
-        glVertex3f(p0.x, p0.y, p0.z);
-        glVertex3f(p1.x, p1.y, p1.z);
-        glEnd();
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 Vec3_cu Skeleton::joint_pos(int joint) const {
     assert(joint >= 0        );
     assert(joint <  _nb_joints);
@@ -479,22 +452,6 @@ Vec3_cu Skeleton::joint_rest_pos(int joint){
 }
 
 // -----------------------------------------------------------------------------
-
-int Skeleton::select_joint(const Camera &cam,
-                           float x,
-                           float y,
-                           bool rest_pose)
-{
-
-    GLfloat m[16];
-    glGetFloatv(GL_PROJECTION_MATRIX, m);
-    _pick.begin(m, (GLfloat)x, (GLfloat)y);
-    subdraw( cam, std::vector<int>(), rest_pose);
-    return _pick.end();
-}
-
-// -----------------------------------------------------------------------------
-
 
 void Skeleton::save_pose(const std::string& filepath)
 {
@@ -823,91 +780,6 @@ static void set_color_selection(bool is_select,
             glAssert( glColor4f(1.f, 1.f, 1.f, 1.f) );
         else
             glAssert( glColor4f(1.f, 1.0f, 0.2f, 1.f) );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::subdraw(const Camera& cam,
-                       const std::vector<int>& selected_joints,
-                       bool rest_pose)
-{
-    for(int i = 0; i < _nb_joints; i++)
-    {
-
-        const bool  is_select = Std_utils::exists(selected_joints, i);
-        const Bone* bone      = _anim_bones[i];
-        const float len       = _anim_bones[i]->length();
-        const float rad       = (len / 30.f);
-
-        const Transfo b_frame = rest_pose ? _frames[i] : _anim_frames[i];
-        const Point_cu org = bone->org();
-        const Point_cu end = bone->end();
-
-        // draw joint with the joint's id for selection
-        _pick.set_name( i );
-
-        glAssert( glMatrixMode(GL_MODELVIEW) );
-        glAssert( glPushMatrix() );
-        {
-            glAssert( glTranslatef(org.x, org.y, org.z) );
-
-            glAssert( glColor4f(1.f, 0.f, 0.0f, 1.f) );
-            set_color_selection(is_select, selected_joints, i);
-
-            draw_joint( rad );
-        }
-        glAssert( glPopMatrix() );
-
-        const float axis_size = 0.3f;
-        // -----------
-
-
-        // draw bone with name
-        GLLineWidthSave save_line_width( 2.0f );
-        if( _pick.is_pick_init() ) glAssert( glLineWidth(5.f) );
-
-
-        if( is_leaf(i) )
-        {
-            draw_frame(b_frame, axis_size);
-            if(_parents[i] >= 0)
-            {
-                glAssert( glPushMatrix() );
-                glAssert( glTranslatef(org.x, org.y, org.z) );
-                glAssert( glColor4f(0.f, 0.1f, 0.8f, 1.f) );
-                set_color_selection(is_select, selected_joints, i);
-                draw_joint(_anim_bones[_parents[i]]->length() / 50.f);
-                glAssert( glPopMatrix() );
-            }
-        }
-        else
-        {
-            // Draw bone wires ---------------
-            {
-                glAssert( glColor4f(0.f, 0.f, 0.f, 1.f) );
-                set_color_selection(is_select, selected_joints, i);
-
-                GLPolygonModeSave save_poly_mode;
-                glAssert( glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) );
-                glPushMatrix();
-                // offset a little the wires so they won't be hidden
-                Vec3_cu p = cam.get_pos();
-                glTranslatef(p.x, p.y, p.z);
-                const float eps = 1.f - 0.001f;
-                glScalef(eps, eps, eps);
-                glTranslatef(-p.x, -p.y, -p.z);
-                draw_bone(org, end, rad, rad);
-                glPopMatrix();
-            }
-            // -------------------------------
-
-            // Draw bone faces ------------
-            Color c = Color::pseudo_rand(i);
-            glAssert( glColor4f(c.r, c.g, c.b, 1.f) );
-            draw_bone( org, end, rad, rad);
-            // ----------------------------
-        }
     }
 }
 

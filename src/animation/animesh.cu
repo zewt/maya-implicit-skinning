@@ -18,7 +18,6 @@
  */
 #include "animesh.hpp"
 
-#include "animesh_kers_colors.hpp"
 #include "animesh_kers.hpp"
 #include "macros.hpp"
 #include "vec3_cu.hpp"
@@ -434,34 +433,6 @@ void Animesh::export_off(const char* filename) const
 
     file.close();
 }
-
-// -----------------------------------------------------------------------------
-
-void Animesh::draw(bool use_color_array, bool use_point_color) const
-{
-    if(!use_point_color)
-        _mesh->draw_using_buffer_object( _mesh->_vbo, _mesh->_normals_bo, use_color_array );
-    else
-        _mesh->draw_using_buffer_object( _mesh->_vbo, _mesh->_normals_bo, _mesh->_point_color_bo, use_color_array );
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::draw_rest_pose(bool use_color_array, bool use_point_color) const
-{
-    if(!use_point_color)
-        _mesh->draw_using_buffer_object(*_vbo_input_vert, *_nbo_input_normal, use_color_array );
-    else
-        _mesh->draw_using_buffer_object(*_vbo_input_vert, *_nbo_input_normal, _mesh->_point_color_bo, use_color_array );
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::draw_points_rest_pose() const
-{
-    _mesh->draw_points_using_buffer_object(*_vbo_input_vert, *_nbo_input_normal, _mesh->_point_color_bo, true);
-}
-
 
 // -----------------------------------------------------------------------------
 

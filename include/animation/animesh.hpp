@@ -25,7 +25,6 @@
 #include "cuda_utils.hpp"
 #include "gl_mesh.hpp"
 #include "mesh.hpp"
-#include "camera.hpp"
 
 // -----------------------------------------------------------------------------
 
@@ -173,22 +172,6 @@ public:
     /// Transformation is computed from the initial position of the mesh
     /// @param type specify the technic used to compute vertices deformations
     void transform_vertices(EAnimesh::Blending_type type);
-
-    /// Draw the mesh for the current position of the skeleton
-    /// @deprecated
-    void draw(bool use_color_array = true, bool use_point_color = false) const;
-
-    /// @deprecated
-    void draw_rest_pose(bool use_color_array = true, bool use_point_color = false) const;
-
-    /// @deprecated
-    void draw_points_rest_pose() const;
-
-    /// Paint the attribute defined by 'mode'. Painting is done by projecting
-    /// mesh's vertices with cuda
-    void paint(EAnimesh::Paint_type mode,
-               const Paint_setup& setup,
-               const Camera& cam);
 
     // -------------------------------------------------------------------------
     /// @name HRBF

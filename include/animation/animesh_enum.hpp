@@ -74,17 +74,6 @@ enum Blending_type {
     MATRIX_BLENDING         ///< Vertices are deformed with the standard SSD
 };
 
-// -----------------------------------------------------------------------------
-
-/// Painting modes for the different mesh attributes
-enum Paint_type {
-    PT_SSD_INTERPOLATION,
-    PT_SSD_WEIGHTS,
-    PT_CLUSTER
-};
-
-// -----------------------------------------------------------------------------
-
 }
 // END EAnimesh NAMESPACE ======================================================
 

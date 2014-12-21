@@ -1235,17 +1235,6 @@ void Obj_file::get_mesh(Loader::Abs_mesh& mesh)
         //G.start_point = g.StartPoint;
         //G._end_point = g.EndPoint;
         G._name = g.name;
-        G._assigned_mats.resize( g.m_AssignedMaterials.size() );
-        for (unsigned j=0; j<g.m_AssignedMaterials.size(); ++j){
-            MaterialGroup mg = g.m_AssignedMaterials[j];
-            Loader::MaterialGroup MG;
-            MG._start_face = mg.m_StartFace;
-            MG._end_face = mg .m_EndFace;
-            //MG._start_point = mg.StartPoint;
-            //MG._end_point = mg.EndPoint;
-            MG._material_idx = mg.m_MaterialIdx;
-            G._assigned_mats[j] = MG;
-        }
         mesh._groups[i] = G;
     }
 }
@@ -1282,26 +1271,6 @@ void Obj_file::set_mesh(const Loader::Abs_mesh& mesh)
         F.t[0] = f.t[0]; F.t[1] = f.t[1]; F.t[2] = f.t[2];
         _mesh._triangles[i] = F;
     }
-    _mesh._materials.clear();
-    _mesh._materials.resize( mesh._materials.size() );
-    for (unsigned i=0; i<mesh._materials.size(); ++i){
-        Loader::Material m = mesh._materials[i];
-        Material M;
-        M.name = m._name;
-        M.illum = m._illum;
-        M.Ka[0] = m._Ka[0]; M.Ka[1] = m._Ka[1]; M.Ka[2] = m._Ka[2]; M.Ka[3] = m._Ka[3];
-        M.Kd[0] = m._Kd[0]; M.Kd[1] = m._Kd[1]; M.Kd[2] = m._Kd[2]; M.Kd[3] = m._Kd[3];
-        M.Ks[0] = m._Ks[0]; M.Ks[1] = m._Ks[1]; M.Ks[2] = m._Ks[2]; M.Ks[3] = m._Ks[3];
-        M.Tf[0] = m._Tf[0]; M.Tf[1] = m._Tf[1]; M.Tf[2] = m._Tf[2];
-        M.Ni = m._Ni;
-        M.Ns = m._Ns;
-        M.map_Ka = m._map_Ka;
-        M.map_Kd = m._map_Kd;
-        M.map_Ks = m._map_Ks;
-        M.map_Bump = m._map_Bump;
-        M.Bm = m._Bm;
-        _mesh._materials[i] = M;
-    }
     _mesh._groups.clear();
     _mesh._groups.resize( mesh._groups.size() );
     for (unsigned i=0; i<mesh._groups.size(); ++i){
@@ -1312,17 +1281,6 @@ void Obj_file::set_mesh(const Loader::Abs_mesh& mesh)
         //G.StartPoint = g.start_point;
         //G.EndPoint = g._end_point;
         G.name = g._name;
-        G.m_AssignedMaterials.resize( g._assigned_mats.size() );
-        for (unsigned j = 0; j < g._assigned_mats.size(); ++j){
-            Loader::MaterialGroup mg = g._assigned_mats[j];
-            MaterialGroup MG;
-            MG.m_StartFace = mg._start_face;
-            MG.m_EndFace = mg ._end_face;
-            //MG.StartPoint = mg._start_point;
-            //MG.EndPoint = mg._end_point;
-            MG.m_MaterialIdx = mg._material_idx;
-            G.m_AssignedMaterials[j] = MG;
-        }
         _mesh._groups[i] = G;
     }
 }

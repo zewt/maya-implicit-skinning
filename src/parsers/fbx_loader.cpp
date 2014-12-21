@@ -363,58 +363,7 @@ void fill_mesh(KFbxMesh* fbx_mesh, KFbxNode* node, Loader::Abs_mesh& mesh)
     Loader::Group g;
     g._start_face = f_size;
     g._end_face = mesh._triangles.size();
-    int nb_elementMaterial = fbx_mesh->GetElementMaterialCount();
-    KFbxGeometryElementMaterial* lMaterialElement;
-    if (nb_elementMaterial == 1) {
-        lMaterialElement = fbx_mesh->GetElementMaterial();
-        if( lMaterialElement->GetMappingMode() == KFbxGeometryElement::eALL_SAME) {
-            Loader::MaterialGroup mg;
-            mg._material_idx = m_size + lMaterialElement->GetIndexArray().GetAt(0);
-            mg._start_face = f_size;
-            mg._end_face = mesh._triangles.size();
-            g._assigned_mats.push_back ( mg );
-        } else {
-            for (int i=0; i<fbx_mesh->GetPolygonCount(); ++i){
-                // register all material groups
-                Loader::MaterialGroup mg;
-                mg._material_idx = m_size + lMaterialElement->GetIndexArray().GetAt(i);
-                mg._start_face = f_size + i;
-                for (; i<fbx_mesh->GetPolygonCount() && (m_size + lMaterialElement->GetIndexArray().GetAt(i) == (int)mg._material_idx); ++i);
-                mg._end_face = f_size + i;
-                g._assigned_mats.push_back ( mg );
-                --i;
-            }
-        }
-        mesh._groups.push_back ( g );
-    } else if (nb_elementMaterial>1) {
-        int i=0;
-        for (int i=0; i<nb_elementMaterial; ++i){
-            if ( fbx_mesh->GetElementMaterial( i )->GetMappingMode() == KFbxGeometryElement::eBY_POLYGON )
-                break;
-        }
-        if (i>=nb_elementMaterial){
-            lMaterialElement = fbx_mesh->GetElementMaterial();
-            Loader::MaterialGroup mg;
-            mg._material_idx = m_size + lMaterialElement->GetIndexArray().GetAt(0);
-            mg._start_face = f_size;
-            mg._end_face = mesh._triangles.size();
-            g._assigned_mats.push_back ( mg );
-        } else {
-            lMaterialElement = fbx_mesh->GetElementMaterial( i );
-            for (int j=0; j<fbx_mesh->GetPolygonCount(); ++j){
-                // register all material groups
-                Loader::MaterialGroup mg;
-                mg._material_idx = m_size + lMaterialElement->GetIndexArray().GetAt(j);
-                mg._start_face = f_size + j;
-                for (; j<fbx_mesh->GetPolygonCount() && (m_size + lMaterialElement->GetIndexArray().GetAt(j) == (int)mg._material_idx); ++j);
-                mg._end_face = f_size + j;
-                g._assigned_mats.push_back ( mg );
-                --j;
-            }
-        }
-        mesh._groups.push_back ( g );
-
-    }
+    mesh._groups.push_back ( g );
     /////////////////////////////////////////////
 }
 

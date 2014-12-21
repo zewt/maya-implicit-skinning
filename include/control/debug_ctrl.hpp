@@ -20,7 +20,6 @@
 #define DEBUG_CTRL_HPP__
 
 #include "port_glew.h"
-#include "camera.hpp"
 #include <vector>
 
 class Debug_ctrl {
@@ -29,7 +28,6 @@ public:
     Debug_ctrl() :
         _show_normals(false),
         _show_gradient(false),
-        _do_partial_fit(false),
         _do_selection(false),
         _potential_pit(true),
         _fit_on_all_bones(true),
@@ -43,22 +41,13 @@ public:
         _smooth1_force(1.f),
         _smooth2_force(0.5f),
         _smooth_mesh(true),
-        _slope_smooth_weight(2),
-        _val0(0.f),
-        _val1(0.f),
-        _draw_grid_skeleton(false)
+        _slope_smooth_weight(2)
     {
-        for(int i = 0; i < 100; ++i)
-            _tab_vals[i] = 0.0f;
     }
-
-    void draw_gradient(const std::vector<int>& selected_points,
-                       const Vec3_cu* d_gradient);
 
     bool _show_normals;
     bool _show_gradient;
 
-    bool _do_partial_fit;         ///<  only fit mesh's selected points
     bool _do_selection;
 
     bool _potential_pit;
@@ -77,11 +66,6 @@ public:
     float _smooth2_force;
     bool _smooth_mesh;
     int _slope_smooth_weight;
-
-    float _val0;
-    float _val1;
-    float _tab_vals[100];
-    bool _draw_grid_skeleton;
 };
 
 #endif // DEBUG_CTRL_HPP__

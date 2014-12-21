@@ -29,8 +29,6 @@
 // -----------------------------------------------------------------------------
 
 #include "std_utils.hpp"
-#include "glassert.h"
-#include "camera.hpp"
 #include "port_glew.h"
 
 // -----------------------------------------------------------------------------
@@ -171,49 +169,6 @@ int Graph::get_window_nearest(float x, float y, float& dist)
     }
     dist = sqrtf(dst2);
     return res;
-}
-
-// -----------------------------------------------------------------------------
-
-void Graph::draw(const Camera& cam, int current_vertex) const
-{
-    glAssert( glMatrixMode(GL_MODELVIEW) );
-    Vec3_cu vx   = cam.get_x();
-    Vec3_cu vy   = cam.get_y();
-    Vec3_cu cdir = cam.get_dir();
-    Vec3_cu pcam = cam.get_pos();
-    for(unsigned i = 0; i < _vertices.size(); i++)
-    {
-        glAssert( glPushMatrix() );
-        const Vec3_cu& v = _vertices[i];
-        float dst = (pcam - v).norm();
-        float fc = 0.008f * dst;
-        glAssert( glTranslatef(v.x, v.y, v.z) );
-        if((int)i == current_vertex){
-            glAssert( glRotatef(45.f, cdir.x, cdir.y, cdir.z) );
-            glAssert( glColor4f(1.f, 1.f, 0.2f, 1.f) );
-        }else
-            glAssert( glColor4f(1.f, 0.f, 0.f, 1.f) );
-
-        glBegin(GL_QUADS);{
-            glVertex3f(-vx.x * fc, -vx.y * fc, -vx.z * fc);
-            glVertex3f(-vy.x * fc, -vy.y * fc, -vy.z * fc);
-            glVertex3f( vx.x * fc,  vx.y * fc,  vx.z * fc);
-            glVertex3f( vy.x * fc,  vy.y * fc,  vy.z * fc);
-        }glAssert( glEnd() );
-        glAssert( glPopMatrix() );
-    }
-    glAssert( glColor4f(1.f, 0.f, 0.f, 1.f) );
-    glAssert( glLineWidth(3.f) );
-    if(_vertices.size() > 0 && _edges.size() > 0)
-    {
-        glAssert( glEnableClientState(GL_VERTEX_ARRAY) );
-        glAssert( glVertexPointer(3, GL_FLOAT, 0, &(_vertices[0])) );
-        glAssert( glDrawElements(GL_LINES, _edges.size() *2, GL_UNSIGNED_INT, &(_edges[0])) );
-        // Release pointer
-        glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-        glAssert( glDisableClientState(GL_VERTEX_ARRAY) );
-    }
 }
 
 // -----------------------------------------------------------------------------

@@ -35,7 +35,6 @@ public:
         _draw_voxels(false),
         _draw_hrbf_samples(false),
         _edit_hrbf_samples(false),
-        _ssao(false),
         _grid(false),
         _potential_2d(false),
         _nb_samples_res(128),
@@ -65,9 +64,6 @@ public:
 
     bool _draw_hrbf_samples;
     bool _edit_hrbf_samples;
-
-    /// activate screen space ambient oclusion (only in phong rendering)
-    bool _ssao;
 
     /// Draw the grid
     bool _grid;

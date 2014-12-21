@@ -35,7 +35,6 @@
 struct Animesh;
 struct Skeleton;
 namespace Loader { struct Abs_skeleton; }
-class Camera;
 // END Forward definitions -----------------------------------------------------
 
 struct Samp_id{

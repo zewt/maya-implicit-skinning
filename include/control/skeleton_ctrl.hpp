@@ -26,7 +26,6 @@
 #include "joint_type.hpp"
 #include "blending_env_type.hpp"
 #include "controller.hpp"
-#include "camera.hpp"
 #include "transfo.hpp"
 #include "loader_skel.hpp"
 #include "loader_anims.hpp"
@@ -126,26 +125,6 @@ public:
 
     const std::vector<int>& get_selection_set(){ return _selected_joints; }
 
-    /// Try to select a joint and add it to the previous selection set
-    /// @return if a vertex has been selected
-    bool select_joint(const Camera &cam, int x, int y, bool rest_pose);
-
-    /// Try to select a joint if succeed replace the previous set.
-    /// if it fails do nothing (the previous selection is kept).
-    /// @return wether a joint has been selected or not
-    bool select_safely(const Camera &cam, int x, int y, bool rest_pose);
-
-    /// Try to unselect a joint and remove it from the previous selection set
-    bool unselect(const Camera &cam, int x, int y, bool rest_pose);
-
-    /// Select a joint given its ID
-    /// @return if it was already selected
-    bool select_joint(int joint_id);
-
-    /// Select every joints and add them to the selection list
-    /// @return number of joints selected
-    int select_all();
-
     void reset_selection();
 
 private:
@@ -154,7 +133,6 @@ private:
     // -------------------------------------------------------------------------
 
     void add_to_selection(int id);
-    void remove_from_selection(int id);
 
     // -------------------------------------------------------------------------
     /// @name Attributes

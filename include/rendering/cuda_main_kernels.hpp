@@ -26,7 +26,6 @@
 // -----------------------------------------------------------------------------
 
 #include "bbox.hpp"
-#include "raytracing_context.hpp"
 #include "cuda_utils.hpp"
 #include "scene_enum.hpp"
 #include "blending_env_type.hpp"
@@ -55,45 +54,8 @@
  * at each kernel call.
 */
 
-// -----------------------------------------------------------------------------
-
 /// Initialize device memory and textures
 /// @warning must be called first before any other cuda calls
 void init_cuda(const std::vector<Blending_env::Op_t>& op);
-
-/**
- * @namespace Raytracing
- * @brief functions related to raytracing and cuda kernels associated
-*/
-// =============================================================================
-namespace Raytracing {
-// =============================================================================
-
-/// Update the current bounding box to raytrace
-void update_bbox(const BBox_cu& bbox);
-
-/// Do we partially evaluate the tree ?
-/// @see set_bone_to_trace()
-void set_partial_tree_eval(bool s);
-
-/// Sets the eight first bone to be raytraced from the vector
-void set_bone_to_trace(const std::vector<int>& bone_ids);
-
-void trace( Context& ctx );
-
-void trace_skinning_skeleton(const Context& ctx);
-
-void set_scene_type(Scene_Type type);
-
-}// End Raytracing namespace ===================================================
-
-
-/// Fetch a controller value from texture given its instance id.
-__global__
-void get_controller_values(Cuda_utils::Device::Array<float2> out_vals, int inst_id);
-
-// =============================================================================
-
-
 
 #endif // CUDA_MAIN_KERNELS_HPP__

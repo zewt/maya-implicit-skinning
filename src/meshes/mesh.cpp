@@ -28,6 +28,7 @@
 #include <map>
 
 #include "glsave.hpp"
+#include "glassert.h"
 #include "macros.hpp"
 #include "mesh.hpp"
 #include "loader_mesh.hpp"
@@ -37,29 +38,11 @@
 
 // -----------------------------------------------------------------------------
 
-Mesh::Material::Material() :
-    map_Ka(0),
-    map_Kd(0),
-    map_Ks(0),
-    map_Bump(0),
-    Bm(0)
-{
-    set_Ka(0.1f, 0.1f, 0.1f, 1.f);
-    set_Kd(0.8f, 0.5f, 0.0f, 1.f);
-    set_Ks(0.5f, 0.5f, 0.5f, 1.f);
-    set_Ns(5.f);
-    set_Tf(1.f);
-}
-
-// -----------------------------------------------------------------------------
-
 Mesh::Mesh() :
     _is_initialized(false),
     _is_closed(true),
     _has_tex_coords(false),
     _has_normals(false),
-    _has_materials(false),
-    _has_bumpmap(false),
     _is_manifold(true),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
@@ -101,8 +84,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _is_closed(true),
     _has_tex_coords(false),
     _has_normals(false),
-    _has_materials(false),
-    _has_bumpmap(false),
     _is_manifold(true),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
@@ -183,8 +164,6 @@ Mesh::Mesh(const Mesh& m) :
     _is_closed(m._is_closed),
     _has_tex_coords(m._has_tex_coords),
     _has_normals(m._has_normals),
-    _has_materials(m._has_materials),
-    _has_bumpmap(m._has_bumpmap),
     _is_manifold(m._is_manifold),
     _offset(m._offset),
     _scale(m._scale),
@@ -198,9 +177,6 @@ Mesh::Mesh(const Mesh& m) :
     _size_unpacked_vert_array(m._size_unpacked_vert_array),
     _unpacked_tri_list_per_vert(m._unpacked_tri_list_per_vert),
     _unpacked_quad_list_per_vert(m._unpacked_quad_list_per_vert),
-    _material_grps_tri(m._material_grps_tri),
-    _material_grps_quad(m._material_grps_quad),
-    //_material_list(m._material_list) // FIXME: implement recopy for Material -> for GLTex2D as well ***
 
     _vbo(GL_ARRAY_BUFFER),
     _normals_bo(GL_ARRAY_BUFFER),
@@ -298,8 +274,6 @@ Mesh::Mesh(const char* filename) :
     _is_closed(true),
     _has_tex_coords(false),
     _has_normals(false),
-    _has_materials(false),
-    _has_bumpmap(false),
     _is_manifold(true),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
@@ -490,22 +464,10 @@ void Mesh::free_mesh_data()
     _edge_list         = 0;
     _edge_list_offsets = 0;
 
-    // Delete opengl textures
-    for(unsigned i = 0; i < _material_list.size(); i++)
-    {
-        delete _material_list[i].map_Ka;
-        delete _material_list[i].map_Kd;
-        delete _material_list[i].map_Ks;
-        delete _material_list[i].map_Bump;
-    }
-
     _tri_list_per_vert.clear();
     _quad_list_per_vert.clear();
     _unpacked_tri_list_per_vert.clear();
     _unpacked_quad_list_per_vert.clear();
-    _material_grps_tri.clear();
-    _material_grps_quad.clear();
-    _material_list.clear();
 
     //////////////// Register buffer
     if(_nb_vert > 0){
@@ -897,170 +859,6 @@ void Mesh::compute_face_index()
 
 // -----------------------------------------------------------------------------
 
-void Mesh::draw_using_buffer_object(
-        const GlBuffer_obj& new_vbo,
-        const GlBuffer_obj& n_bo,
-        const GlBuffer_obj& c_bo,
-        bool use_color_array) const
-{
-    if(_nb_vert == 0 || !_is_initialized) return;
-
-    glAssert( glEnableClientState(GL_VERTEX_ARRAY) );
-    new_vbo.bind();
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-
-    assert(_has_normals);
-    n_bo.bind();
-    glAssert( glEnableClientState(GL_NORMAL_ARRAY) );
-    glAssert( glNormalPointer(GL_FLOAT, 0, 0) );
-
-    // TODO: when use_color_array true disable materials
-    if(use_color_array)
-    {
-        c_bo.bind();
-        glAssert( glEnableClientState(GL_COLOR_ARRAY) );
-        glAssert( glColorPointer(4,GL_FLOAT,0,0) );
-    }
-
-    _index_bo_tri.bind();
-    glAssert( glDrawElements(GL_TRIANGLES, _nb_tri * 3, GL_UNSIGNED_INT, 0) );
-    _index_bo_tri.unbind();
-
-
-    _index_bo_quad.bind();
-    glAssert( glDrawElements(GL_QUADS, 4 * _nb_quad, GL_UNSIGNED_INT, 0) );
-    _index_bo_quad.unbind();
-
-    c_bo.unbind();
-
-    glAssert( glBindBuffer(GL_ARRAY_BUFFER, 0) );
-    glAssert( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-    glAssert( glNormalPointer(GL_FLOAT, 0, 0) );
-    glAssert( glDrawElements(GL_TRIANGLES, 0, GL_UNSIGNED_INT, 0) );
-    glAssert( glDisableClientState(GL_VERTEX_ARRAY) );
-    glAssert( glDisableClientState(GL_NORMAL_ARRAY) );
-
-    if(use_color_array){
-        glAssert( glColorPointer(4,GL_FLOAT,0,0) );
-        glAssert( glDisableClientState(GL_COLOR_ARRAY) );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::draw_points_using_buffer_object(const GlBuffer_obj& new_vbo,
-                                           const GlBuffer_obj& n_bo,
-                                           const GlBuffer_obj& c_bo,
-                                           bool use_color_array) const
-{
-    GLEnabledSave save_tex(GL_TEXTURE_2D, true, false);
-
-    glAssert( glEnableClientState(GL_VERTEX_ARRAY) );
-    new_vbo.bind();
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-
-    n_bo.bind();
-
-    glAssert( glEnableClientState(GL_NORMAL_ARRAY) );
-    glAssert( glNormalPointer(GL_FLOAT, 0, 0) );
-
-    if(use_color_array){
-        c_bo.bind();
-        glAssert( glEnableClientState(GL_COLOR_ARRAY) );
-        glAssert( glColorPointer(4,GL_FLOAT,0,0) );
-    }
-
-    _index_bo_point.bind();
-    glAssert( glDrawElements(GL_POINTS, _nb_vert, GL_UNSIGNED_INT, 0) );
-    _index_bo_point.unbind();
-
-    c_bo.unbind();
-
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-    glAssert( glNormalPointer(GL_FLOAT, 0, 0) );
-    glAssert( glDisableClientState(GL_VERTEX_ARRAY) );
-    glAssert( glDisableClientState(GL_NORMAL_ARRAY) );
-    if(use_color_array){
-        glAssert( glColorPointer(4,GL_FLOAT,0,0) );
-        glAssert( glDisableClientState(GL_COLOR_ARRAY) );
-    }
-
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::draw_points() const{
-    draw_points_using_buffer_object(_vbo, _normals_bo, _point_color_bo, true);
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::draw(bool use_color_array, bool use_point_color) const
-{
-    if(use_point_color)
-        draw_using_buffer_object( _vbo, _normals_bo, _point_color_bo, use_color_array );
-    else
-        draw_using_buffer_object( _vbo, _normals_bo, use_color_array );
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::draw_using_buffer_object(
-    const GlBuffer_obj& new_vbo,
-    const GlBuffer_obj& n_bo,
-    bool use_color_array) const
-{
-    draw_using_buffer_object(new_vbo, n_bo, _color_bo, use_color_array);
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::enable_client_state() const
-{
-    glAssert( glEnableClientState(GL_VERTEX_ARRAY) );
-    _vbo.bind();
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-
-    if(_has_normals)
-    {
-        _normals_bo.bind();
-        glAssert( glEnableClientState(GL_NORMAL_ARRAY) );
-        glAssert( glNormalPointer(GL_FLOAT, 0, 0) );
-    }
-
-    GLEnabledSave save_color_mat(GL_COLOR_MATERIAL, true, true);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-    if(_has_tex_coords)
-    {
-        glAssert( glEnableClientState(GL_TEXTURE_COORD_ARRAY) );
-        _tex_bo.bind();
-        glAssert( glTexCoordPointer(2, GL_FLOAT, 0, 0) );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::disable_client_state() const
-{
-    _vbo.unbind();
-    glAssert( glVertexPointer(3, GL_FLOAT, 0, 0) );
-    glAssert( glDisableClientState(GL_VERTEX_ARRAY) );
-    if(_has_normals){
-        glAssert( glNormalPointer(GL_FLOAT, 0, 0) );
-        glAssert( glDisableClientState(GL_NORMAL_ARRAY) );
-    }
-
-    if(_has_tex_coords)
-    {
-        glAssert( glTexCoordPointer(2, GL_FLOAT, 0, 0) );
-        glAssert( glDisableClientState(GL_TEXTURE_COORD_ARRAY) );
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Mesh::save(Loader::Abs_mesh& mesh)
 {
     // FIXME: handling quads:
@@ -1103,26 +901,6 @@ void Mesh::save(Loader::Abs_mesh& mesh)
         mesh._triangles[i] = F;
     }
 
-    // Copy Material list
-    mesh._materials.clear();
-    mesh._materials.resize( _material_list.size() );
-    for(unsigned i = 0; i < mesh._materials.size(); ++i) {
-        const Mesh::Material& m = _material_list[i];
-        Loader::Material M;
-        M._name = m.name;
-        M._illum = 4;
-        Utils::copy(M._Ka, m.Ka, 4);
-        Utils::copy(M._Kd, m.Kd, 4);
-        Utils::copy(M._Ks, m.Ks, 4);
-        Utils::copy(M._Tf, m.Tf, 3);
-        M._Ni = m.Ni;
-        M._Ns = m.get_Ns();
-        M._map_Ka = m.filepath_Ka; M._map_Kd = m.filepath_Kd;
-        M._map_Ks = m.filepath_Ks; M._map_Bump = m.filepath_Bump;
-        M._Bm = m.Bm;
-        mesh._materials[i] = M;
-    }
-
     // copy groups (we don't actually handle groups so we just one big root
     // group which contains all the materials groups)
     mesh._groups.clear();
@@ -1135,17 +913,6 @@ void Mesh::save(Loader::Abs_mesh& mesh)
     //G._end_point = 0;
     G._name = "_";
 
-    G._assigned_mats.resize( _material_grps_tri.size() );
-    for(unsigned i = 0; i < G._assigned_mats.size(); ++i){
-        const Mat_grp& m = _material_grps_tri[i];
-        Loader::MaterialGroup MG;
-        MG._start_face = m.starting_idx;
-        MG._end_face = m.starting_idx + m.nb_face;
-        //MG._start_point = 0;
-        //MG._end_point = 0;
-        MG._material_idx = m.mat_idx;
-        G._assigned_mats[i] = MG;
-    }
     mesh._groups[0] = G;
 }
 
@@ -1263,14 +1030,6 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
         }
     }
 
-    // Copy materials groups :
-    if(mesh._groups.size())
-    {
-        build_material_lists(mesh, mesh_path);
-        regroup_faces_by_material();
-        regroup_transcelucent_materials();
-    }
-
     if( !_has_normals )
         compute_normals();
     if(_has_tex_coords)
@@ -1281,201 +1040,6 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
     compute_face_index();
     compute_edges();
     _is_initialized = true;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::build_material_lists(const Loader::Abs_mesh& mesh,
-                                const std::string& mesh_path)
-{
-    _has_materials = true;
-    _material_grps_tri.clear();
-    _material_grps_quad.clear();
-    int last_mat = mesh._materials.size();
-    for(unsigned i = 0; i < mesh._groups.size(); i++)
-    {
-        const Loader::Group& grp = mesh._groups[i];
-        // No materials ? we take the previous material or a default one
-        if(grp._assigned_mats.size() == 0)
-        {
-            Mat_grp mesh_mat_grp;
-            mesh_mat_grp.starting_idx = grp._start_face;
-            mesh_mat_grp.nb_face      = grp._end_face - grp._start_face;
-            mesh_mat_grp.mat_idx      = last_mat;
-
-            _material_grps_tri.push_back(mesh_mat_grp);
-        }
-
-        for(unsigned j = 0; j < grp._assigned_mats.size(); j++)
-        {
-            const Loader::MaterialGroup& file_mat_grp = grp._assigned_mats[j];
-            last_mat = file_mat_grp._material_idx;
-
-            Mat_grp mesh_mat_grp;
-            mesh_mat_grp.starting_idx = file_mat_grp._start_face;
-            mesh_mat_grp.nb_face      = file_mat_grp._end_face - file_mat_grp._start_face;
-            mesh_mat_grp.mat_idx      = file_mat_grp._material_idx;
-
-            _material_grps_tri.push_back(mesh_mat_grp);
-        }
-    }
-
-    const std::string path = mesh_path;
-
-    // Copy materials And load textures :
-    _material_list.resize(mesh._materials.size()+1);
-    _has_bumpmap = false;
-    for(unsigned i = 0; i < mesh._materials.size()+1; i++)
-    {
-        Loader::Material mat;
-
-        // Last material is a default material :
-        if(i == mesh._materials.size()) mat = Loader::Material();
-        else                            mat = mesh._materials[i];
-
-        Material mesh_mat;
-
-        mesh_mat.name = mat._name;
-        // Copy coeffs
-        mesh_mat.Bm = mat._Bm;
-        for(int j = 0; j < 4; j++){
-            mesh_mat.Ka[j] = mat._Ka[j];
-            mesh_mat.Kd[j] = mat._Kd[j];
-            mesh_mat.Ks[j] = mat._Ks[j];
-        }
-        for(int j = 0; j < 3; j++)
-            mesh_mat.Tf[j] = mat._Tf[j];
-
-        mesh_mat.Ni = mat._Ni;
-        mesh_mat.set_Ns(mat._Ns);
-
-        // Load textures (read file and create the opengl texture)
-        mesh_mat.map_Bump = mat._map_Bump.size() ? Tex_loader::load(path+mat._map_Bump) : 0;
-        mesh_mat.map_Ka   = mat._map_Ka.size()   ? Tex_loader::load(path+mat._map_Ka)   : 0;
-        mesh_mat.map_Kd   = mat._map_Kd.size()   ? Tex_loader::load(path+mat._map_Kd)   : 0;
-        mesh_mat.map_Ks   = mat._map_Ks.size()   ? Tex_loader::load(path+mat._map_Ks)   : 0;
-        // Compy texture names
-        mesh_mat.filepath_Ka   = mat._map_Ka;
-        mesh_mat.filepath_Kd   = mat._map_Kd;
-        mesh_mat.filepath_Ks   = mat._map_Ks;
-        mesh_mat.filepath_Bump = mat._map_Bump;
-
-        _material_list[i] = mesh_mat;
-
-        _has_bumpmap = _has_bumpmap || mesh_mat.map_Bump != 0;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::regroup_transcelucent_materials()
-{
-    // Transcluscent materials must be moved at the end of the material group list
-    const int tri_grp_size  = _material_grps_tri. size();
-    const int quad_grp_size = _material_grps_quad.size();
-
-    // Switch the material group to the end
-    int acc = tri_grp_size-1;
-    for( int j = 0; j < acc; j++ )
-    {
-        int mat_idx = _material_grps_tri[j].mat_idx;
-        const Material& mat = _material_list[mat_idx];
-        float average_transp = (mat.Tf[0] + mat.Tf[1] + mat.Tf[2]) / 3.0f;
-
-        if(average_transp <= (1.f - 0.001f))
-        {
-            Mat_grp temp_grp = _material_grps_tri[j];
-            _material_grps_tri[j  ] = _material_grps_tri[acc];
-            _material_grps_tri[acc] = temp_grp;
-            acc--;
-        }
-    }
-
-    acc = quad_grp_size-1;
-    for( int j = 0; j < acc; j++ )
-    {
-        int mat_idx = _material_grps_tri[j].mat_idx;
-        const Material& mat = _material_list[mat_idx];
-        float average_transp = (mat.Tf[0] + mat.Tf[1] + mat.Tf[2]) / 3.0f;
-
-        if(average_transp <= (1.f - 0.001f))
-        {
-            Mat_grp temp_grp = _material_grps_quad[j];
-            _material_grps_quad[j  ] = _material_grps_quad[acc];
-            _material_grps_quad[acc] = temp_grp;
-            acc--;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::regroup_faces_by_material()
-{
-    int* new_tri           = _nb_tri  > 0 ? new int[_nb_tri  * 3] : 0;
-    int* new_unpacked_tri  = _nb_tri  > 0 ? new int[_nb_tri  * 3] : 0;
-    int* new_quad          = _nb_quad > 0 ? new int[_nb_quad * 4] : 0;
-    int* new_unpacked_quad = _nb_quad > 0 ? new int[_nb_quad * 4] : 0;
-
-    int acc = 0;
-    for(int mat_i = 0; mat_i < (int)_material_list.size(); mat_i++){
-        for(int grp_i = 0; grp_i < (int)_material_grps_tri.size(); grp_i++){
-            if(_material_grps_tri[grp_i].mat_idx == mat_i)
-            {
-                int face_start = _material_grps_tri[grp_i].starting_idx;
-                int face_end   = face_start + _material_grps_tri[grp_i].nb_face;
-                _material_grps_tri[grp_i].starting_idx = acc;
-                for(int face_i = face_start; face_i < face_end; face_i++)
-                {
-                    for(int j = 0; j < 3; j++){
-                        new_tri         [acc*3 + j] = _tri         [face_i*3 + j];
-                        new_unpacked_tri[acc*3 + j] = _unpacked_tri[face_i*3 + j];
-                    }
-                    acc++;
-                }
-            }
-        }// END nb_mat_grp
-    }// END nb_mat_list
-
-    assert ( acc == _nb_tri );
-
-    acc = 0;
-    for(int mat_i = 0; mat_i < (int)_material_list.size(); mat_i++){
-        for(int grp_i = 0; grp_i < (int)_material_grps_quad.size(); grp_i++){
-            if(_material_grps_quad[grp_i].mat_idx == mat_i)
-            {
-                int face_start = _material_grps_quad[grp_i].starting_idx;
-                int face_end   = face_start + _material_grps_quad[grp_i].nb_face;
-                _material_grps_quad[grp_i].starting_idx = acc;
-                for(int face_i = face_start; face_i < face_end; face_i++)
-                {
-                    for(int j = 0; j < 4; j++){
-                        new_quad         [acc*4 + j] = _quad         [face_i*4 + j];
-                        new_unpacked_quad[acc*4    ] = _unpacked_quad[face_i*4    ];
-                    }
-                    acc++;
-                }
-            }
-        }// END nb_mat_grp
-    }// END nb_mat_list
-
-    assert ( acc == _nb_quad );
-
-    if(_nb_tri > 0)
-    {
-        delete[] _tri;
-        delete[] _unpacked_tri;
-        _tri          = new_tri;
-        _unpacked_tri = new_unpacked_tri;
-    }
-
-    if(_nb_quad > 0)
-    {
-        delete[] _quad;
-        delete[] _unpacked_quad;
-        _quad          = new_quad;
-        _unpacked_quad = new_unpacked_quad;
-    }
 }
 
 // -----------------------------------------------------------------------------

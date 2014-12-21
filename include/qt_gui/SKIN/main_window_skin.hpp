@@ -62,7 +62,6 @@ private:
 
     bool load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loader);
     void load_fbx_mesh( Fbx_loader::Fbx_file& loader);
-    bool load_custom_skeleton(QString name);
     bool load_custom_weights(QString name);
 
     OGL_viewports_skin* _viewports;

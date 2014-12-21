@@ -49,21 +49,13 @@ GLuint g_op_tex;
 
 // -----------------------------------------------------------------------------
 
-Shader_prog* g_dummy_quad_shader = 0;
-Shader_prog* g_lavalamp_program = 0;
-Shader_prog* g_lavalamp_body_program = 0;
-Shader_prog* g_arrows_program = 0;
 Shader_prog* g_points_shader = 0;
-Shader_prog* g_normal_map_shader = 0;
-Shader_prog* g_ssao_shader = 0;
 
 namespace Tex_units{
     const int KD   = 3;
     const int KS   = 4;
     const int BUMP = 5;
 }
-
-Shader_prog* g_phong_list[NB_PHONG_SHADERS];
 
 // -----------------------------------------------------------------------------
 

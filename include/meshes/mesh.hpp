@@ -143,56 +143,6 @@ public:
         int mat_idx;      ///< material index to apply to the set of faces
     };
 
-    struct Material{
-
-        Material();
-
-        void setup_opengl_materials()
-        {
-            float average_transp = (Tf[0] + Tf[1] + Tf[2]) / 3.0f;
-            Ka[3] = Kd[3] = Ks[3] = average_transp;
-            glAssert( glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,   Ka) );
-            glAssert( glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,   Kd) );
-            glAssert( glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  Ks) );
-            glAssert( glMaterialf( GL_FRONT_AND_BACK, GL_SHININESS, Ns) );
-
-            if(average_transp <= (1.f - 0.001f)) glAssert( glEnable(GL_BLEND)  );
-            else                                 glAssert( glDisable(GL_BLEND) );
-        }
-
-        void set_Ns(float v){ Ns = std::max( 0.f, std::min(v, 128.f)); }
-        float get_Ns() const { return Ns; }
-
-        void set_Ka(float r, float g, float b, float a) { Ka[0] = r; Ka[1] = g; Ka[2] = b; Ka[3] = a; }
-        void set_Kd(float r, float g, float b, float a) { Kd[0] = r; Kd[1] = g; Kd[2] = b; Kd[3] = a; }
-        void set_Ks(float r, float g, float b, float a) { Ks[0] = r; Ks[1] = g; Ks[2] = b; Ks[3] = a; }
-
-        void set_Tf(float t) { Tf[0] = Tf[1] = Tf[2] = t; }
-
-        float Ka[4]; ///< ambient
-        float Kd[4]; ///< diffuse
-        float Ks[4]; ///< specular
-        float Tf[3]; ///< transparency
-        float Ni;    ///< intensity
-    private:
-        float Ns;    ///< specular power
-    public:
-
-        GlTex2D* map_Ka;   ///< ambient texture map
-        GlTex2D* map_Kd;   ///< diffuse texture map
-        GlTex2D* map_Ks;   ///< specular texture map
-        GlTex2D* map_Bump; ///< bump texture map
-
-        std::string filepath_Ka;
-        std::string filepath_Kd;
-        std::string filepath_Ks;
-        std::string filepath_Bump;
-
-        /// bump map depth. Only used if bump is relevent.
-        float Bm;
-        std::string name;
-    };
-
     //  ------------------------------------------------------------------------
     // End Inner structs
     //  ------------------------------------------------------------------------
@@ -233,38 +183,6 @@ public:
     //  ------------------------------------------------------------------------
     /// @name Drawing the mesh
     //  ------------------------------------------------------------------------
-
-    /// Draw the mesh using the given vertex and normal buffer objects
-    void draw_using_buffer_object(const GlBuffer_obj& _vbo,
-                                  const GlBuffer_obj& n_bo,
-                                  bool use_color_array = true) const;
-
-    /// Draw point mesh using the given vertex and normal buffer objects
-    void draw_points_using_buffer_object(const GlBuffer_obj& _vbo,
-                                         const GlBuffer_obj& n_bo,
-                                         const GlBuffer_obj& c_bo,
-                                         bool use_color_array = true) const;
-
-    /// draw mesh points using color and buffer objects
-    void draw_points() const;
-
-    /// Draw the mesh using the given vertex, normal and color buffer objects
-    void draw_using_buffer_object(const GlBuffer_obj& _vbo,
-                                  const GlBuffer_obj& n_bo,
-                                  const GlBuffer_obj& c_bo,
-                                  bool use_color_array = true) const;
-
-    /// Draw the mesh
-    /// @param use_color_array use the color array to draw the mesh
-    /// @param use_point_color There are two buffers objects that stores the
-    /// color. One is the points color and the other the mesh color. this
-    /// parameter choose between them
-    void draw(bool use_color_array = true, bool use_point_color = false) const;
-
-    /// Enable openGL client state for vertices/texture UVs/normals
-    void enable_client_state() const;
-    /// Disable openGL client state for vertices/texture UVs/normals
-    void disable_client_state() const;
 
     //  ------------------------------------------------------------------------
     /// @name Surface deformations
@@ -363,10 +281,6 @@ public:
     /// List of vertices on a side of the mesh
     const std::vector<int>& get_on_side_list() const { return _on_side_verts; }
 
-    const std::vector<Mat_grp> get_mat_grps_tri() const { return _material_grps_tri; }
-
-    const std::vector<Material> get_mat_list() const { return _material_list; }
-
     const Packed_data* get_packed_vert_map() const { return _packed_vert_map; }
 
     int get_edge(int i) const {
@@ -401,8 +315,6 @@ public:
     bool is_closed()      const { return _is_closed;      }
     bool has_tex_coords() const { return _has_tex_coords; }
     bool has_normals()    const { return _has_normals;    }
-    bool has_materials()  const { return _has_materials;  }
-    bool has_bumpmap()    const { return _has_bumpmap;    }
     bool is_manifold()    const { return _is_manifold;    }
 
 private:
@@ -431,25 +343,12 @@ private:
     /// updates 'edge_list' and 'edge_list_offsets'
     void compute_edges();
 
-    /// fill the attributes 'material_grps_tri' 'material_grps_quad'
-    /// 'material_list'
-    void build_material_lists(const Loader::Abs_mesh& mesh,
-                              const std::string& mesh_path);
-
     /// initialize all the vbos with their corresponding CPU array attributes
     void init_vbos();
 
     /// updates the vbo with the vertex position in 'vert'.
     /// @warning slow method it is done on CPU
     void update_unpacked_vert();
-
-    /// in order to accelerate the rendering we regroup the index of faces
-    /// in order to be contigus by material type
-    void regroup_faces_by_material();
-
-    /// We use the ugly alpha blending to render transparent materials
-    /// this function regroups their rendering at the end.
-    void regroup_transcelucent_materials();
 
     // Mesh edges computation tool functions.
     //{
@@ -475,8 +374,6 @@ private:
     bool _is_closed;         ///< is the mesh closed
     bool _has_tex_coords;    ///< do the mesh has texture coordinates loaded
     bool _has_normals;       ///< do the mesh has normals loaded
-    bool _has_materials;     ///< do we apply the matterial list
-    bool _has_bumpmap;
 
     /// When false it is sure the mesh is not 2-manifold. But true does not
     /// ensure mesh is 2-manifold (for instance self intersection are not detected
@@ -564,13 +461,6 @@ private:
     /// packed_vert_map[packed_vert_idx] = mapping to unpacked.
     /// size of 'packed_vert_map' equals 'nb_vert'
     Packed_data* _packed_vert_map;
-
-    /// List of material bound to a face index group in unpacked_tri
-    std::vector<Mat_grp>   _material_grps_tri;
-    /// List of material bound to a face index group in unpacked_quad
-    std::vector<Mat_grp>   _material_grps_quad;
-    /// List of material definitions (coeffs Ka, Kd, textures, bump map etc.)
-    std::vector<Material>  _material_list;
 
 public:
     /// @name Buffer object data

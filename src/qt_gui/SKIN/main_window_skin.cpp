@@ -24,7 +24,6 @@
 
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
-#include "camera.hpp"
 #include "display_operator.hpp"
 #include "SKIN/OGL_viewports_skin.hpp"
 #include "cuda_ctrl.hpp"
@@ -248,7 +247,6 @@ void Main_window_skin::on_reset_anim_released()
 
 void Main_window_skin::on_enable_partial_fit_toggled(bool checked)
 {
-    Cuda_ctrl::_debug._do_partial_fit = checked;
 }
 
 void Main_window_skin::on_spinBox_nb_step_fitting_valueChanged(int val)
@@ -493,23 +491,6 @@ void Main_window_skin::load_fbx_mesh( Fbx_loader::Fbx_file& loader)
 
     ptr_mesh->load( mesh, loader._path);
     Cuda_ctrl::load_mesh( ptr_mesh );
-}
-
-// -----------------------------------------------------------------------------
-
-bool Main_window_skin::load_custom_skeleton(QString name)
-{
-    QString skel_name = name;
-    skel_name.append(".skel");
-    if( !QFile::exists(skel_name) )
-    {
-        QMessageBox::information(this, "Error", "Can't' find "+name+".skel");
-        return false;
-    }
-
-    Cuda_ctrl::_graph.load_from_file(skel_name.toLatin1());
-    Cuda_ctrl::_skeleton.load( *g_graph );
-    return true;
 }
 
 // -----------------------------------------------------------------------------

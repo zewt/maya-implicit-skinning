@@ -179,7 +179,6 @@ bool Off_file::import_file(const std::string& file_path)
     int s = _mesh._triangles.size();
     _mesh._materials.push_back( Loader::Material() );
     _mesh._groups.push_back( Loader::Group("", 0, s) );
-    _mesh._groups[0]._assigned_mats.push_back( Loader::MaterialGroup(0, 0, s) );
 
     return true;
 }

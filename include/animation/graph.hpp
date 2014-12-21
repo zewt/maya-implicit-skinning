@@ -22,8 +22,6 @@
 #include "point_cu.hpp"
 #include <vector>
 
-class Camera;
-
 /** @brief The class of a graph.
     A graph can be used to design a skeleton from scratch with push_vertex(),
     push_edge() and remove_vertex(). The result can be saved with
@@ -80,9 +78,6 @@ struct Graph {
   /// of the selected vertex
   /// @return the selected vertex id
   int get_window_nearest(float x, float y, float& dist);
-
-  /// Draw the graph with raster
-  void draw(const Camera& cam, int current_vertex = -1) const;
 
   /// Try to find the
   // void mirror(int i);

@@ -461,10 +461,11 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
 
     compute_normals(out_verts, out_normals);
 
-    if(_mesh->_has_tex_coords && _mesh->_has_bumpmap)
+    // XXX: needed?
+//    if(_mesh->_has_tex_coords && _mesh->_has_bumpmap)
         compute_tangents(out_verts, out_normals);
-    else
-        out_tangents = 0;
+//    else
+//        out_tangents = 0;
 
     // Fill the buffer objects with the deformed vertices.
     // vertex with multiple texture coordinates are duplicated
