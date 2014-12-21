@@ -19,14 +19,21 @@
 #include "SKIN/main_window_skin.hpp"
 
 #include <QFileDialog>
-#include <QMessageBox>
 #include <QString>
+
+#include <cassert>
+#include <algorithm>
 
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
 #include "display_operator.hpp"
 #include "SKIN/OGL_viewports_skin.hpp"
 #include "cuda_ctrl.hpp"
+#include "gl_mesh.hpp"
+#include "loader.hpp"
+#include "fbx_loader.hpp"
+#include "conversions.hpp"
+
 
 // TODO: to be deleted ////////////////
 extern Mesh* g_mesh;
@@ -34,17 +41,73 @@ extern Mesh* g_mesh;
 extern Graph* g_graph;
 #include "skeleton.hpp"
 extern Skeleton* g_skel;
-///////////////////
-
-
-// Forward def
-namespace Skeleton_env {
-void set_grid_res(Skel_id i, int res);
-}
-// END Forward def
-
 
 using namespace Cuda_ctrl;
+
+
+
+#include "port_glew.h"
+
+#include <QGLWidget>
+
+class OGL_widget_skin_hidden : public QGLWidget {
+public:
+    OGL_widget_skin_hidden(QWidget *w): QGLWidget(w)
+    {
+        updateGL();
+        makeCurrent();
+
+        glewInit();
+        int state = glewIsSupported("GL_VERSION_2_0 "
+                                    "GL_VERSION_1_5 "
+                                    "GL_ARB_vertex_buffer_object "
+                                    "GL_ARB_pixel_buffer_object");
+        if(!state) {
+            fprintf(stderr, "Cannot initialize glew: required OpenGL extensions missing.");
+            exit(-1);
+        }
+    
+        setGeometry(0,0,0,0);
+        hide();
+
+        assert(isValid());
+
+        // Initialize cuda context
+        std::vector<Blending_env::Op_t> op;
+    //    op.push_back( Blending_env::B_TCH );
+        op.push_back( Blending_env::B_D  );
+        op.push_back( Blending_env::U_OH );
+        op.push_back( Blending_env::C_D  );
+
+    //    for (int i=(int)Blending_env::BINARY_3D_OPERATOR_BEGIN+1; i<(int)Blending_env::BINARY_3D_OPERATOR_END; ++i)
+    //        op.push_back( Blending_env::Op_t(i) );
+
+        Cuda_ctrl::cuda_start( op );
+        Cuda_ctrl::init_opengl_cuda();
+    }
+};
+
+/*
+void OGL_viewports_skin::updateGL()
+{
+    using namespace Cuda_ctrl;
+
+    if(_anim_mesh == NULL)
+        return;
+    // Transform HRBF samples for display and selection
+    _anim_mesh->transform_samples();
+    // Animate the mesh :
+    _anim_mesh->deform_mesh();
+}
+*/
+
+
+
+
+
+
+
+
 
 // -----------------------------------------------------------------------------
 
@@ -53,8 +116,10 @@ Main_window_skin::Main_window_skin(QWidget *parent) :
 {
     setupUi(this);
 
-    _viewports = new OGL_viewports_skin(viewports_frame, this);
-    viewports_frame->layout()->addWidget(_viewports);
+    _hidden = new OGL_widget_skin_hidden(viewports_frame);
+
+//    _viewports = new OGL_viewports_skin(viewports_frame, this);
+//    viewports_frame->layout()->addWidget(_viewports);
 
     resize(1300, 800);
 
@@ -177,27 +242,6 @@ void Main_window_skin::on_spinB_smooth_force_a_valueChanged(double val){
 }
 
 // END SMOOTHING SLOTS =========================================================
-
-void Main_window_skin::on_horizontalSlider_sliderMoved(int position)
-{
-    Cuda_ctrl::_display.set_transparency_factor( (float)position/100.f );
-}
-
-void Main_window_skin::on_ssd_raio_toggled(bool checked)
-{
-    if(checked)
-    {
-        Cuda_ctrl::_anim_mesh->do_ssd_skinning();
-    }
-}
-
-void Main_window_skin::on_dual_quaternion_radio_toggled(bool checked)
-{
-    if(checked)
-    {
-        Cuda_ctrl::_anim_mesh->do_dual_quat_skinning();
-    }
-}
 
 void Main_window_skin::on_implicit_skinning_checkBox_toggled(bool checked)
 {
@@ -464,51 +508,16 @@ void Main_window_skin::on_dSpinB_opening_value_valueChanged(double val)
 
 
 
-#include <QFileDialog>
-#include <QMessageBox>
-
-#include <cassert>
-#include <algorithm>
-
-#include "cuda_ctrl.hpp"
-#include "vec3_cu.hpp"
-#include "gl_mesh.hpp"
-#include "SKIN/OGL_viewports_skin.hpp"
-#include "loader.hpp"
-#include "fbx_loader.hpp"
-#include "obj_loader.hpp"
-#include "conversions.hpp"
-
 void Main_window_skin::load_fbx_mesh( Fbx_loader::Fbx_file& loader)
 {
     Mesh* ptr_mesh = new Mesh();
     Loader::Abs_mesh mesh;
     loader.get_mesh( mesh );
-    if(mesh._vertices.size() == 0){
-        QMessageBox::information(this, "Warning", "no mesh found");
+    if(mesh._vertices.size() == 0)
         return;
-    }
 
     ptr_mesh->load( mesh, loader._path);
     Cuda_ctrl::load_mesh( ptr_mesh );
-}
-
-// -----------------------------------------------------------------------------
-
-bool Main_window_skin::load_custom_weights(QString name)
-{
-    QString ssd_name = name;
-    ssd_name.append(".weights");
-    if( QFile::exists(ssd_name) )
-    {
-        Cuda_ctrl::load_animesh_and_ssd_weights(ssd_name.toLatin1());
-        return true;
-    }
-    else
-    {
-        QMessageBox::information(this, "Error", "Can't' find "+name+".weights");
-        return false;
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -538,10 +547,8 @@ bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loade
 
 void Main_window_skin::on_actionLoad_skeleton_triggered()
 {
-    if( !Cuda_ctrl::is_mesh_loaded() ){
-        QMessageBox::information(this, "Error", "You must load a mesh before.");
+    if( !Cuda_ctrl::is_mesh_loaded() )
         return;
-    }
 
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Load skeleton"),
@@ -565,10 +572,6 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
             Cuda_ctrl::_graph.load_from_file(fileName.toLatin1());
             Cuda_ctrl::_skeleton.load( *g_graph );
         }
-        else
-        {
-            QMessageBox::information(this, "Error", "Unsupported file type: '"+ext+"'");
-        }
     }
 }
 
@@ -576,15 +579,13 @@ void Main_window_skin::on_actionLoad_skeleton_triggered()
 
 void Main_window_skin::on_actionSave_as_mesh_triggered()
 {
-    if( !Cuda_ctrl::is_mesh_loaded() ){
-        QMessageBox::information(this, "Error", "No mesh to be saved.");
+    if( !Cuda_ctrl::is_mesh_loaded() )
         return;
-    }
 
     QString fileName = QFileDialog::getSaveFileName(this,
                                                     tr("Save mesh"),
                                                     "./resource/meshes",
-                                                    tr("*.off *obj") );
+                                                    tr("*.off") );
 
     if( fileName.size() != 0 )
     {
@@ -592,16 +593,6 @@ void Main_window_skin::on_actionSave_as_mesh_triggered()
        QString ext = fi.suffix().toLower();
        if(ext == "off")
            g_mesh->export_off(fileName.toLatin1(), false);
-       else if( ext == "obj" )
-       {
-           Loader::Abs_mesh abs_mesh;
-           g_mesh->save( abs_mesh );
-           Obj_loader::Obj_file loader;
-           loader.set_mesh( abs_mesh );
-           loader.save_file( fileName.toStdString() );
-       }
-       else
-           QMessageBox::information(this, "Error !", "unsupported ext: '"+ext+"' \n");
     }
 }
 
@@ -609,10 +600,8 @@ void Main_window_skin::on_actionSave_as_mesh_triggered()
 
 void Main_window_skin::on_actionSave_ISM_triggered()
 {
-    if( !Cuda_ctrl::is_animesh_loaded() ){
-        QMessageBox::information(this, "Error", "No animated mesh to save");
+    if( !Cuda_ctrl::is_animesh_loaded() )
         return;
-    }
 
     QString fileName = QFileDialog::getSaveFileName(this,
                                                     tr("Save ism"),
@@ -626,10 +615,8 @@ void Main_window_skin::on_actionSave_ISM_triggered()
 
 void Main_window_skin::on_actionLoad_ISM_triggered()
 {
-    if( !Cuda_ctrl::is_animesh_loaded() ){
-        QMessageBox::information(this, "Error", "No animated mesh loaded");
+    if( !Cuda_ctrl::is_animesh_loaded() )
         return;
-    }
 
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Load ism"),
@@ -644,10 +631,8 @@ void Main_window_skin::on_actionLoad_ISM_triggered()
 
 void Main_window_skin::on_actionLoad_weights_triggered()
 {
-    if( !Cuda_ctrl::is_animesh_loaded() ){
-        QMessageBox::information(this, "Error", "No animated mesh loaded");
+    if( !Cuda_ctrl::is_animesh_loaded() )
         return;
-    }
 
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Load skinning weights"),
@@ -681,10 +666,7 @@ void Main_window_skin::on_actionLoad_FBX_triggered()
     QString mesh_name = name;
     mesh_name.append(".fbx");
     if( !QFile::exists(mesh_name) )
-    {
-        QMessageBox::information(this, "Error !", "Can't' find "+name+"'.fbx'\n");
         return;
-    }
 
     Fbx_loader::Fbx_file loader( mesh_name.toStdString() );
     load_fbx_mesh( loader );

@@ -99,39 +99,6 @@ struct Quad_face {
 
 //------------------------------------------------------------------------------
 
-struct Material {
-    /// material name
-    std::string _name;
-    /// don't know :| Seems to always be 4
-    int _illum;
-    float _Ka[4]; ///< ambient
-    float _Kd[4]; ///< diffuse
-    float _Ks[4]; ///< specular
-    float _Tf[3]; ///< transparency
-    float _Ni;    ///< intensity
-    float _Ns;    ///< specular power
-    /// @name Texture path relative to the mesh file
-    /// @{
-    std::string _map_Ka;   ///< ambient texture map
-    std::string _map_Kd;   ///< diffuse texture map
-    std::string _map_Ks;   ///< specular texture map
-    std::string _map_Bump; ///< bump texture map
-    /// @}
-    /// bump map depth. Only used if bump is relevent.
-    float _Bm;
-
-    /// ctors
-    Material();
-    Material(const Material& mat);
-    /// dtor
-    ~Material();
-
-    /// set all maps path relative to 'p'
-    void set_relative_paths(const std::string& p);
-};
-
-//------------------------------------------------------------------------------
-
 struct Group {
     /// start index for faces in the group
     unsigned _start_face;
@@ -170,7 +137,6 @@ struct Abs_mesh {
     std::vector<TexCoord>  _texCoords;
     std::vector<Tri_face>  _triangles;  ///< the triangulated faces
     std::vector<Group>     _groups;
-    std::vector<Material>  _materials;  ///< faces materials for '_triangles'
 
     struct Render_faces {
         std::vector<Tri_face > _tris;

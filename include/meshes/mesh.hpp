@@ -300,11 +300,6 @@ public:
     int get_nb_edges()    const { return _nb_edges;                 }
     int get_vbos_size()   const { return _size_unpacked_vert_array; }
 
-    /// number of normals associated to the ith vertex
-    int get_nb_normals(int i) const { return _packed_vert_map[i].nb_ocurrence; }
-    /// number of texture coordinates associated to the ith vertex
-    int get_nb_tex_coords(int i) const { return _packed_vert_map[i].nb_ocurrence; }
-
     /// @return false if the ith vertex belongs to at least one primitive
     /// i.e triangle or quad
     bool is_disconnect(int i) const { return !_is_connected[i]; }

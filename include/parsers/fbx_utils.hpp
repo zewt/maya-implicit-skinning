@@ -89,12 +89,6 @@ KFbxXMatrix geometry_transfo(KFbxNode* pNode);
 /// copy 'd3' in array 't'
 void copy(float* t[3], const fbxDouble3& d3);
 
-/// copy FBX phong material to our Material type
-void copy( Loader::Material& mat, const KFbxSurfacePhong* phong );
-
-/// copy FBX lambert material to our Material type
-void copy( Loader::Material& m, const KFbxSurfaceLambert* lambert );
-
 /// FbxX matrix to our transformation type
 Transfo to_transfo(const KFbxXMatrix& mat);
 

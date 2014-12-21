@@ -214,38 +214,6 @@ void importTexCoords_byPolygonVertex( KFbxMesh* lMesh,
 
 // -----------------------------------------------------------------------------
 
-void fill_material(KFbxNode* node, Loader::Abs_mesh& mesh)
-{
-    for (int i = 0; i < node->GetMaterialCount(); ++i )
-    {
-        Loader::Material m;
-        // get material infos
-        KFbxSurfaceMaterial* fbx_mat = node->GetMaterial(i);
-
-        const KFbxImplementation* implem = GetImplementation(fbx_mat, ImplementationHLSL);
-        if( implem == 0 )         implem = GetImplementation(fbx_mat, ImplementationCGFX);
-
-        if(implem != 0)
-            std::cerr << "Material implementation not supported : CGFX/HLSL.\n";
-        else if(fbx_mat->GetClassId().Is(KFbxSurfacePhong::ClassId))
-            Fbx_utils::copy(m, (KFbxSurfacePhong*)fbx_mat);
-        else if(fbx_mat->GetClassId().Is(KFbxSurfaceLambert::ClassId) )
-            Fbx_utils::copy(m, (KFbxSurfaceLambert*)fbx_mat);
-        else
-        {
-            std::cerr << "ERROR FBX : unhandle material type we won't load it";
-            std::cerr << std::endl;
-        }
-
-        // add material
-        if(implem == 0) mesh._materials.push_back ( m );
-
-    }// for materialCount
-}
-
-
-// -----------------------------------------------------------------------------
-
 void fill_mesh(KFbxMesh* fbx_mesh, KFbxNode* node, Loader::Abs_mesh& mesh)
 {
     // deal with non triangular mesh
@@ -355,10 +323,6 @@ void fill_mesh(KFbxMesh* fbx_mesh, KFbxNode* node, Loader::Abs_mesh& mesh)
     }
 
 
-    // materials ###############################################################
-    int m_size = mesh._materials.size();
-    fill_material(node, mesh);
-
     // material groups & groups ################################################
     Loader::Group g;
     g._start_face = f_size;
@@ -432,9 +396,6 @@ void Fbx_file::get_mesh(Loader::Abs_mesh& mesh)
     }
 
     _size_mesh = mesh._vertices.size();
-
-    for(unsigned i = 0; i < mesh._materials.size(); i++)
-        mesh._materials[i].set_relative_paths(_path);
  }
 
 // -----------------------------------------------------------------------------
@@ -869,77 +830,6 @@ void Fbx_file::set_mesh(const Loader::Abs_mesh& mesh)
 
 
 }
-
-// -----------------------------------------------------------------------------
-
-#if 0
-bool SaveScene(KFbxDocument* fbx_scene, const char* pFilename, int pFileFormat, bool pEmbedMedia)
-{
-    int lMajor, lMinor, lRevision;
-    bool lStatus = true;
-
-    // Create an exporter.
-    KFbxExporter* lExporter = KFbxExporter::Create(g_FBXSdkManager, "");
-
-    if( pFileFormat < 0 || pFileFormat >= g_FBXSdkManager->GetIOPluginRegistry()->GetWriterFormatCount() )
-    {
-        // Write in fall back format if pEmbedMedia is true
-        pFileFormat = g_FBXSdkManager->GetIOPluginRegistry()->GetNativeWriterFormat();
-
-        if (!pEmbedMedia)
-        {
-            //Try to export in ASCII if possible
-            int lFormatIndex, lFormatCount = g_FBXSdkManager->GetIOPluginRegistry()->GetWriterFormatCount();
-
-            for (lFormatIndex=0; lFormatIndex<lFormatCount; lFormatIndex++)
-            {
-                if (g_FBXSdkManager->GetIOPluginRegistry()->WriterIsFBX(lFormatIndex))
-                {
-                    KString lDesc =g_FBXSdkManager->GetIOPluginRegistry()->GetWriterFormatDescription(lFormatIndex);
-                    char *lASCII = "ascii";
-                    if (lDesc.Find(lASCII)>=0)
-                    {
-                        pFileFormat = lFormatIndex;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    // Set the export states. By default, the export states are always set to
-    // true except for the option eEXPORT_TEXTURE_AS_EMBEDDED. The code below
-    // shows how to change these states.
-
-    IOS_REF.SetBoolProp(EXP_FBX_MATERIAL,        true);
-    IOS_REF.SetBoolProp(EXP_FBX_TEXTURE,         true);
-    IOS_REF.SetBoolProp(EXP_FBX_EMBEDDED,        pEmbedMedia);
-    IOS_REF.SetBoolProp(EXP_FBX_SHAPE,           true);
-    IOS_REF.SetBoolProp(EXP_FBX_GOBO,            true);
-    IOS_REF.SetBoolProp(EXP_FBX_ANIMATION,       true);
-    IOS_REF.SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
-
-    // Initialize the exporter by providing a filename.
-    if(lExporter->Initialize(pFilename, pFileFormat, g_FBXSdkManager->GetIOSettings()) == false)
-    {
-        printf("Call to KFbxExporter::Initialize() failed.\n");
-        printf("Error returned: %s\n\n", lExporter->GetLastErrorString());
-        return false;
-    }
-
-    KFbxSdkManager::GetFileFormatVersion(lMajor, lMinor, lRevision);
-    printf("FBX version number for this version of the FBX SDK is %d.%d.%d\n\n", lMajor, lMinor, lRevision);
-
-    // Export the scene.
-    lStatus = lExporter->Export(fbx_scene);
-
-    // Destroy the exporter.
-    lExporter->Destroy();
-    return lStatus;
-}
-#endif
-
-// -----------------------------------------------------------------------------
 
 void Fbx_file::free_mem()
 {

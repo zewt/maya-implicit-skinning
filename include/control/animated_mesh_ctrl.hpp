@@ -135,8 +135,6 @@ public:
     /// Restore the default propagation direction of every vertices.
     void reset_invert_propagation();
 
-    void do_ssd_skinning();
-    void do_dual_quat_skinning();
     void set_implicit_skinning(bool s);
 
     //--------------------------------------------------------------------------

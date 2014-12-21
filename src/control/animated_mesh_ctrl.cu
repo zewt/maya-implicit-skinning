@@ -184,18 +184,6 @@ void Animated_mesh_ctrl::enable_update_base_potential(bool state)
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::do_ssd_skinning(){
-    _blending_type = EAnimesh::MATRIX_BLENDING;
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::do_dual_quat_skinning(){
-    _blending_type = EAnimesh::DUAL_QUAT_BLENDING;
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::set_implicit_skinning(bool s){
     _animesh->set_implicit_skinning(s);
 }

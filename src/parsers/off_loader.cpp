@@ -177,7 +177,6 @@ bool Off_file::import_file(const std::string& file_path)
 
     // Push everything in the same group/material group
     int s = _mesh._triangles.size();
-    _mesh._materials.push_back( Loader::Material() );
     _mesh._groups.push_back( Loader::Group("", 0, s) );
 
     return true;

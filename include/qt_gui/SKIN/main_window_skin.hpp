@@ -19,9 +19,6 @@
 #ifndef _MAIN_WINDOW_SKIN_H_
 #define _MAIN_WINDOW_SKIN_H_
 
-#include <QComboBox>
-#include <QSlider>
-#include <QKeyEvent>
 #include <map>
 
 #include "fbx_loader.hpp"
@@ -31,7 +28,7 @@
 // FORWARD DEFS ----------------------------------------------------------------
 // Forward def because of the interdependencie between MainWindow and
 // OGL_viewports
-class OGL_viewports_skin;
+class OGL_widget_skin_hidden;
 // END FORWARD DEFS ------------------------------------------------------------
 
 /** @class MainWindow
@@ -62,9 +59,8 @@ private:
 
     bool load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loader);
     void load_fbx_mesh( Fbx_loader::Fbx_file& loader);
-    bool load_custom_weights(QString name);
 
-    OGL_viewports_skin* _viewports;
+    OGL_widget_skin_hidden* _hidden;
 
 public slots:
     // -------------------------------------------------------------------------
@@ -80,8 +76,6 @@ public slots:
     void on_actionLoad_mesh_triggered();
     void on_actionExit_triggered();
     void on_enable_smoothing_toggled(bool checked);
-    void on_horizontalSlider_sliderMoved(int position);
-    void on_ssd_raio_toggled(bool checked);
     void on_actionLoad_skeleton_triggered();
     void on_spinBox_bulge_in_contact_force_valueChanged(double );
     void on_update_bulge_in_contact_released();
@@ -96,7 +90,6 @@ public slots:
     void on_debug_show_normal_toggled(bool checked);
     void on_debug_show_gradient_toggled(bool checked);
     void on_spinB_smooth_force_a_valueChanged(double );
-    void on_dual_quaternion_radio_toggled(bool checked);
     void on_implicit_skinning_checkBox_toggled(bool checked);
     void on_doubleSpinBox_valueChanged(double );
     void on_box_potential_pit_toggled(bool checked);

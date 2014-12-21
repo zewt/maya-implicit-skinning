@@ -300,50 +300,6 @@ void copy(float* t, const fbxDouble3& d3)
 
 // -----------------------------------------------------------------------------
 
-void copy( Loader::Material& m, const KFbxSurfacePhong* phong )
-{
-    m._name = std::string( phong->GetName() );
-    Fbx_utils::copy(m._Ka, phong->Ambient.Get() );
-    Fbx_utils::copy(m._Kd, phong->Diffuse.Get() );
-    Fbx_utils::copy(m._Ks, phong->Specular.Get());
-    m._Tf[0] = m._Tf[1] = m._Tf[2] = std::max(1.f - (float)phong->TransparencyFactor.Get(), 0.f);
-    m._Ns = (float)phong->Shininess.Get();
-
-    // textures
-    KFbxFileTexture* fbx_tex = 0;
-    fbx_tex = (KFbxFileTexture*) phong->Ambient.GetSrcObject(KFbxTexture::ClassId);
-    if( fbx_tex ) m._map_Ka = std::string( fbx_tex->GetFileName() );
-
-    fbx_tex = (KFbxFileTexture*) phong->Diffuse.GetSrcObject(KFbxTexture::ClassId);
-    if( fbx_tex ) m._map_Kd = std::string( fbx_tex->GetFileName() );
-
-    fbx_tex = (KFbxFileTexture*) phong->Specular.GetSrcObject(KFbxTexture::ClassId);
-    if( fbx_tex ) m._map_Ks = std::string( fbx_tex->GetFileName() );
-
-    fbx_tex = (KFbxFileTexture*) phong->Bump.GetSrcObject(KFbxTexture::ClassId);
-    if( fbx_tex ) m._map_Bump = std::string( fbx_tex->GetFileName() );
-}
-
-// -----------------------------------------------------------------------------
-
-void copy( Loader::Material& m, const KFbxSurfaceLambert* lbrt )
-{
-    m._name = std::string( lbrt->GetName() );
-    Fbx_utils::copy(m._Ka, lbrt->Ambient.Get() );
-    Fbx_utils::copy(m._Kd, lbrt->Diffuse.Get() );
-    m._Tf[0] = m._Tf[1] = m._Tf[2] = std::max( 1.f - (float)lbrt->TransparencyFactor.Get(), 0.f);
-
-    // textures
-    KFbxFileTexture* fbx_tex = 0;
-    fbx_tex = (KFbxFileTexture*) lbrt->Ambient.GetSrcObject(KFbxTexture::ClassId);
-    if( fbx_tex ) m._map_Ka = std::string( fbx_tex->GetFileName() );
-
-    fbx_tex = (KFbxFileTexture*) lbrt->Diffuse.GetSrcObject(KFbxTexture::ClassId);
-    if( fbx_tex ) m._map_Kd = std::string( fbx_tex->GetFileName() );
-}
-
-// -----------------------------------------------------------------------------
-
 Transfo to_transfo(const KFbxXMatrix& mat)
 {
     Transfo tr;
