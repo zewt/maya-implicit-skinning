@@ -102,13 +102,6 @@ void init_cuda(const std::vector<Blending_env::Op_t>& op)
     Constants::allocate();
     std::cout << "Done\n";
 
-    std::cout << "allocate textures for raytracing\n";
-//    Textures_env::load_blob_tex("resource/textures/tex.ppm");
-//    Textures_env::load_extrusion_tex("resource/textures/test.ppm", 0);
-//    Textures_env::load_extrusion_tex("resource/textures/vortex_text.ppm", 1);
-//    Textures_env::init();
-    std::cout << "Done\n";
-
     Skeleton_env::init_env();
 
     std::cout << "\n--- END CUDA CONTEXT SETUP ---" << std::endl;

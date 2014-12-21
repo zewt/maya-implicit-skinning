@@ -8,8 +8,6 @@ project(implicit_framework)
 # Check dependencies
 #-------------------------------------------------------------------------------
 FIND_PACKAGE(CUDA REQUIRED)
-FIND_PACKAGE(Qt5OpenGL REQUIRED)
-FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(OpenGL REQUIRED)
 
 # END CHECK DEPENDANCIES -------------------------------------------------------
@@ -168,12 +166,6 @@ file(
     #${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
 
-file(
-  GLOB_RECURSE
-  source_voxelizer
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/meshes/voxelizer/*.cpp
-)
-
 set(host_sources ${host_sources} ${source_voxelizer} )
 
 # END PROJECT FILES ------------------------------------------------------------
@@ -234,8 +226,6 @@ ENDIF(MSVC)
 
 if(MSVC)
     INCLUDE_DIRECTORIES("${CUDA_SDK_ROOT_DIR}/common/inc")
-    #set(GLEW "${CUDA_SDK_ROOT_DIR}/common/lib/Win32/glew32.lib")
-    set(GLEW "glew32")
     set(glu "glu32")
     set(OpenGL "opengl32")
     ADD_DEFINITIONS(-DFBXSDK_SHARED) # macro needed to tell fbx we're using dlls
@@ -243,7 +233,6 @@ if(MSVC)
 else()
     set(LIB_CUDA -lcuda)
     set(glu GLU)
-    set(GLEW GLEW)
     set(OpenGL GL)
     set(FBX "${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/gcc/x64/libfbxsdk-2012.2-static.a")
     #set(TAUCS_LIBRARIES ${taucs})
@@ -257,18 +246,6 @@ endif()
 
 if(MSVC)
 configure_file(${FBX_ROOT}/2012.2/lib/vs2010/x86/fbxsdk-2012.2.dll ${CMAKE_CURRENT_BINARY_DIR}/fbxsdk-2012.2.dll COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/dll/glew32.dll ${CMAKE_CURRENT_BINARY_DIR}/glew32.dll COPYONLY)
-
-get_target_property(QtBinDir Qt5::Core LOCATION)
-get_filename_component(QtBinDir "${QtBinDir}" DIRECTORY)
-
-configure_file("${QtBinDir}/Qt5Core.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${QtBinDir}/Qt5OpenGL.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${QtBinDir}/Qt5Widgets.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${QtBinDir}/Qt5Gui.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${QtBinDir}/icudt53.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${QtBinDir}/icuin53.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${QtBinDir}/icuuc53.dll" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 endif()
 
 # END COPY DLLS ----------------------------------------------------------------
@@ -290,9 +267,7 @@ ADD_LIBRARY( implicit_framework STATIC ${host_sources} )
 # Libraries implicit_framework needs to be linked against:
 TARGET_LINK_LIBRARIES(implicit_framework
     ${LIB_CUDA} cuda_lib
-    Qt5::Widgets
-    Qt5::OpenGL
-    ${OpenGL} ${GLEW} ${glu} ${FBX} -ldl -lpthread)
+    ${OpenGL} ${glu} ${FBX} -ldl -lpthread)
 
 TARGET_LINK_LIBRARIES(cuda_lib implicit_framework)
 

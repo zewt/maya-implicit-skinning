@@ -20,7 +20,6 @@
 #define IBL_GENERATOR_HPP__
 
 #include "structs.hpp"
-#include "tools.hpp"
 #include "opening.hpp"
 
 #include <algorithm>

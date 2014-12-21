@@ -122,67 +122,6 @@ DBone_id Tree_cu::compute_clusters(Bone::Id bid,
     return acc;
 }
 
-// -----------------------------------------------------------------------------
-
-//#if 0
-
-//void Tree_cu::compute_blending_list()
-//{
-//    _nb_singletons = 0;
-//    _nb_pairs      = 0;
-//    for(unsigned cid = 0; cid < _clusters.size(); ++cid)
-//    {
-//        Cluster cl = _clusters[cid];
-//        DBone_id d_bone_id = cl.first_bone;
-//        Bone::Id h_bone_id = _bone_aranged[d_bone_id]->get_bone_id();
-//        Bone::Id h_parent  = _tree->parent( h_bone_id );
-
-//        if( h_parent < 0 || _tree->data( h_parent )._blend_type == EJoint::MAX)
-//        {
-//            cl.datas = _tree->data(h_parent < 0 ? h_bone_id : h_parent);
-//            _blending_list.push_back( cl );
-//            _nb_singletons++;
-//        }
-//        else
-//        {
-//            DBone_id d_parent = _parents_aranged[ d_bone_id ];
-//            Cluster c0 = _clusters[ cid ];
-//            Cluster c1 = _clusters[ _bone_to_cluster[ d_parent ].id() ];
-//            c0.datas = _tree->data(h_parent);
-//            c1.datas = _tree->data(h_parent);
-//            _blending_list.push_front( c0 );
-//            _blending_list.push_front( c1 );
-//            _nb_pairs++;
-//        }
-//    }
-//}
-
-//#else
-
-//void Tree_cu::compute_blending_list()
-//{
-//    _nb_singletons = 0;
-//    _nb_pairs      = 0;
-//    for(unsigned cid = 0; cid < _clusters.size(); ++cid)
-//    {
-//        Cluster cl = _clusters[cid];
-//        DBone_id d_bone_id = cl.first_bone;
-//        Bone::Id h_bone_id = _bone_aranged[d_bone_id.id()]->get_bone_id();
-//        Bone::Id h_parent  = _tree->parent( h_bone_id );
-
-////        if( h_parent < 0 || _tree->data( h_parent )._blend_type == EJoint::MAX)
-//        {
-//            cl.datas = _tree->data(h_parent < 0 ? h_bone_id : h_parent);
-//            _blending_list.push_back( cl );
-//            _nb_singletons++;
-//        }
-//    }
-//}
-
-//#endif
-
-// -----------------------------------------------------------------------------
-
 void Tree_cu::compute_blending_list()
 {
     _blending_list.clear();
