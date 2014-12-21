@@ -94,7 +94,6 @@ public slots:
     void on_doubleSpinBox_valueChanged(double );
     void on_box_potential_pit_toggled(bool checked);
     void on_spinBox_diffuse_smoothing_weights_iter_valueChanged(int );
-    void on_actionReloadShaders_triggered();
     void on_spinB_step_length_valueChanged(double );
     void on_checkBox_collsion_on_toggled(bool checked);
     void on_pushB_attached_skeleton_released();

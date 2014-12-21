@@ -19,7 +19,6 @@
 #include "SKIN/main_window_skin.hpp"
 //#include "SKIN_V2/main_window_skin2.hpp"
 
-#include "SKIN/OGL_viewports_skin.hpp"
 #include <QtGui>
 
 /**

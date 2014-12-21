@@ -30,7 +30,6 @@
 #include "opengl_stuff.hpp"
 #include "animesh.hpp"
 #include "cuda_utils_common.hpp"
-#include "obj_loader.hpp"
 #include "constants.hpp"
 #include "display_operator.hpp"
 #include "endianess.hpp"
@@ -70,9 +69,6 @@ void load_mesh( Mesh* mesh )
 
     Color cl = _color.get(Color_ctrl::MESH_POINTS);
     g_mesh->set_point_color_bo(cl.r, cl.g, cl.b, cl.a);
-
-    delete g_anim_cache;
-    g_anim_cache = new Point_cache_file(g_mesh->get_nb_vertices(), 100);
 
     std::cout << "mesh loaded" << std::endl;
 }
@@ -167,15 +163,6 @@ void load_animesh()
     delete _anim_mesh;
     _anim_mesh = new Animated_mesh_ctrl(g_animesh);
 }
-
-// -----------------------------------------------------------------------------
-
-void reload_shaders()
-{
-    load_shaders();
-}
-
-// -----------------------------------------------------------------------------
 
 void get_mem_usage(double& total, double& free)
 {
@@ -298,16 +285,9 @@ void cleanup()
     glAssert( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
     glUseProgram( 0 );
 
-    glDeleteBuffers(1, &g_gl_quad);
-
-    glAssert( glDeleteTextures(1, &g_ctrl_frame_tex) );
     glAssert( glDeleteTextures(1, &g_op_frame_tex) );
     glAssert( glDeleteTextures(1, &g_op_tex) );
 
-    for (int i = 0; i < NB_TEX; ++i)
-        glDeleteTextures(NB_TEX, g_gl_Tex);
-
-    erase_shaders();
     // End OpenGL ----------
 
     Constants::free();
@@ -315,7 +295,6 @@ void cleanup()
     delete g_skel; // Skeleton must be deleted before blending env
     delete g_animesh;
     delete g_graph;
-    delete g_anim_cache;
     delete g_mesh;
 
     g_skel        = 0;

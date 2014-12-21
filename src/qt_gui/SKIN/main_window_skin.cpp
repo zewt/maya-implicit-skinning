@@ -27,7 +27,6 @@
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
 #include "display_operator.hpp"
-#include "SKIN/OGL_viewports_skin.hpp"
 #include "cuda_ctrl.hpp"
 #include "gl_mesh.hpp"
 #include "loader.hpp"
@@ -320,11 +319,6 @@ void Main_window_skin::on_box_potential_pit_toggled(bool checked)
 void Main_window_skin::on_spinBox_diffuse_smoothing_weights_iter_valueChanged(int val)
 {
     Cuda_ctrl::_anim_mesh->set_smoothing_weights_diffusion_iter(val);
-}
-
-void Main_window_skin::on_actionReloadShaders_triggered()
-{
-    Cuda_ctrl::reload_shaders();
 }
 
 void Main_window_skin::on_spinB_step_length_valueChanged(double val)

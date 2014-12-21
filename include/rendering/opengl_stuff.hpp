@@ -29,8 +29,4 @@ void init_opengl();
 
 GLuint init_tex_operator( int width, int height );
 
-void load_shaders();
-
-void erase_shaders();
-
 #endif // OPENGL_STUFF_HPP__

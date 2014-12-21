@@ -83,9 +83,6 @@ void load_animesh();
 
 void load_animesh_and_ssd_weights(const char* filename);
 
-/// Re compile all the shaders
-void reload_shaders();
-
 /// device memory usage in megabytes
 void get_mem_usage(double& total, double& free);
 

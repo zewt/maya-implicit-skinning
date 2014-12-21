@@ -32,7 +32,6 @@
 #include "macros.hpp"
 #include "mesh.hpp"
 #include "loader_mesh.hpp"
-#include "tex_loader.hpp"
 #include "timer.hpp"
 #include "std_utils.hpp"
 
