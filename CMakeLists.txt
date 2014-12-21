@@ -232,7 +232,11 @@ CUDA_ADD_LIBRARY( implicit_framework STATIC  ${cuda_sources}  ${host_sources})
 # Libraries implicit_framework needs to be linked against:
 TARGET_LINK_LIBRARIES(implicit_framework
     ${LIB_CUDA} 
-    ${OpenGL} ${glu} ${FBX} -ldl -lpthread)
+    ${OpenGL} ${glu} ${FBX})
+
+if(!MSVC)
+TARGET_LINK_LIBRARIES(implicit_framework -ldl -lpthread)
+endif()
 
 TARGET_LINK_LIBRARIES(implicit_framework)
 
