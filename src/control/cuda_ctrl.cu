@@ -182,7 +182,7 @@ void cuda_start(const std::vector<Blending_env::Op_t>& op)
 
     set_default_controller_parameters();
 
-    atexit(cleanup);
+//    atexit(cleanup);
 }
 
 // -----------------------------------------------------------------------------
