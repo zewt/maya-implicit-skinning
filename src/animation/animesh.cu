@@ -45,7 +45,6 @@ float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2);
 Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     _mesh(m_), _skel(s_),
     mesh_smoothing(EAnimesh::LAPLACIAN),
-    do_implicit_skinning(false),
     do_smooth_mesh(false),
     do_local_smoothing(true),
     do_interleave_fitting(false),
@@ -67,7 +66,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
 //    d_input_normals(m->get_nb_vertices()),
     d_output_vertices(_mesh->get_nb_vertices()),
     d_output_normals(_mesh->get_nb_vertices()),
-    d_ssd_normals(_mesh->get_nb_vertices()),
     d_ssd_vertices(_mesh->get_nb_vertices()),
     d_gradient(_mesh->get_nb_vertices()),
     d_input_tri(_mesh->get_nb_tri()*3),
@@ -79,7 +77,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     d_base_potential(_mesh->get_nb_vertices()),
     d_base_gradient(_mesh->get_nb_vertices()),
     d_piv(_mesh->get_nb_faces()),
-    d_packed_vert_map(_mesh->get_nb_vertices()),
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
@@ -220,18 +217,13 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
 {
     const int nb_vert = a_mesh.get_nb_vertices();
 
-    const Mesh::Packed_data* d = a_mesh.get_packed_vert_map();
-    Cuda_utils::mem_cpy_htd(d_packed_vert_map.ptr(), d, nb_vert);
-
     Host::Array<Point_cu > input_vertices(nb_vert);
-    Host::Array<Vec3_cu>   input_normals (nb_vert);
     Host::Array<bool>      flip_prop     (nb_vert);
     for(int i = 0; i < nb_vert; i++)
     {
         Point_cu  pos = Convs::to_point( a_mesh.get_vertex(i) );
 
         input_vertices[i] = pos;
-        input_normals [i] = a_mesh.get_normal(i);
         flip_prop     [i] = false;
     }
 
@@ -243,8 +235,6 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     d_piv.copy_from(h_piv);
 
     d_input_vertices.copy_from(input_vertices);
-//    d_input_normals.copy_from(input_normals);
-    d_ssd_normals.copy_from(input_normals);
     d_flip_propagation.copy_from(flip_prop);
 
     HA_int h_edge_list(a_mesh.get_nb_edges());
@@ -259,7 +249,7 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     d_edge_list.copy_from(h_edge_list);
     d_edge_list_offsets.copy_from(h_edge_list_offsets);
 
-    Cuda_utils::mem_cpy_htd(d_input_tri. ptr(), a_mesh._tri , a_mesh._nb_tri*3 );
+    Cuda_utils::mem_cpy_htd(d_input_tri. ptr(), a_mesh.get_tri_index(), a_mesh.get_nb_tri()*3 );
 }
 
 // -----------------------------------------------------------------------------

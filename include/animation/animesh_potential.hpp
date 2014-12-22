@@ -186,9 +186,6 @@ inline static float iso_to_sfactor(float x, int s)
     #endif
 }
 
-// -----------------------------------------------------------------------------
-
-#if 1
 /*
     Ajustement standard avec gradient
 */
@@ -208,11 +205,10 @@ inline static float iso_to_sfactor(float x, int s)
 /// use the potential of the two nearest clusters, in full eval we don't update
 /// d_vert_to_fit has it is suppossed to be the last pass
 __global__
-void match_base_potential(const bool full_fit,
+void match_base_potential(const bool final_pass,
                           const bool smooth_fac_from_iso,
                           Vec3_cu* out_verts,
                           const float* base_potential,
-                          const Vec3_cu* custom_dir,
                           Vec3_cu* out_gradient,
                           const Skeleton_env::DBone_id* nearest_bone,
                           float* smooth_factors_iso,
@@ -252,25 +248,15 @@ void match_base_potential(const bool full_fit,
         out_gradient[p] = gf0;
         // STOP CASE : Gradient is null we can't know where to march
         if(gf0.norm() <= 0.00001f){
-            if(!full_fit) vert_to_fit[thread_idx] = -1;
-            #ifdef ENABLE_COLOR
-            d_vert_state[p] = EAnimesh::NORM_GRAD_NULL;
-            #endif
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
             return;
         }
 
         // STOP CASE : Point already near enough the isosurface
         if( fabsf(f0) < EPSILON ){
-            if(!full_fit) vert_to_fit[thread_idx] = -1;
-            #ifdef ENABLE_COLOR
-            d_vert_state[p] = EAnimesh::NOT_DISPLACED;
-            #endif
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
             return;
         }
-
-        #ifdef ENABLE_COLOR
-        d_vert_state[p] = EAnimesh::NB_ITER_MAX;
-        #endif
 
         // Inside we march along the inverted gradient
         // outside along the gradient :
@@ -284,8 +270,6 @@ void match_base_potential(const bool full_fit,
         float    fi     = f0;
         float    abs_f0 = fabsf(f0);
         Point_cu vi     = v0;
-
-        //const Vec3_cu c_dir = custom_dir[p];
 
         for(unsigned short i = 0; i < nb_iter; ++i)
         {
@@ -314,21 +298,14 @@ void match_base_potential(const bool full_fit,
             abs_f0 = fabsf(fi);
             if(raphson && abs_f0 < EPSILON )
             {
-                if(!full_fit) vert_to_fit[thread_idx] = -1;
-                #ifdef ENABLE_COLOR
-                d_vert_state[p] = EAnimesh::OUT_VERT;
-                #endif
+                if(!final_pass) vert_to_fit[thread_idx] = -1;
                 break;
             }
             else if( fi * f0 <= 0.f)
             {
                 t = dichotomic_search(r, 0.f, t, gfi, ptl);
 
-                if(!full_fit) vert_to_fit[thread_idx] = -1;
-
-                #ifdef ENABLE_COLOR
-                d_vert_state[p] = EAnimesh::FITTED;
-                #endif
+                if(!final_pass) vert_to_fit[thread_idx] = -1;
                 break;
             }
 
@@ -340,23 +317,17 @@ void match_base_potential(const bool full_fit,
                                           gtmp, gradient_threshold);
                 #endif
 
-                if(!full_fit) vert_to_fit[thread_idx] = -1;
+                if(!final_pass) vert_to_fit[thread_idx] = -1;
 
                 smooth_factors[p] = smooth_strength;
-                #ifdef ENABLE_COLOR
-                d_vert_state[p] = EAnimesh::GRADIENT_DIVERGENCE;
-                #endif
                 break;
             }
 
             // STOP CASE 3 : Potential pit
             if( ((fi - f0)*dl < 0.f) & potential_pit )
             {
-                if(!full_fit) vert_to_fit[thread_idx] = -1;
+                if(!final_pass) vert_to_fit[thread_idx] = -1;
                 smooth_factors[p] = smooth_strength;
-                #ifdef ENABLE_COLOR
-                d_vert_state[p] = EAnimesh::POTENTIAL_PIT;
-                #endif
                 break;
             }
 
@@ -373,7 +344,6 @@ void match_base_potential(const bool full_fit,
     }
 #endif
 }
-#endif
 
 }
 // END KERNELS NAMESPACE =======================================================

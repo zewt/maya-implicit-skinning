@@ -147,12 +147,6 @@ void Animated_mesh_ctrl::enable_update_base_potential(bool state)
     _animesh->set_enable_update_base_potential(state);
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_implicit_skinning(bool s){
-    _animesh->set_implicit_skinning(s);
-}
-
 void Animated_mesh_ctrl::update_base_potential()
 {
     assert(_animesh != 0);

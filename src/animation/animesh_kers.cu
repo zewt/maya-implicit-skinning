@@ -46,10 +46,8 @@ Vec3_cu compute_rotation_axis(const Transfo& t)
 
 __global__
 void transform_SSD(const Point_cu* in_verts,
-                   const Vec3_cu* in_normals,
                    int nb_verts,
                    Vec3_cu* out_verts,
-                   Vec3_cu* out_normals,
                    const Transfo* transfos,
                    const float* weights,
                    const int* joints,
@@ -75,8 +73,6 @@ void transform_SSD(const Point_cu* in_verts,
         // Compute animated position
         Vec3_cu vi = (t * in_verts[p]).to_vector();
         out_verts [p] = vi;
-        // Compute animated normal
-        out_normals[p] = t.fast_invert().transpose() * in_normals[p];
     }
 }
 
@@ -84,10 +80,8 @@ void transform_SSD(const Point_cu* in_verts,
 
 __global__
 void transform_dual_quat( const Point_cu* in_verts,
-                          const Vec3_cu* in_normals,
                           int nb_verts,
                           Vec3_cu* out_verts,
-                          Vec3_cu* out_normals,
                           const Dual_quat_cu* dual_quat,
                           const float* weights,
                           const int* joints,
@@ -135,8 +129,6 @@ void transform_dual_quat( const Point_cu* in_verts,
         // Compute animated position
         Vec3_cu vi = dq_blend.transform( in_verts[p] ).to_vector();
         out_verts [p] = vi;
-        // Compute animated normal
-        out_normals[p] = dq_blend.rotate( in_normals[p] );
     }
 }
 
@@ -197,20 +189,21 @@ compute_unpacked_normals_tri(const int* faces,
                              int unpack_factor){
     int n = nb_faces;
     int p = blockIdx.x * blockDim.x + threadIdx.x;
-    if(p < n){
-        Mesh::PrimIdx pidx;
-        pidx.a = faces[3*p    ];
-        pidx.b = faces[3*p + 1];
-        pidx.c = faces[3*p + 2];
-        Mesh::PrimIdxVertices pivp = piv[p];
-        Vec3_cu nm = compute_normal_tri(pidx, vertices);
-        int ia = pidx.a * unpack_factor + pivp.ia;
-        int ib = pidx.b * unpack_factor + pivp.ib;
-        int ic = pidx.c * unpack_factor + pivp.ic;
-        unpacked_normals[ia] = nm;
-        unpacked_normals[ib] = nm;
-        unpacked_normals[ic] = nm;
-    }
+    if(p >= n)
+        return;
+
+    Mesh::PrimIdx pidx;
+    pidx.a = faces[3*p    ];
+    pidx.b = faces[3*p + 1];
+    pidx.c = faces[3*p + 2];
+    Mesh::PrimIdxVertices pivp = piv[p];
+    Vec3_cu nm = compute_normal_tri(pidx, vertices);
+    int ia = pidx.a * unpack_factor + pivp.ia;
+    int ib = pidx.b * unpack_factor + pivp.ib;
+    int ic = pidx.c * unpack_factor + pivp.ic;
+    unpacked_normals[ia] = nm;
+    unpacked_normals[ib] = nm;
+    unpacked_normals[ic] = nm;
 }
 
 /// Average the normals assigned to each vertex

@@ -38,7 +38,7 @@ public:
     virtual ~Base_anim_eval(){ }
 
     /// @return the local frame of the ith bone for the ith frame
-    virtual int nb_frames () const = 0;
+    virtual size_t nb_frames () const = 0;
 
     /// frame rate in seconds
     float frame_rate() const { return _frame_rate; }
@@ -59,7 +59,7 @@ public:
     { }
 
 
-    int nb_frames () const { return _lcl_frames.size();}
+    size_t nb_frames () const { return _lcl_frames.size();}
 
     /// Stores every bones local transformations for each frame
     /// _gl_frames[ith_frame][bone_id] == local_transformation

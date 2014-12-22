@@ -25,7 +25,6 @@ class Debug_ctrl {
 public:
 
     Debug_ctrl() :
-        _show_normals(false),
         _show_gradient(false),
         _do_selection(false),
         _potential_pit(true),
@@ -44,7 +43,6 @@ public:
     {
     }
 
-    bool _show_normals;
     bool _show_gradient;
 
     bool _do_selection;

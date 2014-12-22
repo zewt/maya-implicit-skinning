@@ -129,8 +129,6 @@ public:
     /// Restore the default propagation direction of every vertices.
     void reset_invert_propagation();
 
-    void set_implicit_skinning(bool s);
-
     //--------------------------------------------------------------------------
     /// @name SSD weights
     //--------------------------------------------------------------------------
@@ -149,7 +147,7 @@ public:
     /// Compute the center of gravity of the points currently selected
     Vec3_cu cog_mesh_selection();
 
-    int  get_nb_selected_points(){ return _selected_points.size(); }
+    size_t get_nb_selected_points(){ return _selected_points.size(); }
     const std::vector<int>& get_selected_points(){ return _selected_points; }
     int* get_selected_points_device(){ return _d_selected_points; }
 

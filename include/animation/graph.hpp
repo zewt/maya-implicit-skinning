@@ -92,10 +92,10 @@ struct Graph {
   void set_offset_scale(const Vec3_cu& _offset, float _scale);
 
   /// Return the number of vertices
-  inline int nb_vertices() const { return _vertices.size(); }
+  inline size_t nb_vertices() const { return _vertices.size(); }
 
   /// Return the number of edges
-  inline int nb_edges() const { return _edges.size(); }
+  inline size_t nb_edges() const { return _edges.size(); }
 
   //----------------------------------------------------------------------------
   /// @name Attributes

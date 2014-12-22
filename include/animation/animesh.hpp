@@ -302,10 +302,6 @@ public:
 
     void set_enable_update_base_potential(bool s){ do_update_potential = s; }
 
-    /// Switch between implicit skinning and basic ssd skinning
-    inline void set_implicit_skinning  ( bool s) { do_implicit_skinning = s;                     }
-
-    inline const Cuda_utils::DA_Vec3_cu& get_ssd_normals() const { return d_ssd_normals; }
     inline const Cuda_utils::DA_Vec3_cu& get_rot_axis() const { return d_rot_axis; }
     inline const Cuda_utils::DA_Vec3_cu& get_gradient() const { return d_gradient; }
 
@@ -391,7 +387,7 @@ private:
 
     void fit_mesh(int nb_vert_to_fit,
                   int* d_vert_to_fit,
-                  bool full_eval,
+                  bool final_pass,
                   bool smooth_fac_from_iso,
                   Vec3_cu *d_vertices,
                   int nb_steps, float smooth_strength);
@@ -460,7 +456,6 @@ private:
 
     EAnimesh::Smooth_type mesh_smoothing;
 
-    bool do_implicit_skinning;
     bool do_smooth_mesh;
     bool do_local_smoothing;
     bool do_interleave_fitting;
@@ -514,8 +509,6 @@ private:
 
     /// Points of the mesh animated by ssd
     Cuda_utils::Device::Array<Point_cu>  d_ssd_vertices;
-    /// Normals of the mesh animated by ssd
-    Cuda_utils::Device::Array<Vec3_cu> d_ssd_normals;
 
     /// Gradient of the implicit surface at each vertices when animated
     Cuda_utils::Device::Array<Vec3_cu> d_gradient;
@@ -548,11 +541,6 @@ private:
     Cuda_utils::Device::Array<Vec3_cu> d_unpacked_tangents;
     /// ?
     Cuda_utils::Device::Array<Mesh::PrimIdxVertices> d_piv;
-
-    /// Map the ith packed vertex to the unpacked array form used for rendering
-    /// d_packed_vert_map[packed_vert] = unpacked_vert
-    /// @see Mesh
-    Cuda_utils::Device::Array<Mesh::Packed_data> d_packed_vert_map;
 
     /// Vector representing the rotation axis of the nearest joint for each
     /// vertex. d_rot_axis[vert_id] == vec_rotation_axis

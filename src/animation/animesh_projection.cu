@@ -80,16 +80,16 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
 
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)
 {
-    if(_mesh->get_nb_faces() > 0)
-    {
-        Animesh_kers::compute_normals(d_input_tri.ptr(),
-                                      d_piv,
-                                      _mesh->get_nb_tri(),
-                                      vertices,
-                                      d_unpacked_normals,
-                                      _mesh->_max_faces_per_vertex,
-                                      normals);
-    }
+    if(_mesh->get_nb_faces() == 0)
+        return;
+
+    Animesh_kers::compute_normals(d_input_tri.ptr(),
+                                    d_piv,
+                                    _mesh->get_nb_tri(),
+                                    vertices,
+                                    d_unpacked_normals,
+                                    _mesh->_max_faces_per_vertex,
+                                    normals);
     CUDA_CHECK_ERRORS();
 }
 
@@ -145,7 +145,7 @@ void Animesh::tangential_smooth(float* factors,
 // -----------------------------------------------------------------------------
 
 void Animesh::smooth_mesh(Vec3_cu* output_vertices,
-                          Vec3_cu* output_normals,
+                          Vec3_cu* output_vertices_temp,
                           float* factors,
                           int nb_iter,
                           bool local_smoothing = true)
@@ -158,7 +158,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
     switch(mesh_smoothing)
     {
     case EAnimesh::LAPLACIAN:
-        Animesh_kers::laplacian_smooth(output_vertices, output_normals, d_edge_list,
+        Animesh_kers::laplacian_smooth(output_vertices, output_vertices_temp, d_edge_list,
                                        d_edge_list_offsets, factors, local_smoothing,
                                        smooth_force_a, nb_iter, 3);
         break;
@@ -178,7 +178,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
                                           local_smoothing);// use smooth fac ?
         break;
     case EAnimesh::TANGENTIAL:
-        tangential_smooth(factors, output_vertices, buff, output_normals, nb_iter);
+        tangential_smooth(factors, output_vertices, buff, output_vertices_temp, nb_iter);
         break;
     case EAnimesh::HUMPHREY:
 
@@ -193,7 +193,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
 
         Animesh_kers::hc_laplacian_smooth(d_vert_buffer,
                                           output_vertices,
-                                          output_normals,
+                                          output_vertices_temp,
                                           buff2,
                                           d_edge_list,
                                           d_edge_list_offsets,
@@ -236,7 +236,7 @@ void Animesh::conservative_smooth(Vec3_cu* output_vertices,
 
 void Animesh::fit_mesh(int nb_vert_to_fit,
                        int* d_vert_to_fit,
-                       bool full_eval,
+                       bool final_pass,
                        bool smooth_fac_from_iso,
                        Vec3_cu* d_vertices,
                        int nb_steps,
@@ -253,11 +253,10 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
 
     Animesh_kers::match_base_potential
         <<<grid_size, block_size >>>
-        (full_eval,
+        (final_pass,
          smooth_fac_from_iso,
          d_vertices,
          d_base_potential.ptr(),
-         d_ssd_normals.ptr(),
          d_gradient.ptr(),
          d_nearest_bone_in_device_mem.ptr(),
          d_smooth_factors_conservative.ptr(),
@@ -291,10 +290,8 @@ void Animesh::geometric_deformation(EAnimesh::Blending_type t,
     {
         Animesh_kers::transform_dual_quat<<<grid_size, block_size >>>
             (d_in.ptr(),
-             d_base_gradient.ptr(),
              d_in.size(),
              out,
-             d_ssd_normals.ptr(),
              _skel->d_dual_quat(),
              d_weights.ptr(),
              d_joints.ptr(),
@@ -304,10 +301,8 @@ void Animesh::geometric_deformation(EAnimesh::Blending_type t,
     {
         Animesh_kers::transform_SSD<<<grid_size, block_size >>>
             (d_in.ptr(),
-             d_base_gradient.ptr(),
              d_in.size(),
              out,
-             d_ssd_normals.ptr(),
              _skel->d_transfos(),
              d_weights.ptr(),
              d_joints.ptr(),
@@ -355,72 +350,68 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
     geometric_deformation(type, d_input_vertices, out_verts);
 #endif
 
-    if(do_implicit_skinning)
+    d_smooth_factors_laplacian.copy_from( d_input_smooth_factors );
+    d_vert_to_fit.copy_from(d_vert_to_fit_base);
+    int nb_vert_to_fit = d_vert_to_fit.size();
+    const int nb_steps = Cuda_ctrl::_debug._nb_step;
+
+    Cuda_utils::DA_int* curr = &d_vert_to_fit;
+
+    if(do_smooth_mesh)
     {
-        d_smooth_factors_laplacian.copy_from( d_input_smooth_factors );
-        d_vert_to_fit.copy_from(d_vert_to_fit_base);
-        int nb_vert_to_fit = d_vert_to_fit.size();
-        const int nb_steps = Cuda_ctrl::_debug._nb_step;
-
-        Cuda_utils::DA_int* curr = &d_vert_to_fit;
-
-        if(do_smooth_mesh)
+        Cuda_utils::DA_int* prev = &d_vert_to_fit_buff;
+        // Interleaved fittig
+        for( int i = 0; i < nb_steps && nb_vert_to_fit != 0; i++)
         {
-            Cuda_utils::DA_int* prev = &d_vert_to_fit_buff;
-            // Interleaved fittig
-            for( int i = 0; i < nb_steps && nb_vert_to_fit != 0; i++)
-            {
-                // First fitting (only evaluate the three adjacent nearest bones)
-                if(nb_vert_to_fit > 0){
-                    fit_mesh(nb_vert_to_fit, curr->ptr(), false/*full fit*/, true/*smooth from iso*/, out_verts, 2, smooth_force_a);
-                }
-
-                nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
-                Utils::swap_pointers(curr, prev);
-
-                // user smoothing
-                //smooth_mesh(output_vertices, output_normals, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
-                conservative_smooth(out_verts, out_normals, *curr, nb_vert_to_fit, smoothing_iter);
+            // First fitting (only evaluate the three adjacent nearest bones)
+            if(nb_vert_to_fit > 0){
+                fit_mesh(nb_vert_to_fit, curr->ptr(), false/*final pass*/, true/*smooth from iso*/, out_verts, 2, smooth_force_a);
             }
+
+            nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
+            Utils::swap_pointers(curr, prev);
+
+            // user smoothing
+            //smooth_mesh(output_vertices, output_normals, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
+            // XXX: out_normals isn't actually normals; it's just a temporary buffer and clobbers out_normals
+            conservative_smooth(out_verts, out_normals, *curr, nb_vert_to_fit, smoothing_iter);
         }
-        else
+    }
+    else
+    {
+        // First fitting
+        if(nb_vert_to_fit > 0)
         {
-            // First fitting
-            if(nb_vert_to_fit > 0)
-            {
-                d_vert_to_fit.copy_from(d_vert_to_fit_base);
-                //compute_normals(output_vertices, ssd_normals);
-                fit_mesh(nb_vert_to_fit, curr->ptr(), true/*full fit*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth1_force);
-            }
+            d_vert_to_fit.copy_from(d_vert_to_fit_base);
+            fit_mesh(nb_vert_to_fit, curr->ptr(), true/*final pass*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth1_force);
         }
+    }
 
 #if 1
-        // Smooth the initial guess
-        if(_debug._smooth_mesh)
-        {
-            this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-            smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth1_iter);
-        }
+    // Smooth the initial guess
+    if(_debug._smooth_mesh)
+    {
+        this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
+        smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth1_iter);
+    }
 
-        // Final fitting (global evaluation of the skeleton)
-        if(Cuda_ctrl::_debug._fit_on_all_bones)
-        {
-            //compute_normals(output_vertices, ssd_normals);
-            curr->copy_from(d_vert_to_fit_base);
-            fit_mesh(curr->size(), curr->ptr(), true/*full fit*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth2_force);
-        }
+    // Final fitting (global evaluation of the skeleton)
+    if(Cuda_ctrl::_debug._fit_on_all_bones)
+    {
+        curr->copy_from(d_vert_to_fit_base);
+        fit_mesh(curr->size(), curr->ptr(), true/*final pass*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth2_force);
+    }
 
-        // Final smoothing
-        if(_debug._smooth_mesh)
-        {
-            this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-            smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth2_iter);
-        }
+    // Final smoothing
+    if(_debug._smooth_mesh)
+    {
+        this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
+        smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth2_iter);
+    }
 #endif
 
-        // Interpolation between ssd position and correction:
-        ssd_lerp(out_verts);
-    }
+    // Interpolation between ssd position and correction:
+    ssd_lerp(out_verts);
 
     compute_normals(out_verts, out_normals);
 }

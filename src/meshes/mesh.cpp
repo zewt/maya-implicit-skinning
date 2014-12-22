@@ -43,7 +43,6 @@ Mesh::Mesh() :
     _scale(1.f),
     _nb_vert(0),
     _nb_tri(0),
-    _nb_quad(0),
     _nb_edges(0),
     _vert(0),
     _is_connected(0),
@@ -53,9 +52,7 @@ Mesh::Mesh() :
     _edge_list(0),
     _edge_list_offsets(0),
     _normals(0),
-    _tangents(0),
     _size_unpacked_vert_array(-1),
-    _unpacked_tri(0),
     _packed_vert_map(0)
 {
 }
@@ -69,7 +66,6 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _scale(1.f),
     _nb_vert( vert.size() / 3),
     _nb_tri( tri.size() / 3),
-    _nb_quad(0),
     _nb_edges(0),
     _vert(0),
     _is_connected(0),
@@ -79,9 +75,7 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _edge_list(0),
     _edge_list_offsets(0),
     _normals(0),
-    _tangents(0),
     _size_unpacked_vert_array( vert.size() / 3),
-    _unpacked_tri(0),
     _packed_vert_map(0)
 {
 
@@ -109,10 +103,9 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     // Copy to packed and unpacked arrays :
     if( _nb_tri > 0){
         _tri           = new int   [_nb_tri  * 3 ];
-        _unpacked_tri  = new int   [_nb_tri  * 3 ];
         for(int i = 0; i < _nb_tri*3; i++)
         {
-            int idx = _tri[i] = _unpacked_tri[i] = tri[i];
+            int idx = _tri[i] = tri[i];
             _is_connected[idx] = true;
         }
     }
@@ -134,7 +127,6 @@ Mesh::Mesh(const Mesh& m) :
     _max_faces_per_vertex(m._max_faces_per_vertex),
     _nb_vert(m._nb_vert),
     _nb_tri(m._nb_tri),
-    _nb_quad(m._nb_quad),
     _nb_edges(m._nb_edges),
     _tri_list_per_vert(m._tri_list_per_vert),
     _size_unpacked_vert_array(m._size_unpacked_vert_array)
@@ -145,16 +137,13 @@ Mesh::Mesh(const Mesh& m) :
     _is_side         = new bool [ _nb_vert*3 ];
     _packed_vert_map = new Packed_data[_nb_vert];
 
-    _tri       = new int[3 * _nb_tri             ];
-    _piv       = new int[4 * (_nb_tri + _nb_quad)];
-    _edge_list = new int[_nb_edges               ];
+    _tri       = new int[3 * _nb_tri];
+    _piv       = new int[4 * _nb_tri];
+    _edge_list = new int[_nb_edges];
 
     _edge_list_offsets = new int[2*_nb_vert];
 
     _normals    = _has_normals     ? new float [_size_unpacked_vert_array * 3] : 0;
-    _tangents   = m._tangents != 0 ? new float [_size_unpacked_vert_array * 3] : 0;
-
-    _unpacked_tri  = new int[_nb_tri  * 3];
 
     for(int i = 0; i < _nb_vert; i++)
     {
@@ -174,18 +163,15 @@ Mesh::Mesh(const Mesh& m) :
     }
 
     for(int i = 0; i < _nb_tri*3; i++)
-    {
         _tri[i] = m._tri[i];
-        _unpacked_tri[i] = m._unpacked_tri[i];
-    }
 
-    for(int i = 0; i < 4*(_nb_tri + _nb_quad); i++)
+    for(int i = 0; i < 4*_nb_tri; i++)
         _piv[i] = m._piv[i];
 
     for(int i = 0; i < _nb_edges; i++)
         _edge_list[i] = m._edge_list[i];
 
-    if( m._has_normals || m._tangents != 0)
+    if(m._has_normals)
     {
         for(int i = 0; i < _size_unpacked_vert_array; i++)
         {
@@ -193,12 +179,6 @@ Mesh::Mesh(const Mesh& m) :
                 _normals[i*3  ] = m._normals[i*3  ];
                 _normals[i*3+1] = m._normals[i*3+1];
                 _normals[i*3+2] = m._normals[i*3+2];
-            }
-
-            if(_tangents != 0){
-                _tangents[i*3  ] = m._tangents[i*3  ];
-                _tangents[i*3+1] = m._tangents[i*3+1];
-                _tangents[i*3+2] = m._tangents[i*3+2];
             }
         }
     }
@@ -213,7 +193,6 @@ Mesh::Mesh(const char* filename) :
     _scale(1.f),
     _nb_vert(0),
     _nb_tri(0),
-    _nb_quad(0),
     _nb_edges(0),
     _vert(0),
     _is_connected(0),
@@ -223,9 +202,7 @@ Mesh::Mesh(const char* filename) :
     _edge_list(0),
     _edge_list_offsets(0),
     _normals(0),
-    _tangents(0),
     _size_unpacked_vert_array(-1),
-    _unpacked_tri(0),
     _packed_vert_map(0)
 {
     using namespace std;
@@ -252,7 +229,6 @@ Mesh::Mesh(const char* filename) :
     _packed_vert_map = new Packed_data[_nb_vert];
 
     std::vector<int> tri_index(nb_faces * 3 * 2);
-    std::vector<int> quad_index(nb_faces * 4);
 
     for(int i = 0; i < _nb_vert;i++)
     {
@@ -264,7 +240,7 @@ Mesh::Mesh(const char* filename) :
         _packed_vert_map[i] = d;
     }
 
-    _nb_tri = _nb_quad = 0;
+    _nb_tri = 0;
     int k = 0, k_quad = 0, max_edges_per_face = 8;
     for(int i = 0; i < nb_faces;i++)
     {
@@ -280,18 +256,9 @@ Mesh::Mesh(const char* filename) :
             }
             _nb_tri++;
         }
-        if(face_edges == 4)
+        else if(face_edges > 3)
         {
-            for(int j = 0; j < 4; j++){
-                int idx;
-                file >> idx;
-                quad_index[k_quad++] =idx;
-                _is_connected[idx] = true;
-            }
-            _nb_quad++;
-        }
-        if(face_edges > 4)
-        {
+            // XXX: untested, doesn't set _is_connected
             int* v_face = new int[max_edges_per_face];
             cout << "large face: " << face_edges << "at " << _nb_tri << "\n";
             if(face_edges > max_edges_per_face){
@@ -327,9 +294,8 @@ Mesh::Mesh(const char* filename) :
     // Copy to packed and unpacked arrays :
     if( _nb_tri > 0){
         _tri           = new int   [_nb_tri  * 3 ];
-        _unpacked_tri  = new int   [_nb_tri  * 3 ];
         for(int i = 0; i < _nb_tri*3; i++)
-            _tri[i] = _unpacked_tri[i] = tri_index[i];
+            _tri[i] = tri_index[i];
     }
 
     compute_piv();
@@ -355,9 +321,7 @@ void Mesh::free_mesh_data()
     delete[] _vert;
     delete[] _tri;
     delete[] _normals;
-    delete[] _tangents;
     delete[] _packed_vert_map;
-    delete[] _unpacked_tri;
     delete[] _piv;
     delete[] _edge_list;
     delete[] _edge_list_offsets;
@@ -365,9 +329,7 @@ void Mesh::free_mesh_data()
     _vert              = 0;
     _tri               = 0;
     _normals           = 0;
-    _tangents          = 0;
     _packed_vert_map   = 0;
-    _unpacked_tri      = 0;
     _piv               = 0;
     _edge_list         = 0;
     _edge_list_offsets = 0;
@@ -410,7 +372,7 @@ void Mesh::export_off(const char* filename, bool invert_index) const
 void Mesh::compute_piv()
 {
     delete[] _piv;
-    _piv = new int [4 * (_nb_tri + _nb_quad)];
+    _piv = new int [4 * _nb_tri];
     int* pic = new int [_nb_vert]; // Nb faces per vertices
     for(int i = 0; i < _nb_vert; i++){
         pic[i] = 0;
@@ -513,18 +475,16 @@ void Mesh::compute_face_index()
 
 // -----------------------------------------------------------------------------
 
-void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
+void Mesh::load(const Loader::Abs_mesh& mesh)
 {
     _is_initialized = false;
     free_mesh_data();
 
     _nb_vert = mesh._vertices.size();
     _nb_tri  = mesh._triangles.size();
-    _nb_quad = 0; // For now the loader triangulates every faces
 
     _vert          = new float [_nb_vert * 3];
     _tri           = new int   [_nb_tri  * 3];
-    _unpacked_tri  = new int   [_nb_tri  * 3];
 
     _is_connected = new bool[_nb_vert];
     _is_side      = new bool[_nb_vert];
@@ -598,8 +558,6 @@ void Mesh::load(const Loader::Abs_mesh& mesh, const std::string& mesh_path)
 
             int v_unpacked = _packed_vert_map[v_idx].idx_data_unpacked + off;
 
-            // Fill unpacked triangle index
-            _unpacked_tri[i*3+j] = v_unpacked;
             // Fill normal as there index match the unpacked vertex array
             if( n_idx != -1 )
                 *((Loader::Normal*)(_normals+v_unpacked*3)) = mesh._normals[n_idx];
@@ -696,7 +654,7 @@ void Mesh::compute_edges()
     list_pairs.reserve(16);
     for(int i = 0; i < _nb_vert; i++)
     {
-        // We suppose the faces are quads to reserve memory
+        // We suppose the faces are tris to reserve memory
         if( _max_faces_per_vertex > 0)
             neighborhood_list.reserve(_max_faces_per_vertex*3);
 

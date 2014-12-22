@@ -31,7 +31,6 @@ namespace Loader{
     struct Abs_mesh;
 }
 
-struct Animesh;
 // END FORWARD DEFINITIONS  ----------------------------------------------------
 
 
@@ -78,14 +77,10 @@ struct Animesh;
 class Mesh{
 public:
 
-    friend struct Animesh;
-
     //  ------------------------------------------------------------------------
     /// @name Inner structs
     //  ------------------------------------------------------------------------
 
-    /** @struct Packed_data
-    */
     struct Packed_data{
         /// index of the data in the unpacked array
         int idx_data_unpacked;
@@ -94,18 +89,8 @@ public:
         int nb_ocurrence;
     };
 
-    struct Tex_coords{
-        Tex_coords() : u(0.f), v(0.f) { }
-        Tex_coords(float u_, float v_) : u(u_), v(v_) { }
-        float u,v;
-    };
-
-    struct Tri_idx {
-        int a, b, c;
-    };
-
     /// @struct PrimIdx
-    /// The class of a primitive (triangle or quad).
+    /// The class of a primitive.
     /// Each attribute is the index of a vertex.
     struct PrimIdx{
         int a, b, c, d;
@@ -126,12 +111,6 @@ public:
         void print(){
             printf("%d %d %d %d\n",ia, ib, ic, id);
         }
-    };
-
-    struct Mat_grp{
-        int starting_idx; ///< starting face index to apply the material
-        int nb_face;      ///< (starting_idx+nb_face) is the ending face index
-        int mat_idx;      ///< material index to apply to the set of faces
     };
 
     //  ------------------------------------------------------------------------
@@ -166,7 +145,7 @@ public:
     void export_off(const char* filename, bool invert_index = false) const;
 
     /// Load a mesh from the abstract representation of our file loader
-    void load(const Loader::Abs_mesh& mesh, const std::string& mesh_path);
+    void load(const Loader::Abs_mesh& mesh);
 
     //  ------------------------------------------------------------------------
     /// @name Getter & Setters
@@ -208,8 +187,6 @@ public:
 
     const float* get_vertices() const { return _vert; }
 
-    const Packed_data* get_packed_vert_map() const { return _packed_vert_map; }
-
     int get_edge(int i) const {
         assert(i < _nb_edges);
         return _edge_list[i];
@@ -232,18 +209,14 @@ public:
 
     int get_nb_vertices() const { return _nb_vert;                  }
     int get_nb_tri()      const { return _nb_tri;                   }
-    int get_nb_quad()     const { return _nb_quad;                  }
-    int get_nb_faces()    const { return _nb_tri + _nb_quad;        }
+    int get_nb_faces()    const { return _nb_tri;                   }
     int get_nb_edges()    const { return _nb_edges;                 }
-    int get_vbos_size()   const { return _size_unpacked_vert_array; }
 
     /// @return false if the ith vertex belongs to at least one primitive
     bool is_disconnect(int i) const { return !_is_connected[i]; }
 
     /// Is the ith vertex on the mesh boundary
     bool is_vert_on_side(int i) const { return _is_side[i]; }
-
-    bool has_normals()    const { return _has_normals;    }
 
 private:
 
@@ -296,7 +269,6 @@ private:
     //  ------------------------------------------------------------------------
     int _nb_vert;
     int _nb_tri;   ///< number of triangle faces (same for packed and unpacked)
-    int _nb_quad;  ///< number of quad faces (same for packed and unpacked)
     int _nb_edges; ///< nb elt in 'edge_list'
 
     // TODO: use a structure to hold vertices properties.
@@ -332,13 +304,10 @@ private:
     //  ------------------------------------------------------------------------
 
     float* _normals;     ///< Normal direction list [N0x N0y N0z N1x N1y N1z ...]
-    float* _tangents;    ///< Tangent direction list [T0x T0y T0z T1x T1y T1z ...]
 
     /// size of the vbo for the rendering. '_normals' and '_tangents' size are
     /// 3*size_unpacked_vert_array and '_tex_coords' is 2*size_unpacked_vert_array
     int _size_unpacked_vert_array;
-
-    int* _unpacked_tri;  ///< unpacked triangle index ( size == nb_tri)
 
     /// Mapping between the packed array of vertices 'vert' and the unpacked
     /// array of vertices 'vbo'. because vertices have multiple texture

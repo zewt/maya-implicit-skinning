@@ -51,13 +51,6 @@ private:
 
 public:
     // -------------------------------------------------------------------------
-    /// @name MANUAL SLOTS
-    // -------------------------------------------------------------------------
-
-    void toggle_fitting(bool checked);
-
-
-    // -------------------------------------------------------------------------
     /// @name AUTO SLOTS
     // -------------------------------------------------------------------------
     void on_actionLoad_mesh_triggered();
@@ -77,7 +70,6 @@ public:
     void on_debug_show_normal_toggled(bool checked);
     void on_debug_show_gradient_toggled(bool checked);
     void on_spinB_smooth_force_a_valueChanged(double );
-    void on_implicit_skinning_checkBox_toggled(bool checked);
     void on_doubleSpinBox_valueChanged(double );
     void on_box_potential_pit_toggled(bool checked);
     void on_spinBox_diffuse_smoothing_weights_iter_valueChanged(int );
