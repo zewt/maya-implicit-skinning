@@ -47,9 +47,11 @@ message("CUDA compute capability defined to ${CUDA_COMPUTE_CAPABILITY}")
 # SET(FBX_ROOT $ENV{FBXSDK_ROOT})
 SET(FBX_ROOT "C:/Program Files/Autodesk/FBX SDK")
 
+set(MAYA_DIR "C:/Program Files/Autodesk/Maya2015")
 INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${FBX_ROOT}/2012.2/include
+    "${MAYA_DIR}/include"
     libs/include
     libs/include/vcglib
     include
@@ -175,8 +177,6 @@ endforeach(val)
 # works for any compiler
 IF(MSVC)
     ADD_DEFINITIONS(-DNOMINMAX)
-    ADD_DEFINITIONS(/arch:SSE)
-    ADD_DEFINITIONS(/arch:SSE2)
     ADD_DEFINITIONS(/D _CRT_SECURE_NO_WARNINGS)
     #ADD_DEFINITIONS(/arch:SSE3)
     #ADD_DEFINITIONS(/arch:MMX)
@@ -198,7 +198,7 @@ if(MSVC)
     set(glu "glu32")
     set(OpenGL "opengl32")
     ADD_DEFINITIONS(-DFBXSDK_SHARED) # macro needed to tell fbx we're using dlls
-    set(FBX "${FBX_ROOT}/2012.2/lib/vs2010/x86/fbxsdk-2012.2.lib")
+    set(FBX "${FBX_ROOT}/2012.2/lib/vs2010/x64/fbxsdk-2012.2.lib")
 else()
     set(LIB_CUDA -lcuda)
     set(glu GLU)
