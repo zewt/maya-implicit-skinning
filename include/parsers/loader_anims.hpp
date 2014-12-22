@@ -63,7 +63,7 @@ public:
 
     /// Stores every bones local transformations for each frame
     /// _gl_frames[ith_frame][bone_id] == local_transformation
-    std::vector< std::vector<Transfo> > _lcl_frames;
+    std::vector< std::vector<CpuTransfo> > _lcl_frames;
 };
 
 

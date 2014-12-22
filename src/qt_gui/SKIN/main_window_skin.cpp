@@ -183,10 +183,6 @@ void Main_window_skin::set_current_ctrl()
     _anim_mesh->update_base_potential();
 }
 
-void Main_window_skin::toggle_fitting(bool checked){
-    Cuda_ctrl::_anim_mesh->set_implicit_skinning(checked);
-}
-
 void Main_window_skin::on_actionExit_triggered()
 {
     exit(0);
@@ -203,11 +199,6 @@ void Main_window_skin::on_spinB_smooth_force_a_valueChanged(double val){
 }
 
 // END SMOOTHING SLOTS =========================================================
-
-void Main_window_skin::on_implicit_skinning_checkBox_toggled(bool checked)
-{
-    Cuda_ctrl::_anim_mesh->set_implicit_skinning(checked);
-}
 
 // BLENDING SLOTS ==============================================================
 
@@ -455,7 +446,7 @@ void Main_window_skin::load_fbx_mesh( Fbx_loader::Fbx_file& loader)
     if(mesh._vertices.size() == 0)
         return;
 
-    ptr_mesh->load( mesh, loader._path);
+    ptr_mesh->load(mesh);
     Cuda_ctrl::load_mesh( ptr_mesh );
 }
 

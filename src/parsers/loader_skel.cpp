@@ -33,8 +33,8 @@ void compute_bone_lengths(Abs_skeleton& skel)
         {
             int son_id = skel._sons[bone_id][s];
 
-            Vec3_cu p0 = skel._bones[bone_id]._frame.get_translation();
-            Vec3_cu p1 = skel._bones[son_id ]._frame.get_translation();
+            Vec3 p0 = skel._bones[bone_id]._frame.get_translation();
+            Vec3 p1 = skel._bones[son_id ]._frame.get_translation();
 
             mean_len += (p0-p1).norm();
         }

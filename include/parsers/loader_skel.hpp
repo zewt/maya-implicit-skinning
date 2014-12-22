@@ -19,18 +19,17 @@
 #ifndef LOADER_SKEL_HPP__
 #define LOADER_SKEL_HPP__
 
-#include "transfo.hpp"
 #include <string>
 #include <vector>
+#include <cpu_transfo.hpp>
 
 // =============================================================================
 namespace Loader {
-// =============================================================================
 
 /// @brief intermediate representation of a bone for file loading
 struct Abs_bone {
     float       _length; ///< The bone length
-    Transfo     _frame;  ///< The bone position and orientation
+    CpuTransfo     _frame;  ///< The bone position and orientation
     std::string _name;   ///< The bone name
 };
 

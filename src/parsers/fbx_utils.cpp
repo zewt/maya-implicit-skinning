@@ -300,9 +300,9 @@ void copy(float* t, const fbxDouble3& d3)
 
 // -----------------------------------------------------------------------------
 
-Transfo to_transfo(const KFbxXMatrix& mat)
+Loader::CpuTransfo to_transfo(const KFbxXMatrix& mat)
 {
-    Transfo tr;
+    Loader::CpuTransfo tr;
     const KFbxXMatrix matT = mat.Transpose();
     for(int i = 0; i < 16; i++)
         tr[i] = (float)(((const double*)matT)[i]);
@@ -312,9 +312,9 @@ Transfo to_transfo(const KFbxXMatrix& mat)
 
 // -----------------------------------------------------------------------------
 
-Transfo to_transfo(const KFbxMatrix& mat)
+Loader::CpuTransfo to_transfo(const KFbxMatrix& mat)
 {
-    Transfo tr;
+    Loader::CpuTransfo tr;
     const KFbxMatrix matT = mat.Transpose();
     for(int i = 0; i < 16; i++)
         tr[i] = (float)(((const double*)matT)[i]);

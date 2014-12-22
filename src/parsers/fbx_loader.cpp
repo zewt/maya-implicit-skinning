@@ -303,8 +303,8 @@ static int fill_skeleton(Loader::Abs_skeleton& skel,
     std::string name( skel_attr->GetNameOnly().Buffer() );
 
     //KFbxAnimEvaluator::GetNodeGlobalTransformFast()
-    //Transfo tr = Fbx_utils::to_transfo( Fbx_utils::geometry_transfo(node) );
-    Transfo tr = Fbx_utils::to_transfo( node->EvaluateGlobalTransform() );
+    //Loader::CpuTransfo tr = Fbx_utils::to_transfo( Fbx_utils::geometry_transfo(node) );
+    Loader::CpuTransfo tr = Fbx_utils::to_transfo( node->EvaluateGlobalTransform() );
     Loader::Abs_bone bone = {0.f, tr, name };
     skel._bones.  push_back( bone               );
     skel._parents.push_back( bone_parent        );
@@ -334,7 +334,7 @@ void set_skel_frame(Loader::Abs_skeleton& skel,
                     const std::map<KFbxNode*, int>& ptr_to_idx,
                     const KFbxMatrix& mat)
 {
-    const Transfo tr = Fbx_utils::to_transfo( mat );
+    const Loader::CpuTransfo tr = Fbx_utils::to_transfo( mat );
     Node_map::const_iterator it = ptr_to_idx.find( node );
     if( it != ptr_to_idx.end() )
         skel._bones[ it->second ]._frame = tr;
@@ -377,14 +377,14 @@ KFbxXMatrix compute_cluster_bind_frame(KFbxGeometry* geom,
 
     KFbxXMatrix clus_transfo;
     // TransformMatrix refers to the global initial transform of the geometry
-    // node that contains the link node. (i.e global transfo of 'geom')
+    // node that contains the link node. (i.e global Loader::CpuTransfo of 'geom')
     cluster->GetTransformMatrix(clus_transfo);
 
     KFbxXMatrix geom_transfo = Fbx_utils::geometry_transfo(geom->GetNode());
 
     KFbxXMatrix clus_link_transfo;
     // TransformLink refers to global initial transform of the link node (
-    // (i.e global transfo of the bone associated to this cluster).
+    // (i.e global Loader::CpuTransfo of the bone associated to this cluster).
     cluster->GetTransformLinkMatrix(clus_link_transfo);
 
     //return lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition;
@@ -502,14 +502,14 @@ void fill_bind_pose_cluster_less_nodes(
 
             // Retreive bind pose of the parent bone
             const int* pid = 0;
-            Transfo bind_pose_prt = Transfo::identity();
+            Loader::CpuTransfo bind_pose_prt = Loader::CpuTransfo::identity();
             if( Std_utils::find(ptr_to_idx, parent, pid) )
                 bind_pose_prt = skel._bones[*pid]._frame;
 
             // Retreive local transformation of the bone
             int id = Std_utils::find(ptr_to_idx, node );
-            Transfo lc = Fbx_utils::to_transfo( node->EvaluateLocalTransform() );
-            Transfo tr = bind_pose_prt * lc;
+            Loader::CpuTransfo lc = Fbx_utils::to_transfo( node->EvaluateLocalTransform() );
+            Loader::CpuTransfo tr = bind_pose_prt * lc;
             skel._bones[id]._frame = tr;
         }
     }
@@ -661,13 +661,13 @@ bool fill_anim(Loader::Sampled_anim_eval* abs_anim,
     for(KTime t = start; t < stop; t += frame_inter )
     {
         int nb_bones = idx_to_ptr.size();
-        std::vector<Transfo> pose_t(nb_bones);
+        std::vector<Loader::CpuTransfo> pose_t(nb_bones);
         for(int i = 0; i < nb_bones; i++)
         {
             KFbxNode* node = idx_to_ptr[i];
-            Transfo tr = Fbx_utils::to_transfo(node->EvaluateGlobalTransform(t));
+            Loader::CpuTransfo tr = Fbx_utils::to_transfo(node->EvaluateGlobalTransform(t));
 
-            Transfo joint_inv = skel._bones[i]._frame.fast_invert();
+            Loader::CpuTransfo joint_inv = skel._bones[i]._frame.fast_invert();
 
             pose_t[i] = joint_inv * tr;
         }

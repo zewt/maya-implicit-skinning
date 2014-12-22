@@ -90,10 +90,10 @@ KFbxXMatrix geometry_transfo(KFbxNode* pNode);
 void copy(float* t[3], const fbxDouble3& d3);
 
 /// FbxX matrix to our transformation type
-Transfo to_transfo(const KFbxXMatrix& mat);
+Loader::CpuTransfo to_transfo(const KFbxXMatrix& mat);
 
 /// Fbx matrix to our transformation type
-Transfo to_transfo(const KFbxMatrix& mat);
+Loader::CpuTransfo to_transfo(const KFbxMatrix& mat);
 
 /// FBxVector4 to our loader vertex type
 Loader::Vertex to_lvertex(const KFbxVector4& vec);
