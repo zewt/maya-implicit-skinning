@@ -134,7 +134,7 @@ file(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/global_datas/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meshes/vcg_lib/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/meshes/*.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
 
 set(host_sources ${host_sources} ${source_voxelizer} )
