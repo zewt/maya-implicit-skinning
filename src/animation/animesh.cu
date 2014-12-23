@@ -82,10 +82,7 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     h_vertices_nearest_bones(_mesh->get_nb_vertices()),
     d_vertices_nearest_bones(_mesh->get_nb_vertices()),
     nb_vertices_by_bones(_skel->get_bones().size()),
-    h_vertices_nearest_joint(_mesh->get_nb_vertices()),
-    d_vertices_nearest_joint(_mesh->get_nb_vertices()),
     d_nearest_bone_in_device_mem(_mesh->get_nb_vertices()),
-    d_nearest_joint_in_device_mem(_mesh->get_nb_vertices()),
     h_nearest_bone_dist(_mesh->get_nb_vertices()),
     vmap_old_new(_mesh->get_nb_vertices()),
     vmap_new_old(_mesh->get_nb_vertices()),
@@ -349,7 +346,6 @@ float Animesh::compute_nearest_vert_to_bone(int bone_id)
 // -----------------------------------------------------------------------------
 
 void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
-                                   HA_int& h_vertices_nearest_joint,
                                    HA_int& nb_vert_by_bone)
 {
     const int nb_bones = _skel->get_bones().size();
@@ -362,9 +358,6 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
     {
         float d0  = std::numeric_limits<float>::infinity();
         int   nd0 = _skel->root();
-
-        float joint_dist       = std::numeric_limits<float>::infinity();
-        int   nearest_joint_id = _skel->root();
 
         const Point_cu current_vertex = _mesh->get_vertex(i).to_point();
         for(int j = 0; j < _skel->nb_joints(); j++)
@@ -381,22 +374,9 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
                 d0  = dist2;
                 nd0 = j;
             }
-
-            // compute nearest joint
-            const Point_cu joint = _skel->joint_pos(j).to_point();
-            const Vec3_cu dir    = current_vertex-joint;
-            float dist = dir.norm();
-            // works fine but some mesh have corrupted normals so for the moment
-            // I don't use this information
-            float sign = 1.f;// dir.dot( current_normal );
-            if(dist < joint_dist && sign >= 0){
-                nearest_joint_id = j;
-                joint_dist       = dist;
-            }
         }
         h_nearest_bone_dist     [i] = sqrt(d0);
         vertices_nearest_bones  [i] = nd0;
-        h_vertices_nearest_joint[i] = nearest_joint_id;
         nb_vert_by_bone[nd0]++;
     }
 }
@@ -405,7 +385,7 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
 
 void Animesh::clusterize(int n_voxels)
 {
-    clusterize_euclidean(h_vertices_nearest_bones, h_vertices_nearest_joint, nb_vertices_by_bones);
+    clusterize_euclidean(h_vertices_nearest_bones, nb_vertices_by_bones);
 
     init_verts_per_bone();
     update_nearest_bone_joint_in_device_mem();
@@ -418,16 +398,11 @@ void Animesh::update_nearest_bone_joint_in_device_mem()
     int n = _mesh->get_nb_vertices();
     // Convert host ids to device ids for the nearest joints
     std::vector<DBone_id> tmp (n);
-    std::vector<DBone_id> tmp2(n);
-    for(int i = 0; i < n; i++){
+    for(int i = 0; i < n; i++)
         tmp [i] = _skel->get_bone_didx( h_vertices_nearest_bones[i] );
-        tmp2[i] = _skel->get_bone_didx( h_vertices_nearest_joint[i] );
-    }
     d_nearest_bone_in_device_mem. copy_from(tmp);
-    d_nearest_joint_in_device_mem.copy_from(tmp2);
 
     d_vertices_nearest_bones.copy_from(h_vertices_nearest_bones);
-    d_vertices_nearest_joint.copy_from(h_vertices_nearest_joint);
 }
 
 // -----------------------------------------------------------------------------
