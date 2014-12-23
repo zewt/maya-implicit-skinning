@@ -334,6 +334,7 @@ private:
     /// @warning animated position is only valid for currently selected bones
     std::vector<HSample_list> _sample_anim_list;
 
+public:
     Animesh* _animesh;
     Skeleton* _skel;
 };
