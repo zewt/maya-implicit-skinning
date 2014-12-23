@@ -203,6 +203,23 @@ void Animesh::init_vert_to_fit()
 
 // -----------------------------------------------------------------------------
 
+void Animesh::copy_vertices(const std::vector<Vec3_cu> &vertices)
+{
+    assert(vertices.size() == d_input_vertices.size());
+    const int nb_vert = vertices.size();
+    Host::Array<Point_cu > input_vertices(nb_vert);
+
+    for(int i = 0; i < nb_vert; i++)
+    {
+        Point_cu  pos = Convs::to_point(vertices[i]);
+
+        input_vertices[i] = pos;
+//        flip_prop     [i] = false; // XXX ?
+    }
+
+    d_input_vertices.copy_from(input_vertices);
+}
+
 void Animesh::copy_mesh_data(const Mesh& a_mesh)
 {
     const int nb_vert = a_mesh.get_nb_vertices();
@@ -544,7 +561,7 @@ void Animesh::diffuse_attr(int nb_iter, float strength, float *attr)
 
 // -----------------------------------------------------------------------------
 
-void Animesh::get_anim_vertices_aifo(std::vector<float>& anim_vert)
+void Animesh::get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert)
 {
     const int nb_vert = d_output_vertices.size();
     anim_vert.reserve(nb_vert);
@@ -554,9 +571,7 @@ void Animesh::get_anim_vertices_aifo(std::vector<float>& anim_vert)
     for(int i = 0; i < nb_vert; i++)
     {
         Point_cu p = h_out_verts[vmap_new_old[i]];
-        anim_vert.push_back(p.x);
-        anim_vert.push_back(p.y);
-        anim_vert.push_back(p.z);
+        anim_vert.push_back(Loader::Vec3(p.x, p.y, p.z));
     }
 }
 

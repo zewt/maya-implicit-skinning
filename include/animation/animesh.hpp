@@ -24,6 +24,7 @@
 #include "animesh_enum.hpp"
 #include "cuda_utils.hpp"
 #include "mesh.hpp"
+#include "cpu_transfo.hpp"
 
 // -----------------------------------------------------------------------------
 
@@ -226,7 +227,10 @@ public:
     // -------------------------------------------------------------------------
 
     /// Fill the vector as in the imported file order
-    void get_anim_vertices_aifo(std::vector<float>& anim_vert);
+    void get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert);
+    
+    // Copy the given vertices into the mesh.
+    void copy_vertices(const std::vector<Vec3_cu> &vertices);
 
     /// Set bone type
     void set_bone_type(int id, int bone_type);
