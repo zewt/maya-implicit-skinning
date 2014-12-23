@@ -37,44 +37,6 @@ namespace Animesh_kers{
 
 using namespace Cuda_utils;
 
-/// Transform each vertex with SSD
-/// @param in_verts vertices in rest position
-/// @param out_verts  deformed vertices with ssd method
-__global__
-void transform_SSD(const Point_cu* in_verts,
-                   int nb_verts,
-                   Vec3_cu* out_verts,
-                   const Transfo* transfos,
-                   const float* weights,
-                   const int* joints,
-                   const int* jpv );
-
-/// Transform each vertex with dual quaternions, compute smoothing factors
-/// @param d_input_vertices vertices in rest position
-/// @param d_normals animated normals (needed to compute the local smoothing)
-/// @param output_vertices ssd animated vertices
-/// @param output_vertices_2 ssd animated vertices (same has output_vertices)
-
-/// @param d_rot_axis rotation vector axis for the ith joint
-__global__
-void transform_dual_quat(const Point_cu* in_verts,
-                         int nb_verts,
-                         Vec3_cu* out_verts,
-                         const Dual_quat_cu* d_transform,
-                         const float* d_weights,
-                         const int* d_joints,
-                         const int* d_jpv);
-
-/// Linear interpolation between verts_0 and verts_1 given the lerp_factor
-/// at each vertices
-__global__
-void lerp_kernel( const int* vert_to_fit,
-                  const Vec3_cu* verts_0,
-                  const Vec3_cu* verts_1,
-                  float* lerp_factor,
-                  Vec3_cu* out_verts,
-                  int nb_verts);
-
 /// Computes the potential at each vertex of the mesh. When the mesh is
 /// animated, if implicit skinning is enabled, vertices move so as to match
 /// that value of the potential.

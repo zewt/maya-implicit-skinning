@@ -119,7 +119,6 @@ public:
     void set_smoothing_weights_diffusion_iter(int nb_iter);
 
     int  get_nb_iter_smooth(){ return _nb_iter;       }
-    int  get_blending_type (){ return _blending_type; }
     bool is_smooth_on      (){ return _do_smooth;     }
 
     /// invert the propagation direction (for the fitting) of the currently
@@ -129,17 +128,6 @@ public:
     /// Restore the default propagation direction of every vertices.
     void reset_invert_propagation();
 
-    //--------------------------------------------------------------------------
-    /// @name SSD weights
-    //--------------------------------------------------------------------------
-
-    /// Set the weight of the ith vertex associated to the if joint,
-    /// the value is clamped between [0, 1], and the value associated to the
-    /// other joints are normalized.
-    void set_ssd_weight(int id_vertex, int id_joint, float weight);
-    /// SSD weights from the abstract representation of a parsed file.
-    void set_ssd_weight(const Loader::Abs_skeleton& skel);
-    
     //--------------------------------------------------------------------------
     /// @name Mesh_selection
     //--------------------------------------------------------------------------
@@ -157,8 +145,6 @@ public:
 
     void save_ism(const char* filename);
     void load_ism(const char* filename);
-    void save_weights(const char* filename);
-    void load_weights(const char* filename);
 
     //--------------------------------------------------------------------------
     /// @name HRBF Samples Handling
@@ -277,9 +263,6 @@ private:
     /// @param wether we write the joint cap list or parent cap list
     void write_hrbf_caps_env(std::ofstream& file, bool jcap);
 
-    /// Write section of every ssd interpolation factors between ssd and is
-    void write_ssd_is_lerp( std::ofstream& file );
-
     /// write section storing HRBF implicite primitives radius of the compact
     /// support
     void write_hrbf_radius( std::ofstream& file );
@@ -309,9 +292,6 @@ private:
     /// @param wether we read the joint cap list or parent cap list
     void read_hrbf_caps_env(std::ifstream& file, bool jcap);
 
-    /// Read the section containing interpolation factor between ssd and is
-    void read_ssd_is_lerp(std::ifstream& file);
-
     void read_hrbf_radius(std::ifstream& file,
                           std::vector<float>& radius_hrbf);
 
@@ -326,7 +306,6 @@ private:
     bool _auto_precompute; ///< Bones are always precomputed in grids
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
-    int  _blending_type;   ///< Animation type (SSD or dual Quat)
 
     std::vector<int>     _selected_points;  ///< List of selected mesh points
     std::vector<Samp_id> _selected_samples; ///< List of selected hrbf samples

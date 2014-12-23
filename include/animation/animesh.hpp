@@ -170,7 +170,7 @@ public:
     /// Transform the vertices of the mesh given the rotation at each bone.
     /// Transformation is computed from the initial position of the mesh
     /// @param type specify the technic used to compute vertices deformations
-    void transform_vertices(EAnimesh::Blending_type type);
+    void transform_vertices();
 
     // -------------------------------------------------------------------------
     /// @name HRBF
@@ -206,20 +206,6 @@ public:
     void clusterize(int n_voxels = 25);
 
     // -------------------------------------------------------------------------
-    /// @name Import export
-    /// @deprecated You should use the parsers module
-    // -------------------------------------------------------------------------
-
-    /// Reads the weight file that define how each joint of the skeleton
-    /// deforms each vertex of the mesh
-    /// @deprecated
-    void read_weights_from_file(const char* filename, bool file_has_commas);
-
-    /// Export the ssd weights associated to each vertices
-    /// @deprecated
-    void export_weights(const char* filename);
-
-    // -------------------------------------------------------------------------
     /// @name SSD Related
     // -------------------------------------------------------------------------
 
@@ -233,33 +219,7 @@ public:
     /// Set the weight of the ith vertex associated to the if joint,
     /// the value is clamped between [0, 1], and the value associated to the
     /// other joints are normalized.
-    void set_ssd_weight(int id_vertex, int id_joint, float weight);
     void init_rigid_ssd_weights();
-
-    float get_ssd_weight(int id_vertex, int id_joint);
-
-    /// @param weights Array vector of ssd weights per vertices and per bone:
-    /// vec[vert_id][...].first == bone_id, vec[vert_id][...].second == weight
-    /// use case:
-    /** @code
-        std::vector<std::map<int, float> > weights;
-        get_ssd_weights(weights);
-        std::map<int, float>& map = weights[index_vert];
-        std::map<int, float>::iterator it;
-        for(it = map.begin(); it != map.end(); ++it){
-            const int   bone_id = it->first;
-            const float weight  = it->second;
-        }
-        @endcode
-    */
-    void get_ssd_weights(std::vector<std::map<int, float> >& weights);
-
-    /// copy device ssd weights on host side
-    void update_host_ssd_weights();
-
-    void set_ssd_weights(const std::vector<std::map<int, float> >& weights);
-
-    void update_device_ssd_weights();
 
     // -------------------------------------------------------------------------
     /// @name Getter & Setters
@@ -270,17 +230,6 @@ public:
 
     /// Set bone type
     void set_bone_type(int id, int bone_type);
-
-    void get_ssd_lerp(std::vector<float>& ssd_to_is_lerp) const{
-        const Cuda_utils::DA_float& tab = d_ssd_interpolation_factor;
-        ssd_to_is_lerp.resize( tab.size() );
-        Cuda_utils::mem_cpy_dth(&(ssd_to_is_lerp[0]), tab.ptr(), tab.size() );
-    }
-
-    void set_ssd_is_lerp(const std::vector<float>& vec) {
-        assert( (int)vec.size() == d_ssd_interpolation_factor.size());
-        d_ssd_interpolation_factor.copy_from( vec );
-    }
 
     inline void set_smooth_factor(int i, float val){
         d_input_smooth_factors.set(i, val);
@@ -373,17 +322,6 @@ private:
 
     /// Compute normals in 'normals' and the vertices position in 'vertices'
     void compute_normals(const Vec3_cu* vertices, Vec3_cu* normals);
-
-    ///  geometric deformation of vertices (SSD, dual quat ...)
-    /// @param t : type of the deformation
-    /// @param in : input vertices to deform
-    /// @param out : output vertices deformed with 't' method
-    void geometric_deformation(EAnimesh::Blending_type t,
-                               const Cuda_utils::DA_Point_cu& d_in,
-                               Vec3_cu* out);
-
-    /// Interpolates between out_verts and ssd_position (in place)
-    void ssd_lerp(Vec3_cu* out_verts);
 
     void fit_mesh(int nb_vert_to_fit,
                   int* d_vert_to_fit,
@@ -546,11 +484,6 @@ private:
     /// vertex. d_rot_axis[vert_id] == vec_rotation_axis
     Cuda_utils::Device::Array<Vec3_cu>  d_rot_axis;
 
-    /// Vertices are moved based on a linear interpolation between ssd and
-    /// implicit skinning this array map for each vertex index its interpolation
-    /// weight : 1 is full ssd and 0 full implicit skinning
-    Cuda_utils::Device::Array<float> d_ssd_interpolation_factor;
-
     // -------------------------------------------------------------------------
     /// @name SSD Weights
     // -------------------------------------------------------------------------
@@ -560,20 +493,12 @@ private:
     /// @see d_jpv
     Cuda_utils::Device::Array<int> d_joints;
 
-    /// List of ssd weights associated to a vertex for animation. You must use
-    /// d_jpv to access the list of ssd weights associated to the ith vertex
-    /// @see d_jpv
-    Cuda_utils::Device::Array<float> d_weights;
-
     /// Table of indirection which associates for the ith vertex its list of
     /// weights and joint IDs.
     /// For the ith vertex d_jpv gives for (ith*2) the starting index in
-    /// d_joints and d_weights. The (ith*2+1) element gives the number of joint/
-    /// weigths associated to the vertex in d_joints and d_weights arrays.
+    /// d_joints. The (ith*2+1) element gives the number of joint/
+    /// weigths associated to the vertex in d_joints.
     Cuda_utils::Device::Array<int> d_jpv;
-
-    /// SSD weigths on CPU
-    std::vector<std::map<int, float> > h_weights;
 
     // -------------------------------------------------------------------------
     /// @name CLUSTER

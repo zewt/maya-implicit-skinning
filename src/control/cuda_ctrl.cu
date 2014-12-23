@@ -84,30 +84,6 @@ void erase_graph(){
     g_graph = new Graph(g_mesh->get_offset(), g_mesh->get_scale());
 }
 
-// -----------------------------------------------------------------------------
-
-void load_animesh_and_ssd_weights(const char* filename)
-{
-    delete g_animesh;
-    g_animesh = new Animesh(g_mesh, g_skel);
-    delete _anim_mesh;
-    _anim_mesh = new Animated_mesh_ctrl(g_animesh);
-
-    if(filename){
-        // Check extension :
-        int len = strlen(filename);
-        bool has_commas = (filename[len-4] == '.') &
-                (filename[len-3] == 'c') &
-                (filename[len-2] == 's') &
-                (filename[len-1] == 'v');
-        std::cout << "reading weights\n";
-        g_animesh->read_weights_from_file(filename, has_commas);
-        std::cout << "weights ok" << std::endl;
-    }
-
-    g_animesh->update_base_potential();
-}
-
 void load_animesh()
 {
     delete g_animesh;

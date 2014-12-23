@@ -46,10 +46,6 @@ struct Abs_skeleton {
     std::vector< std::vector<int> > _sons;
     /// _parents[bone_id] == parent_bone_id
     std::vector<int> _parents;
-
-    /// _weights[vert_idx][ith_bone].first  == bone_idx
-    /// _weights[vert_idx][ith_bone].second == bone_weight
-    std::vector< std::vector< std::pair<int, float> > > _weights;
 };
 
 //------------------------------------------------------------------------------

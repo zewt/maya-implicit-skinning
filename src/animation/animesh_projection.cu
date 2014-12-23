@@ -277,65 +277,7 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
     CUDA_CHECK_ERRORS();
 }
 
-// -----------------------------------------------------------------------------
-
-void Animesh::geometric_deformation(EAnimesh::Blending_type t,
-                                    const Cuda_utils::DA_Point_cu& d_in,
-                                    Vec3_cu* out)
-{
-    const int block_size = 16;
-    const int grid_size  = (d_in.size() + block_size - 1) / block_size;
-
-    if(t == EAnimesh::DUAL_QUAT_BLENDING)
-    {
-        Animesh_kers::transform_dual_quat<<<grid_size, block_size >>>
-            (d_in.ptr(),
-             d_in.size(),
-             out,
-             _skel->d_dual_quat(),
-             d_weights.ptr(),
-             d_joints.ptr(),
-             d_jpv.ptr());
-    }
-    else /*if(type == MATRIX_BLENDING */
-    {
-        Animesh_kers::transform_SSD<<<grid_size, block_size >>>
-            (d_in.ptr(),
-             d_in.size(),
-             out,
-             _skel->d_transfos(),
-             d_weights.ptr(),
-             d_joints.ptr(),
-             d_jpv.ptr());
-    }
-    CUDA_CHECK_ERRORS();
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::ssd_lerp(Vec3_cu* out_verts)
-{
-    d_ssd_vertices.copy_from(d_output_vertices);
-
-    const int nb_vert_to_fit = d_vert_to_fit_base.size();
-    if( nb_vert_to_fit == 0) return;
-    const int block_size = 16;
-    const int grid_size  = (nb_vert_to_fit + block_size - 1) / block_size;
-
-    Animesh_kers::lerp_kernel<<<grid_size, block_size>>>
-            (d_vert_to_fit_base.ptr(),
-             out_verts,
-             (Vec3_cu*)d_ssd_vertices.ptr(),
-             d_ssd_interpolation_factor.ptr(),
-             out_verts,
-             nb_vert_to_fit);
-
-    CUDA_CHECK_ERRORS();
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::transform_vertices(EAnimesh::Blending_type type)
+void Animesh::transform_vertices()
 {
     using namespace Cuda_ctrl;
 
@@ -343,12 +285,8 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
 
     Vec3_cu* out_normals  = (Vec3_cu*)d_output_normals.ptr();
 
-#if 0
-    d_output_vertices.copy_from(d_input_vertices);
-#else
     Vec3_cu* out_verts    = (Vec3_cu*)d_output_vertices.ptr();
-    geometric_deformation(type, d_input_vertices, out_verts);
-#endif
+    d_output_vertices.copy_from(d_input_vertices);
 
     d_smooth_factors_laplacian.copy_from( d_input_smooth_factors );
     d_vert_to_fit.copy_from(d_vert_to_fit_base);
@@ -409,9 +347,6 @@ void Animesh::transform_vertices(EAnimesh::Blending_type type)
         smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth2_iter);
     }
 #endif
-
-    // Interpolation between ssd position and correction:
-    ssd_lerp(out_verts);
 
     compute_normals(out_verts, out_normals);
 }

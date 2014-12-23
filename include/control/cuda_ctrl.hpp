@@ -68,8 +68,6 @@ void erase_graph();
 
 void load_animesh();
 
-void load_animesh_and_ssd_weights(const char* filename);
-
 /// device memory usage in megabytes
 void get_mem_usage(double& total, double& free);
 

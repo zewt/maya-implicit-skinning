@@ -66,14 +66,6 @@ enum Smooth_type {
     HUMPHREY       ///< Laplacian corrected with original points position
 };
 
-// -----------------------------------------------------------------------------
-
-/// Geometric deformations mode of the vertices
-enum Blending_type {
-    DUAL_QUAT_BLENDING = 0, ///< Vertices are deformed with dual quaternions
-    MATRIX_BLENDING         ///< Vertices are deformed with the standard SSD
-};
-
 }
 // END EAnimesh NAMESPACE ======================================================
 

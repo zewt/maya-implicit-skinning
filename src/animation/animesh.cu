@@ -71,16 +71,14 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     d_input_tri(_mesh->get_nb_tri()*3),
     d_edge_list(_mesh->get_nb_edges()),
     d_edge_list_offsets(2 * _mesh->get_nb_vertices()),
-    d_joints(), d_weights(),
+    d_joints(),
     d_jpv(2 * _mesh->get_nb_vertices()),
-    h_weights(_mesh->get_nb_vertices()),
     d_base_potential(_mesh->get_nb_vertices()),
     d_base_gradient(_mesh->get_nb_vertices()),
     d_piv(_mesh->get_nb_faces()),
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
-    d_ssd_interpolation_factor(_mesh->get_nb_vertices(), 0.f),
     h_vertices_nearest_bones(_mesh->get_nb_vertices()),
     d_vertices_nearest_bones(_mesh->get_nb_vertices()),
     nb_vertices_by_bones(_skel->get_bones().size()),
@@ -182,18 +180,13 @@ Animesh::~Animesh()
 
 void Animesh::init_vert_to_fit()
 {
-    assert(d_ssd_interpolation_factor.size() > 0);
-
-    Cuda_utils::HA_float ssd_factor(d_ssd_interpolation_factor.size());
-    ssd_factor.copy_from(d_ssd_interpolation_factor);
-
     int nb_vert = _mesh->get_nb_vertices();
     std::vector<int> h_vert_to_fit_base;
     h_vert_to_fit_base.reserve(nb_vert);
     int acc = 0;
     for (int i = 0; i < nb_vert; ++i)
     {
-        if( !_mesh->is_disconnect(i) && ssd_factor[i] < (1.f - 0.00001f) ){
+        if( !_mesh->is_disconnect(i) ){
             h_vert_to_fit_base.push_back( i );
             acc++;
         }
@@ -342,12 +335,6 @@ void Animesh::init_ssd_interpolation_weights()
 
 //    Host::Array<float> base_potential(n);
 //    base_potential.copy_from(d_base_potential);
-
-    Host::Array<float> base_ssd_weights(n);
-    base_ssd_weights.copy_from(d_ssd_interpolation_factor);
-    //_mesh->diffuse_along_mesh(base_ssd_weights.ptr(), 1.f, 2);
-
-    d_ssd_interpolation_factor.copy_from(base_ssd_weights);
 
     init_vert_to_fit();
 }
@@ -540,29 +527,18 @@ void Animesh::init_rigid_ssd_weights()
 {
     int nb_vert = _mesh->get_nb_vertices();
 
-    std::vector<float> weights(nb_vert);
     std::vector<int>   joints (nb_vert);
     Host::Array<int>   jpv    (2u*nb_vert);
 
     for(int i = 0; i < nb_vert; ++i)
     {
         joints [i] = h_vertices_nearest_bones[i];
-        weights[i] = 1.f;
 
         jpv[i*2    ] = i; // starting index
         jpv[i*2 + 1] = 1; // number of bones influencing the vertex
-
-        int start = i;
-        int end   = start + 1;
-
-        h_weights[i].clear();
-        for(int j = start; j < end ; j++)
-            h_weights[i][joints[j]] = weights[j];
     }
 
     d_jpv.copy_from(jpv);
-    d_weights.malloc(nb_vert);
-    d_weights.copy_from(weights);
     d_joints.malloc(nb_vert);
     d_joints.copy_from(joints);
 }
@@ -663,282 +639,6 @@ void Animesh::set_junction_radius(int bone_id, float rad)
     assert(bone_id < _skel->nb_joints());
     h_junction_radius[bone_id] = rad;
 }
-
-// -----------------------------------------------------------------------------
-
-void Animesh::set_ssd_weight(int id_vertex, int id_joint, float weight)
-{
-    id_joint = _skel->parent(id_joint);
-
-    assert(id_vertex < (int)d_input_vertices.size());
-    // clamp [0, 1]
-    weight = fmax(0.f, fmin(weight, 1.f));
-
-    float old_weight = get_ssd_weight(id_vertex, id_joint);
-    float delta      = old_weight - weight;
-
-    int start, end;
-    d_jpv.fetch(id_vertex*2  , start);
-    d_jpv.fetch(id_vertex*2+1, end  );
-
-    delta = delta / (float)(end-1);
-
-    for(int i=start; i<(start+end); i++)
-    {
-        int current_joint;
-        d_joints.fetch(i, current_joint);
-        if(current_joint == id_joint)
-            d_weights.set(i, weight);
-        else
-        {
-            float w;
-            d_weights.fetch(i, w);
-            d_weights.set(i, w+delta);
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-float Animesh::get_ssd_weight(int id_vertex, int id_joint)
-{
-    assert(id_vertex < d_input_vertices.size());
-
-    int start, end;
-    d_jpv.fetch(id_vertex*2  , start);
-    d_jpv.fetch(id_vertex*2+1, end  );
-
-    for(int i=start; i<(start+end); i++)
-    {
-        int current_joint;
-        d_joints.fetch(i, current_joint);
-        if(current_joint == id_joint)
-        {
-            float w;
-            d_weights.fetch(i, w);
-            return w;
-        }
-    }
-
-    // Joint "id_joint" is not associated to this vertex
-    assert(false);
-    return 0.f;
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::get_ssd_weights(std::vector<std::map<int, float> >& weights)
-{
-    const int nb_vert = d_input_vertices.size();
-    weights.clear();
-    weights.resize(nb_vert);
-
-    HA_float h_weights(d_weights.size());
-    HA_int h_joints(d_joints.size());
-    HA_int h_jpv(d_jpv.size());
-    h_weights.copy_from(d_weights);
-    h_joints.copy_from(d_joints);
-    h_jpv.copy_from(d_jpv);
-
-    for( int i = 0; i < nb_vert; i++)
-    {
-        int start = h_jpv[i*2];
-        int end   = start + h_jpv[i*2 + 1];
-        weights[i].clear();
-        for(int j = start; j < end ; j++){
-            weights[i][h_joints[j]] = h_weights[j];
-            //std::cout << h_weights[j] << std::endl;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::update_host_ssd_weights()
-{
-    get_ssd_weights(h_weights);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::set_ssd_weights(const std::vector<std::map<int, float> >& in_weights)
-{
-    const int nb_vert = d_input_vertices.size();
-    assert( in_weights.size() == (unsigned)nb_vert );
-
-    std::vector<float> weights;
-    std::vector<int>   joints;
-    HA_int             jpv(nb_vert*2);
-
-    weights.reserve(nb_vert*2);
-    joints.reserve(nb_vert*2);
-
-    int acc = 0;
-    for( int i = 0; i < nb_vert; i++)
-    {
-        const std::map<int, float>& map = in_weights[i];
-        jpv[i*2    ] = acc;
-        jpv[i*2 + 1] = map.size();
-        std::map<int, float>::const_iterator it;
-        for(it = map.begin(); it != map.end(); ++it)
-        {
-            joints.push_back(it->first);
-            weights.push_back(it->second);
-        }
-        acc += map.size();
-    }
-
-    d_weights.malloc(weights.size());
-    d_joints.malloc(joints.size());
-    d_jpv.malloc(jpv.size());
-    d_weights.copy_from(weights);
-    d_joints.copy_from(joints);
-    d_jpv.copy_from(jpv);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::update_device_ssd_weights()
-{
-    set_ssd_weights(h_weights);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::export_weights(const char* filename)
-{
-    using namespace std;
-    ofstream file(filename, ios_base::out|ios_base::trunc);
-
-    if(!file.is_open()){
-        cerr << "Error exporting file " << filename << endl;
-        exit(1);
-    }
-
-    // Copy to host :
-    HA_int   h_jpv(d_jpv.size());
-    HA_int   h_joints(d_joints.size());
-    HA_float h_weights(d_weights.size());
-
-    h_jpv.copy_from(d_jpv);
-    h_joints.copy_from(d_joints);
-    h_weights.copy_from(d_weights);
-
-    for(int i = 0; i < d_input_vertices.size(); i++)
-    {
-        int start, end;
-        float sum_weights = 0.f;
-        // vertices are not necessarily
-        start = h_jpv[vmap_new_old[i]*2    ];
-        end   = h_jpv[vmap_new_old[i]*2 + 1];
-
-        for(int j=start; j<(start+end); j++)
-        {
-            float weight = h_weights[j];
-            int   bone   = h_joints[j];
-            sum_weights += weight;
-
-            file << bone << " " << weight << " ";
-        }
-
-        if((sum_weights > 1.0001f) || (sum_weights < -0.0001f)){
-            std::cerr << "WARNING: exported ssd weights does not sum to one ";
-            std::cerr << "(line " << (i+1) << ")" << std::endl;
-        }
-        file << endl;
-    }
-    file.close();
-}
-
-
-// -----------------------------------------------------------------------------
-
-void Animesh::read_weights_from_file(const char* filename,
-                                          bool file_has_commas)
-{
-    using namespace std;
-    using namespace Cuda_utils;
-
-    ifstream file(filename);
-
-    int n = _mesh -> get_nb_vertices();
-    std::vector<float> h_weights; h_weights.reserve(2*n);
-    std::vector<int>   h_joints; h_joints.reserve(2*n);
-    Host::Array<int>   h_jpv(2*n);
-
-    if(!file.is_open()){
-        cerr << "Error opening file: " << filename << endl;
-        exit(1);
-    }
-
-    int k = 0;
-    for(int i = 0; i < n; i++)
-    {
-        std::string str_line;
-        std::getline(file, str_line);
-        std::stringbuf current_line_sb(str_line, ios_base::in);
-
-        istream current_line(&current_line_sb);
-        int j = 0;
-        //int j_old = -1;
-        float weight, sum_weights = 0.f;
-        int p = 0;
-        while(!current_line.eof() && !str_line.empty())
-        {
-            current_line >> j;
-            //if(j == j_old) break;
-            if(file_has_commas) current_line.ignore(1,',');
-
-            current_line >> weight;
-
-            if(file_has_commas) current_line.ignore(1,',');
-
-            current_line.ignore(10,' ');
-
-            if(current_line.peek() == '\r') current_line.ignore(1,'\r');
-
-            if(current_line.peek() == '\n') current_line.ignore(1,'\n');
-
-            p++;
-            h_weights.push_back( weight ); // SSD weight
-            h_joints. push_back(  j     ); // joint number
-            //j_old = j;
-
-            sum_weights += weight;
-            if(j < 0 || j > _skel->nb_joints()){
-                std::cerr << "ERROR: incorrect joint id in imported ssd weights.";
-                std::cerr << "Maybe the file does not match the skeleton";
-                std::cerr << std::endl;
-            }
-        }
-
-        if((sum_weights > 1.0001f) || (sum_weights < -0.0001f)){
-            std::cerr << "WARNING: imported ssd weights does not sum to one ";
-            std::cerr << "(line " << (i+1) << ")" << std::endl;
-        }
-
-        // we use vmap_old_new because Animesh does not necessarily
-        // stores vertices in the same order as in the off file
-        h_jpv[2*vmap_old_new[i]  ] = k; //read start position
-        h_jpv[2*vmap_old_new[i]+1] = p; //number of joints modifying that vertex
-        k += p;
-    } // END FOR NB lINES
-
-    // Copy weights to device mem
-    d_jpv.copy_from(h_jpv);
-    d_weights.malloc(k);
-    d_weights.copy_from(h_weights);
-    d_joints.malloc(k);
-    d_joints.copy_from(h_joints);
-
-    update_host_ssd_weights();
-
-    cout << "file \"" << filename << "\" loaded successfully" << endl;
-    set_default_bones_radius();
-    file.close();
-}
-
-// -----------------------------------------------------------------------------
 
 int Animesh::pack_vert_to_fit(Cuda_utils::Host::Array<int>& in,
                                    Cuda_utils::Host::Array<int>& out,

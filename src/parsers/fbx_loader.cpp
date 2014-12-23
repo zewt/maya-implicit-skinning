@@ -416,37 +416,6 @@ void compute_bones_bind_frame(Loader::Abs_skeleton& skel,
 
 // -----------------------------------------------------------------------------
 
-void fill_bones_weights(Loader::Abs_skeleton& skel,
-                        KFbxSkin* skin,
-                        const std::map<KFbxNode*, int>& ptr_to_idx,
-                        int off,
-                        int size_mesh)
-{
-    skel._weights.resize( size_mesh );
-    for(int i = 0; i < skin->GetClusterCount(); i++)
-    {
-        KFbxCluster* cluster = skin->GetCluster(i);
-        KFbxNode*    cl_node = cluster->GetLink();
-
-        if( cl_node == 0 ) continue;
-
-        const int bone_id = Std_utils::find( ptr_to_idx, cl_node);
-
-        const int size_cluster = cluster->GetControlPointIndicesCount();
-        for(int c = 0; c < size_cluster; c++)
-        {
-            const int   fbx_idx    =        cluster->GetControlPointIndices()[c];
-            const float fbx_weight = (float)cluster->GetControlPointWeights()[c];
-
-            std::pair<int, float> p = std::make_pair( bone_id, fbx_weight );
-
-            skel._weights[ fbx_idx + off].push_back( p );
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 /// Extract bind pose using KFBxPose but For some files this won't work
 void fill_bind_pose(KFbxScene* scene,
                     Loader::Abs_skeleton& skel,
@@ -590,10 +559,6 @@ void Fbx_file::get_skeleton(Loader::Abs_skeleton& skel) const
 
             // Extract bind pose using clusters
             compute_bones_bind_frame(skel, done, (KFbxSkin*)dfm, geom, ptr_to_idx);
-
-            const int offset = Std_utils::find( _offset_verts, node);
-            // Extract bones weights
-            fill_bones_weights(skel, (KFbxSkin*)dfm, ptr_to_idx, offset, _size_mesh);
         }
     }
 

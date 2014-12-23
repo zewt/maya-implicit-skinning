@@ -37,7 +37,6 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
     _auto_precompute(true),
     _factor_bones(false),
     _nb_iter(7),
-    _blending_type((int)EAnimesh::DUAL_QUAT_BLENDING),
     _d_selected_points(0),
     _bone_caps(am->get_skel()->nb_joints()),
     _bone_anim_caps(am->get_skel()->nb_joints()),
@@ -100,36 +99,6 @@ void Animated_mesh_ctrl::set_smooth_factor(int i, float fact){
     _animesh->set_smooth_factor(i, fact);
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_ssd_weight(int id_vertex,
-                                        int id_joint,
-                                        float weight)
-{
-    _animesh->set_ssd_weight(id_vertex, id_joint, weight);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_ssd_weight(const Loader::Abs_skeleton& skel)
-{
-    if( skel._weights.size() == 0 ) return;
-
-    std::vector<std::map<int, float> > weights( skel._weights.size() );
-
-    for(unsigned i = 0; i < skel._weights.size(); i++)
-    {
-        const std::vector< std::pair<int, float> >& bones = skel._weights[i];
-        for(unsigned j = 0; j < bones.size(); j++)
-            weights[i][ bones[j].first ] = bones[j].second;
-    }
-
-    _animesh->set_ssd_weights( weights );
-    _animesh->update_host_ssd_weights();
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::switch_do_smoothing(){
     set_do_smoothing(!_do_smooth);
 }
@@ -164,7 +133,7 @@ void Animated_mesh_ctrl::update_clusters(int nb_voxels)
 
 void Animated_mesh_ctrl::deform_mesh()
 {
-    _animesh->transform_vertices((EAnimesh::Blending_type)get_blending_type());
+    _animesh->transform_vertices();
 }
 
 // -----------------------------------------------------------------------------
@@ -237,20 +206,6 @@ void Animated_mesh_ctrl::write_samples(std::ofstream& file,
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::write_ssd_is_lerp( std::ofstream& file )
-{
-    std::vector<float> lerp_facts;
-    _animesh->get_ssd_lerp( lerp_facts );
-    int size = (int)lerp_facts.size();
-
-    file << "[SSD_IS_LERP]" << std::endl;
-    file << "nb_points " << size << std::endl;
-    for(int i = 0; i < size; ++i)
-        file << lerp_facts[i] << std::endl;
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::write_hrbf_radius( std::ofstream& file )
 {
     file << "[HRBF_RADIUS]" << std::endl;
@@ -279,7 +234,6 @@ void Animated_mesh_ctrl::save_ism(const char* filename)
     write_hrbf_caps_env( file, true  /*write joint caps*/);
     write_hrbf_caps_env( file, false /*write parent caps*/);
     write_bone_types( file );
-    write_ssd_is_lerp( file );
     write_hrbf_radius( file );
 
     file.close();
@@ -412,22 +366,6 @@ void Animated_mesh_ctrl::read_hrbf_env_weights(
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::read_ssd_is_lerp(std::ifstream& file)
-{
-    std::string nil;
-    int nb_points = -1;
-    file >> nil /* nb_points*/ >> nb_points;
-
-    assert(_animesh->get_mesh()->get_nb_vertices() == nb_points);
-    std::vector<float> factors(nb_points);
-    for(int i = 0; i<nb_points; i++ )
-        file >> factors[i];
-
-    _animesh->set_ssd_is_lerp(factors);
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::read_hrbf_radius(std::ifstream& file,
                                           std::vector<float>& radius_hrbf)
 {
@@ -471,7 +409,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         else if(section == "[HRBF_JCAPS_ENV]")   read_hrbf_caps_env( file, true  );
         else if(section == "[HRBF_PCAPS_ENV]")   read_hrbf_caps_env( file, false );
         else if(section == "[BONE_TYPES]")       read_bone_types( file, bones_type );
-        else if(section == "[SSD_IS_LERP]")      read_ssd_is_lerp( file );
         else if(section == "[HRBF_RADIUS]")      read_hrbf_radius( file, radius_hrbf);
         else
         {
@@ -508,27 +445,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
 
     _animesh->update_base_potential();
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::save_weights(const char* filename){
-    _animesh->export_weights(filename);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::load_weights(const char* filename)
-{
-    int len = strlen(filename);
-    bool has_commas = (filename[len-4] == '.') &
-            (filename[len-3] == 'c') &
-            (filename[len-2] == 's') &
-            (filename[len-1] == 'v');
-
-    _animesh->read_weights_from_file(filename, has_commas);
-}
-
-// -----------------------------------------------------------------------------
 
 Vec3_cu Animated_mesh_ctrl::cog_mesh_selection()
 {

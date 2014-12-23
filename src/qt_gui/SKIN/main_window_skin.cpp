@@ -465,7 +465,7 @@ bool Main_window_skin::load_fbx_skeleton_anims(const Fbx_loader::Fbx_file& loade
 
     Cuda_ctrl::load_animesh(); // Bind animated mesh to skel
     // Convert bones weights to our representation
-    Cuda_ctrl::_anim_mesh->set_ssd_weight( skel );
+    //Cuda_ctrl::_anim_mesh->set_ssd_weight( skel );
 
     // Load first animation
 //    std::vector<Loader::Base_anim_eval*> anims;
@@ -539,11 +539,12 @@ void Main_window_skin::on_actionLoad_weights_triggered()
     string filename = "foo.weights";
     if( filename.size() == 0)
         return;
-
+/*
     if(Cuda_ctrl::is_animesh_loaded())
         Cuda_ctrl::_anim_mesh->load_weights(filename.c_str());
     else
         Cuda_ctrl::load_animesh_and_ssd_weights( filename.c_str() );
+*/
 }
 
 // -----------------------------------------------------------------------------
