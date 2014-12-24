@@ -114,8 +114,6 @@ void Skeleton::init(int nb_joints)
     _saved_transfos.resize(nb_joints);
     _h_transfos.malloc(nb_joints);
     _d_transfos.malloc(nb_joints);
-    _h_dual_quat.malloc(nb_joints);
-    _d_dual_quat.malloc(nb_joints);
     _joints_data.resize(nb_joints);
     _controllers.malloc(nb_joints);
     _anim_bones.resize(nb_joints);
@@ -229,7 +227,7 @@ void Skeleton::reset()
         _saved_transfos[i] = _h_transfos[i];
         _h_transfos[i] = Transfo::identity();
     }
-    update_bones_pose( _h_transfos );
+    update_bones_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -238,7 +236,7 @@ void Skeleton::unreset()
 {
     for(int i = 0; i < nb_joints(); i++)
         _h_transfos[i] = _saved_transfos[i];
-    update_bones_pose( _h_transfos );
+    update_bones_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -461,43 +459,40 @@ void Skeleton::transform_precomputed_prim(const HPLA_tr &global_transfos )
 {
 
     for( int i = 0; i < _nb_joints; i++)
-        if(bone_type(i) == EBone::PRECOMPUTED)
-        {
-            Precomputed_prim& prim = ((Bone_precomputed*)_anim_bones[i])->get_primitive();
-            Precomputed_env::set_transform(prim.get_id(), global_transfos[i]);
-        }
+    {
+        if(bone_type(i) != EBone::PRECOMPUTED)
+            continue;
+
+        Bone_precomputed *bone = (Bone_precomputed*) _anim_bones[i];
+        Precomputed_prim &prim = bone->get_primitive();
+        Precomputed_env::set_transform(prim.get_id(), global_transfos[i]);
+    }
 
     Precomputed_env::update_device_transformations();
 }
 
-// -----------------------------------------------------------------------------
+void Skeleton::set_transforms(const std::vector<Transfo> &transfos)
+{
+    _h_transfos.copy_from(transfos);
+    update_bones_pose();
+}
 
-void Skeleton::update_bones_pose(const HPLA_tr& global_transfos)
+void Skeleton::update_bones_pose()
 {
     // Update joints position in animated position and the associated
     // transformations
-    subupdate_vertices( _root, global_transfos );
-
-    // Update the dual quaternion representation of the transformations from
-    // the matrices
-    for(int i = 0; i < nb_joints(); i++)
-    {
-        Dual_quat_cu dq = Dual_quat_cu(global_transfos[i]);
-        _h_dual_quat[i] = dq;
-    }
+    subupdate_vertices( _root, _h_transfos );
 
     // Update joint positions in texture.
-    _d_transfos. copy_from( global_transfos );
-    _d_dual_quat.copy_from( _h_dual_quat    );
+    _d_transfos.copy_from( _h_transfos );
 
     transform_hrbf( _d_transfos );
-    transform_precomputed_prim( global_transfos );
+    transform_precomputed_prim( _h_transfos );
 
     // In order to this call to take effect correctly it MUST be done after
     // transform_hrbf() and transform_precomputed_prim() otherwise bones
     // positions will not be updated correctly within the Skeleton_env.
     Skeleton_env::update_bones_data(_skel_id, _anim_bones);
-    // --------
 }
 
 // -----------------------------------------------------------------------------
@@ -655,14 +650,3 @@ const Transfo&  Skeleton::get_transfo(Bone::Id bone_id) const {
     assert(bone_id < _nb_joints);
     return _h_transfos[bone_id];
 }
-
-// -----------------------------------------------------------------------------
-
-const Dual_quat_cu&  Skeleton::get_dual_quat(Bone::Id bone_id) const {
-    assert(bone_id >= 0);
-    assert(bone_id < _nb_joints);
-    return _h_dual_quat[bone_id];
-}
-
-// -----------------------------------------------------------------------------
-

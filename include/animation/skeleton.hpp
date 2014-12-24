@@ -255,19 +255,10 @@ struct Skeleton {
   /// These transformation can be used as is to deformed the mesh
   const Transfo& get_transfo(Bone::Id bone_id) const;
 
-  /// Get the animated joints global transformations expressed with dual
-  /// quaternions. These transformation can be used as is to deformed the mesh
-  const Dual_quat_cu& get_dual_quat(Bone::Id bone_id) const;
-
   /// Get the animated joints global transformations expressed with matrices
   /// in device memory. These transformation can be used as is to deformed
   /// the mesh
   const Transfo* d_transfos() const { return _d_transfos.ptr(); }
-
-  /// Get the animated joints global transformations expressed with dual
-  /// quaternions in device memory. These transformation can be used as is
-  /// to deformed the mesh
-  const Dual_quat_cu* d_dual_quat() const { return _d_dual_quat.ptr(); }
 
   /// @return the hrbf id associated to the bone or -1
   /// if the bone is not an HRBF
@@ -275,9 +266,7 @@ struct Skeleton {
 
   float get_hrbf_radius(Bone::Id bone_id);
 
-  //----------------------------------------------------------------------------
-  /// @name Class tools
-  //----------------------------------------------------------------------------
+  void set_transforms(const std::vector<Transfo> &transfos);
 
 private:
 
@@ -292,7 +281,7 @@ private:
   /// Given a set of global transformation at each joints animate the skeleton.
   /// animated bones frames dual quaternions are updated as well as device
   /// memory
-  void update_bones_pose(const HPLA_tr& global_transfos);
+  void update_bones_pose();
 
   /// transform implicit surfaces computed with HRBF.
   /// @param global_transfos array of global transformations for each bone
@@ -370,10 +359,6 @@ private:
   Cuda_utils::Host::PL_Array<Transfo> _h_transfos;
   /// same as h_transform but in device memory
   Cuda_utils::Device::Array<Transfo> _d_transfos;
-  /// same as h_transform but represented with dual quaternions instead of matrices
-  Cuda_utils::Host::PL_Array<Dual_quat_cu> _h_dual_quat;
-  /// Same as h_dq_transformations but in device memory
-  Cuda_utils::Device::Array<Dual_quat_cu> _d_dual_quat;
 
   /// Array of each animated bone. Note that a bone can be subclass.
   /// @see bone.hpp
