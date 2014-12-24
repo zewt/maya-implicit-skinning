@@ -258,13 +258,6 @@ TARGET_LINK_LIBRARIES(implicit_framework)
 # Build executable
 #-------------------------------------------------------------------------------
 
-# Set skinning executable.
-ADD_EXECUTABLE(implicit_skinning
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main_skinning.cpp )
-# Specify the dependency.
-TARGET_LINK_LIBRARIES(implicit_skinning implicit_framework)
-
-
 # Generating PTX files.
 # CUDA_COMPILE_PTX(PTX_FILES CUDA_FILES test_bin.cu)
 
