@@ -75,7 +75,7 @@ bool is_animesh_loaded(){
 
 // -----------------------------------------------------------------------------
 
-bool is_skeleton_loaded(){ return g_skel != 0; }
+bool is_skeleton_loaded(){ return _skeleton.is_loaded(); }
 
 // -----------------------------------------------------------------------------
 
@@ -170,12 +170,11 @@ void cleanup()
 
     Constants::free();
 
-    delete g_skel; // Skeleton must be deleted before blending env
+    _skeleton.cleanup(); // Skeleton must be deleted before blending env
     delete g_animesh;
     delete g_graph;
     delete g_mesh;
 
-    g_skel        = 0;
     g_animesh     = 0;
     g_graph       = 0;
     g_mesh        = 0;

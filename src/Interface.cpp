@@ -6,7 +6,6 @@
 #include "Interface.h"
 
 #include "loader_mesh.hpp"
-#include "mesh.hpp"
 
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
@@ -39,67 +38,8 @@ void PluginInterface::shutdown()
     Cuda_ctrl::cleanup();
 }
 
-extern Mesh* g_mesh;
-#include "skeleton.hpp"
-extern Skeleton* g_skel;
 
 
-
-
-
-void update_hrbf_samples(int bone_id)
-{
-    if( g_skel->is_leaf(bone_id) )
-        return;
-
-
-    switch(0)
-    {
-    case 0:
-    {
-        Cuda_ctrl::_anim_mesh->choose_hrbf_samples_poisson
-                (bone_id,
-                 // Set a distance threshold from sample to the joints to choose them.
-                 -0.02f, // dSpinB_max_dist_joint->value(),
-                 -0.02f, // dSpinB_max_dist_parent->value(),
-                 0, // dSpinB_min_dist_samples->value(),
-                 // Minimal number of samples.  (this value is used only whe the value min dist is zero)
-                 50, // spinB_nb_samples_psd->value(), 20-1000
-
-                 // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
-                 0); // dSpinB_max_fold->value() );
-
-        break;
-    }
-
-    case 1:
-    {
-        Cuda_ctrl::_anim_mesh->choose_hrbf_samples_ad_hoc
-                (bone_id,
-                 -0.02f, // dSpinB_max_dist_joint->value(),
-                 -0.02f, // dSpinB_max_dist_parent->value(),
-                 0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
-                 0); // dSpinB_max_fold->value() );
-
-        break;
-    }
-
-    case 2:
-    {
-        Cuda_ctrl::_anim_mesh->choose_hrbf_samples_gael( bone_id );
-        break;
-    }
-    }
-}
-
-
-void update_all_hrbf_samples()
-{
-    for(int bone_id = 0; bone_id < g_skel->nb_joints(); ++bone_id)
-    {
-        update_hrbf_samples(bone_id);
-    }
-}
 
 // We're being given a mesh to work with.  Load it into Mesh, and hand it to the CUDA
 // interface.
@@ -118,13 +58,12 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
 
         original_loader_skeleton = loader_skeleton;
         Cuda_ctrl::_skeleton.load(loader_skeleton);
-    //    Cuda_ctrl::_skeleton.set_offset_scale( g_mesh->get_offset(), g_mesh->get_scale());
 
         Cuda_ctrl::load_animesh();
 
 
 
-        update_all_hrbf_samples();
+        Cuda_ctrl::_anim_mesh->update_all_hrbf_samples(0);
 
 
         Cuda_ctrl::_anim_mesh->update_base_potential();
@@ -146,11 +85,11 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
 
             transfos.push_back(Transfo(changeToTransform));
         }
-        g_skel->set_transforms(transfos);
+        Cuda_ctrl::_skeleton.set_transforms(transfos);
     }
 
 //    loader_skeleton._bones[0].
-    int num_vertices = loader_mesh._vertices.size();
+    size_t num_vertices = loader_mesh._vertices.size();
     vector<Vec3_cu> vertices(num_vertices);
     const Loader::Vertex *mesh_vertices = &loader_mesh._vertices[0];
     for(size_t i = 0; i < num_vertices; ++i)

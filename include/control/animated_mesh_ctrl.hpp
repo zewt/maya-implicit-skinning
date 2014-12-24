@@ -168,6 +168,10 @@ public:
                      const std::vector<Vec3_cu>& p,
                      const std::vector<Vec3_cu>& n);
 
+    // Update bone_id using the specified HRBF sampler.  XXX: if this is kept, add an enum
+    void update_hrbf_samples(int bone_id, int mode);
+    void update_all_hrbf_samples(int mode);
+
     /// @param bone_id bone identifier
     void choose_hrbf_samples_ad_hoc(int bone_id, float jmax, float pmax,  float minDist, float fold);
 

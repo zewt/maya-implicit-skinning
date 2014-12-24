@@ -42,6 +42,8 @@ public:
     {
     }
 
+    void cleanup();
+
     void load(const Graph& g_graph);
 
     void load(const Loader::Abs_skeleton& abs_skel);
@@ -86,6 +88,9 @@ public:
                           Vec3_cu& fx,
                           Vec3_cu& fy,
                           Vec3_cu& fz);
+
+    // Set the current joint transforms.
+    void set_transforms(const std::vector<Transfo> &transfos);
 
     Transfo joint_anim_frame(int id_bone);
 

@@ -24,6 +24,5 @@
 #include "conversions.hpp"
 
 Graph*       g_graph    = 0;
-Skeleton*    g_skel     = 0;
 Animesh* g_animesh = 0;
 
