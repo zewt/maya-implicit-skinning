@@ -252,6 +252,34 @@ endif()
 
 TARGET_LINK_LIBRARIES(implicit_framework)
 
+ADD_LIBRARY(implicit SHARED src/plugin.cpp)
+SET_TARGET_PROPERTIES(implicit PROPERTIES SUFFIX .mll)
+SET_TARGET_PROPERTIES(implicit PROPERTIES CMAKE_MODULE_LINKER_FLAGS
+      "${CMAKE_SHARED_LINKER_FLAGS} /DEF:my_defs.def /NODEFAULTLIB")
+
+TARGET_LINK_LIBRARIES(implicit
+    "${MAYA_DIR}/lib/OpenMaya.lib"
+    "${MAYA_DIR}/lib/OpenMayaAnim.lib"
+    "${MAYA_DIR}/lib/Foundation.lib"
+)
+
+IF(MSVC)
+SET_TARGET_PROPERTIES(implicit PROPERTIES LINK_FLAGS "/export:initializePlugin /export:uninitializePlugin")
+
+ADD_DEFINITIONS(
+    -D_USRDLL
+    -DNT_PLUGIN
+    -D_SECURE_SCL=0
+    -D_SECURE_SCL_THROWS=0
+    -D_SECURE_SCL_DEPRECATE=0
+    -D_CRT_SECURE_NO_DEPRECATE
+    -DREQUIRE_IOSTREAM
+    -DAW_NEW_IOSTREAMS
+    -DBits64_
+)
+ENDIF(MSVC)
+TARGET_LINK_LIBRARIES(implicit implicit_framework)
+
 # END BUILD LIBRARIES ----------------------------------------------------------
 
 #-------------------------------------------------------------------------------
