@@ -19,10 +19,7 @@
 #include "cuda_globals.hpp"
 
 #include "globals.hpp"
-#include "cuda_ctrl.hpp"
-#include "skeleton.hpp"
-#include "conversions.hpp"
+#include "graph.hpp"
 
 Graph*       g_graph    = 0;
-Animesh* g_animesh = 0;
 

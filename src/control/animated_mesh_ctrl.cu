@@ -59,6 +59,7 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
 Animated_mesh_ctrl::~Animated_mesh_ctrl()
 {
     Cuda_utils::free_d(_d_selected_points);
+    delete _animesh;
 }
 
 // -----------------------------------------------------------------------------

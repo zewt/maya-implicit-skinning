@@ -24,7 +24,6 @@
 
 struct Graph;
 struct Skeleton;
-struct Animesh;
 
 /** Various global variables used in cuda source files
  */
@@ -34,8 +33,5 @@ extern Graph* g_graph;
 
 /// The current skeleton
 extern Skeleton* g_skel;
-
-/// The current animated mesh
-extern Animesh* g_animesh;
 
 #endif // CUDA_GLOBALS_HPP__

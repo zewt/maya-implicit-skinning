@@ -48,8 +48,6 @@ void load_mesh( Mesh* mesh )
 {
     delete _anim_mesh;
     _anim_mesh = 0;
-    delete g_animesh;
-    g_animesh = 0;
 
     delete g_mesh;
     g_mesh = 0;
@@ -86,10 +84,9 @@ void erase_graph(){
 
 void load_animesh()
 {
-    delete g_animesh;
-    g_animesh = new Animesh(g_mesh, g_skel);
+    Animesh *animesh = new Animesh(g_mesh, g_skel);
     delete _anim_mesh;
-    _anim_mesh = new Animated_mesh_ctrl(g_animesh);
+    _anim_mesh = new Animated_mesh_ctrl(animesh);
 }
 
 void get_mem_usage(double& total, double& free)
@@ -171,13 +168,13 @@ void cleanup()
     Constants::free();
 
     _skeleton.cleanup(); // Skeleton must be deleted before blending env
-    delete g_animesh;
     delete g_graph;
     delete g_mesh;
+    delete _anim_mesh;
 
-    g_animesh     = 0;
     g_graph       = 0;
     g_mesh        = 0;
+    _anim_mesh = NULL;
 
     Blending_env::clean_env();
     HRBF_env::clean_env();
