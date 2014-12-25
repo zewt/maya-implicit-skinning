@@ -8,7 +8,6 @@ project(implicit_framework)
 # Check dependencies
 #-------------------------------------------------------------------------------
 FIND_PACKAGE(CUDA REQUIRED)
-FIND_PACKAGE(OpenGL REQUIRED)
 
 # END CHECK DEPENDANCIES -------------------------------------------------------
 
@@ -191,13 +190,8 @@ ENDIF(MSVC)
 
 if(MSVC)
     INCLUDE_DIRECTORIES("${CUDA_SDK_ROOT_DIR}/common/inc")
-    set(glu "glu32")
-    set(OpenGL "opengl32")
 else()
     set(LIB_CUDA -lcuda)
-    set(glu GLU)
-    set(OpenGL GL)
-    #set(TAUCS_LIBRARIES ${taucs})
 endif()
 
 # END DEFINE LIBRARIES ---------------------------------------------------------
@@ -231,15 +225,11 @@ CUDA_ADD_LIBRARY( implicit_framework STATIC  ${cuda_sources}  ${host_sources})
 # Build all .cpp and qt codes into a static lib implicit_framework
 #ADD_LIBRARY( implicit_framework STATIC ${host_sources} )
 # Libraries implicit_framework needs to be linked against:
-TARGET_LINK_LIBRARIES(implicit_framework
-    ${LIB_CUDA} 
-    ${OpenGL} ${glu})
+TARGET_LINK_LIBRARIES(implicit_framework ${LIB_CUDA})
 
 if(!MSVC)
 TARGET_LINK_LIBRARIES(implicit_framework -ldl -lpthread)
 endif()
-
-TARGET_LINK_LIBRARIES(implicit_framework)
 
 ADD_LIBRARY(implicit SHARED src/plugin.cpp)
 SET_TARGET_PROPERTIES(implicit PROPERTIES SUFFIX .mll)
