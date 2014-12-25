@@ -19,9 +19,7 @@
 #include "animesh_kers.hpp"
 
 #include "conversions.hpp"
-#include "dual_quat_cu.hpp"
 #include "cuda_current_device.hpp"
-#include "color.hpp"
 #include "std_utils.hpp"
 
 

@@ -21,7 +21,6 @@
 
 #include <vector>
 
-#include "dual_quat_cu.hpp"
 #include "bone.hpp"
 #include "joint_type.hpp"
 #include "transfo.hpp"

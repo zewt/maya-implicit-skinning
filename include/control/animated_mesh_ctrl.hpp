@@ -26,7 +26,6 @@
 
 #include "vec3_cu.hpp"
 #include "mesh.hpp"
-#include "color.hpp"
 #include "animesh_enum.hpp"
 #include "transfo.hpp"
 #include "bone_type.hpp"

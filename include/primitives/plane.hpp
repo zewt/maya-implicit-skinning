@@ -52,49 +52,6 @@ private:
     float offset;
 };
 
-
-/// @brief implicit plane using flatten & symetric funtion ( distance )
-struct S_Plane{
-    __device__ __host__
-    inline S_Plane() {};
-
-    __device__ __host__
-    inline S_Plane(const Vec3_cu& normal, const Point_cu& b, float r) :
-        n(normal.normalized()), radius(r), p(b),
-        recal(pt_vec_dot(p,n) - r),
-        offset(radius) {};
-
-    __device__ __host__
-    float	f(const Point_cu& p) const;
-
-    __device__ __host__
-    inline Vec3_cu	gf(const Point_cu& p) const;
-
-    __device__ __host__
-    inline float fngf(Vec3_cu& gf, const Point_cu& p) const;
-
-    __device__ __host__
-    static inline float pt_vec_dot(const Point_cu& p, const Vec3_cu& v);
-
-
-    void set_radius(float r) {
-        radius = r;
-        if (offset > radius)
-            offset = radius; ///< potential offset around surface
-        recal = pt_vec_dot(p,n) - r;
-    }
-
-    float get_radius() {
-        return radius;
-    }
-
-    Vec3_cu n;
-    float radius;
-    Point_cu p;
-    float recal;  ///< offset for plane recalage
-    float offset; ///< potential offset around surface
-};
-
 #include "plane.inl"
 
 #endif // PLANE_HPP__

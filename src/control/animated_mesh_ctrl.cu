@@ -990,13 +990,6 @@ void Animated_mesh_ctrl::transform_caps(int bone_id, const Transfo& tr)
         }
 }
 
-// -----------------------------------------------------------------------------
-
-static float4 colorToFloat4(const Color& cl){
-    return make_float4(cl.r, cl.g, cl.b, cl.a);
-}
-
-// -----------------------------------------------------------------------------
 void Animated_mesh_ctrl::resize_samples_anim(int bone_id, int size)
 {
     _sample_anim_list[bone_id].nodes.  resize( size );

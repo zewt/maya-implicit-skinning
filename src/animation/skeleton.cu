@@ -22,7 +22,6 @@
 #include <fstream>
 
 #include "std_utils.hpp"
-#include "color.hpp"
 #include "blending_env.hpp"
 #include "skeleton_env.hpp"
 #include "hrbf_kernels.hpp"
