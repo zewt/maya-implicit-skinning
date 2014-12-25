@@ -17,7 +17,24 @@
 #include <vector>
 using namespace std;
 
-static Cuda_ctrl::CudaCtrl *mainCtrl;
+struct PluginInterfaceImpl
+{
+    bool gotFirst;
+    Cuda_ctrl::CudaCtrl cudaCtrl;
+};
+
+PluginInterface::PluginInterface()
+{
+    // We store this in a helper object to avoid importing CudaCtrl into the header,
+    // since it's incompatible with Maya's headers.
+    impl = new PluginInterfaceImpl();
+    impl->gotFirst = false;
+}
+
+PluginInterface::~PluginInterface()
+{
+    delete impl;
+}
 
 void PluginInterface::init()
 {
@@ -34,9 +51,6 @@ void PluginInterface::init()
 
 void PluginInterface::shutdown()
 {
-    delete mainCtrl;
-    mainCtrl = NULL;
-
     Cuda_ctrl::cleanup();
 }
 
@@ -48,9 +62,9 @@ void PluginInterface::shutdown()
 static Loader::Abs_skeleton original_loader_skeleton; // XXX
 void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton, vector<Loader::Vec3> &out_verts)
 {
-    if(mainCtrl == NULL)
+    if(!impl->gotFirst)
     {
-        mainCtrl = new Cuda_ctrl::CudaCtrl();
+        impl->gotFirst = true;
 
         // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
         // Mesh.
@@ -58,21 +72,23 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
         ptr_mesh->load(loader_mesh);
 
         // Hand the Mesh to Cuda_ctrl.
-        mainCtrl->load_mesh( ptr_mesh );
+        impl->cudaCtrl.load_mesh( ptr_mesh );
 
+        // Load the skeleton.
+        impl->cudaCtrl._skeleton.load(loader_skeleton);
+
+        // Tell cudaCtrl that we've loaded both the mesh and the skeleton.  This could be simplified.
+        impl->cudaCtrl.load_animesh();
+
+        // Save the skeleton.  We'll compare the skeleton we get later against this to find out
+        // how it's changed.  XXX: Should we store the bind pose instead?  If so, we'll need to
+        // be in bind pose for update_all_hrbf_samples/update_base_potential.
         original_loader_skeleton = loader_skeleton;
-        mainCtrl->_skeleton.load(loader_skeleton);
-
-        mainCtrl->load_animesh();
 
 
-
-        mainCtrl->_anim_mesh->update_all_hrbf_samples(0);
-
-
-        mainCtrl->_anim_mesh->update_base_potential();
-
-//        Cuda_ctrl::_anim_mesh->save_ism("c:/foo.ism");
+        // Run the initial sampling.
+        impl->cudaCtrl._anim_mesh->update_all_hrbf_samples(0);
+        impl->cudaCtrl._anim_mesh->update_base_potential();
     }
 
     // Update the skeleton representation.
@@ -89,7 +105,7 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
 
             transfos.push_back(Transfo(changeToTransform));
         }
-        mainCtrl->_skeleton.set_transforms(transfos);
+        impl->cudaCtrl._skeleton.set_transforms(transfos);
     }
 
 //    loader_skeleton._bones[0].
@@ -103,12 +119,12 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
             mesh_vertices[i].y,
             mesh_vertices[i].z);
     }
-    mainCtrl->_anim_mesh->_animesh->copy_vertices(vertices);
+    impl->cudaCtrl._anim_mesh->_animesh->copy_vertices(vertices);
 
 //    Cuda_ctrl::_anim_mesh->update_base_potential();
 
-    mainCtrl->_anim_mesh->set_do_smoothing(true);
-    mainCtrl->_anim_mesh->deform_mesh();
+    impl->cudaCtrl._anim_mesh->set_do_smoothing(true);
+    impl->cudaCtrl._anim_mesh->deform_mesh();
 
-    mainCtrl->_anim_mesh->_animesh->get_anim_vertices_aifo(out_verts);
+    impl->cudaCtrl._anim_mesh->_animesh->get_anim_vertices_aifo(out_verts);
 }

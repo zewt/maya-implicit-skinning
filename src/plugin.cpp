@@ -1256,6 +1256,9 @@ public:
     MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
 
 private:
+
+    PluginInterface pluginInterface;
+
     // local node attributes
     static  MObject     offsetMatrix;     // offset center and axis
 };
@@ -1603,7 +1606,7 @@ MStatus offset::compute(const MPlug &plug, MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     vector<Loader::Vec3> result_verts;
-    PluginInterface::go(mesh, skeleton, result_verts);
+    pluginInterface.go(mesh, skeleton, result_verts);
 
 
 

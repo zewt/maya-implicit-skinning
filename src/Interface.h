@@ -7,10 +7,17 @@
 #include <vector>
 using namespace std;
 
-namespace PluginInterface
+struct PluginInterfaceImpl;
+class PluginInterface
 {
-    void init();
-    void shutdown();
+public:
+    PluginInterface();
+    ~PluginInterface();
+
+    static void init();
+    static void shutdown();
     void go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton, vector<Loader::Vec3> &out_verts);
-}
+private:
+    PluginInterfaceImpl *impl;
+};
 #endif
