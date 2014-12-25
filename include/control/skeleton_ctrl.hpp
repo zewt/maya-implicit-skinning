@@ -29,7 +29,6 @@
 #include "transfo.hpp"
 #include "loader_skel.hpp"
 #include "loader_anims.hpp"
-#include "graph.hpp"
 
 struct Skeleton;
 
@@ -40,8 +39,6 @@ class Skeleton_ctrl {
 public:
     Skeleton_ctrl();
     ~Skeleton_ctrl();
-
-    void load(const Graph& graph);
 
     void load(const Loader::Abs_skeleton& abs_skel);
 

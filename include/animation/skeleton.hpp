@@ -30,7 +30,6 @@
 #include "skeleton_env_type.hpp"
 
 // Forward definitions ---------------------------------------------------------
-struct Graph;
 namespace Loader {
 struct Abs_skeleton;
 }
@@ -93,9 +92,6 @@ struct Abs_skeleton;
  */
 struct Skeleton {
 
-
-  /// Build skeleton from a graph
-  Skeleton(const Graph& g, int root = 0);
 
   /// Build skeleton from the abstract representation
   Skeleton(const Loader::Abs_skeleton& skel);
@@ -301,18 +297,7 @@ private:
   void subupdate_vertices(int root,
                           const HPLA_tr& global_transfos);
 
-  /// Given a graph 'g' build the corresponding skeleton with the node root as
-  /// root of the tree. This fills the attributes '_parents' '_children' and
-  /// '_bone_lengths'
-  void fill_children(Graph& g, int root);
-
-  /// Once 'fill_children()' has been called this compute
-  /// the frames at each bone. Attributes '_frames' and '_lcl_frames' are
-  /// filled
-  void fill_frames(const Graph& g);
-
-  /// Once '_frames' and '_children' are filled (manually or with
-  /// fill_children() and fill_frame() ) this compute '_bones' and
+  /// Once '_frames' and '_children' are filled, this compute '_bones' and
   /// '_anim_bones' according to the frames positions.
   void fill_bones();
 

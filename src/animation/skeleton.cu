@@ -29,7 +29,6 @@
 #include "conversions.hpp"
 #include "std_utils.hpp"
 #include "class_saver.hpp"
-#include "graph.hpp"
 #include "loader_skel.hpp"
 #include "globals.hpp"
 
@@ -42,66 +41,6 @@
 using namespace Cuda_utils;
 
 const float default_bone_radius = 1.f;
-
-// -----------------------------------------------------------------------------
-
-/// @param g : graph to look up
-/// @param curr : current node of 'g'
-/// @param prev : previous (i.e parent) node of g(curr)
-/// @param res : newly created tree with nodes duplicated when several sons
-/// @param pt : current parent in res
-static void rec_gen_bone_graph(const Graph& g,
-                               int curr,
-                               int prev,
-                               Graph& res,
-                               int pt)
-{
-    // Current is a leaf:
-    if( g._neighs[curr].size() < 2  && prev != -1)
-    {
-        int id = res.push_vertex( g._vertices[curr] );
-        if(pt != -1) res.push_edge( Graph::Edge(pt, id) );
-        return;
-    }
-
-    for(unsigned i = 0; i < g._neighs[curr].size(); ++i)
-    {
-        const int arc = g._neighs[curr][i];
-
-        if(arc == prev) continue; // skip parent
-
-        int id = res.push_vertex( g._vertices[curr] );
-        if(pt != -1) res.push_edge( Graph::Edge(pt, id) );
-
-        rec_gen_bone_graph(g, arc, curr, res, id);
-    }
-
-}
-
-// -----------------------------------------------------------------------------
-
-static Graph gen_bone_graph(const Graph& g, int root)
-{
-    Graph res( g._offset, g._scale);
-    if( g._neighs[root].size() > 1)
-    {
-        // When root has more than 1 son it will be duplicated, hence no root
-        // node will exists. We need to create it
-        Vec3_cu v = g._vertices[root];
-        v.x += 0.1f; // offset so that it has not zero length
-        int id = res.push_vertex( v );
-        rec_gen_bone_graph(g, root, -1, res, id);
-
-    }
-    else if ( g._neighs[root].size() == 0)
-        res.push_vertex( g._vertices[root] );
-    else
-        rec_gen_bone_graph(g, root, -1, res, -1);
-
-    return  res;
-}
-
-// -----------------------------------------------------------------------------
 
 void Skeleton::init(int nb_joints)
 {
@@ -148,40 +87,10 @@ void Skeleton::init(int nb_joints)
 void Skeleton::init_skel_env()
 {
     _skel_id = Skeleton_env::new_skel_instance(_root, _anim_bones, _parents);
+    update_bones_pose();
     Skeleton_env::update_joints_data(_skel_id, _joints_data);
     Skeleton_env::update_bones_data (_skel_id, _anim_bones );
 }
-
-// -----------------------------------------------------------------------------
-
-Skeleton::Skeleton(const Graph& graph, int root)
-{
-    assert( !graph.is_cycles(root) );
-
-    // from the graph we generate another graph were nodes with more than one
-    // son are duplicated to obtain as many nodes as sons. The new nodes keeps
-    // the position and arcs of the old node.
-    // Later each node will give rise to a single bone.
-    Graph g = gen_bone_graph(graph, root);
-    // The generated graph has always root set to node 0
-    _root = root = 0;
-
-    init( g.nb_vertices() );
-
-    _parents[_root] = -1;
-    Mat3_cu id = Mat3_cu::identity();
-    _frames     [_root] = Transfo( id, g._vertices[_root] );
-    _lcl_frames [_root] = _frames[_root].fast_invert();
-
-    Graph tmp = g;
-    fill_children( tmp, _root );
-    fill_frames( g );
-    fill_bones();
-    // must be called last
-    init_skel_env();
-}
-
-// -----------------------------------------------------------------------------
 
 Skeleton::Skeleton(const Loader::Abs_skeleton& skel) : _root(skel._root)
 {
@@ -457,7 +366,7 @@ void Skeleton::transform_hrbf(const Cuda_utils::Device::Array<Transfo>& d_global
 
 void Skeleton::transform_precomputed_prim(const HPLA_tr &global_transfos )
 {
-
+    // XXX: why does _nb_joints exist isntead of just _anim_bones.size()
     for( int i = 0; i < _nb_joints; i++)
     {
         if(bone_type(i) != EBone::PRECOMPUTED)
@@ -536,68 +445,6 @@ void Skeleton::update_hrbf_id_to_bone_id()
     }
 }
 */
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::fill_children(Graph& g, int root)
-{
-    std::vector<int> to_pop;
-    to_pop.reserve( 2 * g.nb_edges() );
-    for(int i = 0; i < (int)g.nb_edges(); i++)
-    {
-        const Graph::Edge& e = g._edges[i];
-        if(e.a == root){
-            to_pop.push_back(e.b);
-            _children[root].push_back(e.b);
-            _parents[e.b] = root;
-            Std_utils::pop(g._edges, i);
-            i = -1;
-        } else {
-            if(e.b == root){
-                to_pop.push_back(e.a);
-                _children[root].push_back(e.a);
-                _parents[e.a] = root;
-                Std_utils::pop(g._edges, i);
-                i = -1;
-            }
-        }
-    }
-
-    for(unsigned i = 0; i < to_pop.size(); i++)
-        fill_children(g, to_pop[i]);
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::fill_frames(const Graph& g)
-{
-    for(int i = 0; i < _nb_joints; i++)
-    {
-        Vec3_cu org = g.get_vertex( i );
-        Vec3_cu end = Vec3_cu::zero();
-        int nb_sons = _children[i].size();
-        for(int s = 0; s < nb_sons; s++)
-        {
-            int sid = _children[i][s];
-            end += g.get_vertex( sid );
-        }
-
-        Vec3_cu x, y, z;
-        if( nb_sons > 0){
-            end /= (float)nb_sons;
-            x = (end - org).normalized();
-        }else
-            x = Vec3_cu::unit_x();
-
-        x.coordinate_system(y, z);
-
-        Transfo tr(Mat3_cu(x, y, z), org);
-        _frames    [i] = tr;
-        _lcl_frames[i] = tr.fast_invert();
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void Skeleton::fill_bones()
 {

@@ -41,18 +41,6 @@ int Skeleton_ctrl::root()
     return skel->root();
 }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::load( const Graph& graph )
-{
-    delete skel;
-    skel = new Skeleton(graph, 0);
-
-    reset_selection();
-}
-
-// -----------------------------------------------------------------------------
-
 void Skeleton_ctrl::load(const Loader::Abs_skeleton& abs_skel)
 {
     delete skel;
