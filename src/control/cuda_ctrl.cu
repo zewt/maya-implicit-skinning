@@ -38,13 +38,15 @@
 namespace Cuda_ctrl {
 // =============================================================================
 
-Animated_mesh_ctrl*  _anim_mesh = 0;
-Skeleton_ctrl        _skeleton;
 Debug_ctrl           _debug;
-Graph_ctrl           _graph;
 Operators_ctrl       _operators;
 
-void load_mesh( Mesh* mesh )
+CudaCtrl::~CudaCtrl()
+{
+    delete _anim_mesh;
+}
+
+void CudaCtrl::load_mesh( Mesh* mesh )
 {
     delete _anim_mesh;
     _anim_mesh = 0;
@@ -67,22 +69,14 @@ bool is_mesh_loaded(){
 
 // -----------------------------------------------------------------------------
 
-bool is_animesh_loaded(){
+bool CudaCtrl::is_animesh_loaded() const
+{
     return _anim_mesh != 0;
 }
 
-// -----------------------------------------------------------------------------
+bool CudaCtrl::is_skeleton_loaded() const { return _skeleton.is_loaded(); }
 
-bool is_skeleton_loaded(){ return _skeleton.is_loaded(); }
-
-// -----------------------------------------------------------------------------
-
-void erase_graph(){
-    delete g_graph;
-    g_graph = new Graph(g_mesh->get_offset(), g_mesh->get_scale());
-}
-
-void load_animesh()
+void CudaCtrl::load_animesh()
 {
     Animesh *animesh = new Animesh(g_mesh, g_skel);
     delete _anim_mesh;
@@ -167,14 +161,16 @@ void cleanup()
 
     Constants::free();
 
-    _skeleton.cleanup(); // Skeleton must be deleted before blending env
+    // XXX
+    mainCtrl->_skeleton.cleanup(); // Skeleton must be deleted before blending env
     delete g_graph;
     delete g_mesh;
-    delete _anim_mesh;
+
+    delete mainCtrl;
 
     g_graph       = 0;
     g_mesh        = 0;
-    _anim_mesh = NULL;
+    mainCtrl = NULL;
 
     Blending_env::clean_env();
     HRBF_env::clean_env();

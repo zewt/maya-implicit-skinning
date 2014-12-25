@@ -43,30 +43,32 @@
 namespace Cuda_ctrl{
 // =============================================================================
 
-/// Control for the current animated mesh (mesh color, smoothing, anim etc.)
-extern Animated_mesh_ctrl* _anim_mesh;
-/// Control for the skeleton
-extern Skeleton_ctrl      _skeleton;
 /// Control for the debug mode
 extern Debug_ctrl         _debug;
-/// Control for the current graph (save it load it etc.)
-extern Graph_ctrl         _graph;
 /// Control for blending operators (bulge in contact, clean union etc.)
 extern Operators_ctrl    _operators;
 
 // -----------------------------------------------------------------------------
 
-void load_mesh( Mesh* mesh );
+class CudaCtrl {
+public:
+    ~CudaCtrl();
+
+    void load_mesh( Mesh* mesh );
+    bool is_animesh_loaded() const;
+    void load_animesh();
+    bool is_skeleton_loaded() const;
+
+    /// Control for the skeleton
+    Skeleton_ctrl _skeleton;
+
+    /// Control for the current animated mesh (mesh color, smoothing, anim etc.)
+    Animated_mesh_ctrl *_anim_mesh;
+};
+
+CudaCtrl *mainCtrl;
 
 bool is_mesh_loaded();
-
-bool is_animesh_loaded();
-
-bool is_skeleton_loaded();
-
-void erase_graph();
-
-void load_animesh();
 
 /// device memory usage in megabytes
 void get_mem_usage(double& total, double& free);

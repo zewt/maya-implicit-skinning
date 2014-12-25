@@ -44,13 +44,9 @@ message("CUDA compute capability defined to ${CUDA_COMPUTE_CAPABILITY}")
 # compiler and cuda compilation in NVCC.  Note that CUDA_INCLUDE_DIRS is added
 # automatically by CUDA_ADD_EXECUTABLE and CUDA_ADD_LIBRARY.
 
-# SET(FBX_ROOT $ENV{FBXSDK_ROOT})
-SET(FBX_ROOT "C:/Program Files/Autodesk/FBX SDK")
-
 set(MAYA_DIR "C:/Program Files/Autodesk/Maya2015")
 INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${FBX_ROOT}/2012.2/include
     "${MAYA_DIR}/include"
     libs/include
     libs/include/vcglib
@@ -197,13 +193,10 @@ if(MSVC)
     INCLUDE_DIRECTORIES("${CUDA_SDK_ROOT_DIR}/common/inc")
     set(glu "glu32")
     set(OpenGL "opengl32")
-    ADD_DEFINITIONS(-DFBXSDK_SHARED) # macro needed to tell fbx we're using dlls
-    set(FBX "${FBX_ROOT}/2012.2/lib/vs2010/x64/fbxsdk-2012.2.lib")
 else()
     set(LIB_CUDA -lcuda)
     set(glu GLU)
     set(OpenGL GL)
-    set(FBX "${CMAKE_CURRENT_SOURCE_DIR}/libs/bin/gcc/x64/libfbxsdk-2012.2-static.a")
     #set(TAUCS_LIBRARIES ${taucs})
 endif()
 
@@ -212,10 +205,6 @@ endif()
 #-------------------------------------------------------------------------------
 # Copy dlls to build directory
 #-------------------------------------------------------------------------------
-
-if(MSVC)
-configure_file(${FBX_ROOT}/2012.2/lib/vs2010/x86/fbxsdk-2012.2.dll ${CMAKE_CURRENT_BINARY_DIR}/fbxsdk-2012.2.dll COPYONLY)
-endif()
 
 # END COPY DLLS ----------------------------------------------------------------
 
@@ -244,7 +233,7 @@ CUDA_ADD_LIBRARY( implicit_framework STATIC  ${cuda_sources}  ${host_sources})
 # Libraries implicit_framework needs to be linked against:
 TARGET_LINK_LIBRARIES(implicit_framework
     ${LIB_CUDA} 
-    ${OpenGL} ${glu} ${FBX})
+    ${OpenGL} ${glu})
 
 if(!MSVC)
 TARGET_LINK_LIBRARIES(implicit_framework -ldl -lpthread)

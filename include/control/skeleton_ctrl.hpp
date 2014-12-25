@@ -48,7 +48,7 @@ public:
 
     void load(const Loader::Abs_skeleton& abs_skel);
 
-    bool is_loaded();
+    bool is_loaded() const;
 
     bool is_displayed  (){ return _display;      }
     void switch_display(){ _display = !_display; }

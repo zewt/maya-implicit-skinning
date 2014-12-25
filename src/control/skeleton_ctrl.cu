@@ -65,7 +65,7 @@ void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
 
 // -----------------------------------------------------------------------------
 
-bool Skeleton_ctrl::is_loaded(){ return g_skel != 0; }
+bool Skeleton_ctrl::is_loaded() const { return g_skel != 0; }
 
 // -----------------------------------------------------------------------------
 

@@ -10,8 +10,6 @@
 #include "blending_lib/generator.hpp"
 #include "vec3_cu.hpp"
 #include "cuda_ctrl.hpp"
-#include "loader.hpp"
-#include "fbx_loader.hpp"
 #include "conversions.hpp"
 #include "cuda_ctrl.hpp"
 #include "animesh.hpp"
@@ -46,7 +44,10 @@ void PluginInterface::shutdown()
 static Loader::Abs_skeleton original_loader_skeleton; // XXX
 void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton, vector<Loader::Vec3> &out_verts)
 {
-    if(Cuda_ctrl::_anim_mesh == NULL)
+    if(Cuda_ctrl::mainCtrl == NULL)
+        Cuda_ctrl::mainCtrl = new Cuda_ctrl::CudaCtrl();
+
+    if(Cuda_ctrl::mainCtrl->_anim_mesh == NULL)
     {
         // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
         // Mesh.
@@ -54,19 +55,19 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
         ptr_mesh->load(loader_mesh);
 
         // Hand the Mesh to Cuda_ctrl.
-        Cuda_ctrl::load_mesh( ptr_mesh );
+        Cuda_ctrl::mainCtrl->load_mesh( ptr_mesh );
 
         original_loader_skeleton = loader_skeleton;
-        Cuda_ctrl::_skeleton.load(loader_skeleton);
+        Cuda_ctrl::mainCtrl->_skeleton.load(loader_skeleton);
 
-        Cuda_ctrl::load_animesh();
-
-
-
-        Cuda_ctrl::_anim_mesh->update_all_hrbf_samples(0);
+        Cuda_ctrl::mainCtrl->load_animesh();
 
 
-        Cuda_ctrl::_anim_mesh->update_base_potential();
+
+        Cuda_ctrl::mainCtrl->_anim_mesh->update_all_hrbf_samples(0);
+
+
+        Cuda_ctrl::mainCtrl->_anim_mesh->update_base_potential();
 
 //        Cuda_ctrl::_anim_mesh->save_ism("c:/foo.ism");
     }
@@ -85,7 +86,7 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
 
             transfos.push_back(Transfo(changeToTransform));
         }
-        Cuda_ctrl::_skeleton.set_transforms(transfos);
+        Cuda_ctrl::mainCtrl->_skeleton.set_transforms(transfos);
     }
 
 //    loader_skeleton._bones[0].
@@ -99,12 +100,12 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
             mesh_vertices[i].y,
             mesh_vertices[i].z);
     }
-    Cuda_ctrl::_anim_mesh->_animesh->copy_vertices(vertices);
+    Cuda_ctrl::mainCtrl->_anim_mesh->_animesh->copy_vertices(vertices);
 
 //    Cuda_ctrl::_anim_mesh->update_base_potential();
 
-    Cuda_ctrl::_anim_mesh->set_do_smoothing(true);
-    Cuda_ctrl::_anim_mesh->deform_mesh();
+    Cuda_ctrl::mainCtrl->_anim_mesh->set_do_smoothing(true);
+    Cuda_ctrl::mainCtrl->_anim_mesh->deform_mesh();
 
-    Cuda_ctrl::_anim_mesh->_animesh->get_anim_vertices_aifo(out_verts);
+    Cuda_ctrl::mainCtrl->_anim_mesh->_animesh->get_anim_vertices_aifo(out_verts);
 }
