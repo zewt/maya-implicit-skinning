@@ -17,6 +17,8 @@
 #include <vector>
 using namespace std;
 
+static Cuda_ctrl::CudaCtrl *mainCtrl;
+
 void PluginInterface::init()
 {
     std::vector<Blending_env::Op_t> op;
@@ -25,7 +27,6 @@ void PluginInterface::init()
     op.push_back( Blending_env::C_D  );
 
     Cuda_ctrl::cuda_start(op);
-    Cuda_ctrl::init_opengl_cuda();
 
     // XXX "HACK: Because blending_env initialize to elbow too ..." What?
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
@@ -33,6 +34,9 @@ void PluginInterface::init()
 
 void PluginInterface::shutdown()
 {
+    delete mainCtrl;
+    mainCtrl = NULL;
+
     Cuda_ctrl::cleanup();
 }
 
@@ -44,30 +48,29 @@ void PluginInterface::shutdown()
 static Loader::Abs_skeleton original_loader_skeleton; // XXX
 void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton, vector<Loader::Vec3> &out_verts)
 {
-    if(Cuda_ctrl::mainCtrl == NULL)
-        Cuda_ctrl::mainCtrl = new Cuda_ctrl::CudaCtrl();
-
-    if(Cuda_ctrl::mainCtrl->_anim_mesh == NULL)
+    if(mainCtrl == NULL)
     {
+        mainCtrl = new Cuda_ctrl::CudaCtrl();
+
         // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
         // Mesh.
         Mesh* ptr_mesh = new Mesh();
         ptr_mesh->load(loader_mesh);
 
         // Hand the Mesh to Cuda_ctrl.
-        Cuda_ctrl::mainCtrl->load_mesh( ptr_mesh );
+        mainCtrl->load_mesh( ptr_mesh );
 
         original_loader_skeleton = loader_skeleton;
-        Cuda_ctrl::mainCtrl->_skeleton.load(loader_skeleton);
+        mainCtrl->_skeleton.load(loader_skeleton);
 
-        Cuda_ctrl::mainCtrl->load_animesh();
-
-
-
-        Cuda_ctrl::mainCtrl->_anim_mesh->update_all_hrbf_samples(0);
+        mainCtrl->load_animesh();
 
 
-        Cuda_ctrl::mainCtrl->_anim_mesh->update_base_potential();
+
+        mainCtrl->_anim_mesh->update_all_hrbf_samples(0);
+
+
+        mainCtrl->_anim_mesh->update_base_potential();
 
 //        Cuda_ctrl::_anim_mesh->save_ism("c:/foo.ism");
     }
@@ -86,7 +89,7 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
 
             transfos.push_back(Transfo(changeToTransform));
         }
-        Cuda_ctrl::mainCtrl->_skeleton.set_transforms(transfos);
+        mainCtrl->_skeleton.set_transforms(transfos);
     }
 
 //    loader_skeleton._bones[0].
@@ -100,12 +103,12 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
             mesh_vertices[i].y,
             mesh_vertices[i].z);
     }
-    Cuda_ctrl::mainCtrl->_anim_mesh->_animesh->copy_vertices(vertices);
+    mainCtrl->_anim_mesh->_animesh->copy_vertices(vertices);
 
 //    Cuda_ctrl::_anim_mesh->update_base_potential();
 
-    Cuda_ctrl::mainCtrl->_anim_mesh->set_do_smoothing(true);
-    Cuda_ctrl::mainCtrl->_anim_mesh->deform_mesh();
+    mainCtrl->_anim_mesh->set_do_smoothing(true);
+    mainCtrl->_anim_mesh->deform_mesh();
 
-    Cuda_ctrl::mainCtrl->_anim_mesh->_animesh->get_anim_vertices_aifo(out_verts);
+    mainCtrl->_anim_mesh->_animesh->get_anim_vertices_aifo(out_verts);
 }

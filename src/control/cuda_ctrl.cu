@@ -25,7 +25,6 @@
 
 #include "skeleton.hpp"
 #include "globals.hpp"
-#include "cuda_globals.hpp"
 #include "animesh.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
@@ -41,9 +40,16 @@ namespace Cuda_ctrl {
 Debug_ctrl           _debug;
 Operators_ctrl       _operators;
 
+CudaCtrl::CudaCtrl()
+{
+    _anim_mesh = NULL;
+    _mesh = NULL;
+}
+
 CudaCtrl::~CudaCtrl()
 {
     delete _anim_mesh;
+    delete _mesh;
 }
 
 void CudaCtrl::load_mesh( Mesh* mesh )
@@ -51,23 +57,12 @@ void CudaCtrl::load_mesh( Mesh* mesh )
     delete _anim_mesh;
     _anim_mesh = 0;
 
-    delete g_mesh;
-    g_mesh = 0;
-
-    g_mesh = mesh;
-
-    g_mesh->check_integrity();
+    delete _mesh;
+    _mesh = mesh;
+    _mesh->check_integrity();
 
     std::cout << "mesh loaded" << std::endl;
 }
-
-// -----------------------------------------------------------------------------
-
-bool is_mesh_loaded(){
-    return g_mesh != 0 && g_mesh->get_nb_vertices() != 0;
-}
-
-// -----------------------------------------------------------------------------
 
 bool CudaCtrl::is_animesh_loaded() const
 {
@@ -78,7 +73,7 @@ bool CudaCtrl::is_skeleton_loaded() const { return _skeleton.is_loaded(); }
 
 void CudaCtrl::load_animesh()
 {
-    Animesh *animesh = new Animesh(g_mesh, g_skel);
+    Animesh *animesh = new Animesh(_mesh, _skeleton.skel);
     delete _anim_mesh;
     _anim_mesh = new Animated_mesh_ctrl(animesh);
 }
@@ -128,13 +123,6 @@ void set_default_controller_parameters()
     //Blending_env::set_global_ctrl_shape(shape);
 }
 
-void init_opengl_cuda()
-{
-    // NOTE this function should not call ANY cuda API functions
-    g_mesh  = new Mesh();
-    g_graph = new Graph(g_mesh->get_offset(), g_mesh->get_scale());
-}
-
 // -----------------------------------------------------------------------------
 
 void cuda_start(const std::vector<Blending_env::Op_t>& op)
@@ -160,17 +148,6 @@ void cleanup()
     CUDA_CHECK_ERRORS();
 
     Constants::free();
-
-    // XXX
-    mainCtrl->_skeleton.cleanup(); // Skeleton must be deleted before blending env
-    delete g_graph;
-    delete g_mesh;
-
-    delete mainCtrl;
-
-    g_graph       = 0;
-    g_mesh        = 0;
-    mainCtrl = NULL;
 
     Blending_env::clean_env();
     HRBF_env::clean_env();

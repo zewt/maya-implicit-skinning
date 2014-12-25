@@ -31,20 +31,17 @@
 #include "loader_anims.hpp"
 #include "graph.hpp"
 
+struct Skeleton;
 
 /**
     @brief
 */
 class Skeleton_ctrl {
 public:
-    Skeleton_ctrl() :
-        _display(true)
-    {
-    }
+    Skeleton_ctrl();
+    ~Skeleton_ctrl();
 
-    void cleanup();
-
-    void load(const Graph& g_graph);
+    void load(const Graph& graph);
 
     void load(const Loader::Abs_skeleton& abs_skel);
 
@@ -138,6 +135,9 @@ private:
 
     bool _display;
     std::vector<int> _selected_joints; ///< set of selected skeleton joints
+
+public: // XXX
+    Skeleton *skel;
 };
 
 

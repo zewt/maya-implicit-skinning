@@ -19,5 +19,4 @@
 #include "globals.hpp"
 
 std::string g_cache_dir  = "";
-Mesh* g_mesh = 0;
 

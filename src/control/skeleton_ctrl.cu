@@ -19,31 +19,34 @@
 #include "skeleton_ctrl.hpp"
 
 #include "animesh.hpp"
-#include "cuda_globals.hpp"
 #include "globals.hpp"
 #include "cuda_ctrl.hpp"
 #include "conversions.hpp"
 #include "skeleton.hpp"
 
-Skeleton*    g_skel     = 0;
-
-void Skeleton_ctrl::cleanup()
+Skeleton_ctrl::Skeleton_ctrl():
+    _display(true)
 {
-    delete g_skel;
-    g_skel = NULL;
+    skel = NULL;
+}
+
+Skeleton_ctrl::~Skeleton_ctrl()
+{
+    delete skel;
+    skel = NULL;
 }
 
 int Skeleton_ctrl::root()
 {
-    return g_skel->root();
+    return skel->root();
 }
 
 // -----------------------------------------------------------------------------
 
-void Skeleton_ctrl::load( const Graph& g_graph )
+void Skeleton_ctrl::load( const Graph& graph )
 {
-    delete g_skel;
-    g_skel = new Skeleton(g_graph, 0);
+    delete skel;
+    skel = new Skeleton(graph, 0);
 
     reset_selection();
 }
@@ -52,31 +55,31 @@ void Skeleton_ctrl::load( const Graph& g_graph )
 
 void Skeleton_ctrl::load(const Loader::Abs_skeleton& abs_skel)
 {
-    delete g_skel;
-    g_skel = new Skeleton(abs_skel);
+    delete skel;
+    skel = new Skeleton(abs_skel);
 
     reset_selection();
 }
 
 void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
 {
-    g_skel->set_transforms(transfos);
+    skel->set_transforms(transfos);
 }
 
 // -----------------------------------------------------------------------------
 
-bool Skeleton_ctrl::is_loaded() const { return g_skel != 0; }
+bool Skeleton_ctrl::is_loaded() const { return skel != 0; }
 
 // -----------------------------------------------------------------------------
 
 void Skeleton_ctrl::reset(){
-    g_skel->reset();
+    skel->reset();
 }
 
 // -----------------------------------------------------------------------------
 
 Vec3_cu Skeleton_ctrl::joint_pos(int idx) {
-    return g_skel->joint_pos(idx);
+    return skel->joint_pos(idx);
 }
 
 // -----------------------------------------------------------------------------
@@ -86,7 +89,7 @@ void Skeleton_ctrl::joint_anim_frame(int id_bone,
                               Vec3_cu& fy,
                               Vec3_cu& fz)
 {
-    Mat3_cu m = g_skel->joint_anim_frame(id_bone).get_mat3();
+    Mat3_cu m = skel->joint_anim_frame(id_bone).get_mat3();
     fx = m.x();
     fy = m.y();
     fz = m.z();
@@ -96,14 +99,14 @@ void Skeleton_ctrl::joint_anim_frame(int id_bone,
 
 Transfo Skeleton_ctrl::joint_anim_frame(int id_joint)
 {
-    return g_skel->joint_anim_frame( id_joint );
+    return skel->joint_anim_frame( id_joint );
 }
 
 // -----------------------------------------------------------------------------
 
 Transfo Skeleton_ctrl::bone_anim_frame(int id_bone)
 {
-    return g_skel->bone_anim_frame( id_bone );
+    return skel->bone_anim_frame( id_bone );
 }
 
 // -----------------------------------------------------------------------------
@@ -130,25 +133,22 @@ void Skeleton_ctrl::add_to_selection(int id)
 int Skeleton_ctrl::get_hrbf_id(int bone_id)
 {
 
-    if( g_skel->bone_type(bone_id) == EBone::HRBF)
-    {
-        Bone_hrbf* b = ((Bone_hrbf*)g_skel->get_bone(bone_id));
-        return b->get_hrbf().get_id();
-    }
-    else
+    if( skel->bone_type(bone_id) != EBone::HRBF)
         return -1;
 
+    Bone_hrbf* b = ((Bone_hrbf*)skel->get_bone(bone_id));
+    return b->get_hrbf().get_id();
 }
 
 // -----------------------------------------------------------------------------
 
 int Skeleton_ctrl::get_bone_id(int hrbf_id)
 {
-    for (int i = 0; i < g_skel->nb_joints(); ++i)
+    for (int i = 0; i < skel->nb_joints(); ++i)
     {
-        if( g_skel->bone_type(i) == EBone::HRBF)
+        if( skel->bone_type(i) == EBone::HRBF)
         {
-            Bone_hrbf* b = ((Bone_hrbf*)g_skel->get_bone(i));
+            Bone_hrbf* b = ((Bone_hrbf*)skel->get_bone(i));
             if(b->get_hrbf().get_id() == hrbf_id)
                 return i;
         }
@@ -161,35 +161,35 @@ int Skeleton_ctrl::get_bone_id(int hrbf_id)
 // -----------------------------------------------------------------------------
 
 int Skeleton_ctrl::get_parent(int bone_id){
-    return g_skel->parent(bone_id);
+    return skel->parent(bone_id);
 }
 
 // -----------------------------------------------------------------------------
 
 int Skeleton_ctrl::get_bone_type(int bone_id){
-    return g_skel->bone_type(bone_id);
+    return skel->bone_type(bone_id);
 }
 
 // -----------------------------------------------------------------------------
 
 void Skeleton_ctrl::set_joint_pos(int joint_id, const Vec3_cu& pos)
 {
-   g_skel->set_joint_rest_pos(joint_id, Convs::to_point(pos));
+   skel->set_joint_rest_pos(joint_id, Convs::to_point(pos));
 }
 
 // -----------------------------------------------------------------------------
 
 void Skeleton_ctrl::set_offset_scale(const Vec3_cu& off, float scale)
 {
-    g_skel->set_offset_scale(off, scale);
+    skel->set_offset_scale(off, scale);
 }
 
 // -----------------------------------------------------------------------------
 
 IBL::Ctrl_setup Skeleton_ctrl::get_joint_controller(int id_joint){
-    int pt = g_skel->parent( id_joint );
+    int pt = skel->parent( id_joint );
     if( pt > -1)
-        return g_skel->get_joint_controller(/*id_joint*/pt);
+        return skel->get_joint_controller(/*id_joint*/pt);
     else
         return IBL::Ctrl_setup();
 }
@@ -197,26 +197,26 @@ IBL::Ctrl_setup Skeleton_ctrl::get_joint_controller(int id_joint){
 // -----------------------------------------------------------------------------
 
 void Skeleton_ctrl::set_joint_controller(int id_joint, const IBL::Ctrl_setup& shape){
-    int pt = g_skel->parent( id_joint );
+    int pt = skel->parent( id_joint );
     if( pt > -1)
-        g_skel->set_joint_controller(/*id_joint*/pt, shape);
+        skel->set_joint_controller(/*id_joint*/pt, shape);
 }
 
 // -----------------------------------------------------------------------------
 
 void Skeleton_ctrl::set_joint_blending(int i, EJoint::Joint_t type){
-    int pt = g_skel->parent( i );
+    int pt = skel->parent( i );
     if(pt > -1)
-        g_skel->set_joint_blending(pt, type);
+        skel->set_joint_blending(pt, type);
 }
 
 // -----------------------------------------------------------------------------
 
 EJoint::Joint_t Skeleton_ctrl::get_joint_blending(int id)
 {
-    int pt = g_skel->parent( id );
+    int pt = skel->parent( id );
     if(pt > -1)
-        return g_skel->joint_blending(pt);
+        return skel->joint_blending(pt);
 
     return EJoint::NONE;
 }
@@ -224,29 +224,29 @@ EJoint::Joint_t Skeleton_ctrl::get_joint_blending(int id)
 // -----------------------------------------------------------------------------
 
 void Skeleton_ctrl::set_joint_bulge_mag(int i, float m){
-    g_skel->set_joint_bulge_mag(i, m);
+    skel->set_joint_bulge_mag(i, m);
 }
 
 // -----------------------------------------------------------------------------
 
 int Skeleton_ctrl::get_nb_joints(){
-    return g_skel->nb_joints();
+    return skel->nb_joints();
 }
 
 // -----------------------------------------------------------------------------
 
 const std::vector<int>& Skeleton_ctrl::get_sons(int joint_id)
 {
-    return g_skel->get_sons( joint_id );
+    return skel->get_sons( joint_id );
 }
 
 // -----------------------------------------------------------------------------
 
 int Skeleton_ctrl::find_associated_bone(int hrbf_id)
 {
-    for(int i = 0; i < g_skel->nb_joints(); i++)
+    for(int i = 0; i < skel->nb_joints(); i++)
     {
-        const Bone* b = g_skel->get_bone(i);
+        const Bone* b = skel->get_bone(i);
         if(b->get_type() == EBone::HRBF)
         {
             const HermiteRBF& hrbf = ((const Bone_hrbf*)b)->get_hrbf();

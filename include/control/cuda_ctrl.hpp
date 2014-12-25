@@ -28,7 +28,8 @@
 #include "operators_ctrl.hpp"
 #include "skeleton_ctrl.hpp"
 #include "debug_ctrl.hpp"
-#include "graph_ctrl.hpp"
+
+class Mesh;
 
 /** @brief Mouse, keyboard, screen interface and more for the cuda library
 
@@ -52,12 +53,15 @@ extern Operators_ctrl    _operators;
 
 class CudaCtrl {
 public:
+    CudaCtrl();
     ~CudaCtrl();
 
     void load_mesh( Mesh* mesh );
     bool is_animesh_loaded() const;
     void load_animesh();
     bool is_skeleton_loaded() const;
+
+    Mesh *_mesh;
 
     /// Control for the skeleton
     Skeleton_ctrl _skeleton;
@@ -66,16 +70,8 @@ public:
     Animated_mesh_ctrl *_anim_mesh;
 };
 
-CudaCtrl *mainCtrl;
-
-bool is_mesh_loaded();
-
 /// device memory usage in megabytes
 void get_mem_usage(double& total, double& free);
-
-// -----------------------------------------------------------------------------
-
-void init_opengl_cuda();
 
 /// Initialization of the cuda implicit skinning library
 /// init glew, opengl, cuda context and pre-compute some heavy stuff

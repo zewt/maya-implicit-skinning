@@ -21,7 +21,6 @@
 #include "conversions.hpp"
 #include "animesh.hpp"
 #include "globals.hpp"
-#include "cuda_globals.hpp"
 #include "cuda_ctrl.hpp"
 #include "std_utils.hpp"
 #include "loader_skel.hpp"
@@ -523,12 +522,6 @@ void Animated_mesh_ctrl::set_smooth_smear(float val ){
 void Animated_mesh_ctrl::set_smoothing_weights_diffusion_iter(int nb_iter){
     _animesh->set_smoothing_weights_diffusion_iter(nb_iter);
 }
-
-// -----------------------------------------------------------------------------
-
-const Mesh* Animated_mesh_ctrl::get_mesh() const { return g_mesh; }
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::invert_propagation()
 {

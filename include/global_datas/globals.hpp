@@ -20,15 +20,8 @@
 #define GLOBAL_HPP__
 
 #include <string>
-#include "macros.hpp"
-#include "mesh.hpp"
-
-#include "blending_env_type.hpp"
 
 /// Path to store various caches (mostly blending operators)
 extern std::string g_cache_dir;
-
-/// The current mesh
-extern Mesh* g_mesh;
 
 #endif // GLOBAL_HPP__

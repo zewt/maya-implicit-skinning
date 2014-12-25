@@ -83,7 +83,6 @@ public:
     void color_ssd_weights(int joint_id);
     //@}
 
-    const Mesh* get_mesh() const;
     int get_nearest_bone(int vert_idx);
     bool is_point_displayed(){ return _display_points;     }
 
