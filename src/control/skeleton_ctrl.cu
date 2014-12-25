@@ -25,6 +25,14 @@
 #include "conversions.hpp"
 #include "skeleton.hpp"
 
+Skeleton*    g_skel     = 0;
+
+void Skeleton_ctrl::cleanup()
+{
+    delete g_skel;
+    g_skel = NULL;
+}
+
 int Skeleton_ctrl::root()
 {
     return g_skel->root();
@@ -48,6 +56,11 @@ void Skeleton_ctrl::load(const Loader::Abs_skeleton& abs_skel)
     g_skel = new Skeleton(abs_skel);
 
     reset_selection();
+}
+
+void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
+{
+    g_skel->set_transforms(transfos);
 }
 
 // -----------------------------------------------------------------------------
@@ -195,7 +208,6 @@ void Skeleton_ctrl::set_joint_blending(int i, EJoint::Joint_t type){
     int pt = g_skel->parent( i );
     if(pt > -1)
         g_skel->set_joint_blending(pt, type);
-    //g_animesh->update_base_potential();
 }
 
 // -----------------------------------------------------------------------------
@@ -207,7 +219,6 @@ EJoint::Joint_t Skeleton_ctrl::get_joint_blending(int id)
         return g_skel->joint_blending(pt);
 
     return EJoint::NONE;
-    //g_animesh->update_base_potential();
 }
 
 // -----------------------------------------------------------------------------

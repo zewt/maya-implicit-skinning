@@ -678,6 +678,60 @@ void Animated_mesh_ctrl::update_caps(int bone_id, bool jcap, bool pcap)
     _bone_anim_caps[bone_id].pcap.n_nodes.resize( pn_nodes.size() );
 }
 
+
+void Animated_mesh_ctrl::update_hrbf_samples(int bone_id, int mode)
+{
+    if( _skel->is_leaf(bone_id) )
+        return;
+
+    switch(mode)
+    {
+    case 0:
+    {
+        choose_hrbf_samples_poisson
+                (bone_id,
+                 // Set a distance threshold from sample to the joints to choose them.
+                 -0.02f, // dSpinB_max_dist_joint->value(),
+                 -0.02f, // dSpinB_max_dist_parent->value(),
+                 0, // dSpinB_min_dist_samples->value(),
+                 // Minimal number of samples.  (this value is used only whe the value min dist is zero)
+                 50, // spinB_nb_samples_psd->value(), 20-1000
+
+                 // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
+                 0); // dSpinB_max_fold->value() );
+
+        break;
+    }
+
+    case 1:
+    {
+        choose_hrbf_samples_ad_hoc
+                (bone_id,
+                 -0.02f, // dSpinB_max_dist_joint->value(),
+                 -0.02f, // dSpinB_max_dist_parent->value(),
+                 0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
+                 0); // dSpinB_max_fold->value() );
+
+        break;
+    }
+
+    case 2:
+    {
+        choose_hrbf_samples_gael( bone_id );
+        break;
+    }
+    }
+}
+
+
+void Animated_mesh_ctrl::update_all_hrbf_samples(int mode)
+{
+    for(int bone_id = 0; bone_id < _skel->nb_joints(); ++bone_id)
+    {
+        update_hrbf_samples(bone_id, mode);
+    }
+}
+
 // -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::choose_hrbf_samples_ad_hoc(int bone_id,
