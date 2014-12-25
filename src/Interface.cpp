@@ -21,6 +21,7 @@ struct PluginInterfaceImpl
 {
     bool gotFirst;
     Cuda_ctrl::CudaCtrl cudaCtrl;
+    Loader::Abs_skeleton original_loader_skeleton; // XXX
 };
 
 PluginInterface::PluginInterface()
@@ -59,7 +60,6 @@ void PluginInterface::shutdown()
 
 // We're being given a mesh to work with.  Load it into Mesh, and hand it to the CUDA
 // interface.
-static Loader::Abs_skeleton original_loader_skeleton; // XXX
 void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton, vector<Loader::Vec3> &out_verts)
 {
     if(!impl->gotFirst)
@@ -83,7 +83,7 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
         // Save the skeleton.  We'll compare the skeleton we get later against this to find out
         // how it's changed.  XXX: Should we store the bind pose instead?  If so, we'll need to
         // be in bind pose for update_all_hrbf_samples/update_base_potential.
-        original_loader_skeleton = loader_skeleton;
+        impl->original_loader_skeleton = loader_skeleton;
 
 
         // Run the initial sampling.
@@ -98,7 +98,7 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
         {
             const Loader::Abs_bone &bone = loader_skeleton._bones[i];
             Loader::CpuTransfo currentTransform = bone._frame;
-            Loader::CpuTransfo bindTransform = original_loader_skeleton._bones[i]._frame;
+            Loader::CpuTransfo bindTransform = impl->original_loader_skeleton._bones[i]._frame;
 
             Loader::CpuTransfo inverted = bindTransform.full_invert();
             Loader::CpuTransfo changeToTransform = currentTransform * inverted;
