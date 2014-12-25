@@ -37,6 +37,11 @@ struct Abs_bone {
 
 /// @brief intermediate representation of a skeleton for file loading
 struct Abs_skeleton {
+    /// Compute the bone lengths of every bones.
+    /// The hierachy of the skeleton and bones positions must be correctly filled.
+    /// The bone length equal the mean length between the joint and its sons.
+    /// Leaves are of length zero
+    void compute_bone_lengths();
 
     int _root; ///< index of the root bone in _bones
 
@@ -48,14 +53,6 @@ struct Abs_skeleton {
     std::vector<int> _parents;
 };
 
-//------------------------------------------------------------------------------
-
-/// Compute the bone lengths of every bones.
-/// The hierachy of the skeleton and bones positions must be correctly filled.
-/// The bone length equal the mean length between the joint and its sons.
-/// Leaves are of length zero
-void compute_bone_lengths(Abs_skeleton& skel);
-
-} // END LOADER NAMESPACE ======================================================
+}
 
 #endif // LOADER_SKEL_HPP__

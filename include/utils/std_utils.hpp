@@ -79,7 +79,7 @@ inline static std::string to_upper(const std::string& str){
 /// @return the file extenssion or the empty string if not found
 inline static std::string file_ext(const std::string& str){
     std::string res;
-    unsigned pos = str.find_last_of('.');
+    size_t pos = str.find_last_of('.');
     if( pos != std::string::npos) res = str.substr(pos);
     else                          res = "";
     return res;

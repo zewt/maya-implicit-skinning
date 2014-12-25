@@ -1505,7 +1505,7 @@ MStatus loadSkeletonFromSkinCluster(const MFnSkinCluster &skinCluster, Loader::A
             skeleton._sons[parentIdx].push_back(boneIdx);
     }
 
-    Loader::compute_bone_lengths(skeleton);
+    skeleton.compute_bone_lengths();
     return MStatus::kSuccess;
 }
 

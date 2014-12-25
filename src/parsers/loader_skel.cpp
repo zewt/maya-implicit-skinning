@@ -18,30 +18,27 @@
  */
 #include "loader_skel.hpp"
 
-// =============================================================================
 namespace Loader {
-// =============================================================================
 
-void compute_bone_lengths(Abs_skeleton& skel)
+void Abs_skeleton::compute_bone_lengths()
 {
-    int nb_bones = skel._bones.size();
-    for(int bone_id = 0; bone_id < nb_bones; bone_id++)
+    for(size_t bone_id = 0; bone_id < _bones.size(); bone_id++)
     {
-        int nb_sons = skel._sons[bone_id].size();
+        int nb_sons = _sons[bone_id].size();
         float mean_len = 0.f;
-        for(int s = 0; s < nb_sons; s++)
+        for(size_t s = 0; s < nb_sons; s++)
         {
-            int son_id = skel._sons[bone_id][s];
+            int son_id = _sons[bone_id][s];
 
-            Vec3 p0 = skel._bones[bone_id]._frame.get_translation();
-            Vec3 p1 = skel._bones[son_id ]._frame.get_translation();
+            Vec3 p0 = _bones[bone_id]._frame.get_translation();
+            Vec3 p1 = _bones[son_id ]._frame.get_translation();
 
             mean_len += (p0-p1).norm();
         }
 
         float len = nb_sons > 1 ? mean_len / (float)nb_sons : mean_len;
-        skel._bones[bone_id]._length = len;
+        _bones[bone_id]._length = len;
     }
 }
 
-} // END LOADER NAMESPACE ======================================================
+}

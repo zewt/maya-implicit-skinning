@@ -63,8 +63,8 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _has_normals(false),
     _offset(0.f,0.f,0.f),
     _scale(1.f),
-    _nb_vert( vert.size() / 3),
-    _nb_tri( tri.size() / 3),
+    _nb_vert( (int) vert.size() / 3),
+    _nb_tri( (int) tri.size() / 3),
     _nb_edges(0),
     _vert(0),
     _is_connected(0),
@@ -74,7 +74,7 @@ Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
     _edge_list(0),
     _edge_list_offsets(0),
     _normals(0),
-    _size_unpacked_vert_array( vert.size() / 3),
+    _size_unpacked_vert_array( (int) vert.size() / 3),
     _packed_vert_map(0)
 {
 
@@ -479,8 +479,8 @@ void Mesh::load(const Loader::Abs_mesh& mesh)
     _is_initialized = false;
     free_mesh_data();
 
-    _nb_vert = mesh._vertices.size();
-    _nb_tri  = mesh._triangles.size();
+    _nb_vert = (int) mesh._vertices.size();
+    _nb_tri  = (int) mesh._triangles.size();
 
     _vert          = new float [_nb_vert * 3];
     _tri           = new int   [_nb_tri  * 3];
@@ -670,7 +670,7 @@ void Mesh::compute_edges()
         ring.push_back(list_pairs[0].second);
         std::vector<std::pair<int, int> >::iterator it = list_pairs.begin();
         list_pairs.erase(it);
-        unsigned int  pairs_left = list_pairs.size();
+        size_t pairs_left = list_pairs.size();
         bool manifold   = true;
         while( (pairs_left = list_pairs.size()) != 0)
         {
@@ -708,7 +708,7 @@ void Mesh::compute_edges()
         for(unsigned int j = 0; j < ring.size(); j++)
             neighborhood_list[i].push_back( ring[j] );
 
-        _nb_edges += ring.size();
+        _nb_edges += (int) ring.size();
     }// END FOR( EACH VERTEX )
 
     // Copy results on a more GPU friendly layout for future use
@@ -720,7 +720,7 @@ void Mesh::compute_edges()
     int k = 0;
     for(int i = 0; i < _nb_vert; i++)
     {
-        int size = neighborhood_list[i].size();
+        int size = (int) neighborhood_list[i].size();
         _edge_list_offsets[2 * i    ] = k;
         _edge_list_offsets[2 * i + 1] = size;
         for(int j = 0; j <  size; j++)

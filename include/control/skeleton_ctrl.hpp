@@ -28,7 +28,6 @@
 #include "controller.hpp"
 #include "transfo.hpp"
 #include "loader_skel.hpp"
-#include "loader_anims.hpp"
 
 struct Skeleton;
 
