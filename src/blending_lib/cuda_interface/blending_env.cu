@@ -1726,7 +1726,7 @@ void make_cache_env(const std::string &filename)
     std::ofstream file((base_name+"_infos.opc").c_str(), std::ios_base::out|std::ios_base::trunc);
     if(!file.is_open()){
         std::cerr << "Error exporting file " << filename << std::endl;
-        exit(1);
+        return;
     }
 
     Vec3i_cu s = grid_operators_values->size();
