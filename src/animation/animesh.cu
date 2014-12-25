@@ -91,7 +91,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     d_half_angles(_skel->nb_joints()),
     h_orthos(_skel->nb_joints()),
     d_orthos(_skel->nb_joints()),
-    d_flip_propagation(_mesh->get_nb_vertices()),
     h_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer_2(_mesh->get_nb_vertices()),
@@ -225,13 +224,10 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     const int nb_vert = a_mesh.get_nb_vertices();
 
     Host::Array<Point_cu > input_vertices(nb_vert);
-    Host::Array<bool>      flip_prop     (nb_vert);
     for(int i = 0; i < nb_vert; i++)
     {
         Point_cu  pos = Convs::to_point( a_mesh.get_vertex(i) );
-
         input_vertices[i] = pos;
-        flip_prop     [i] = false;
     }
 
     int n_faces = a_mesh.get_nb_faces();
@@ -242,7 +238,6 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     d_piv.copy_from(h_piv);
 
     d_input_vertices.copy_from(input_vertices);
-    d_flip_propagation.copy_from(flip_prop);
 
     HA_int h_edge_list(a_mesh.get_nb_edges());
     HA_int h_edge_list_offsets(2*nb_vert);
@@ -701,14 +696,4 @@ int Animesh::pack_vert_to_fit_gpu(
     //Cuda_utils::mem_cpy_dtd(d_vert_to_fit.ptr(), packed_array.ptr(), new_nb_vert_to_fit);
 
     return new_nb_vert_to_fit;
-}
-
-void Animesh::reset_flip_propagation(){
-    int nb_vert = _mesh->get_nb_vertices();
-    Host::Array<bool> flip_prop(nb_vert);
-    for(int i = 0; i < nb_vert; i++){
-        flip_prop[i] = false;
-    }
-
-    d_flip_propagation.copy_from(flip_prop);
 }

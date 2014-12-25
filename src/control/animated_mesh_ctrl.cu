@@ -36,7 +36,6 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
     _auto_precompute(true),
     _factor_bones(false),
     _nb_iter(7),
-    _d_selected_points(0),
     _bone_caps(am->get_skel()->nb_joints()),
     _bone_anim_caps(am->get_skel()->nb_joints()),
     _sample_list(am->get_skel()->nb_joints()),
@@ -57,7 +56,6 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
 
 Animated_mesh_ctrl::~Animated_mesh_ctrl()
 {
-    Cuda_utils::free_d(_d_selected_points);
     delete _animesh;
 }
 
@@ -446,39 +444,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
     _animesh->update_base_potential();
 }
 
-Vec3_cu Animated_mesh_ctrl::cog_mesh_selection()
-{
-    Vec3_cu cog = Vec3_cu::zero();
-
-    int size = _selected_points.size();
-    const Mesh* m = _animesh->get_mesh();
-    for(int i = 0; i < size; i++)
-    {
-        Vec3_cu v = m->get_vertex(_selected_points[i]);
-        cog = v + cog;
-    }
-
-    cog = cog / (float)(size == 0 ? 1 : size);
-    return cog;
-}
-
-void Animated_mesh_ctrl::update_device_selection()
-{
-    Cuda_utils::free_d( _d_selected_points );
-
-    int size = _selected_points.size();
-    if(size)
-    {
-        Cuda_utils::malloc_d(_d_selected_points, size);
-        Cuda_utils::mem_cpy_htd(_d_selected_points,
-                                &(_selected_points[0]),
-                                size );
-    }
-
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::set_nb_iter_smooting(int nb_iter)
 {
     if(_animesh != 0){
@@ -522,21 +487,6 @@ void Animated_mesh_ctrl::set_smooth_smear(float val ){
 void Animated_mesh_ctrl::set_smoothing_weights_diffusion_iter(int nb_iter){
     _animesh->set_smoothing_weights_diffusion_iter(nb_iter);
 }
-
-void Animated_mesh_ctrl::invert_propagation()
-{
-    for(unsigned i = 0; i < _selected_points.size(); i++)
-        _animesh->set_flip_propagation(_selected_points[i], true);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::reset_invert_propagation()
-{
-    _animesh->reset_flip_propagation();
-}
-
-// -----------------------------------------------------------------------------
 
 int Animated_mesh_ctrl::get_nearest_bone(int vert_idx){
     return _animesh->get_nearest_bone(vert_idx);
@@ -996,81 +946,6 @@ void Animated_mesh_ctrl::resize_samples_anim(int bone_id, int size)
     _sample_anim_list[bone_id].n_nodes.resize( size );
 }
 
-// -----------------------------------------------------------------------------
-
-Vec3_cu Animated_mesh_ctrl::get_sample_pos(Samp_id id)
-{
-    return _sample_list[id.bone_id].nodes[id.samp_id];
-}
-
-// -----------------------------------------------------------------------------
-
-Vec3_cu Animated_mesh_ctrl::get_sample_normal(Samp_id id)
-{
-    return _sample_list[id.bone_id].n_nodes[id.samp_id];
-}
-
-// -----------------------------------------------------------------------------
-
-Vec3_cu Animated_mesh_ctrl::get_sample_anim_normal(Samp_id id)
-{
-    const Skeleton* s = _skel;
-    const Transfo& tr = s->get_transfo( id.bone_id );
-    Point_cu node = Convs::to_point(_sample_list[id.bone_id].n_nodes[id.samp_id]);
-    return Convs::to_vector( tr * node);
-}
-
-// -----------------------------------------------------------------------------
-
-Vec3_cu Animated_mesh_ctrl::get_sample_anim_pos(Samp_id id)
-{
-    const Skeleton* s = _skel;
-    const Transfo& tr = s->get_transfo( id.bone_id );
-    Point_cu node = Convs::to_point(_sample_list[id.bone_id].nodes[id.samp_id]);
-    return Convs::to_vector( tr * node);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::transform_selected_samples(const Transfo& t)
-{
-    std::vector<bool> update_bone(_sample_list.size(), false);
-
-    for(unsigned i = 0; i < _selected_samples.size(); i++)
-    {
-        Samp_id id = _selected_samples[i];
-        Vec3_cu& pos = _sample_list[id.bone_id].nodes[id.samp_id];
-        Vec3_cu& nor = _sample_list[id.bone_id].n_nodes[id.samp_id];
-
-        pos = (t * pos.to_point()).to_vector();
-        nor = (t * nor);
-
-        update_bone[id.bone_id] = true;
-    }
-
-    for(unsigned i = 0; i < update_bone.size(); i++)
-        if( update_bone[i] ) update_bone_samples(i);
-}
-
-// -----------------------------------------------------------------------------
-
-Vec3_cu Animated_mesh_ctrl::cog_sample_selection()
-{
-    Vec3_cu cog = Vec3_cu::zero();
-
-    int size = _selected_samples.size();
-    for(int i = 0; i < size; i++)
-    {
-        Samp_id id = _selected_samples[i];
-        const Vec3_cu& v = _sample_list[id.bone_id].nodes[id.samp_id];
-
-        cog = v + cog;
-    }
-
-    cog = cog / (float)(size == 0 ? 1 : size);
-    return cog;
-}
-
 int Animated_mesh_ctrl::compute_nb_samples()
 {
     int acc = 0;
@@ -1079,21 +954,6 @@ int Animated_mesh_ctrl::compute_nb_samples()
 
     return acc;
 }
-
-// -----------------------------------------------------------------------------
-
-int Animated_mesh_ctrl::compute_offset(int bone_id)
-{
-    assert( bone_id >= 0                  );
-    assert( bone_id < (int)_sample_list.size() );
-    int acc = 0;
-    for(int i = 0; i < bone_id; i++)
-        acc += _sample_list[i].nodes.size();
-
-    return acc;
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::precompute_all_bones()
 {

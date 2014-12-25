@@ -36,15 +36,6 @@ struct Skeleton;
 namespace Loader { struct Abs_skeleton; }
 // END Forward definitions -----------------------------------------------------
 
-struct Samp_id{
-    int bone_id; ///< bone identifier
-    int samp_id; ///< sample identifier
-
-    bool operator==(const Samp_id& id) const {
-        return (id.bone_id == bone_id) && (id.samp_id == samp_id);
-    }
-};
-
 /** @brief Settings Controler for the animated mesh
     This class provide a control interface for the animated mesh.
     Point selection and coloring are handle here.
@@ -119,24 +110,6 @@ public:
     int  get_nb_iter_smooth(){ return _nb_iter;       }
     bool is_smooth_on      (){ return _do_smooth;     }
 
-    /// invert the propagation direction (for the fitting) of the currently
-    /// selected vertices
-    void invert_propagation();
-
-    /// Restore the default propagation direction of every vertices.
-    void reset_invert_propagation();
-
-    //--------------------------------------------------------------------------
-    /// @name Mesh_selection
-    //--------------------------------------------------------------------------
-
-    /// Compute the center of gravity of the points currently selected
-    Vec3_cu cog_mesh_selection();
-
-    size_t get_nb_selected_points(){ return _selected_points.size(); }
-    const std::vector<int>& get_selected_points(){ return _selected_points; }
-    int* get_selected_points_device(){ return _d_selected_points; }
-
     //--------------------------------------------------------------------------
     /// @name File import/export
     //--------------------------------------------------------------------------
@@ -194,39 +167,7 @@ public:
     /// all samples are transformed
     void transform_samples(const std::vector<int>& bone_ids = std::vector<int>());
 
-    //--------------------------------------------------------------------------
-    /// @name HRBF Samples Selection
-    //--------------------------------------------------------------------------
-    const std::vector<Samp_id>& get_selected_samples(){
-        return _selected_samples;
-    }
-
-    Vec3_cu get_sample_pos   (Samp_id id);
-    Vec3_cu get_sample_normal(Samp_id id);
-
-    /// Get sample position in animated position
-    Vec3_cu get_sample_anim_pos(Samp_id id);
-    /// Get sample normal in animated position
-    Vec3_cu get_sample_anim_normal(Samp_id id);
-
-    void transform_selected_samples(const Transfo& t);
-
-    /// Compute the center of gravity of the currently selected samples
-    Vec3_cu cog_sample_selection();
-
-
-    // -------------------------------------------------------------------------
-    /// @name Class Tools
-    // -------------------------------------------------------------------------
 private:
-
-    /// removes a point from the last selection do nothing if the point was not
-    /// selected
-    void remove_from_selection(int id);
-
-    /// update _d_selected_points device array with _selected_points host
-    void update_device_selection();
-
     /// Append the current caps and samples and update the 'bone_id' with them
     /// also allocates the '_anim_samples_list' for nodes and n_nodes
     void update_bone_samples(int bone_id);
@@ -236,10 +177,6 @@ private:
 
     /// How many samples for every bone
     int compute_nb_samples();
-
-    /// @return number of samples in _samples_list untill we reach bone_id
-    /// (excluded)
-    int compute_offset(int bone_id);
 
     /// Convert all bones to the precomputed type. except for SSD bones and
     /// Already precomputed
@@ -308,11 +245,6 @@ private:
     bool _auto_precompute; ///< Bones are always precomputed in grids
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
-
-    std::vector<int>     _selected_points;  ///< List of selected mesh points
-    std::vector<Samp_id> _selected_samples; ///< List of selected hrbf samples
-
-    int* _d_selected_points;   ///< selected points on device mem
 
     struct Cap_list {
         Cap jcap;

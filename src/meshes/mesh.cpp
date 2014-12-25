@@ -27,7 +27,6 @@
 #include <deque>
 #include <map>
 
-#include "glassert.h"
 #include "macros.hpp"
 #include "mesh.hpp"
 #include "loader_mesh.hpp"

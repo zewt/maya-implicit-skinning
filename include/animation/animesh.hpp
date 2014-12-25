@@ -267,10 +267,6 @@ public:
     // TO be deleted and moved in the ctrl
     void set_junction_radius(int bone_id, float rad);
 
-    void set_flip_propagation(int vid, bool s) { d_flip_propagation.set(vid, s); }
-
-    void reset_flip_propagation();
-
     const Mesh*     get_mesh() const { return _mesh; }
     const Skeleton* get_skel() const { return _skel; }
 
@@ -560,11 +556,6 @@ private:
     /// (joint idx in host mem)
     Cuda_utils::HA_Vec3_cu h_orthos;
     Cuda_utils::DA_Vec3_cu d_orthos;
-
-    /// Array used to debug. Tells if a vertices needs to be fitted by following,
-    /// the inverse direction it should take.
-    /// d_flipp_propagation[vert_id] = if we flip the propagation dir of the fit
-    Cuda_utils::Device::Array<bool> d_flip_propagation;
 
     // -------------------------------------------------------------------------
     /// @name Pre allocated arrays to store intermediate results of the mesh
