@@ -64,7 +64,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\src\animation;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <Optimization>Disabled</Optimization>
@@ -101,7 +101,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\src\animation;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -137,7 +137,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\src\animation;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
@@ -171,14 +171,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\animation\animesh.hpp" />
-    <ClInclude Include="..\include\animation\animesh_enum.hpp" />
     <ClInclude Include="..\include\animation\animesh_kers.hpp" />
-    <ClInclude Include="..\include\animation\animesh_potential.hpp" />
-    <ClInclude Include="..\include\animation\bone.hpp" />
-    <ClInclude Include="..\include\animation\bone_type.hpp" />
-    <ClInclude Include="..\include\animation\joint_type.hpp" />
-    <ClInclude Include="..\include\animation\skeleton.hpp" />
     <ClInclude Include="..\include\blending_lib\controller.hpp" />
     <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
     <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env.hpp" />
@@ -302,6 +295,14 @@
     <ClCompile Include="..\src\meshes\mesh.cpp" />
     <ClCompile Include="..\src\Interface.cpp" />
     <ClCompile Include="..\src\plugin.cpp" />
+    <ClInclude Include="..\src\animation\animesh.hpp" />
+    <ClInclude Include="..\src\animation\animesh_enum.hpp" />
+    <ClInclude Include="..\src\animation\animesh_kers.hpp" />
+    <ClInclude Include="..\src\animation\animesh_potential.hpp" />
+    <ClInclude Include="..\src\animation\bone.hpp" />
+    <ClInclude Include="..\src\animation\bone_type.hpp" />
+    <ClInclude Include="..\src\animation\joint_type.hpp" />
+    <ClInclude Include="..\src\animation\skeleton.hpp" />
     <CudaCompile Include="..\src\animation\animesh.cu">
       <FileType>Document</FileType>
     </CudaCompile>
