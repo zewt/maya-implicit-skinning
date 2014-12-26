@@ -50,13 +50,14 @@ Tree_cu::Tree_cu(Tree* tree) :
     {
         Bone::Id hidx     = _bone_aranged[i]->get_bone_id();
         Bone::Id h_parent = tree->parent( hidx );
-        if( h_parent > -1 )
+        if(h_parent == -1)
         {
-            assert(_hidx_to_didx.find(h_parent) != _hidx_to_didx.end() );
-            _parents_aranged[ i ] = _hidx_to_didx[ h_parent ];
-        }
-        else
             _parents_aranged[ i ] = DBone_id(-1);
+            continue;
+        }
+
+        assert(_hidx_to_didx.find(h_parent) != _hidx_to_didx.end() );
+        _parents_aranged[ i ] = _hidx_to_didx[ h_parent ];
     }
 
     compute_blending_list();
@@ -77,16 +78,16 @@ DBone_id Tree_cu::compute_clusters(Bone::Id bid,
                                    std::map<DBone_id, Bone::Id>& didx_to_hidx)
 {
     int nb_psons = -1;
-    Bone::Id root_pson[] = { _tree->root() };
-    Bone::Id* psons = 0;
+    const Bone::Id root_pson[] = { _tree->root() };
+    const Bone::Id* psons = 0;
 
     int pt = _tree->parent( bid );
-    if( bid == _tree->root() ){
+    if( bid == _tree->root() ) {
         psons = root_pson;
         nb_psons = 1;
-    }else if(_tree->sons( pt ).size() > 0){
-        psons = &( _tree->sons(pt)[0] );
-        nb_psons = (int)_tree->sons( pt ).size();
+    } else if(_tree->sons( pt ).size() > 0) {
+        psons = &_tree->sons(pt)[0];
+        nb_psons = (int)_tree->sons(pt).size();
     }
 
     if( bid == psons[0] )
@@ -100,7 +101,7 @@ DBone_id Tree_cu::compute_clusters(Bone::Id bid,
             hidx_to_didx[ psons[i] ] = acc;
             didx_to_hidx[ acc      ] = psons[i];
 
-            bone_to_cluster[acc.id()] = Cluster_id(clusters.size() - 1); // cluster id
+            bone_to_cluster[acc.id()] = Cluster_id((int) clusters.size() - 1); // cluster id
             bone_aranged   [acc.id()] = _tree->bone( psons[i] );
             acc++;
         }
@@ -155,15 +156,15 @@ void Tree_cu::BList::clear()
 
 void Tree_cu::BList::  add_cluster(Cluster_id cid)
 {
-#ifndef ENABLE_ADHOC_HAND
-    //////////////////////
-    // Blend with pairs //
-    //////////////////////
     Cluster cl = _tree_cu._clusters[cid.id()];
     DBone_id d_bone_id = cl.first_bone;
     Bone::Id h_bone_id = _tree_cu._bone_aranged[d_bone_id.id()]->get_bone_id();
     Bone::Id h_parent  = _tree_cu._tree->parent( h_bone_id );
 
+#ifndef ENABLE_ADHOC_HAND
+    //////////////////////
+    // Blend with pairs //
+    //////////////////////
     if( h_parent < 0 || _tree_cu._tree->data( h_parent )._blend_type == EJoint::MAX)
     {
         cl.datas = _tree_cu._tree->data(h_parent < 0 ? h_bone_id : h_parent);
@@ -187,12 +188,6 @@ void Tree_cu::BList::  add_cluster(Cluster_id cid)
     ///////////////////////////
     // Blend with singletons //
     ///////////////////////////
-    Cluster cl = _tree_cu._clusters[cid.id()];
-    DBone_id d_bone_id = cl.first_bone;
-    Bone::Id h_bone_id = _tree_cu._bone_aranged[d_bone_id.id()]->get_bone_id();
-    Bone::Id h_parent  = _tree_cu._tree->parent( h_bone_id );
-
-
     cl.datas = _tree_cu._tree->data(h_parent < 0 ? h_bone_id : h_parent);
     _list.push_back( cl );
     _nb_singletons++;
