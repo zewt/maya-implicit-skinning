@@ -120,32 +120,14 @@ public:
     /// @warning this don't copy texture but only pointer to texture
     Mesh(const Mesh& m);
 
-    Mesh();
-
-    /// Build mesh from triangle index and vertex position
-    Mesh(const std::vector<int>& tri, const std::vector<float>& vert);
+    /// Load a mesh from the abstract representation of our file loader
+    Mesh(const Loader::Abs_mesh& mesh);
 
     ~Mesh();
 
     /// Check for data corruptions in the mesh  and exit programm if there is any.
     /// This is a debug function, if it triggers it is likely this class is bugged.
     void check_integrity();
-
-
-    //  ------------------------------------------------------------------------
-    /// @name Import/export
-    //  ------------------------------------------------------------------------
-
-    /// Create a mesh from an OFF file
-    Mesh(const char* filename);
-
-    /// @param filename      path and name for the file to be writen
-    /// @param invert_index  whether the triangles index are to be
-    /// inverted (i.e write in clockwise order or counter clockwise)
-    void export_off(const char* filename, bool invert_index = false) const;
-
-    /// Load a mesh from the abstract representation of our file loader
-    void load(const Loader::Abs_mesh& mesh);
 
     //  ------------------------------------------------------------------------
     /// @name Getter & Setters

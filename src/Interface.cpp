@@ -68,8 +68,7 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
 
         // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
         // Mesh.
-        Mesh* ptr_mesh = new Mesh();
-        ptr_mesh->load(loader_mesh);
+        Mesh *ptr_mesh = new Mesh(loader_mesh);
 
         // Hand the Mesh to Cuda_ctrl.
         impl->cudaCtrl.load_mesh( ptr_mesh );

@@ -33,91 +33,6 @@
 #include "timer.hpp"
 #include "std_utils.hpp"
 
-// -----------------------------------------------------------------------------
-
-Mesh::Mesh() :
-    _is_initialized(false),
-    _has_normals(false),
-    _offset(0.f,0.f,0.f),
-    _scale(1.f),
-    _nb_vert(0),
-    _nb_tri(0),
-    _nb_edges(0),
-    _vert(0),
-    _is_connected(0),
-    _is_side(0),
-    _tri(0),
-    _piv(0),
-    _edge_list(0),
-    _edge_list_offsets(0),
-    _normals(0),
-    _size_unpacked_vert_array(-1),
-    _packed_vert_map(0)
-{
-}
-
-// -----------------------------------------------------------------------------
-
-Mesh::Mesh(const std::vector<int>& tri, const std::vector<float>& vert) :
-    _is_initialized(true),
-    _has_normals(false),
-    _offset(0.f,0.f,0.f),
-    _scale(1.f),
-    _nb_vert( (int) vert.size() / 3),
-    _nb_tri( (int) tri.size() / 3),
-    _nb_edges(0),
-    _vert(0),
-    _is_connected(0),
-    _is_side(0),
-    _tri(0),
-    _piv(0),
-    _edge_list(0),
-    _edge_list_offsets(0),
-    _normals(0),
-    _size_unpacked_vert_array( (int) vert.size() / 3),
-    _packed_vert_map(0)
-{
-
-    if(_nb_vert > 0)
-    {
-        _vert            = new float[ _nb_vert * 3 ];
-        _is_connected    = new bool [ _nb_vert     ];
-        _is_side         = new bool [ _nb_vert     ];
-        _packed_vert_map = new Packed_data[_nb_vert];
-    }
-
-    for(int i = 0; i < _nb_vert; i++)
-    {
-        Packed_data d = {i, 1};
-        _packed_vert_map[i] = d;
-
-        _vert[i*3  ] = vert[i*3  ];
-        _vert[i*3+1] = vert[i*3+1];
-        _vert[i*3+2] = vert[i*3+2];
-
-        _is_side     [i] = false;
-        _is_connected[i] = false;
-    }
-
-    // Copy to packed and unpacked arrays :
-    if( _nb_tri > 0){
-        _tri           = new int   [_nb_tri  * 3 ];
-        for(int i = 0; i < _nb_tri*3; i++)
-        {
-            int idx = _tri[i] = tri[i];
-            _is_connected[idx] = true;
-        }
-    }
-
-
-    compute_piv();
-    compute_face_index();
-    compute_edges();
-    compute_normals();
-}
-
-// -----------------------------------------------------------------------------
-
 Mesh::Mesh(const Mesh& m) :
     _is_initialized(m._is_initialized),
     _has_normals(m._has_normals),
@@ -183,130 +98,6 @@ Mesh::Mesh(const Mesh& m) :
     }
 }
 
-// -----------------------------------------------------------------------------
-
-Mesh::Mesh(const char* filename) :
-    _is_initialized(false),
-    _has_normals(false),
-    _offset(0.f,0.f,0.f),
-    _scale(1.f),
-    _nb_vert(0),
-    _nb_tri(0),
-    _nb_edges(0),
-    _vert(0),
-    _is_connected(0),
-    _is_side(0),
-    _tri(0),
-    _piv(0),
-    _edge_list(0),
-    _edge_list_offsets(0),
-    _normals(0),
-    _size_unpacked_vert_array(-1),
-    _packed_vert_map(0)
-{
-    using namespace std;
-    int nil;
-    ifstream file(filename);
-    int nb_faces;
-
-    if(!file.is_open()){
-        cout << "error loading file : " << filename << endl;
-        exit(1);
-    }
-    string line;
-    file >> line;
-    if(line.compare("OFF\n") == 0){
-        cerr << "this is not an OFF file\n";
-        return;
-    }
-
-    file >> _nb_vert >> nb_faces >> nil;
-    _size_unpacked_vert_array = _nb_vert;
-
-    _is_connected    = new bool[_nb_vert];
-    _vert            = new float[_nb_vert * 3];
-    _packed_vert_map = new Packed_data[_nb_vert];
-
-    std::vector<int> tri_index(nb_faces * 3 * 2);
-
-    for(int i = 0; i < _nb_vert;i++)
-    {
-        float a,b,c;
-        file >> a >> b >> c;
-        _vert[3*i] = a; _vert[3*i + 1] = b; _vert[3*i + 2] = c;
-        _is_connected[i] = false;
-        Packed_data d = {i, 1};
-        _packed_vert_map[i] = d;
-    }
-
-    _nb_tri = 0;
-    int k = 0, k_quad = 0, max_edges_per_face = 8;
-    for(int i = 0; i < nb_faces;i++)
-    {
-        int face_edges;
-        file >> face_edges;
-        if(face_edges == 3)
-        {
-            for(int j = 0; j < 3; j++){
-                int idx;
-                file >> idx;
-                tri_index[k++] = idx;
-                _is_connected[idx] = true;
-            }
-            _nb_tri++;
-        }
-        else if(face_edges > 3)
-        {
-            // XXX: untested, doesn't set _is_connected
-            int* v_face = new int[max_edges_per_face];
-            cout << "large face: " << face_edges << "at " << _nb_tri << "\n";
-            if(face_edges > max_edges_per_face){
-                delete[] v_face;
-                max_edges_per_face = face_edges;
-                v_face = new int[max_edges_per_face];
-            }
-            for(int i = 0; i < face_edges; i++){
-                file >> v_face[i];
-            }
-            int a = 0;
-            int b = 1;
-            int c = face_edges - 1;
-            int d = face_edges - 2;
-            for(int i = 0; i < face_edges - 2; i += 2){
-                int v0 = v_face[a], v1 = v_face[b];
-                int v2 = v_face[c], v3 = v_face[d];
-                tri_index[k++] = v0; tri_index[k++] = v1; tri_index[k++] = v2;
-                _nb_tri++;
-                if(i < face_edges - 3)
-                {
-                    tri_index[k++] = v3; tri_index[k++] = v2; tri_index[k++] = v1;
-                    _nb_tri++;
-                }
-                a++; b++;
-                c--; d--;
-            }
-            delete[] v_face;
-        }
-    }
-    file.close();
-
-    // Copy to packed and unpacked arrays :
-    if( _nb_tri > 0){
-        _tri           = new int   [_nb_tri  * 3 ];
-        for(int i = 0; i < _nb_tri*3; i++)
-            _tri[i] = tri_index[i];
-    }
-
-    compute_piv();
-    compute_face_index();
-    compute_edges();
-    compute_normals();
-
-    _is_initialized = true;
-}
-
-// -----------------------------------------------------------------------------
-
 Mesh::~Mesh(){
     free_mesh_data();
 }
@@ -335,38 +126,6 @@ void Mesh::free_mesh_data()
 
     _tri_list_per_vert.clear();
 }
-
-// -----------------------------------------------------------------------------
-
-void Mesh::export_off(const char* filename, bool invert_index) const
-{
-    using namespace std;
-    ofstream file(filename);
-    if( !file.is_open() ){
-        cerr << "Error creating file: " << filename << endl;
-        exit(1);
-    }
-    file << "OFF" << endl;
-    file << _nb_vert << ' ' << get_nb_faces() << " 0" << endl;
-
-    for(int i = 0; i < _nb_vert; i++){
-        file << (_vert[3 * i    ] * 1.f / _scale - _offset.x) << ' '
-             << (_vert[3 * i + 1] * 1.f / _scale - _offset.y) << ' '
-             << (_vert[3 * i + 2] * 1.f / _scale - _offset.z) << ' ' << endl;
-    }
-
-    for(int i = 0; i < _nb_tri; i++) {
-        int a = _tri[3*i  ];
-        int b = _tri[3*i+1];
-        int c = _tri[3*i+2];
-        if(invert_index)
-            file << "3 " << c << ' ' << b << ' ' << a << endl;
-        else
-            file << "3 " << a << ' ' << b << ' ' << c << endl;
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void Mesh::compute_piv()
 {
@@ -474,7 +233,24 @@ void Mesh::compute_face_index()
 
 // -----------------------------------------------------------------------------
 
-void Mesh::load(const Loader::Abs_mesh& mesh)
+Mesh::Mesh(const Loader::Abs_mesh& mesh):
+    _is_initialized(false),
+    _has_normals(false),
+    _offset(0.f,0.f,0.f),
+    _scale(1.f),
+    _nb_vert(0),
+    _nb_tri(0),
+    _nb_edges(0),
+    _vert(0),
+    _is_connected(0),
+    _is_side(0),
+    _tri(0),
+    _piv(0),
+    _edge_list(0),
+    _edge_list_offsets(0),
+    _normals(0),
+    _size_unpacked_vert_array(-1),
+    _packed_vert_map(0)
 {
     _is_initialized = false;
     free_mesh_data();

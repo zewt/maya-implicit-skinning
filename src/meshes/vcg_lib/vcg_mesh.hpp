@@ -218,21 +218,6 @@ public:
     }
 };
 
-// -----------------------------------------------------------------------------
-
-void fill_vcg_mesh(MyMesh& vcg_mesh,
-                   const float* verts,
-                   const int* triangles,
-                   int nb_vert,
-                   int nb_face);
-
-void fill_mesh(Mesh*& m, const MyMesh& vcg_mesh);
-
-// -----------------------------------------------------------------------------
-
-
-
-
 
 // =============================================================================
 namespace MyAlgorithms {
