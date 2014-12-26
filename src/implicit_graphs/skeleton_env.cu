@@ -57,6 +57,25 @@ Cuda_utils::HD_Array<Cluster_data> hd_cluster_data;
  *            skel0                 skel1
  * @endcode
 */
+
+class SkeletonEnv
+{
+public:
+    SkeletonEnv();
+    ~SkeletonEnv();
+
+    /// Skeletons instance, a skeleton must be a tree with one connex componant.
+    Tree *h_tree;
+
+    /// Acceleration structure for the different skeletons in the environment
+
+    Grid *h_grid;
+
+    Tree_cu *h_tree_cu_instance;
+};
+
+std::deque<SkeletonEnv *> h_envs;
+
 Cuda_utils::HD_Array<Cluster_cu> hd_grid_blending_list;
 
 /// Concatenated datas corresponding to clusters listed hd_grid_blending_list
@@ -74,23 +93,26 @@ Cuda_utils::HD_Array<Offset>  hd_offset; // maybe we should cut in half offset a
 /// @name CPU friendly datas
 // -----------------------------------------------------------------------------
 
-/// List of concatened bones for every skeletons in 'h_tree_instances'
-std::vector<Bone*> h_generic_bones;
 /// user idx to device bone idx
 std::map<Hbone_id, DBone_id> _hidx_to_didx;
 /// device bone idx to user idx
 std::map<DBone_id, Hbone_id> _didx_to_hidx;
 
 
-/// List of skeletons instances, a skeleton must be a tree with one connex
-/// componant.
-std::deque<Tree*>    h_tree_instances;
-/// Prepared tree data to go on GPU
-std::deque<Tree_cu*> h_tree_cu_instances;
 
-/// Acceleration structure for the different skeletons in the environment
-std::deque<Grid*> h_grid;
+SkeletonEnv::SkeletonEnv()
+{
+    h_tree = NULL;
+    h_tree_cu_instance = NULL;
+    h_grid = NULL;
+}
 
+SkeletonEnv::~SkeletonEnv()
+{
+    delete h_tree;
+    delete h_tree_cu_instance;
+    delete h_grid;
+}
 
 
 // =============================================================================
@@ -105,18 +127,17 @@ void cell_to_blending_list(Skel_id sid,
 {
     // Note: if in each cell the list of bones is order from root to leaf
     // then blending list will be also ordered root to leaf
-    const Grid*    g    = h_grid[sid];
-    const Tree_cu* tree = h_tree_cu_instances[sid];
-    const std::list<Bone::Id>& bones_in_cell = g->_grid_cells[cell_id];
+    const Grid*    g    = h_envs[sid]->h_grid;
+    const Tree_cu* tree = h_envs[sid]->h_tree_cu_instance;
+    const std::list<Bone::Id> &bones_in_cell = g->_grid_cells[cell_id];
 
-    std::vector<bool> cluster_done;
-    cluster_done.resize(tree->_clusters.size(), false);
-
-    Tree_cu::BList blending_list( *(h_tree_cu_instances[sid]) );
-    std::list<Bone::Id>::const_iterator bones_it = bones_in_cell.begin();
-    for(; bones_it != bones_in_cell.end(); ++bones_it)
+    std::vector<bool> cluster_done(tree->_clusters.size(), false);
+    Tree_cu::BList blending_list( *(h_envs[sid]->h_tree_cu_instance) );
+    
+    for(std::list<Bone::Id>::const_iterator bones_it = bones_in_cell.begin();
+        bones_it != bones_in_cell.end(); ++bones_it)
     {
-        DBone_id dbone = bone_hidx_to_didx(sid, *bones_it);
+        DBone_id dbone = tree->hidx_to_didx(*bones_it);
 
         Cluster_id clus_id = tree->bone_to_cluster( dbone );
         if( cluster_done[clus_id.id()] ) continue;
@@ -148,25 +169,49 @@ static void update_device_grid()
 
     // Look up every grids and compute the cells blending list.
     // update offset to access blending list as well
-    std::deque< std::list<Cluster>* > cells_blist; // TODO/ <- pre-allocate this in alloc_hd_grid()
     int offset = 0;
     int grid_offset = 0;
-    for(unsigned grid_id = 0; grid_id < h_grid.size(); ++grid_id)
+    int off_bone = 0;
+    for(unsigned grid_id = 0; grid_id < h_envs.size(); ++grid_id)
     {
-        Grid* grid = h_grid[grid_id];
+        if(h_envs[grid_id] == NULL)
+            continue;
+
+        const Grid* grid = h_envs[grid_id]->h_grid;
 //        grid->build_grid(); should be already done
+        ((Grid *)grid)->build_grid(); // (but isn't always)
 
         std::set<int>::const_iterator it = grid->_filled_cells.begin();
         for( ; it != grid->_filled_cells.end(); ++it)
         {
             int cell_idx = *it;
 
-            std::list<Cluster>* blist = new std::list<Cluster>();
-            cells_blist.push_back( blist );
-            cell_to_blending_list(grid_id, cell_idx, *blist );
+            std::list<Cluster> blist;
+            cell_to_blending_list(grid_id, cell_idx, blist );
 
             hd_grid[grid_offset + cell_idx] = offset;
-            offset += (int)blist->size();
+
+            // XXX inefficient
+            if(hd_grid_blending_list.size() < offset + blist.size())
+            {
+                hd_grid_blending_list.realloc(offset + blist.size());
+                hd_grid_data.realloc(offset + blist.size());
+            }
+
+            std::list<Cluster>::const_iterator it = blist.begin();
+            for(unsigned l = 0; it != blist.end(); ++it, ++l)
+            {
+                // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
+                Cluster c = *it;
+                Cluster_cu clus(c);
+
+                clus.first_bone += off_bone;
+
+                hd_grid_blending_list[offset + l] = clus;
+                hd_grid_data         [offset + l]._bulge_strength = c.datas._bulge_strength;
+            }
+
+            offset += (int)blist.size();
         }
 
         hd_offset[grid_id].grid_data = grid_offset;
@@ -178,43 +223,8 @@ static void update_device_grid()
         hd_grid_bbox[grid_id*2 + 0] = bb.pmin.to_float4();
         hd_grid_bbox[grid_id*2 + 1] = bb.pmax.to_float4();
         hd_grid_bbox[grid_id*2 + 0].w = (float)res;
-    }
 
-    hd_grid_blending_list.malloc( offset );
-    hd_grid_data.malloc( offset );
-
-    // Concatenate blending lists compute new concatenated bone index:
-    int grid_id = 0;
-    int off_bone = 0;
-    int blist_offset = 0;
-    for(unsigned i = 0; i < cells_blist.size(); ++i)
-    {
-        const std::list<Cluster>& blist = *(cells_blist[i]);
-        std::list<Cluster>::const_iterator it = blist.begin();
-        for(unsigned l = 0; it != blist.end(); ++it, ++l)
-        {
-
-            // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
-            Cluster c = *it;
-            Cluster_cu clus(c);
-
-            clus.first_bone += off_bone;
-
-            hd_grid_blending_list[blist_offset + l] = clus;
-            hd_grid_data         [blist_offset + l]._bulge_strength = c.datas._bulge_strength;;
-        }
-
-        blist_offset += blist.size();
-        delete cells_blist[i];
-        cells_blist[i] = 0;
-
-        // Compute grid identifier and bone offset
-        int res = h_grid[grid_id]->res();
-        if( (hd_offset[grid_id].grid_data +  res*res*res) < ((int)i+1)){
-            grid_id++;
-            if( grid_id < (int)h_grid.size() )
-                off_bone += h_tree_cu_instances[grid_id]->_bone_aranged.size();
-        }
+        off_bone += h_envs[grid_id]->h_tree_cu_instance->_bone_aranged.size();
     }
 
     hd_offset.update_device_mem(); // This is also done in update_device_tree maybe we can factorize
@@ -265,26 +275,28 @@ static void fill_separated_bone_types(const std::vector<Bone*>& generic_bones)
 
 /// Fill device array : hd_blending_list; hd_offset (only list_data field);
 /// h_generic_bones; _hidx_to_didx; _didx_to_hidx;
-static void update_device_tree()
+static void update_device_tree(std::vector<Bone*> &h_generic_bones)
 {
     assert( !binded );
     // Convert host layout to the GPU friendly layout
     // And compute some array sizes.
-    std::deque<Tree_cu*>& tree_cu_list = h_tree_cu_instances;
 
-    int nb_bones_all = 0; // Number of bones for every concatenated skels
-    int s_blend_list = 0; // Size of the concatenated blending list
-    for(unsigned i = 0; i < h_tree_instances.size(); ++i)
+    int nb_bones_all = 0; // Total number of bones across all skeletons
+    int s_blend_list = 0; // Total size of all blending lists
+    for(unsigned i = 0; i < h_envs.size(); ++i)
     {
+        if(h_envs[i] == NULL)
+            continue;
+
         // Convert tree to GPU layout
-        delete tree_cu_list[i];
-        tree_cu_list[i] = new Tree_cu( h_tree_instances[i] );
-        nb_bones_all += h_tree_instances[i]->bone_size();
-        s_blend_list += tree_cu_list[i]->_blending_list._list.size();
+        delete h_envs[i]->h_tree_cu_instance;
+        h_envs[i]->h_tree_cu_instance = new Tree_cu( h_envs[i]->h_tree );
+        nb_bones_all += h_envs[i]->h_tree->bone_size();
+        s_blend_list += h_envs[i]->h_tree_cu_instance->_blending_list._list.size();
     }
 
     // Now we can allocate memory
-    hd_offset.malloc( h_tree_instances.size() );
+    hd_offset.malloc( h_envs.size() );
     h_generic_bones.resize( nb_bones_all );
 
     hd_blending_list.malloc( s_blend_list );
@@ -299,9 +311,12 @@ static void update_device_tree()
 
     int off_bone  = 0; // Offset to store bones in h_bone_device
     int off_blist = 0; // Offset to store blending list in
-    for(unsigned t = 0; t < h_tree_instances.size(); ++t)
+    for(unsigned t = 0; t < h_envs.size(); ++t)
     {
-        const Tree_cu* tree_cu = tree_cu_list[t];
+        if(h_envs[t] == NULL)
+            continue;
+
+        const Tree_cu* tree_cu = h_envs[t]->h_tree_cu_instance;
 
         for(unsigned i = 0; i < tree_cu->_bone_aranged.size(); ++i){
             DBone_id new_didx = DBone_id(i) + off_bone;
@@ -348,7 +363,11 @@ static void update_device_tree()
 void update_device()
 {
     unbind();
-    update_device_tree();
+    
+    // List of concatened bones for every skeletons in 'h_envs'
+    std::vector<Bone*> h_generic_bones;
+    update_device_tree(h_generic_bones);
+
     fill_separated_bone_types( h_generic_bones );
     update_device_grid();
     bind();
@@ -359,18 +378,13 @@ void update_device()
 void clean_env()
 {
     unbind();
-    for(unsigned i = 0; i < h_tree_instances.size(); ++i){
-        delete h_tree_instances[i];
-        delete h_tree_cu_instances[i];
-        delete h_grid[i];
+    for(unsigned i = 0; i < h_envs.size(); ++i){
+        delete h_envs[i];
     }
 
-    h_tree_instances.clear();
-    h_tree_cu_instances.clear();
-    h_grid.clear();
+    h_envs.clear();
     _didx_to_hidx.clear();
     _hidx_to_didx.clear();
-    h_generic_bones.clear();
     hd_offset.erase();
     hd_offset.update_device_mem();
     hd_grid_blending_list.erase();
@@ -398,12 +412,14 @@ void alloc_hd_grid()
     unbind();
 
     int total_size = 0;
-    for(unsigned i = 0; i < h_grid.size(); ++i){
-        const int res = h_grid[i]->res();
+    for(unsigned i = 0; i < h_envs.size(); ++i){
+        if(h_envs[i] == NULL)
+            continue;
+        const int res = h_envs[i]->h_grid->res();
         total_size += res*res*res;
     }
     hd_grid.malloc(total_size, -1);
-    hd_grid_bbox.malloc( h_grid.size() * 2 ); // Two points for a bbox
+    hd_grid_bbox.malloc( h_envs.size() * 2 ); // Two points for a bbox
 
     bind();
 }
@@ -426,12 +442,24 @@ Skel_id new_skel_instance(Bone::Id root_idx,
                           const std::vector<Bone*>& bones,
                           const std::vector<int>& parents)
 {
-    int id = (unsigned)h_tree_instances.size();
+    SkeletonEnv *env = new SkeletonEnv();
+    env->h_tree = new Tree(root_idx, bones, parents);
+    env->h_grid = new Grid(env->h_tree);
 
-    Tree* tree = new Tree(root_idx, bones, parents);
-    h_tree_instances.push_back( tree );
-    h_tree_cu_instances.push_back( 0 );
-    h_grid.push_back( new Grid( tree ) );
+    // Find an empty slot.
+    int id;
+    for(id = 0; id < (int) h_envs.size(); ++id)
+    {
+        if(h_envs[id] == NULL)
+            break;
+    }
+
+    // Add a slot if needed.
+    if(id >= h_envs.size())
+        h_envs.push_back(NULL);
+    
+    h_envs[id] = env;
+
     alloc_hd_grid();
     update_device();
     return id;
@@ -439,14 +467,15 @@ Skel_id new_skel_instance(Bone::Id root_idx,
 
 // -----------------------------------------------------------------------------
 
-void delete_skel_instance(Skel_id i)
+void delete_skel_instance(Skel_id skel_id)
 {
-    delete h_grid[i];
-    delete h_tree_instances[i];
-    delete h_tree_cu_instances[i];
-    h_tree_instances.erase( h_tree_instances.begin() +i);
-    h_tree_cu_instances.erase( h_tree_cu_instances.begin() + i);
-    h_grid.erase( h_grid.begin() + i);
+    assert(skel_id < h_envs.size());
+    assert(skel_id >= 0);
+
+    // Set the slot to NULL to allow reuse.
+    delete h_envs[skel_id];
+    h_envs[skel_id] = NULL;
+    
     alloc_hd_grid();
     update_device();
 }
@@ -455,8 +484,8 @@ void delete_skel_instance(Skel_id i)
 
 void update_bones_data(Skel_id i, const std::vector<Bone*>& bones)
 {
-    h_tree_instances[i]->set_bones( bones );
-    h_grid[i]->build_grid();
+    h_envs[i]->h_tree->set_bones( bones );
+    h_envs[i]->h_grid->build_grid();
     update_device();
 }
 
@@ -464,8 +493,8 @@ void update_bones_data(Skel_id i, const std::vector<Bone*>& bones)
 
 void update_joints_data(Skel_id i, const std::vector<Joint_data>& joints)
 {
-    h_tree_instances[i]->set_joints_data( joints );
-    h_grid[i]->build_grid();
+    h_envs[i]->h_tree->set_joints_data( joints );
+    h_envs[i]->h_grid->build_grid();
     update_device();
 }
 
@@ -474,7 +503,7 @@ void update_joints_data(Skel_id i, const std::vector<Joint_data>& joints)
 void set_grid_res(Skel_id i, int res)
 {
     assert( res > 0);
-    h_grid[i]->set_res( res );
+    h_envs[i]->h_grid->set_res( res );
     alloc_hd_grid();
     update_device();
 }
