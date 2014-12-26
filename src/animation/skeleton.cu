@@ -47,7 +47,6 @@ void Skeleton::init(int nb_joints)
     _children.resize(nb_joints);
     _parents.resize(nb_joints);
     _frames.resize(nb_joints);
-    _lcl_frames.resize(nb_joints);
     _anim_frames.resize(nb_joints);
     _saved_transfos.resize(nb_joints);
     _h_transfos.malloc(nb_joints);
@@ -97,9 +96,7 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel) : _root(skel._root)
 
     for(unsigned i = 0; i < skel._bones.size(); i++ )
     {
-        Transfo tr = skel._bones[i]._frame;
-        _frames    [i] = tr;
-        _lcl_frames[i] = tr.fast_invert();
+        _frames    [i] = skel._bones[i]._frame;
         _parents   [i] = skel._parents[i];
 
         _anim_bones[i]->set_length( skel._bones[i]._length );
@@ -146,49 +143,6 @@ void Skeleton::unreset()
         _h_transfos[i] = _saved_transfos[i];
     update_bones_pose();
 }
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::compute_joints_half_angles(HA_Vec3_cu& half_angles,
-                                          HA_Vec3_cu& orthos)
-{
-    for(int i = 0; i < nb_joints(); i++)
-    {
-        if(i == _root  || is_leaf(i))
-        {
-            half_angles[i] = Vec3_cu(0.f, 0.f, 0.f);
-            orthos     [i] = Vec3_cu(0.f, 0.f, 0.f);
-        }
-        else
-        {
-            Vec3_cu null  = Vec3_cu::zero();
-            Vec3_cu half  = Vec3_cu::zero();
-            Vec3_cu ortho = Vec3_cu::zero();
-            Vec3_cu v0    = joint_pos(_parents[i]) - joint_pos(i);
-
-            const std::vector<int>& sons = get_sons(i);
-            for(unsigned p = 0; p < sons.size(); ++p)
-            {
-                Vec3_cu v1 = joint_pos(sons[p]) - joint_pos(i);
-
-                Vec3_cu temp = v0.cross(v1);
-                if(temp.norm() >= 0.0001f)
-                {
-                    half  = half  + (v0 + v1);
-                    ortho = ortho + temp;
-                }
-            }
-
-            half  = half  * (1.f / (float)sons.size());
-            ortho = ortho * (1.f / (float)sons.size());
-
-            half_angles[i] = half. norm() > 0.0001f ? half. normalized() : null;
-            orthos     [i] = ortho.norm() > 0.0001f ? ortho.normalized() : null;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void Skeleton::rec_to_string(int id, int depth, std::string& str)
 {
@@ -307,48 +261,11 @@ float Skeleton::get_hrbf_radius(Bone::Id bone_id)
     return _hrbf_radius[bone_id];
 }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton::set_joint_rest_pos(int joint_id, const Point_cu& pt)
-{
-    _frames[joint_id].set_translation( pt.to_vector() );
-    _lcl_frames[joint_id] = _frames[joint_id].fast_invert();
-    fill_bones();
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::set_offset_scale(const Vec3_cu& offset, float scale)
-{
-    _offset = offset;
-    _scale  = scale;
-    for(int i = 0; i < _nb_joints; i++ )
-    {
-        Transfo tr = Transfo::scale(scale) * Transfo::translate(offset) * _frames[i];
-        _frames[i] = tr;
-        _lcl_frames[i] = tr.fast_invert();
-        _anim_bones[i]->set_length( _anim_bones[i]->length() * scale );
-    }
-    fill_bones();
-}
-
-// -----------------------------------------------------------------------------
-
 Vec3_cu Skeleton::joint_pos(int joint) const {
     assert(joint >= 0        );
     assert(joint <  _nb_joints);
     return _anim_frames[joint].get_translation();
 }
-
-// -----------------------------------------------------------------------------
-
-Vec3_cu Skeleton::joint_rest_pos(int joint){
-    assert(joint >= 0        );
-    assert(joint <  _nb_joints);
-    return _frames[joint].get_translation();
-}
-
-// -----------------------------------------------------------------------------
 
 void Skeleton::transform_hrbf(const Cuda_utils::Device::Array<Transfo>& d_global_transfos)
 {
@@ -476,20 +393,6 @@ void Skeleton::fill_bones()
 Skeleton_env::DBone_id Skeleton::get_bone_didx(Bone::Id i) const {
     return Skeleton_env::bone_hidx_to_didx(_skel_id, i);
 }
-
-// -----------------------------------------------------------------------------
-
-int Skeleton::get_nb_bone_of_type(EBone::Bone_t type)
-{
-    int acc = 0;
-    for(int i = 0; i < _nb_joints; i++)
-        if(bone_type(i) == type)
-            acc++;
-
-    return acc;
-}
-
-// -----------------------------------------------------------------------------
 
 const Transfo&  Skeleton::get_transfo(Bone::Id bone_id) const {
     assert(bone_id >= 0);

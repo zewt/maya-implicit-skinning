@@ -158,22 +158,6 @@ int Skeleton_ctrl::get_bone_type(int bone_id){
     return skel->bone_type(bone_id);
 }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::set_joint_pos(int joint_id, const Vec3_cu& pos)
-{
-   skel->set_joint_rest_pos(joint_id, Convs::to_point(pos));
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::set_offset_scale(const Vec3_cu& off, float scale)
-{
-    skel->set_offset_scale(off, scale);
-}
-
-// -----------------------------------------------------------------------------
-
 IBL::Ctrl_setup Skeleton_ctrl::get_joint_controller(int id_joint){
     int pt = skel->parent( id_joint );
     if( pt > -1)

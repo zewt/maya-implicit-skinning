@@ -105,30 +105,6 @@ struct Skeleton {
   /// @see reset()
   void unreset();
 
-  /** At each joints we compute the half angle vector formed by the adjacents
-      bones. When a joint is connected to more than two bones we compute the
-      average half angle. When bones are colinear the half angle is set to null.
-
-      @code
-      half angle
-         ^
-         |
-       + | +
-    b0  \|/  b1
-         +
-      @endcode
-
-      We also compute the vector orthogonal to the adjacents bones. Again when
-      their is more than two bones we average this orthogonal vector
-
-      @param half_angles the list of half angles which size equals
-      get_nb_joints()
-      @param orthos the list of orthogonals vectors which size equals
-      get_nb_joints()
-  */
-  void compute_joints_half_angles(Cuda_utils::HA_Vec3_cu& half_angles,
-                                  Cuda_utils::HA_Vec3_cu& orthos);
-
   /// get skeleton hierachy with bone types in string
   std::string to_string();
 
@@ -140,12 +116,6 @@ struct Skeleton {
   /// The radius is used to transform hrbf from global support to
   /// compact support
   void set_bone_hrbf_radius(int i, float radius);
-
-  /// Set a new resting position 'pt' for 'joint_id'
-  void set_joint_rest_pos(int joint_id, const Point_cu& pt);
-
-  /// Scale and offset the graph
-  void set_offset_scale(const Vec3_cu& offset, float scale);
 
   void set_joint_controller(Blending_env::Ctrl_id i,
                             const IBL::Ctrl_setup& shape);
@@ -178,31 +148,16 @@ struct Skeleton {
   /// Get the position of a joint in animated position
   Vec3_cu joint_pos(int joint) const;
 
-  /// Get the position of a joint in rest position
-  Vec3_cu joint_rest_pos(int joint);
-
   /// Get the frame of the joint in animated position
   Transfo joint_anim_frame(int joint) const { return _anim_frames[joint];  }
 
-  /// Get the frame of the joint in rest position
-  Transfo joint_frame(int joint) const { return _frames[joint];  }
-
-  /// Get the inverse frame of the joint in rest position
-  Transfo joint_frame_lcl(int joint) const { return _lcl_frames[joint];  }
-
   /// Get the frame of the bone in animated position
   Transfo bone_anim_frame(int bone) const { return _h_transfos[bone] * _bones[bone].get_frame(); }
-
-  /// Get the frame of the bone in rest position
-  Transfo bone_frame(int bone) const { return _bones[bone].get_frame(); }
 
   IBL::Ctrl_setup get_joint_controller(int i);
 
   /// Get the list of children for the ith bone
   const std::vector<int>& get_sons(int i) const { return _children[i];  }
-
-  /// Get the array that contains data on the children of each joint
-  const std::vector< std::vector<int> >& get_joints_sons() const { return _children; }
 
   int parent(int i) const { return _parents[i]; }
 
@@ -219,9 +174,6 @@ struct Skeleton {
   /// warned. <\b>
   const Bone* get_bone(Bone::Id i) const{ return _anim_bones[i];  }
 
-  /// Bone in rest position
-  Bone_cu get_bone_rest_pose(int i) const{ return _bones[i];  }
-
   Blending_env::Ctrl_id get_ctrl(int joint) const {
       return _joints_data[joint]._ctrl_id;
   }
@@ -232,10 +184,7 @@ struct Skeleton {
 
   Skeleton_env::DBone_id get_bone_didx(Bone::Id i) const;
 
-  /// Number of skeleton's bone of type 'type'
-  int get_nb_bone_of_type(EBone::Bone_t type);
-
-  /// bone type (wether a primitive is attached to it)
+  /// bone type (whether a primitive is attached to it)
   /// @see Bone Bone_hrbf Bone_ssd Bone_cylinder Bone_precomputed EBone
   EBone::Bone_t bone_type(Bone::Id id_bone) const {
       return _anim_bones[id_bone]->get_type();
@@ -320,9 +269,6 @@ private:
 
   /// Joints frames in rest position
   std::vector<Transfo> _frames;
-
-  /// Inverse of the Joints frame in rest position
-  std::vector<Transfo> _lcl_frames;
 
   /// last state of '_h_transfos' corresponding of the last call of 'reset()'
   std::vector<Transfo> _saved_transfos;

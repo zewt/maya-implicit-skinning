@@ -62,10 +62,6 @@ public:
 
     void set_joint_controller(int id_joint, const IBL::Ctrl_setup& shape);
 
-    void set_joint_pos(int joint_id, const Vec3_cu& pos);
-
-    void set_offset_scale(const Vec3_cu& off, float scale);
-
     // -------------------------------------------------------------------------
     /// @name Getters
     // -------------------------------------------------------------------------
