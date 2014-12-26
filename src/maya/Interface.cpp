@@ -12,6 +12,7 @@
 #include "cuda_ctrl.hpp"
 #include "conversions.hpp"
 #include "cuda_ctrl.hpp"
+#include "skeleton.hpp"
 #include "animesh.hpp"
 
 #include <vector>
@@ -84,9 +85,10 @@ void PluginInterface::go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_
         // be in bind pose for update_all_hrbf_samples/update_base_potential.
         impl->original_loader_skeleton = loader_skeleton;
 
+        // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
+        for(int bone_id = 1; bone_id < impl->cudaCtrl._anim_mesh->_skel->nb_joints(); ++bone_id)
+            impl->cudaCtrl._anim_mesh->update_hrbf_samples(bone_id, 0);
 
-        // Run the initial sampling.
-        impl->cudaCtrl._anim_mesh->update_all_hrbf_samples(0);
         impl->cudaCtrl._anim_mesh->update_base_potential();
     }
 

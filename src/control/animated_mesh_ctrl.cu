@@ -666,17 +666,6 @@ void Animated_mesh_ctrl::update_hrbf_samples(int bone_id, int mode)
     }
 }
 
-
-void Animated_mesh_ctrl::update_all_hrbf_samples(int mode)
-{
-    for(int bone_id = 0; bone_id < _skel->nb_joints(); ++bone_id)
-    {
-        update_hrbf_samples(bone_id, mode);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::choose_hrbf_samples_ad_hoc(int bone_id,
                                                     float jmax,
                                                     float pmax,

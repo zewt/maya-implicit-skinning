@@ -253,9 +253,7 @@ MStatus loadSkeletonFromSkinCluster(const MFnSkinCluster &skinCluster, Loader::A
     sort(joints.begin(), joints.end(), compare_length);
 
     // Create a root bone.
-    // XXX put this back
-    skeleton._root = 0;
-/*    {
+    {
         Loader::Abs_bone bone;
         bone._name = "root";
         bone._frame = Loader::CpuTransfo::identity();
@@ -264,7 +262,7 @@ MStatus loadSkeletonFromSkinCluster(const MFnSkinCluster &skinCluster, Loader::A
         skeleton._parents.push_back(-1);
         skeleton._root = 0;
     }
-    */
+
     // Create the bones.
     for(int i = 0; i < joints.size(); ++i)
     {
@@ -281,13 +279,11 @@ MStatus loadSkeletonFromSkinCluster(const MFnSkinCluster &skinCluster, Loader::A
 
         // Find this bone's closest ancestor to be its parent.  If it has no ancestors, use the root.
         int parentIdx = find_closest_ancestor(joints, dagPath);
-        if(i == 0)
-            parentIdx = -1; // XXX
-/*        if(parentIdx == -1)
+        if(parentIdx == -1)
             parentIdx = 0;
         else
             parentIdx++; // skip the root bone added above
-            */
+
         skeleton._parents.push_back(parentIdx);
 
         // Add this bone as a child of its parent.
