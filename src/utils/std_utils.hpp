@@ -56,37 +56,6 @@ static std::string to_string(T number)
    return ss.str();
 }
 
-// -----------------------------------------------------------------------------
-
-/// @return lower case version of the string 'str'
-inline static std::string to_lower(const std::string& str){
-    std::string s = str;
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    return s;
-}
-
-// -----------------------------------------------------------------------------
-
-/// @return upper case version of the string 'str'
-inline static std::string to_upper(const std::string& str){
-    std::string s = str;
-    std::transform(s.begin(), s.end(), s.begin(), ::toupper);
-    return s;
-}
-
-// -----------------------------------------------------------------------------
-
-/// @return the file extenssion or the empty string if not found
-inline static std::string file_ext(const std::string& str){
-    std::string res;
-    size_t pos = str.find_last_of('.');
-    if( pos != std::string::npos) res = str.substr(pos);
-    else                          res = "";
-    return res;
-}
-
-// -----------------------------------------------------------------------------
-
 /// Pops the ith element by swapping the last element of the vector with it
 /// and decrementing the size of the vector
 template <class T>
@@ -95,20 +64,6 @@ static void pop(std::vector<T>& vec, int i)
     assert(vec.size() > 0);
     vec[i] = vec[vec.size() - 1];
     vec.pop_back();
-}
-
-// -----------------------------------------------------------------------------
-
-/// Concatenate v0 and v1 into v0. their types can be different as long as
-/// T0 and T1 are equal in terms of byte size.
-template<class T0, class T1>
-static void concat(std::vector<T0>& v0, std::vector<T1>& v1)
-{
-    assert(sizeof(T0) == sizeof(T1));
-    v0.resize( v0.size() + v1.size());
-    const int off = v0.size();
-    for(unsigned i = 0; i < v1.size(); i++)
-        v0[off + i] = *( reinterpret_cast<T0*>( &(v1[i]) ) );
 }
 
 // -----------------------------------------------------------------------------
