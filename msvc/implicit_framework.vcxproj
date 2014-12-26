@@ -64,7 +64,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\include;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\src\implicit_graphs;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\parsers;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <Optimization>Disabled</Optimization>
@@ -101,7 +101,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\include;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\src\implicit_graphs;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\parsers;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -137,7 +137,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\include;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\src\implicit_graphs;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\parsers;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
@@ -171,62 +171,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\animation\animesh_kers.hpp" />
     <ClInclude Include="..\include\blending_lib\controller.hpp" />
     <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
     <ClInclude Include="..\include\blending_lib\funcs.hpp" />
     <ClInclude Include="..\include\blending_lib\generator.hpp" />
     <ClInclude Include="..\include\blending_lib\opening.hpp" />
     <ClInclude Include="..\include\blending_lib\operators.hpp" />
-    <ClInclude Include="..\include\blending_lib\splines.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
     <ClInclude Include="..\include\blending_lib\tools.hpp" />
-    <ClInclude Include="..\include\containers\grid3_cu.hpp" />
-    <ClInclude Include="..\include\containers\identifier.hpp" />
-    <ClInclude Include="..\include\containers\idx3_cu.hpp" />
-    <ClInclude Include="..\include\maths\intersections\intersection.hpp" />
-    <ClInclude Include="..\include\meshes\mesh.hpp" />
-    <ClInclude Include="..\include\meshes\vcg_lib\utils_sampling.hpp" />
-    <ClInclude Include="..\include\meshes\vcg_lib\vcg_mesh.hpp" />
-    <ClInclude Include="..\include\parsers\endianess.hpp" />
-    <ClInclude Include="..\include\parsers\loader_mesh.hpp" />
-    <ClInclude Include="..\include\parsers\loader_skel.hpp" />
-    <ClInclude Include="..\include\primitives\distance_field.hpp" />
-    <ClInclude Include="..\include\primitives\hermiteRBF.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_core.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_data.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_interface.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_tex.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_tex_binding.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_kernels.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_phi_funcs.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_setup.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_wrapper.hpp" />
-    <ClInclude Include="..\include\primitives\plane.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_env.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_env_binding.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_kernels.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_tex.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim.hpp" />
-    <ClInclude Include="..\include\rendering\cuda_main_kernels.hpp" />
-    <ClInclude Include="..\include\rendering\scene_enum.hpp" />
-    <ClInclude Include="..\include\utils\assert_utils.hpp" />
-    <ClInclude Include="..\include\utils\class_saver.hpp" />
-    <ClInclude Include="..\include\utils\conversions.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_compiler_interop.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_current_device.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_common.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_device_array.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_device_elt.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_host_array.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_thrust.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\memory_debug.hpp" />
-    <ClInclude Include="..\include\utils\quick_sort.hpp" />
-    <ClInclude Include="..\include\utils\std_utils.hpp" />
-    <ClInclude Include="..\include\utils\timer.hpp" />
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
@@ -271,6 +223,7 @@
     <ClInclude Include="..\src\blending_lib\cuda_interface\uclean.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\ucommon.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\ultimate.hpp" />
+    <ClInclude Include="..\src\blending_lib\splines.hpp" />
     <ClInclude Include="..\src\containers\grid3_cu.hpp" />
     <ClInclude Include="..\src\containers\identifier.hpp" />
     <ClInclude Include="..\src\containers\idx3_cu.hpp" />
@@ -296,6 +249,7 @@
     <ClInclude Include="..\src\implicit_graphs\tree_type.hpp" />
     <ClInclude Include="..\src\maths\bbox.hpp" />
     <ClInclude Include="..\src\maths\cpu_transfo.hpp" />
+    <ClInclude Include="..\src\maths\intersections\intersection.hpp" />
     <ClInclude Include="..\src\maths\mat3_cu.hpp" />
     <ClInclude Include="..\src\maths\math_cu.hpp" />
     <ClInclude Include="..\src\maths\point_cu.hpp" />
@@ -306,6 +260,48 @@
     <ClInclude Include="..\src\maths\vec2_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
+    <ClInclude Include="..\src\meshes\mesh.hpp" />
+    <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp" />
+    <ClInclude Include="..\src\meshes\vcg_lib\vcg_mesh.hpp" />
+    <ClInclude Include="..\src\parsers\endianess.hpp" />
+    <ClInclude Include="..\src\parsers\loader_mesh.hpp" />
+    <ClInclude Include="..\src\parsers\loader_skel.hpp" />
+    <ClInclude Include="..\src\primitives\distance_field.hpp" />
+    <ClInclude Include="..\src\primitives\hermiteRBF.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_core.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_data.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_interface.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex_binding.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_kernels.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_phi_funcs.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_setup.hpp" />
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_wrapper.hpp" />
+    <ClInclude Include="..\src\primitives\plane.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env_binding.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.hpp" />
+    <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp" />
+    <ClInclude Include="..\src\rendering\scene_enum.hpp" />
+    <ClInclude Include="..\src\utils\assert_utils.hpp" />
+    <ClInclude Include="..\src\utils\class_saver.hpp" />
+    <ClInclude Include="..\src\utils\conversions.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_compiler_interop.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_current_device.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_common.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_device_array.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_device_elt.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_host_array.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_thrust.hpp" />
+    <ClInclude Include="..\src\utils\cuda_utils\memory_debug.hpp" />
+    <ClInclude Include="..\src\utils\quick_sort.hpp" />
+    <ClInclude Include="..\src\utils\std_utils.hpp" />
+    <ClInclude Include="..\src\utils\timer.hpp" />
     <CudaCompile Include="..\src\animation\animesh.cu">
       <FileType>Document</FileType>
     </CudaCompile>
@@ -375,6 +371,14 @@
     <None Include="..\src\blending_lib\splines.inl" />
     <None Include="..\src\containers\grid3_cu.inl" />
     <None Include="..\src\implicit_graphs\skeleton_env_tex.inl" />
+    <None Include="..\src\maths\intersections\intersection.inl" />
+    <None Include="..\src\maths\intersections\inter_tri_tri.inl" />
+    <None Include="..\src\primitives\distance_field.inl" />
+    <None Include="..\src\primitives\hermiteRBF.inl" />
+    <None Include="..\src\primitives\plane.inl" />
+    <None Include="..\src\primitives\precomputed_prim.inl" />
+    <None Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.inl" />
+    <None Include="..\src\utils\cuda_utils\memory_debug.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

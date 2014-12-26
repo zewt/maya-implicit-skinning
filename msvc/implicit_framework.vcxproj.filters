@@ -1,17 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
-    <ClCompile Include="..\src\utils\timer.cpp" />
-    <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
-    <ClCompile Include="..\src\parsers\endianess.cpp" />
-    <ClCompile Include="..\src\parsers\loader_mesh.cpp" />
-    <ClCompile Include="..\src\parsers\loader_skel.cpp" />
-    <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp" />
-    <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp" />
-    <ClCompile Include="..\src\meshes\mesh.cpp" />
-    <ClCompile Include="..\src\Interface.cpp" />
-    <ClCompile Include="..\src\plugin.cpp" />
     <ClCompile Include="..\src\blending_lib\controller.cpp">
       <Filter>blending_lib</Filter>
     </ClCompile>
@@ -42,58 +31,41 @@
     <ClCompile Include="..\src\implicit_graphs\grid.cpp">
       <Filter>implicit_graphs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\meshes\mesh.cpp">
+      <Filter>meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp">
+      <Filter>meshes\vcg_lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp">
+      <Filter>meshes\vcg_lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\parsers\endianess.cpp">
+      <Filter>parsers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\parsers\loader_mesh.cpp">
+      <Filter>parsers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\parsers\loader_skel.cpp">
+      <Filter>parsers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\timer.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Interface.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\plugin.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\animation\animesh_kers.hpp" />
-    <ClInclude Include="..\include\blending_lib\funcs.hpp" />
-    <ClInclude Include="..\include\blending_lib\splines.hpp" />
-    <ClInclude Include="..\include\blending_lib\tools.hpp" />
-    <ClInclude Include="..\include\containers\grid3_cu.hpp" />
-    <ClInclude Include="..\include\containers\identifier.hpp" />
-    <ClInclude Include="..\include\containers\idx3_cu.hpp" />
-    <ClInclude Include="..\include\maths\intersections\intersection.hpp" />
-    <ClInclude Include="..\include\meshes\mesh.hpp" />
-    <ClInclude Include="..\include\meshes\vcg_lib\utils_sampling.hpp" />
-    <ClInclude Include="..\include\meshes\vcg_lib\vcg_mesh.hpp" />
-    <ClInclude Include="..\include\parsers\endianess.hpp" />
-    <ClInclude Include="..\include\parsers\loader_mesh.hpp" />
-    <ClInclude Include="..\include\parsers\loader_skel.hpp" />
-    <ClInclude Include="..\include\primitives\distance_field.hpp" />
-    <ClInclude Include="..\include\primitives\hermiteRBF.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_core.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_data.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_interface.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_tex.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_tex_binding.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_kernels.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_phi_funcs.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_setup.hpp" />
-    <ClInclude Include="..\include\primitives\hrbf\hrbf_wrapper.hpp" />
-    <ClInclude Include="..\include\primitives\plane.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_env.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_env_binding.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_kernels.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_tex.hpp" />
-    <ClInclude Include="..\include\primitives\precomputed_prim.hpp" />
-    <ClInclude Include="..\include\rendering\cuda_main_kernels.hpp" />
-    <ClInclude Include="..\include\rendering\scene_enum.hpp" />
-    <ClInclude Include="..\include\utils\assert_utils.hpp" />
-    <ClInclude Include="..\include\utils\class_saver.hpp" />
-    <ClInclude Include="..\include\utils\conversions.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_compiler_interop.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_current_device.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_common.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_device_array.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_device_elt.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_host_array.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_thrust.hpp" />
-    <ClInclude Include="..\include\utils\cuda_utils\memory_debug.hpp" />
-    <ClInclude Include="..\include\utils\quick_sort.hpp" />
-    <ClInclude Include="..\include\utils\std_utils.hpp" />
-    <ClInclude Include="..\include\utils\timer.hpp" />
     <ClInclude Include="..\src\animation\bone.hpp">
       <Filter>animation</Filter>
     </ClInclude>
@@ -286,6 +258,144 @@
     <ClInclude Include="..\src\maths\ray_cu.hpp">
       <Filter>maths</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\maths\intersections\intersection.hpp">
+      <Filter>maths\intersections</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\meshes\mesh.hpp">
+      <Filter>meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\meshes\vcg_lib\vcg_mesh.hpp">
+      <Filter>meshes\vcg_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp">
+      <Filter>meshes\vcg_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\parsers\loader_skel.hpp">
+      <Filter>parsers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\parsers\endianess.hpp">
+      <Filter>parsers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\parsers\loader_mesh.hpp">
+      <Filter>parsers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim.hpp">
+      <Filter>primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\distance_field.hpp">
+      <Filter>primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hermiteRBF.hpp">
+      <Filter>primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\plane.hpp">
+      <Filter>primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_core.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_interface.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_data.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_phi_funcs.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_setup.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_wrapper.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex_binding.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\hrbf\hrbf_kernels.hpp">
+      <Filter>primitives\hrbf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env_binding.hpp">
+      <Filter>primitives\precomputed_prim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.hpp">
+      <Filter>primitives\precomputed_prim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.hpp">
+      <Filter>primitives\precomputed_prim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp">
+      <Filter>primitives\precomputed_prim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env.hpp">
+      <Filter>primitives\precomputed_prim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\conversions.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\quick_sort.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\std_utils.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\timer.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\assert_utils.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\class_saver.hpp">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_common.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_device_array.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_device_elt.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_host_array.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_thrust.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\memory_debug.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_compiler_interop.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_current_device.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\cuda_utils\cuda_utils.hpp">
+      <Filter>utils\cuda_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp">
+      <Filter>rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\rendering\scene_enum.hpp">
+      <Filter>rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\blending_lib\funcs.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\splines.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\blending_lib\tools.hpp">
+      <Filter>main</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CUDA">
@@ -315,16 +425,41 @@
     <Filter Include="maths">
       <UniqueIdentifier>{796042d5-b8b2-4084-ab9a-5f8030009e65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="maths\intersections">
+      <UniqueIdentifier>{22e3fce3-75de-48c5-8bfb-0bc6a958cc63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="meshes">
+      <UniqueIdentifier>{84491330-4572-4960-9c5a-6dd308693d34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="meshes\vcg_lib">
+      <UniqueIdentifier>{9b7e7c63-bfaa-4504-a63a-f17c5a95de0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="parsers">
+      <UniqueIdentifier>{95ff5a5b-5de4-48d3-9d8f-bfb38dcd5bd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="primitives">
+      <UniqueIdentifier>{584a23a4-e479-4e31-a662-d93df9198d06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="primitives\hrbf">
+      <UniqueIdentifier>{afd8c0ea-ba1a-4c56-9928-e9aefcd90f6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="primitives\precomputed_prim">
+      <UniqueIdentifier>{e3573fbc-2166-4998-83ce-1ca866987da3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{2d1558ff-6880-4630-ac4d-e05d492c179b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\cuda_utils">
+      <UniqueIdentifier>{f854cb69-3e0c-44a7-9dec-dd2b9632ebd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rendering">
+      <UniqueIdentifier>{db5dcd05-30bb-4c33-80bb-07bdeadb7a0d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="main">
+      <UniqueIdentifier>{35429e6d-7578-4f81-9b48-194104cfa389}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu" />
-    <CudaCompile Include="..\src\utils\cuda_utils\cuda_utils.cu" />
-    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_env.cu" />
-    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.cu" />
-    <CudaCompile Include="..\src\primitives\hrbf\hrbf_env.cu" />
-    <CudaCompile Include="..\src\primitives\hrbf\hrbf_kernels.cu" />
-    <CudaCompile Include="..\src\primitives\distance_field.cu" />
-    <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu" />
     <CudaCompile Include="..\src\animation\animesh.cu">
       <Filter>animation</Filter>
     </CudaCompile>
@@ -364,6 +499,30 @@
     <CudaCompile Include="..\src\implicit_graphs\skeleton_env.cu">
       <Filter>implicit_graphs</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\primitives\distance_field.cu">
+      <Filter>primitives</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\hrbf\hrbf_env.cu">
+      <Filter>primitives\hrbf</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\hrbf\hrbf_kernels.cu">
+      <Filter>primitives\hrbf</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_env.cu">
+      <Filter>primitives\precomputed_prim</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.cu">
+      <Filter>primitives\precomputed_prim</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu">
+      <Filter>utils\cuda_utils</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\utils\cuda_utils\cuda_utils.cu">
+      <Filter>utils\cuda_utils</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu">
+      <Filter>rendering</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\blending_lib\opening.inl">
@@ -383,6 +542,30 @@
     </None>
     <None Include="..\src\implicit_graphs\skeleton_env_tex.inl">
       <Filter>implicit_graphs</Filter>
+    </None>
+    <None Include="..\src\maths\intersections\intersection.inl">
+      <Filter>maths\intersections</Filter>
+    </None>
+    <None Include="..\src\maths\intersections\inter_tri_tri.inl">
+      <Filter>maths\intersections</Filter>
+    </None>
+    <None Include="..\src\primitives\distance_field.inl">
+      <Filter>primitives</Filter>
+    </None>
+    <None Include="..\src\primitives\hermiteRBF.inl">
+      <Filter>primitives</Filter>
+    </None>
+    <None Include="..\src\primitives\plane.inl">
+      <Filter>primitives</Filter>
+    </None>
+    <None Include="..\src\primitives\precomputed_prim.inl">
+      <Filter>primitives</Filter>
+    </None>
+    <None Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.inl">
+      <Filter>primitives\precomputed_prim</Filter>
+    </None>
+    <None Include="..\src\utils\cuda_utils\memory_debug.inl">
+      <Filter>utils\cuda_utils</Filter>
     </None>
   </ItemGroup>
 </Project>
