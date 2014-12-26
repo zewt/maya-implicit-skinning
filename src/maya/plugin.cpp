@@ -1,24 +1,3 @@
-//-
-// ==========================================================================
-// Copyright 1995,2006,2008 Autodesk, Inc. All rights reserved.
-//
-// Use of this software is subject to the terms of the Autodesk
-// license agreement provided at the time of installation or download,
-// or which otherwise accompanies this software in either electronic
-// or hard copy form.
-// ==========================================================================
-//+
-
-//
-//  File: offset.cc
-//
-//  Description:
-//         Example implementation of a deformer. This node
-//        offsets vertices according to the CV's weights.
-//        The weights are set using the set editor or the
-//        percent command.
-//
-
 #include <string.h>
 #include <maya/MIOStream.h>
 #include <math.h>
@@ -68,57 +47,41 @@
 #include <map>
 using namespace std;
 
-
-
-
-
-
-
-
-
-
-class offset : public MPxDeformerNode
+class ImplicitSkinDeformer: public MPxDeformerNode
 {
 public:
-    static  MTypeId        id;
+    static MTypeId id;
 
-    virtual ~offset() { }
+    virtual ~ImplicitSkinDeformer() { }
 
-    static void *creator() { return new offset(); }
+    static void *creator() { return new ImplicitSkinDeformer(); }
     static MStatus initialize();
 
-    MObject &accessoryAttribute() const;
     MStatus accessoryNodeSetup(MDagModifier& cmd);
 
 //    MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
     MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
 
 private:
-
     PluginInterface pluginInterface;
 
-    // local node attributes
-    static  MObject     offsetMatrix;     // offset center and axis
+    static MObject  offsetMatrix;     // offset center and axis
 };
 
-MTypeId     offset::id( 0x11229090 );
+MTypeId ImplicitSkinDeformer::id( 0x11229090 );
+MObject ImplicitSkinDeformer::offsetMatrix;
 
-// local attributes
-MObject        offset::offsetMatrix;
-
-MStatus offset::initialize()
+MStatus ImplicitSkinDeformer::initialize()
 {
-    // local attribute initialization
-
-    MFnMatrixAttribute  mAttr;
-    offsetMatrix=mAttr.create( "locateMatrix", "lm");
-        mAttr.setStorable(false);
-        mAttr.setConnectable(true);
+    MFnMatrixAttribute mAttr;
+    offsetMatrix=mAttr.create("locateMatrix", "lm");
+    mAttr.setStorable(false);
+    mAttr.setConnectable(true);
 
     //  deformation attributes
-    addAttribute( offsetMatrix);
+    addAttribute(offsetMatrix);
 
-    attributeAffects( offset::offsetMatrix, offset::outputGeom );
+    attributeAffects(ImplicitSkinDeformer::offsetMatrix, ImplicitSkinDeformer::outputGeom);
 
     return MStatus::kSuccess;
 }
@@ -337,7 +300,7 @@ MStatus loadSkeletonFromSkinCluster(const MFnSkinCluster &skinCluster, Loader::A
     return MStatus::kSuccess;
 }
 
-MStatus offset::compute(const MPlug &plug, MDataBlock &dataBlock)
+MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
         
@@ -466,106 +429,15 @@ MStatus offset::compute(const MPlug &plug, MDataBlock &dataBlock)
     return MStatus::kSuccess;
 }
 
-// Description:   Deform the point with a squash algorithm
-//
-// Arguments:
-//   block        : the datablock of the node
-//     iter        : an iterator for the geometry to be deformed
-//   m            : matrix to transform the point into world space
-//     multiIndex : the index of the geometry that we are deforming
-#if 0
-MStatus offset::deform(MDataBlock& block, MItGeometry &iter, const MMatrix& m, unsigned int geomIndex)
+MStatus ImplicitSkinDeformer::accessoryNodeSetup(MDagModifier& cmd)
 {
-    MStatus status;
-
-    MArrayDataHandle inputArray = block.inputArrayValue(input, &status);
-    if(status != MS::kSuccess) return status;
-    inputArray.jumpToElement(geomIndex);
-
-    MDataHandle inputGeomData = inputArray.inputValue(&status);
-    if(status != MS::kSuccess) return status;
-
-    MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
-    MObject inputObject = inputGeomDataHandle.data();
-
-    if (inputObject.apiType() != MFn::kMeshData) {
-        // XXX: only meshes are supported
-        return status;
-    }
-
-    MFnMesh myMesh(inputObject, &status);
-    if(status != MS::kSuccess) {
-        cout << "Couldn't get input geometry as mesh" << endl;
-        return status;
-    }
-
-    // Mesh* ptr_mesh = new Mesh();
-    Loader::Abs_mesh mesh;
-    load_mesh(inputObject, mesh);
-
-
-    PluginInterface::go(mesh);
-
-
-
-    
-    // Envelope data from the base class.
-    // The envelope is simply a scale factor.
-    MDataHandle envData = block.inputValue(envelope, &status);
-    if(status != MS::kSuccess) return status;
-    float env = envData.asFloat();    
-
-    // Get the matrix which is used to define the direction and scale
-    // of the offset.
-    MDataHandle matData = block.inputValue(offsetMatrix, &status);
-    if (status != MS::kSuccess) return status;
-    MMatrix omat = matData.asMatrix();
-    MMatrix omatinv = omat.inverse();
-
-    for ( ; !iter.isDone(); iter.next()) {
-        MPoint pt = iter.position();
-        pt *= omatinv;
-        
-        float weight = weightValue(block, geomIndex, iter.index());
-        pt.y = pt.y + env*weight;
-
-        pt *= omat;
-        iter.setPosition(pt);
-    }
-
     return MS::kSuccess;
-}
-#endif
-
-//      This method returns a the attribute to which an accessory    
-//    shape is connected. If the accessory shape is deleted, the deformer
-//      node will automatically be deleted.
-//
-//    This method is optional.
-MObject &offset::accessoryAttribute() const
-{
-    return offset::offsetMatrix;
-}
-
-//        This method is called when the deformer is created by the
-//        "deformer" command. You can add to the cmds in the MDagModifier
-//        cmd in order to hook up any additional nodes that your node needs
-//        to operate.
-//
-//        In this example, we create a locator and attach its matrix attribute
-//        to the matrix input on the offset node. The locator is used to
-//        set the direction and scale of the random field.
-//
-//    Description:
-//        This method is optional.
-//
-MStatus offset::accessoryNodeSetup(MDagModifier& cmd)
-{
+/*
     MStatus result;
 
     // hook up the accessory node
     MObject objLoc = cmd.createNode(MString("locator"), MObject::kNullObj, &result);
-    if (result != MS::kSuccess == result)
+    if (result != MS::kSuccess)
         return result;
 
     MFnDependencyNode fnLoc(objLoc);
@@ -573,16 +445,16 @@ MStatus offset::accessoryNodeSetup(MDagModifier& cmd)
     attrName.set("matrix");
     MObject attrMat = fnLoc.attribute(attrName);
 
-    return cmd.connect(objLoc,attrMat,this->thisMObject(),offset::offsetMatrix);
+    return cmd.connect(objLoc, attrMat, thisMObject(), ImplicitSkinDeformer::offsetMatrix);
+*/
 }
 
 MStatus initializePlugin(MObject obj)
 {
     PluginInterface::init();
 
-    MFnPlugin plugin(obj, PLUGIN_COMPANY, "3.0", "Any");
-    return plugin.registerNode( "offset", offset::id, offset::creator, 
-                                  offset::initialize, MPxNode::kDeformerNode );
+    MFnPlugin plugin(obj, "", "1.0", "Any");
+    return plugin.registerNode("implicit", ImplicitSkinDeformer::id, ImplicitSkinDeformer::creator, ImplicitSkinDeformer::initialize, MPxNode::kDeformerNode);
 }
 
 MStatus uninitializePlugin(MObject obj)
@@ -590,5 +462,5 @@ MStatus uninitializePlugin(MObject obj)
     PluginInterface::shutdown();
 
     MFnPlugin plugin(obj);
-    return plugin.deregisterNode(offset::id);
+    return plugin.deregisterNode(ImplicitSkinDeformer::id);
 }
