@@ -96,9 +96,6 @@
     <ClInclude Include="..\include\blending_lib\controller_tools.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\blending_lib\generator.hpp">
-      <Filter>blending_lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\blending_lib\opening.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
@@ -183,9 +180,6 @@
     <ClInclude Include="..\src\global_datas\macros.hpp">
       <Filter>global_datas</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\global_datas\operator_use_macros.hpp">
-      <Filter>global_datas</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp">
       <Filter>global_datas</Filter>
     </ClInclude>
@@ -225,9 +219,6 @@
     <ClInclude Include="..\src\maths\transfo.hpp">
       <Filter>maths</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\maths\trs.hpp">
-      <Filter>maths</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\maths\vec2_cu.hpp">
       <Filter>maths</Filter>
     </ClInclude>
@@ -257,9 +248,6 @@
     </ClInclude>
     <ClInclude Include="..\src\maths\ray_cu.hpp">
       <Filter>maths</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maths\intersections\intersection.hpp">
-      <Filter>maths\intersections</Filter>
     </ClInclude>
     <ClInclude Include="..\src\meshes\mesh.hpp">
       <Filter>meshes</Filter>
@@ -396,11 +384,11 @@
     <ClInclude Include="..\include\blending_lib\tools.hpp">
       <Filter>main</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\blending_lib\generator.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="CUDA">
-      <UniqueIdentifier>{165C56EF-0431-43BE-9DD1-763C6C9EDFD4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="animation">
       <UniqueIdentifier>{f656587d-1d32-4b67-9521-fe924730f005}</UniqueIdentifier>
     </Filter>
@@ -424,9 +412,6 @@
     </Filter>
     <Filter Include="maths">
       <UniqueIdentifier>{796042d5-b8b2-4084-ab9a-5f8030009e65}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="maths\intersections">
-      <UniqueIdentifier>{22e3fce3-75de-48c5-8bfb-0bc6a958cc63}</UniqueIdentifier>
     </Filter>
     <Filter Include="meshes">
       <UniqueIdentifier>{84491330-4572-4960-9c5a-6dd308693d34}</UniqueIdentifier>
@@ -542,12 +527,6 @@
     </None>
     <None Include="..\src\implicit_graphs\skeleton_env_tex.inl">
       <Filter>implicit_graphs</Filter>
-    </None>
-    <None Include="..\src\maths\intersections\intersection.inl">
-      <Filter>maths\intersections</Filter>
-    </None>
-    <None Include="..\src\maths\intersections\inter_tri_tri.inl">
-      <Filter>maths\intersections</Filter>
     </None>
     <None Include="..\src\primitives\distance_field.inl">
       <Filter>primitives</Filter>

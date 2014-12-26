@@ -174,7 +174,6 @@
     <ClInclude Include="..\include\blending_lib\controller.hpp" />
     <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
     <ClInclude Include="..\include\blending_lib\funcs.hpp" />
-    <ClInclude Include="..\include\blending_lib\generator.hpp" />
     <ClInclude Include="..\include\blending_lib\opening.hpp" />
     <ClInclude Include="..\include\blending_lib\operators.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
@@ -223,6 +222,7 @@
     <ClInclude Include="..\src\blending_lib\cuda_interface\uclean.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\ucommon.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\ultimate.hpp" />
+    <ClInclude Include="..\src\blending_lib\generator.hpp" />
     <ClInclude Include="..\src\blending_lib\splines.hpp" />
     <ClInclude Include="..\src\containers\grid3_cu.hpp" />
     <ClInclude Include="..\src\containers\identifier.hpp" />
@@ -235,7 +235,6 @@
     <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp" />
     <ClInclude Include="..\src\global_datas\globals.hpp" />
     <ClInclude Include="..\src\global_datas\macros.hpp" />
-    <ClInclude Include="..\src\global_datas\operator_use_macros.hpp" />
     <ClInclude Include="..\src\implicit_graphs\bone_tex.hpp" />
     <ClInclude Include="..\src\implicit_graphs\grid.hpp" />
     <ClInclude Include="..\src\implicit_graphs\skeleton_env.hpp" />
@@ -249,13 +248,11 @@
     <ClInclude Include="..\src\implicit_graphs\tree_type.hpp" />
     <ClInclude Include="..\src\maths\bbox.hpp" />
     <ClInclude Include="..\src\maths\cpu_transfo.hpp" />
-    <ClInclude Include="..\src\maths\intersections\intersection.hpp" />
     <ClInclude Include="..\src\maths\mat3_cu.hpp" />
     <ClInclude Include="..\src\maths\math_cu.hpp" />
     <ClInclude Include="..\src\maths\point_cu.hpp" />
     <ClInclude Include="..\src\maths\ray_cu.hpp" />
     <ClInclude Include="..\src\maths\transfo.hpp" />
-    <ClInclude Include="..\src\maths\trs.hpp" />
     <ClInclude Include="..\src\maths\vec2i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec2_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
@@ -371,8 +368,6 @@
     <None Include="..\src\blending_lib\splines.inl" />
     <None Include="..\src\containers\grid3_cu.inl" />
     <None Include="..\src\implicit_graphs\skeleton_env_tex.inl" />
-    <None Include="..\src\maths\intersections\intersection.inl" />
-    <None Include="..\src\maths\intersections\inter_tri_tri.inl" />
     <None Include="..\src\primitives\distance_field.inl" />
     <None Include="..\src\primitives\hermiteRBF.inl" />
     <None Include="..\src\primitives\plane.inl" />
