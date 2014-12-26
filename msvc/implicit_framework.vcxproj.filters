@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\implicit_graphs\skinning\grid.cpp" />
-    <ClCompile Include="..\src\implicit_graphs\skinning\tree.cpp" />
-    <ClCompile Include="..\src\implicit_graphs\skinning\tree_cu.cpp" />
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
     <ClCompile Include="..\src\parsers\endianess.cpp" />
     <ClCompile Include="..\src\parsers\loader_mesh.cpp" />
     <ClCompile Include="..\src\parsers\loader_skel.cpp" />
-    <ClCompile Include="..\src\global_datas\globals.cpp" />
     <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp" />
     <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp" />
     <ClCompile Include="..\src\meshes\mesh.cpp" />
@@ -34,63 +30,28 @@
     <ClCompile Include="..\src\blending_lib\structs.cpp">
       <Filter>blending_lib</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\global_datas\globals.cpp">
+      <Filter>global_datas</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\implicit_graphs\tree.cpp">
+      <Filter>implicit_graphs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp">
+      <Filter>implicit_graphs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\implicit_graphs\grid.cpp">
+      <Filter>implicit_graphs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\animation\animesh_kers.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_tex.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_tex_binding.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_tex_interface.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_type.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_functions.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\constants.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\constants_tex.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\dyn_operators.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\n_ary.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\n_ary_constant_interface.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\operator3d_cu.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\uclean.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\ucommon.hpp" />
-    <ClInclude Include="..\include\blending_lib\cuda_interface\ultimate.hpp" />
     <ClInclude Include="..\include\blending_lib\funcs.hpp" />
     <ClInclude Include="..\include\blending_lib\splines.hpp" />
     <ClInclude Include="..\include\blending_lib\tools.hpp" />
     <ClInclude Include="..\include\containers\grid3_cu.hpp" />
     <ClInclude Include="..\include\containers\identifier.hpp" />
     <ClInclude Include="..\include\containers\idx3_cu.hpp" />
-    <ClInclude Include="..\include\control\animated_mesh_ctrl.hpp" />
-    <ClInclude Include="..\include\control\cuda_ctrl.hpp" />
-    <ClInclude Include="..\include\control\debug_ctrl.hpp" />
-    <ClInclude Include="..\include\control\operators_ctrl.hpp" />
-    <ClInclude Include="..\include\control\skeleton_ctrl.hpp" />
-    <ClInclude Include="..\include\global_datas\ad_hoc_hand.hpp" />
-    <ClInclude Include="..\include\global_datas\globals.hpp" />
-    <ClInclude Include="..\include\global_datas\macros.hpp" />
-    <ClInclude Include="..\include\global_datas\operator_use_macros.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\bone_tex.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\grid.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_evaluator.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_tex.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_tex_binding.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_type.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\tree.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\tree_cu.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\tree_cu_type.hpp" />
-    <ClInclude Include="..\include\implicit_graphs\skinning\tree_type.hpp" />
-    <ClInclude Include="..\include\maths\bbox.hpp" />
-    <ClInclude Include="..\include\maths\cpu_transfo.hpp" />
     <ClInclude Include="..\include\maths\intersections\intersection.hpp" />
-    <ClInclude Include="..\include\maths\mat3_cu.hpp" />
-    <ClInclude Include="..\include\maths\math_cu.hpp" />
-    <ClInclude Include="..\include\maths\point_cu.hpp" />
-    <ClInclude Include="..\include\maths\ray_cu.hpp" />
-    <ClInclude Include="..\include\maths\transfo.hpp" />
-    <ClInclude Include="..\include\maths\trs.hpp" />
-    <ClInclude Include="..\include\maths\vec2i_cu.hpp" />
-    <ClInclude Include="..\include\maths\vec2_cu.hpp" />
-    <ClInclude Include="..\include\maths\vec3i_cu.hpp" />
-    <ClInclude Include="..\include\maths\vec3_cu.hpp" />
     <ClInclude Include="..\include\meshes\mesh.hpp" />
     <ClInclude Include="..\include\meshes\vcg_lib\utils_sampling.hpp" />
     <ClInclude Include="..\include\meshes\vcg_lib\vcg_mesh.hpp" />
@@ -175,6 +136,156 @@
     <ClInclude Include="..\include\blending_lib\structs.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\n_ary_constant_interface.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\operator3d_cu.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\uclean.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\ucommon.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\ultimate.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex_binding.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex_interface.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_type.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_functions.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\constants.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\constants_tex.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\dyn_operators.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\cuda_interface\n_ary.hpp">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\containers\identifier.hpp">
+      <Filter>containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\containers\idx3_cu.hpp">
+      <Filter>containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\containers\grid3_cu.hpp">
+      <Filter>containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\control\debug_ctrl.hpp">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\control\operators_ctrl.hpp">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\control\skeleton_ctrl.hpp">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\control\animated_mesh_ctrl.hpp">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\control\cuda_ctrl.hpp">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\global_datas\globals.hpp">
+      <Filter>global_datas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\global_datas\macros.hpp">
+      <Filter>global_datas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\global_datas\operator_use_macros.hpp">
+      <Filter>global_datas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp">
+      <Filter>global_datas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\tree.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\tree_cu.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\tree_cu_type.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\tree_type.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\bone_tex.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\grid.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\skeleton_env.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\skeleton_env_evaluator.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\skeleton_env_tex.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\skeleton_env_tex_binding.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\implicit_graphs\skeleton_env_type.hpp">
+      <Filter>implicit_graphs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\transfo.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\trs.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\vec2_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\vec2i_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\vec3_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\vec3i_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\bbox.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\cpu_transfo.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\mat3_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\math_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\point_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maths\ray_cu.hpp">
+      <Filter>maths</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CUDA">
@@ -186,21 +297,32 @@
     <Filter Include="blending_lib">
       <UniqueIdentifier>{23f1ff70-b3e7-485c-8a95-5fc07371dfaf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="blending_lib\cuda_interface">
+      <UniqueIdentifier>{bd2424cb-39b4-4b94-ae4e-2f4131d6b51b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="containers">
+      <UniqueIdentifier>{c413524f-67c0-4e57-a0ef-e4d0bf20a93b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="control">
+      <UniqueIdentifier>{5687b362-ffbf-4884-a75d-042058dbdac4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="global_datas">
+      <UniqueIdentifier>{6ec3ee84-6a65-4bc3-aed1-55c54051113a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implicit_graphs">
+      <UniqueIdentifier>{81aa3f59-e6d6-4f24-839e-ff31abcd17d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="maths">
+      <UniqueIdentifier>{796042d5-b8b2-4084-ab9a-5f8030009e65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\src\blending_lib\cuda_interface\blending_env.cu" />
-    <CudaCompile Include="..\src\blending_lib\cuda_interface\constants.cu" />
-    <CudaCompile Include="..\src\control\animated_mesh_ctrl.cu" />
-    <CudaCompile Include="..\src\control\cuda_ctrl.cu" />
-    <CudaCompile Include="..\src\control\operators_ctrl.cu" />
-    <CudaCompile Include="..\src\control\skeleton_ctrl.cu" />
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu" />
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_utils.cu" />
     <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_env.cu" />
     <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.cu" />
     <CudaCompile Include="..\src\primitives\hrbf\hrbf_env.cu" />
     <CudaCompile Include="..\src\primitives\hrbf\hrbf_kernels.cu" />
-    <CudaCompile Include="..\src\implicit_graphs\skinning\skeleton_env.cu" />
     <CudaCompile Include="..\src\primitives\distance_field.cu" />
     <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu" />
     <CudaCompile Include="..\src\animation\animesh.cu">
@@ -221,6 +343,27 @@
     <CudaCompile Include="..\src\animation\skeleton.cu">
       <Filter>animation</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\blending_lib\cuda_interface\blending_env.cu">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\blending_lib\cuda_interface\constants.cu">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\animated_mesh_ctrl.cu">
+      <Filter>control</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\cuda_ctrl.cu">
+      <Filter>control</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\operators_ctrl.cu">
+      <Filter>control</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\skeleton_ctrl.cu">
+      <Filter>control</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\implicit_graphs\skeleton_env.cu">
+      <Filter>implicit_graphs</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\blending_lib\opening.inl">
@@ -228,6 +371,18 @@
     </None>
     <None Include="..\src\blending_lib\splines.inl">
       <Filter>blending_lib</Filter>
+    </None>
+    <None Include="..\src\blending_lib\cuda_interface\blending_env_tex.inl">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </None>
+    <None Include="..\src\blending_lib\cuda_interface\constants_tex.inl">
+      <Filter>blending_lib\cuda_interface</Filter>
+    </None>
+    <None Include="..\src\containers\grid3_cu.inl">
+      <Filter>containers</Filter>
+    </None>
+    <None Include="..\src\implicit_graphs\skeleton_env_tex.inl">
+      <Filter>implicit_graphs</Filter>
     </None>
   </ItemGroup>
 </Project>
