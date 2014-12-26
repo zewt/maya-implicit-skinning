@@ -177,10 +177,12 @@
     <ClInclude Include="..\include\blending_lib\opening.hpp" />
     <ClInclude Include="..\include\blending_lib\operators.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
-    <ClInclude Include="..\include\blending_lib\tools.hpp" />
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
+    <ClCompile Include="..\src\maya\Interface.cpp" />
+    <ClCompile Include="..\src\maya\maya_helpers.cpp" />
+    <ClCompile Include="..\src\maya\plugin.cpp" />
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
@@ -197,8 +199,6 @@
     <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp" />
     <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp" />
     <ClCompile Include="..\src\meshes\mesh.cpp" />
-    <ClCompile Include="..\src\Interface.cpp" />
-    <ClCompile Include="..\src\plugin.cpp" />
     <ClInclude Include="..\src\animation\animesh.hpp" />
     <ClInclude Include="..\src\animation\animesh_enum.hpp" />
     <ClInclude Include="..\src\animation\animesh_kers.hpp" />
@@ -257,6 +257,8 @@
     <ClInclude Include="..\src\maths\vec2_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
+    <ClInclude Include="..\src\maya\Interface.hpp" />
+    <ClInclude Include="..\src\maya\maya_helpers.hpp" />
     <ClInclude Include="..\src\meshes\mesh.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\vcg_mesh.hpp" />

@@ -58,11 +58,14 @@
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp">
       <Filter>utils\cuda_utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Interface.cpp">
-      <Filter>main</Filter>
+    <ClCompile Include="..\src\maya\maya_helpers.cpp">
+      <Filter>maya</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\plugin.cpp">
-      <Filter>main</Filter>
+    <ClCompile Include="..\src\maya\plugin.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\Interface.cpp">
+      <Filter>maya</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -381,11 +384,14 @@
     <ClInclude Include="..\src\blending_lib\splines.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\blending_lib\tools.hpp">
-      <Filter>main</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\blending_lib\generator.hpp">
       <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\maya_helpers.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\Interface.hpp">
+      <Filter>maya</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -440,8 +446,8 @@
     <Filter Include="rendering">
       <UniqueIdentifier>{db5dcd05-30bb-4c33-80bb-07bdeadb7a0d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="main">
-      <UniqueIdentifier>{35429e6d-7578-4f81-9b48-194104cfa389}</UniqueIdentifier>
+    <Filter Include="maya">
+      <UniqueIdentifier>{2a994f5b-9149-40e6-9670-c4d09f393ae9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

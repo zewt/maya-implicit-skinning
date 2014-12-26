@@ -3,7 +3,7 @@
 // without jumping hoops.  This file exposes an interface for the plugin that doesn't include any
 // CUDA headers.  Seriously, this is a joke.
 
-#include "Interface.h"
+#include "Interface.hpp"
 
 #include "loader_mesh.hpp"
 
