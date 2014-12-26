@@ -285,7 +285,6 @@
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.hpp" />
     <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp" />
-    <ClInclude Include="..\src\rendering\scene_enum.hpp" />
     <ClInclude Include="..\src\utils\assert_utils.hpp" />
     <ClInclude Include="..\src\utils\class_saver.hpp" />
     <ClInclude Include="..\src\utils\conversions.hpp" />

@@ -27,7 +27,6 @@
 
 #include "bbox.hpp"
 #include "cuda_utils.hpp"
-#include "scene_enum.hpp"
 #include "blending_env_type.hpp"
 
 // -----------------------------------------------------------------------------

@@ -375,9 +375,6 @@
     <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp">
       <Filter>rendering</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\rendering\scene_enum.hpp">
-      <Filter>rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\blending_lib\funcs.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
