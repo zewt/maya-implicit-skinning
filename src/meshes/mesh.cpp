@@ -48,7 +48,7 @@ Mesh::Mesh(const Mesh& m) :
 
     _vert            = new float[ _nb_vert*3 ];
     _is_connected    = new bool [ _nb_vert   ];
-    _is_side         = new bool [ _nb_vert*3 ];
+    _is_side = m._is_side;
     _packed_vert_map = new Packed_data[_nb_vert];
 
     _tri       = new int[3 * _nb_tri];
@@ -64,10 +64,6 @@ Mesh::Mesh(const Mesh& m) :
         _vert[i*3  ] = m._vert[i*3  ];
         _vert[i*3+1] = m._vert[i*3+1];
         _vert[i*3+2] = m._vert[i*3+2];
-
-        _is_side[i*3  ] = m._is_side[i*3  ];
-        _is_side[i*3+1] = m._is_side[i*3+1];
-        _is_side[i*3+2] = m._is_side[i*3+2];
 
         _edge_list_offsets[i*2  ] = m._edge_list_offsets[i*2  ];
         _edge_list_offsets[i*2+1] = m._edge_list_offsets[i*2+1];
@@ -243,7 +239,6 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
     _nb_edges(0),
     _vert(0),
     _is_connected(0),
-    _is_side(0),
     _tri(0),
     _piv(0),
     _edge_list(0),
@@ -262,7 +257,7 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
     _tri           = new int   [_nb_tri  * 3];
 
     _is_connected = new bool[_nb_vert];
-    _is_side      = new bool[_nb_vert];
+    _is_side.resize(_nb_vert, false);
 
     // Copy vertex coordinates
     for( int i = 0; i < _nb_vert; i++)
@@ -356,17 +351,16 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
 
 std::pair<int, int> Mesh::pair_from_tri(int index_tri, int current_vert)
 {
-    int ids[2] = {-1, -1};
     for(int i=0; i<3; i++){
         int vert_id = _tri[index_tri*3 + i];
         if(vert_id == current_vert){
-            ids[0] = _tri[index_tri*3 + (i+1)%3];
-            ids[1] = _tri[index_tri*3 + (i+2)%3];
-            break;
+            int id0 = _tri[index_tri*3 + (i+1)%3];
+            int id1 = _tri[index_tri*3 + (i+2)%3];
+            return std::pair<int, int>(id0, id1);
         }
     }
 
-    return std::pair<int, int>(ids[0], ids[1]);
+    return std::pair<int, int>(-1, -1);
 }
 
 // -----------------------------------------------------------------------------
@@ -418,12 +412,7 @@ void Mesh::compute_edges()
     Timer t;
     t.start();
 
-    delete[] _is_side;
-    _is_side = new bool[_nb_vert];
-    for(int i = 0; i < _nb_vert; i++)
-        _is_side[i] = false;
-
-    _nb_edges = 0;
+    _is_side.resize(_nb_vert, false);
     std::vector<std::vector<int> > neighborhood_list(_nb_vert);
     std::vector<std::pair<int, int> > list_pairs;
     list_pairs.reserve(16);
@@ -481,11 +470,22 @@ void Mesh::compute_edges()
         }else
             ring.pop_back();
 
-        for(unsigned int j = 0; j < ring.size(); j++)
-            neighborhood_list[i].push_back( ring[j] );
-
-        _nb_edges += (int) ring.size();
+        neighborhood_list[i].insert(neighborhood_list[i].begin(), ring.begin(), ring.end());
     }// END FOR( EACH VERTEX )
+
+    load_edges(neighborhood_list);
+
+    std::cout << "Mesh edges computed in: " << t.stop() << " sec" << std::endl;
+}
+
+void Mesh::load_edges(const std::vector<std::vector<int> > &neighborhood_list)
+{
+    assert(neighborhood_list.size() == _nb_vert);
+
+    _nb_edges = 0;
+
+    for(int i = 0; i < _nb_vert; i++)
+        _nb_edges += (int) neighborhood_list[i].size();
 
     // Copy results on a more GPU friendly layout for future use
     delete[] _edge_list;
@@ -493,17 +493,15 @@ void Mesh::compute_edges()
     _edge_list = new int[_nb_edges];
     _edge_list_offsets = new int[2*_nb_vert];
 
-    int k = 0;
+    int edge_list_idx = 0;
     for(int i = 0; i < _nb_vert; i++)
     {
         int size = (int) neighborhood_list[i].size();
-        _edge_list_offsets[2 * i    ] = k;
-        _edge_list_offsets[2 * i + 1] = size;
+        _edge_list_offsets[i*2+0] = edge_list_idx;
+        _edge_list_offsets[i*2+1] = size;
         for(int j = 0; j <  size; j++)
-            _edge_list[k++] = neighborhood_list[i][j];
+            _edge_list[edge_list_idx++] = neighborhood_list[i][j];
     }
-
-    std::cout << "Mesh edges computed in: " << t.stop() << " sec" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

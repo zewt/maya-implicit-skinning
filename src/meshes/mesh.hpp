@@ -224,6 +224,9 @@ private:
     /// updates 'edge_list' and 'edge_list_offsets'
     void compute_edges();
 
+    // Load _edge_list and _edge_list_offsets, given an array of neighbors for each vertex.
+    void load_edges(const std::vector<std::vector<int> > &neighborhood_list);
+
     // Mesh edges computation tool functions.
     //{
     /// given a triangle 'index_tri' and one of its vertex index 'current_vert'
@@ -257,7 +260,7 @@ private:
     float* _vert;        ///< Vertex position list [V0x V0y V0z V1x V1y V1z ...]
 
     bool* _is_connected; ///< Does the ith vertex belongs to a tri
-    bool* _is_side;      ///< Does the ith vertex belongs to a mesh boundary
+    std::vector<bool> _is_side;      ///< Does the ith vertex belongs to a mesh boundary
 
     int* _tri;           ///< triangle index
 
