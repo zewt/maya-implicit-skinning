@@ -25,6 +25,10 @@
 
 #include "precomputed_prim_env.hpp"
 
+namespace Skeleton_env {
+    typedef int Skel_id;
+}
+
 /**
  @class Precomputed_prim
  @brief implicit primitives stored in a 3d grid
@@ -44,9 +48,9 @@ struct Precomputed_prim {
         Precomputed_env::delete_instance(_id);
     }
     __host__
-    inline void fill_grid_with(const Bone* bone)
+    inline void fill_grid_with(Skeleton_env::Skel_id skel_id, const Bone* bone)
     {
-        Precomputed_env::init_instance(_id, bone);
+        Precomputed_env::init_instance(_id, skel_id, bone);
     }
 
     __device__ inline void use_instance_device(int id);

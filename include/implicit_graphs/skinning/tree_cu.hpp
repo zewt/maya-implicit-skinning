@@ -98,7 +98,7 @@ public:
 
     };
 
-    /// Tree from which we're building the GPU representation
+    /// Tree we're building the GPU representation from
     Tree* _tree; // TODO: <- should be const no ?
 
     BList _blending_list;
@@ -115,6 +115,9 @@ public:
     /// Parents of bones in '_bone_aranged'
     /// _parents_arranged[DBone_id] = Dparent_bone
     std::vector<DBone_id> _parents_aranged;
+
+    DBone_id hidx_to_didx(Bone::Id dbone_id) const { return _hidx_to_didx.at(dbone_id); }
+    Bone::Id didx_to_hidx(DBone_id dbone_id) const { return _didx_to_hidx.at(dbone_id); }
 
 private:
     /// Get the cluster associated to a bone

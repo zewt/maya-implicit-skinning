@@ -55,9 +55,9 @@ typedef Skeleton_env::Std_bone_eval Std_eval;
 
 /// Evaluate skeleton potential
 __device__
-float eval_potential(const Point_cu& p, Vec3_cu& grad)
+float eval_potential(Skeleton_env::Skel_id skel_id, const Point_cu& p, Vec3_cu& grad)
 {
-    return Skeleton_env::compute_potential<Std_eval>(p, grad);
+    return Skeleton_env::compute_potential<Std_eval>(skel_id, p, grad);
 }
 
 // -----------------------------------------------------------------------------
@@ -66,7 +66,8 @@ float eval_potential(const Point_cu& p, Vec3_cu& grad)
 /// animated, if implicit skinning is enabled, vertices move so as to match that
 /// value of the potential.
 __global__
-void compute_base_potential(const Point_cu* in_verts,
+void compute_base_potential(Skeleton_env::Skel_id skel_id,
+                            const Point_cu* in_verts,
                             const int nb_verts,
                             float* base_potential,
                             Vec3_cu* base_grad)
@@ -74,7 +75,7 @@ void compute_base_potential(const Point_cu* in_verts,
     const int p = blockIdx.x * blockDim.x + threadIdx.x;
     if(p < nb_verts)
     {
-        float f = eval_potential(in_verts[p], base_grad[p]);
+        float f = eval_potential(skel_id, in_verts[p], base_grad[p]);
         base_potential[p] = f;
     }
 }
@@ -82,14 +83,15 @@ void compute_base_potential(const Point_cu* in_verts,
 // -----------------------------------------------------------------------------
 
 __device__
-float dichotomic_search(const Ray_cu&r,
+float dichotomic_search(Skeleton_env::Skel_id skel_id,
+                        const Ray_cu&r,
                         float t0, float t1,
                         Vec3_cu& grad,
                         float iso)
 {
     float t = t0;
-    float f0 = eval_potential(r(t0), grad);
-    float f1 = eval_potential(r(t1), grad);
+    float f0 = eval_potential(skel_id, r(t0), grad);
+    float f1 = eval_potential(skel_id, r(t1), grad);
 
     if(f0 > f1){
         t0 = t1;
@@ -101,7 +103,7 @@ float dichotomic_search(const Ray_cu&r,
     {
         t = (t0 + t1) * 0.5f;
         p = r(t);
-        f0 = eval_potential(p, grad);
+        f0 = eval_potential(skel_id, p, grad);
 
         if(f0 > iso){
             t1 = t;
@@ -118,7 +120,8 @@ float dichotomic_search(const Ray_cu&r,
 
 /// Search for the gradient divergence section
 __device__
-float dichotomic_search_div(const Ray_cu&r,
+float dichotomic_search_div(Skeleton_env::Skel_id skel_id,
+                            const Ray_cu&r,
                             float t0, float t1,
                             Vec3_cu& grad1,
                             float threshold)
@@ -126,14 +129,14 @@ float dichotomic_search_div(const Ray_cu&r,
     //#define FROM_START
     float t;
     Vec3_cu grad0, grad;
-    float f = eval_potential(r(t0), grad0);
+    float f = eval_potential(skel_id, r(t0), grad0);
 
     Point_cu p;
     for(unsigned short i = 0; i < DICHOTOMIE; ++i)
     {
         t = (t0 + t1) * 0.5f;
         p = r(t);
-        f = eval_potential(p, grad);
+        f = eval_potential(skel_id, p, grad);
 
         if(grad.dot(grad0) > threshold)
         {
@@ -205,7 +208,8 @@ inline static float iso_to_sfactor(float x, int s)
 /// use the potential of the two nearest clusters, in full eval we don't update
 /// d_vert_to_fit has it is suppossed to be the last pass
 __global__
-void match_base_potential(const bool final_pass,
+void match_base_potential(Skeleton_env::Skel_id skel_id, 
+                          const bool final_pass,
                           const bool smooth_fac_from_iso,
                           Vec3_cu* out_verts,
                           const float* base_potential,
@@ -240,7 +244,7 @@ void match_base_potential(const bool final_pass,
         Point_cu v0 = out_verts[p].to_point();
         Vec3_cu gf0;
         float f0;
-        f0 = eval_potential(v0, gf0) - ptl;
+        f0 = eval_potential(skel_id, v0, gf0) - ptl;
 
         if(smooth_fac_from_iso)
             smooth_factors_iso[p] = iso_to_sfactor(f0, slope) * smooth_strength;
@@ -292,7 +296,7 @@ void match_base_potential(const bool final_pass,
             }
 
             vi = r(t);
-            fi = eval_potential(vi, gfi) - ptl;
+            fi = eval_potential(skel_id, vi, gfi) - ptl;
 
             // STOP CASE 1 : Initial iso-surface reached
             abs_f0 = fabsf(fi);
@@ -303,7 +307,7 @@ void match_base_potential(const bool final_pass,
             }
             else if( fi * f0 <= 0.f)
             {
-                t = dichotomic_search(r, 0.f, t, gfi, ptl);
+                t = dichotomic_search(skel_id, r, 0.f, t, gfi, ptl);
 
                 if(!final_pass) vert_to_fit[thread_idx] = -1;
                 break;

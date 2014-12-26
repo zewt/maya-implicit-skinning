@@ -45,7 +45,7 @@ void Animesh::update_base_potential()
             (nb_verts + block_size - 1) / block_size;
 
     Animesh_kers::compute_base_potential<<<grid_size, block_size>>>
-        (d_input_vertices.ptr(), nb_verts, d_base_potential.ptr(), d_base_gradient.ptr());
+        (_skel->get_skel_id(), d_input_vertices.ptr(), nb_verts, d_base_potential.ptr(), d_base_gradient.ptr());
 
     CUDA_CHECK_ERRORS();
 
@@ -253,7 +253,8 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
 
     Animesh_kers::match_base_potential
         <<<grid_size, block_size >>>
-        (final_pass,
+        (_skel->get_skel_id(),
+         final_pass,
          smooth_fac_from_iso,
          d_vertices,
          d_base_potential.ptr(),

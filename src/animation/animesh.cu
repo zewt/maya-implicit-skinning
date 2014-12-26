@@ -587,7 +587,7 @@ void Animesh::set_bone_type(int id, int bone_type)
         assert(_skel->bone_type(id) != EBone::SSD         );
 
         Bone_precomputed* b = new Bone_precomputed( prev_bone->get_obbox() );
-        b->get_primitive().fill_grid_with( _skel->get_bone(id) );
+        b->get_primitive().fill_grid_with( _skel->get_skel_id(), _skel->get_bone(id) );
         bone = b;
         break;
     }

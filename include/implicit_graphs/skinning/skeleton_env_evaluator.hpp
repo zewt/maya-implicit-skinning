@@ -103,7 +103,7 @@ float eval_cluster(Vec3_cu& gf_clus, const Point_cu& p, int size, DBone_id first
 /// @see Std_bone_eval
 template<class Eval_bone>
 __device__
-float compute_potential(const Point_cu& p, Vec3_cu& gf)
+float compute_potential(Skel_id skel_id, const Point_cu& p, Vec3_cu& gf)
 {
     typedef Cluster_cu Clus;
     float f = 0.f;
@@ -111,14 +111,14 @@ float compute_potential(const Point_cu& p, Vec3_cu& gf)
 
 #ifndef USE_GRID_
     // Without space acceleration structure
-    Cluster_id off_cid = fetch_blending_list_offset( 0 ); //////////////////////////////////////////////// TODO: use the real skel instance id instead of hard coded '0'
+    Cluster_id off_cid = fetch_blending_list_offset( skel_id );
     // Clusters contains at first a list of pairs with dynamic blending
     // each pair is blend to others with a max then the rest of the skeleton
     // is blended  with a max
     Clus clus = fetch_blending_list( off_cid );
 #else
     // With a grid as acceleration structure
-    Cluster_id off_cid = fetch_grid_blending_list_offset(0, p.to_vector()); //////////////////////////////////////////////// TODO: use the real skel instance id instead of hard coded '0'
+    Cluster_id off_cid = fetch_grid_blending_list_offset(skel_id, p.to_vector());
     if( !off_cid.is_valid() /*Means we are outside the skeleton bbox*/)
         return 0.f;
     Clus clus = fetch_grid_blending_list( off_cid );

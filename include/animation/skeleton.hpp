@@ -261,6 +261,9 @@ struct Skeleton {
 
   float get_hrbf_radius(Bone::Id bone_id);
 
+  /// Get the id of the skeleton in the skeleton environment
+  Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }
+
   void set_transforms(const std::vector<Transfo> &transfos);
 
 private:

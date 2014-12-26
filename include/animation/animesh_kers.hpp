@@ -41,7 +41,8 @@ using namespace Cuda_utils;
 /// animated, if implicit skinning is enabled, vertices move so as to match
 /// that value of the potential.
 __global__ void
-compute_base_potential(const Point_cu* d_input_vertices,
+compute_base_potential(Skeleton_env::Skel_id skel_id,
+                       const Point_cu* d_input_vertices,
                        const int nb_verts,
                        float* d_base_potential,
                        Vec3_cu* d_base_gradient );
@@ -49,7 +50,8 @@ compute_base_potential(const Point_cu* d_input_vertices,
 /// Match the base potential after basic ssd deformation
 /// (i.e : do the implicit skinning step)
 __global__
-void match_base_potential(const bool full_fit,
+void match_base_potential(Skeleton_env::Skel_id skel_id,
+                          const bool full_fit,
                           const bool smooth_fac_from_iso,
                           Vec3_cu* d_output_vertices,
                           const float* d_base_potential,

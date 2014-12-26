@@ -315,6 +315,7 @@ static Transfo world_coord_to_grid(const OBBox_cu& obbox, int res)
 // -----------------------------------------------------------------------------
 
 static void fill_grid(Bone::Id bone_id,
+                      Skeleton_env::Skel_id skel_id,
                       const OBBox_cu& obbox,
                       int res,
                       DA_float4& d_grid)
@@ -337,7 +338,8 @@ static void fill_grid(Bone::Id bone_id,
     }
 
     using namespace Skeleton_env;
-    DBone_id device_bone_id = bone_hidx_to_didx(0, bone_id);
+
+    DBone_id device_bone_id = bone_hidx_to_didx(skel_id, bone_id);
 
     fill_grid_with_fngf(device_bone_id,
                         steps,
@@ -353,7 +355,7 @@ static void fill_grid(Bone::Id bone_id,
 
 // -----------------------------------------------------------------------------
 
-void init_instance(int inst_id, const Bone* bone)
+void init_instance(int inst_id, Skeleton_env::Skel_id _skel_id, const Bone* bone)
 {
     assert(inst_id < h_offset.size());
     assert(inst_id >= 0);
@@ -368,7 +370,7 @@ void init_instance(int inst_id, const Bone* bone)
     OBBox_cu obbox = bone->get_obbox();
 
     // Compute the primive's grid
-    fill_grid(bone_id, obbox, GRID_RES, (*d_grids[inst_id]));
+    fill_grid(bone_id, _skel_id, obbox, GRID_RES, (*d_grids[inst_id]));
 
     // Adding the transformation to evaluate the grid
     Transfo t = world_coord_to_grid(obbox, GRID_RES);

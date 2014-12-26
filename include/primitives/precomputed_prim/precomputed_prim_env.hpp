@@ -24,6 +24,10 @@
 #include "transfo.hpp"
 
 class Bone;
+namespace Skeleton_env {
+    typedef int Skel_id;
+}
+
 // FIXME: we should pad the 3d grid to avoid the lerp artifacts at borders
 // TODO: we should be able to store any kind of implicit prim (template or class polyphormism)
 /** @namespace Precomputed_env
@@ -86,7 +90,7 @@ void delete_instance(int inst_id);
 
 void reset_instance(int inst_id);
 
-void init_instance(int inst_id, const Bone* bone);
+void init_instance(int inst_id, Skeleton_env::Skel_id skel_id, const Bone* bone);
 
 /// get the transformation t set by 'set_transform()'
 const Transfo& get_user_transform(int inst_id);
