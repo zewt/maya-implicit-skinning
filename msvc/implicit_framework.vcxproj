@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGUID>{02FBEDE0-C714-446C-911E-35A79B11AB17}</ProjectGUID>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>implicit_framework</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 6.5.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.mll</TargetExt>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Configuration)\</IntDir>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.mll</TargetExt>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Configuration)\</IntDir>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.mll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <Optimization>Disabled</Optimization>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;NOMINMAX;_USRDLL;NT_PLUGIN;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;NOMINMAX;_USRDLL;NT_PLUGIN;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <AdditionalOptions>-Xcompiler "/wd 4819" %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
+    <CudaLink />
+    <Link>
+      <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> /debug /export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <ImportLibrary />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;NOMINMAX;_USRDLL;NT_PLUGIN;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;NOMINMAX;_USRDLL;NT_PLUGIN;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <AdditionalOptions>-Xcompiler "/wd 4819" %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
+    <Link>
+      <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> /debug /export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <ImportLibrary />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;NOMINMAX;_USRDLL;NT_PLUGIN;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;NOMINMAX;_USRDLL;NT_PLUGIN;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>..\build5;C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\include;..\include\animation;..\include\animation\pinocchio;..\include\blending_functions;..\include\blending_lib;..\include\blending_lib\cuda_interface;..\include\control;..\include\containers;..\include\global_datas;..\include\maths;..\include\maths\intersections;..\include\meshes;..\include\meshes\voxelizer;..\include\meshes\vcg_lib;..\include\parsers;..\include\primitives\precomputed_prim;..\include\primitives\hrbf;..\include\primitives;..\include\qt_gui;..\include\qt_gui\common\gizmo_deprecated;..\include\rendering;..\include\rendering\environment_map;..\include\utils;..\include\utils\portable_includes;..\include\utils\gl_utils;..\include\utils\cuda_utils;..\include\scene_tree;..\include\implicit_graphs\CSG;..\include\implicit_graphs\skinning;..\CUDA_SDK_ROOT_DIR-NOTFOUND\common\inc;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <AdditionalOptions>-Xcompiler "/wd 4819" %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
+    <Link>
+      <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions> /debug /export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <ImportLibrary />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\animation\animesh.hpp" />
+    <ClInclude Include="..\include\animation\animesh_enum.hpp" />
+    <ClInclude Include="..\include\animation\animesh_kers.hpp" />
+    <ClInclude Include="..\include\animation\animesh_potential.hpp" />
+    <ClInclude Include="..\include\animation\bone.hpp" />
+    <ClInclude Include="..\include\animation\bone_type.hpp" />
+    <ClInclude Include="..\include\animation\joint_type.hpp" />
+    <ClInclude Include="..\include\animation\skeleton.hpp" />
+    <ClInclude Include="..\include\blending_lib\controller.hpp" />
+    <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_tex.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_tex_binding.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_tex_interface.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_env_type.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\blending_functions.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\constants.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\constants_tex.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\dyn_operators.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\n_ary.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\n_ary_constant_interface.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\operator3d_cu.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\uclean.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\ucommon.hpp" />
+    <ClInclude Include="..\include\blending_lib\cuda_interface\ultimate.hpp" />
+    <ClInclude Include="..\include\blending_lib\funcs.hpp" />
+    <ClInclude Include="..\include\blending_lib\generator.hpp" />
+    <ClInclude Include="..\include\blending_lib\opening.hpp" />
+    <ClInclude Include="..\include\blending_lib\operators.hpp" />
+    <ClInclude Include="..\include\blending_lib\splines.hpp" />
+    <ClInclude Include="..\include\blending_lib\structs.hpp" />
+    <ClInclude Include="..\include\blending_lib\tools.hpp" />
+    <ClInclude Include="..\include\containers\grid3_cu.hpp" />
+    <ClInclude Include="..\include\containers\identifier.hpp" />
+    <ClInclude Include="..\include\containers\idx3_cu.hpp" />
+    <ClInclude Include="..\include\control\animated_mesh_ctrl.hpp" />
+    <ClInclude Include="..\include\control\cuda_ctrl.hpp" />
+    <ClInclude Include="..\include\control\debug_ctrl.hpp" />
+    <ClInclude Include="..\include\control\operators_ctrl.hpp" />
+    <ClInclude Include="..\include\control\skeleton_ctrl.hpp" />
+    <ClInclude Include="..\include\global_datas\ad_hoc_hand.hpp" />
+    <ClInclude Include="..\include\global_datas\globals.hpp" />
+    <ClInclude Include="..\include\global_datas\macros.hpp" />
+    <ClInclude Include="..\include\global_datas\operator_use_macros.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\bone_tex.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\grid.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_evaluator.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_tex.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_tex_binding.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\skeleton_env_type.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\tree.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\tree_cu.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\tree_cu_type.hpp" />
+    <ClInclude Include="..\include\implicit_graphs\skinning\tree_type.hpp" />
+    <ClInclude Include="..\include\maths\bbox.hpp" />
+    <ClInclude Include="..\include\maths\cpu_transfo.hpp" />
+    <ClInclude Include="..\include\maths\intersections\intersection.hpp" />
+    <ClInclude Include="..\include\maths\mat3_cu.hpp" />
+    <ClInclude Include="..\include\maths\math_cu.hpp" />
+    <ClInclude Include="..\include\maths\point_cu.hpp" />
+    <ClInclude Include="..\include\maths\ray_cu.hpp" />
+    <ClInclude Include="..\include\maths\transfo.hpp" />
+    <ClInclude Include="..\include\maths\trs.hpp" />
+    <ClInclude Include="..\include\maths\vec2i_cu.hpp" />
+    <ClInclude Include="..\include\maths\vec2_cu.hpp" />
+    <ClInclude Include="..\include\maths\vec3i_cu.hpp" />
+    <ClInclude Include="..\include\maths\vec3_cu.hpp" />
+    <ClInclude Include="..\include\meshes\mesh.hpp" />
+    <ClInclude Include="..\include\meshes\vcg_lib\utils_sampling.hpp" />
+    <ClInclude Include="..\include\meshes\vcg_lib\vcg_mesh.hpp" />
+    <ClInclude Include="..\include\parsers\endianess.hpp" />
+    <ClInclude Include="..\include\parsers\loader_mesh.hpp" />
+    <ClInclude Include="..\include\parsers\loader_skel.hpp" />
+    <ClInclude Include="..\include\primitives\distance_field.hpp" />
+    <ClInclude Include="..\include\primitives\hermiteRBF.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_core.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_data.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_env.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_interface.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_tex.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_env_tex_binding.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_kernels.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_phi_funcs.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_setup.hpp" />
+    <ClInclude Include="..\include\primitives\hrbf\hrbf_wrapper.hpp" />
+    <ClInclude Include="..\include\primitives\plane.hpp" />
+    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
+    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_env.hpp" />
+    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_env_binding.hpp" />
+    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_kernels.hpp" />
+    <ClInclude Include="..\include\primitives\precomputed_prim\precomputed_prim_tex.hpp" />
+    <ClInclude Include="..\include\primitives\precomputed_prim.hpp" />
+    <ClInclude Include="..\include\rendering\cuda_main_kernels.hpp" />
+    <ClInclude Include="..\include\rendering\scene_enum.hpp" />
+    <ClInclude Include="..\include\utils\assert_utils.hpp" />
+    <ClInclude Include="..\include\utils\class_saver.hpp" />
+    <ClInclude Include="..\include\utils\conversions.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_compiler_interop.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_current_device.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_common.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_device_array.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_device_elt.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_host_array.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\cuda_utils_thrust.hpp" />
+    <ClInclude Include="..\include\utils\cuda_utils\memory_debug.hpp" />
+    <ClInclude Include="..\include\utils\quick_sort.hpp" />
+    <ClInclude Include="..\include\utils\std_utils.hpp" />
+    <ClInclude Include="..\include\utils\timer.hpp" />
+    <ClCompile Include="..\src\implicit_graphs\skinning\grid.cpp" />
+    <ClCompile Include="..\src\implicit_graphs\skinning\tree.cpp" />
+    <ClCompile Include="..\src\implicit_graphs\skinning\tree_cu.cpp" />
+    <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
+    <ClCompile Include="..\src\utils\timer.cpp" />
+    <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
+    <ClCompile Include="..\src\parsers\endianess.cpp" />
+    <ClCompile Include="..\src\parsers\loader_mesh.cpp" />
+    <ClCompile Include="..\src\parsers\loader_skel.cpp" />
+    <ClCompile Include="..\src\blending_lib\controller.cpp" />
+    <ClCompile Include="..\src\blending_lib\controller_tools.cpp" />
+    <ClCompile Include="..\src\blending_lib\generator.cpp" />
+    <ClCompile Include="..\src\blending_lib\opening.cpp" />
+    <ClCompile Include="..\src\blending_lib\operators.cpp" />
+    <ClCompile Include="..\src\blending_lib\structs.cpp" />
+    <ClCompile Include="..\src\global_datas\globals.cpp" />
+    <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp" />
+    <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp" />
+    <ClCompile Include="..\src\meshes\mesh.cpp" />
+    <ClCompile Include="..\src\Interface.cpp" />
+    <ClCompile Include="..\src\plugin.cpp" />
+    <CudaCompile Include="..\src\animation\animesh.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\animation\animesh_hrbf_heuristic.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\animation\animesh_kers.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\animation\animesh_projection.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\animation\bone.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\animation\skeleton.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\blending_lib\cuda_interface\blending_env.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\blending_lib\cuda_interface\constants.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\animated_mesh_ctrl.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\cuda_ctrl.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\operators_ctrl.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\control\skeleton_ctrl.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\utils\cuda_utils\cuda_utils.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_env.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\hrbf\hrbf_env.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\hrbf\hrbf_kernels.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\implicit_graphs\skinning\skeleton_env.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\distance_field.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+    <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 6.5.targets" />
+  </ImportGroup>
+</Project>

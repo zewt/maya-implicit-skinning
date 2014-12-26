@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "implicit_framework", "implicit_framework.vcxproj", "{02FBEDE0-C714-446C-911E-35A79B11AB17}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+		RelWithDebInfo|x64 = RelWithDebInfo|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{02FBEDE0-C714-446C-911E-35A79B11AB17}.Debug|x64.ActiveCfg = Debug|x64
+		{02FBEDE0-C714-446C-911E-35A79B11AB17}.Debug|x64.Build.0 = Debug|x64
+		{02FBEDE0-C714-446C-911E-35A79B11AB17}.Release|x64.ActiveCfg = Release|x64
+		{02FBEDE0-C714-446C-911E-35A79B11AB17}.Release|x64.Build.0 = Release|x64
+		{02FBEDE0-C714-446C-911E-35A79B11AB17}.RelWithDebInfo|x64.ActiveCfg = Release|x64
+		{02FBEDE0-C714-446C-911E-35A79B11AB17}.RelWithDebInfo|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
