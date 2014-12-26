@@ -127,8 +127,6 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
 void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
                         std::vector<Vec3_cu>& out_normals)
 {
-    _am->_skel->reset();
-
     std::vector<Vec3_cu> in_verts;
     std::vector<int>     in_vert_ids;
     std::vector<Vec3_cu> in_normals;
@@ -171,7 +169,6 @@ void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
         }
         done[id] = true;
     }
-    _am->_skel->unreset();
 }
 
 // -----------------------------------------------------------------------------
@@ -179,8 +176,6 @@ void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
 void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
                           std::vector<Vec3_cu>& out_normals)
 {
-    _am->_skel->reset();
-
     // The goal here is to build from the cluster of vertices bound to a single
     // bone of id '_bone_id' its associated sub mesh, and then sample the
     // surface of this sub mesh with the poisson disk strategy
@@ -243,8 +238,6 @@ void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
         Utils_sampling::poisson_disk(_mind, _nb_samples, in_verts, in_normals, sub_tris, out_verts, out_normals);
     std::cout << "Poisson disk sampling done. " << out_verts.size();
     std::cout << "samples created" << std::endl;
-
-    _am->_skel->unreset();
 }
 
 // -----------------------------------------------------------------------------
@@ -253,8 +246,6 @@ void Animesh::compute_jcaps(int bone_id,
                                  std::vector<Vec3_cu>& out_verts,
                                  std::vector<Vec3_cu>& out_normals)
 {
-    _skel->reset();
-
     const Bone* b = _skel->get_bone(bone_id);
 
     float jrad = 0.f;// joint radius mean radius
@@ -270,8 +261,6 @@ void Animesh::compute_jcaps(int bone_id,
     out_normals.push_back( n );
 
     //add_circle(jrad, b->get_org(), n, out_verts, out_normals);
-
-    _skel->unreset();
 }
 
 // -----------------------------------------------------------------------------
@@ -281,8 +270,6 @@ void Animesh::compute_pcaps(int bone_id,
                                  std::vector<Vec3_cu>& out_verts,
                                  std::vector<Vec3_cu>& out_normals)
 {
-    _skel->reset();
-
     const Bone* b = _skel->get_bone(bone_id);
     int parent = _skel->parent(bone_id);
     float prad = h_junction_radius[bone_id]; // parent joint radius
@@ -303,8 +290,6 @@ void Animesh::compute_pcaps(int bone_id,
     out_verts.  push_back(p);
     out_normals.push_back(n);
     //add_circle(prad, b->get_org() + b->get_dir(), n, out_verts, out_normals);
-
-    _skel->unreset();
 }
 
 // -----------------------------------------------------------------------------

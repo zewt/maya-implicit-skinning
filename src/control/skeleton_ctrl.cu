@@ -58,14 +58,6 @@ void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
 
 bool Skeleton_ctrl::is_loaded() const { return skel != 0; }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::reset(){
-    skel->reset();
-}
-
-// -----------------------------------------------------------------------------
-
 Vec3_cu Skeleton_ctrl::joint_pos(int idx) {
     return skel->joint_pos(idx);
 }

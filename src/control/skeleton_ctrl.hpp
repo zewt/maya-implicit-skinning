@@ -46,9 +46,6 @@ public:
     bool is_displayed  (){ return _display;      }
     void switch_display(){ _display = !_display; }
 
-    /// reset the skelton position in the resting pose
-    void reset();
-
     /// @return the bone_id associated to the hrbf_id or -1
     int find_associated_bone(int hrbf_id);
 

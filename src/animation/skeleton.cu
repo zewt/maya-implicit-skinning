@@ -48,7 +48,6 @@ void Skeleton::init(int nb_joints)
     _parents.resize(nb_joints);
     _frames.resize(nb_joints);
     _anim_frames.resize(nb_joints);
-    _saved_transfos.resize(nb_joints);
     _h_transfos.malloc(nb_joints);
     _d_transfos.malloc(nb_joints);
     _joints_data.resize(nb_joints);
@@ -122,26 +121,6 @@ Skeleton::~Skeleton()
     }
 
     Skeleton_env::delete_skel_instance( _skel_id );
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::reset()
-{
-    for(int i = 0; i < nb_joints(); i++){
-        _saved_transfos[i] = _h_transfos[i];
-        _h_transfos[i] = Transfo::identity();
-    }
-    update_bones_pose();
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton::unreset()
-{
-    for(int i = 0; i < nb_joints(); i++)
-        _h_transfos[i] = _saved_transfos[i];
-    update_bones_pose();
 }
 
 void Skeleton::rec_to_string(int id, int depth, std::string& str)

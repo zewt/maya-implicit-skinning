@@ -574,7 +574,11 @@ void Animesh::get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert)
 
 void Animesh::set_bone_type(int id, int bone_type)
 {
-    _skel->reset();
+    // Make sure that transform_hrbf/transform_precomputed_prim has been
+    // called.  XXX: This probably shouldn't be needed here, or at least
+    // we could only update the correct bone so we don't do n^2 updates.
+    _skel->update_bones_pose();
+
     Bone* bone = 0;
     const Bone* prev_bone = _skel->get_bone( id );
     float rad = prev_bone->radius();
@@ -605,7 +609,10 @@ void Animesh::set_bone_type(int id, int bone_type)
     _skel->set_bone(id, bone);
 
     init_ssd_interpolation_weights();
-    _skel->unreset();
+
+    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
+    // Figure out why for diagnostics.
+    _skel->update_bones_pose();
 }
 
 // -----------------------------------------------------------------------------

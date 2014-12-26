@@ -97,14 +97,6 @@ struct Skeleton {
 
   ~Skeleton();
 
-  /// Reset the position of the skeleton to the resting position and save its
-  /// position
-  void reset();
-
-  /// Restore the skeleton position  since the LAST call of reset()
-  /// @see reset()
-  void unreset();
-
   /// get skeleton hierachy with bone types in string
   std::string to_string();
 
@@ -215,6 +207,11 @@ struct Skeleton {
 
   void set_transforms(const std::vector<Transfo> &transfos);
 
+  /// Given a set of global transformation at each joints animate the skeleton.
+  /// animated bones frames dual quaternions are updated as well as device
+  /// memory
+  void update_bones_pose();
+
 private:
 
   typedef Cuda_utils::Host::PL_Array<Transfo> HPLA_tr;
@@ -224,11 +221,6 @@ private:
 
   /// Create and initilize a skeleton in the environment Skeleton_env
   void init_skel_env();
-
-  /// Given a set of global transformation at each joints animate the skeleton.
-  /// animated bones frames dual quaternions are updated as well as device
-  /// memory
-  void update_bones_pose();
 
   /// transform implicit surfaces computed with HRBF.
   /// @param global_transfos array of global transformations for each bone
@@ -269,9 +261,6 @@ private:
 
   /// Joints frames in rest position
   std::vector<Transfo> _frames;
-
-  /// last state of '_h_transfos' corresponding of the last call of 'reset()'
-  std::vector<Transfo> _saved_transfos;
 
   /// Joints frame animated
   std::vector<Transfo> _anim_frames;
