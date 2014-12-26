@@ -22,11 +22,13 @@
 #include <string.h>
 #include <maya/MIOStream.h>
 #include <math.h>
+#include <assert.h>
 
 #include <maya/MPxDeformerNode.h> 
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItMeshVertex.h>
+#include <maya/MItMeshEdge.h>
 #include <maya/MPxLocatorNode.h> 
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
@@ -1367,17 +1369,10 @@ Loader::CpuTransfo MMatrixToCpuTransfo(const MMatrix &dagMat)
 MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
 {
     MStatus status = MS::kSuccess;
-//        loader.get_mesh( mesh );
-//        if(mesh._vertices.size() == 0)
-//            return;
+    MItMeshVertex meshIt(inputObject, &status);
+    if(status != MS::kSuccess) return status;
 
-//        ptr_mesh->load( mesh, loader._path);
-//        Cuda_ctrl::load_mesh( ptr_mesh );
-
-
-// vertices ################################################################
-    MItMeshVertex meshIt(inputObject);
-
+    // Load vertices and normals.
     int num_verts = meshIt.count(&status);
     if(status != MS::kSuccess) return status;
 
@@ -1394,9 +1389,7 @@ MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
 
         // XXX: What are we supposed to do with unshared normals?
         MVectorArray normalArray;
-        status = meshIt.getNormals(normalArray);
-//        status = meshIt.getNormal(normal, 0, MSpace::kWorld);
-//        status = meshIt.getNormal(normal, MSpace::kWorld);
+        status = meshIt.getNormals(normalArray, MSpace::kObject);
         if(status != MS::kSuccess) return status;
 
         MVector normal = normalArray[0];
@@ -1405,38 +1398,37 @@ MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
         ++idx;
     }
 
+    // Load tris using Maya's triangulation.
     MItMeshPolygon polyIt(inputObject);
     int num_faces = polyIt.count(&status);
     if(status != MS::kSuccess) return status;
 
-    mesh._triangles.resize(num_faces);
-
-    idx = 0;
     for ( ; !polyIt.isDone(); polyIt.next())
     {
-        if(polyIt.polygonVertexCount() < 3)
-            continue;
-
-        // Load only the first three points of the face, since the data structure only understands
-        // triangles.  We could triangulate the faces, but we only use it for calculating normals,
-        // and the result is the same taking only the first tri so long as the face is planar.
-        Loader::Tri_face f;
-        for(unsigned faceIdx = 0; faceIdx < polyIt.polygonVertexCount() && faceIdx < 3; ++faceIdx)
+        if(!polyIt.hasValidTriangulation())
         {
-            int vertexIndex = polyIt.vertexIndex(faceIdx, &status);
-            if(status != MS::kSuccess) return status;
-
-            f.v[faceIdx] = vertexIndex;
-            f.n[faceIdx] = vertexIndex; // XXX?
+            int idx = polyIt.index(&status);
+            printf("Warning: Polygon with index %i doesn't have a valid triangulation", idx);
+            continue;
         }
 
-        mesh._triangles[idx] = f;
-        //MPointArray pointArray;
-        //polyIt.getPoints(pointArray, MSpace::kWorld, &status);
-        //if(status != MS::kSuccess) return status;
+        MPointArray trianglePoints;
+        MIntArray triangleIndexes;
+        status = polyIt.getTriangles(trianglePoints, triangleIndexes, MSpace::kWorld)		;
+        if(status != MS::kSuccess) return status;
 
+        assert(triangleIndexes.length() % 3 == 0);
+        for(size_t triIdx = 0; triIdx < triangleIndexes.length(); triIdx += 3)
+        {
+            Loader::Tri_face f;
+            for(unsigned faceIdx = 0; faceIdx < 3; ++faceIdx)
+            {
+                f.v[faceIdx] = triangleIndexes[faceIdx];
+                f.n[faceIdx] = triangleIndexes[faceIdx]; // XXX?
+            }
 
-        ++idx;
+            mesh._triangles.push_back(f);
+        }
     }
 
     return MS::kSuccess;
@@ -1600,7 +1592,6 @@ MStatus offset::compute(const MPlug &plug, MDataBlock &dataBlock)
         return status;
     }
 
-    // Mesh* ptr_mesh = new Mesh();
     Loader::Abs_mesh mesh;
     status = load_mesh(inputObject, mesh);
     if(status != MS::kSuccess) return status;
