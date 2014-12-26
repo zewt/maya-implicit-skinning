@@ -271,9 +271,10 @@
 //
 // last known and checked version is 1600 (VC10, aka 2010):
 #if (_MSC_VER > 1600)
-#  if defined(BOOST_ASSERT_CONFIG)
+/*#  if defined(BOOST_ASSERT_CONFIG)
 #     error "Unknown compiler version - please run the configure tests and report the results"
 #  else
 #     pragma message("Unknown compiler version - please run the configure tests and report the results")
 #  endif
+*/
 #endif
