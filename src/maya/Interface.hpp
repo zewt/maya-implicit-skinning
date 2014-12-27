@@ -16,7 +16,14 @@ public:
 
     static void init();
     static void shutdown();
-    void go(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton, vector<Loader::Vec3> &out_verts);
+
+    bool is_setup() const;
+    void setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton);
+
+    void update_skeleton(const Loader::Abs_skeleton &loader_skeleton);
+    void update_vertices(const vector<Loader::Vertex> &loader_vertices);
+    void go(vector<Loader::Vec3> &out_verts);
+
 private:
     PluginInterfaceImpl *impl;
 };

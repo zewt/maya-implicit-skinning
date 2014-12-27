@@ -223,7 +223,7 @@ MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
             for(unsigned faceIdx = 0; faceIdx < 3; ++faceIdx)
             {
                 f.v[faceIdx] = triangleIndexes[faceIdx];
-                f.n[faceIdx] = triangleIndexes[faceIdx]; // XXX?
+                f.n[faceIdx] = triangleIndexes[faceIdx];
             }
 
             mesh._triangles.push_back(f);
@@ -295,6 +295,21 @@ MStatus loadSkeletonFromSkinCluster(const MFnSkinCluster &skinCluster, Loader::A
     skeleton.compute_bone_lengths();
     return MStatus::kSuccess;
 }
+MStatus findAncestorDeformer(MPlug inputPlug, MFn::Type type, MPlug &resultPlug)
+{
+    while(true)
+    {
+        MStatus status = getConnectedPlugWithName(inputPlug, "inputGeometry", inputPlug);
+        if(status != MS::kSuccess)
+            return status;
+
+        if(inputPlug.node().apiType() == type)
+        {
+            resultPlug = inputPlug;
+            return MStatus::kSuccess;
+        }
+    }
+}
 
 MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
@@ -314,31 +329,67 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
     // Select input[index].
     inputPlug.selectAncestorLogicalIndex(logicalOutputIndex, input);
 
-    // Select the connection to input[index], which should be a groupParts node.
-    MPlug groupParts;
-    status = getConnectedPlugWithName(inputPlug, "inputGeometry", groupParts);
-    if(groupParts.node().apiType() != MFn::kGroupParts)
-    {
-        fprintf(stderr, "Expected to find a groupParts above the deformer, found a %s instead\n", groupParts.node().apiTypeStr());
-        return MStatus::kUnknownParameter;
-    }
-
-    // The input geometry plugged into the groupParts node.  This is normally the next
-    // deformer in the chain, or the initial geometry if we're the first deformer.  We
-    // expect to be after skinning, since we need to work on geometry after skinning.
-    // XXX: There might be other deformers between us and the skinCluster; skip past them
-    // the deformers until we find it.  However, this all needs to be moved out of compute()
-    // and into a separate method, and that should probably be done in Python and not native
-    // anyway, so let's solve that when that happens.
+    // Find the skinCluster deformer node above us.
     MPlug skinClusterPlug;
-    status = getConnectedPlugWithName(groupParts, "inputGeometry", skinClusterPlug);
-    if(skinClusterPlug.node().apiType() != MFn::kSkinClusterFilter)
+    status = findAncestorDeformer(inputPlug, MFn::kSkinClusterFilter, skinClusterPlug);
+    if(status != MS::kSuccess)
     {
-        fprintf(stderr, "Expected to find a skinCluster above the deformer, found a %s instead\n", skinClusterPlug.node().apiTypeStr());
-        return MStatus::kUnknownParameter;
+        printf("Couldn't find a skinCluster deformer.  Is the node skinned?\n");
+        return status;
     }
 
 
+    if(0)
+    {
+        // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
+        // we'll use to do initial calculations.
+        MObject inputAttr = MFnDependencyNode(skinClusterPlug.node()).attribute("input", &status);
+        if(status != MS::kSuccess)
+            return status;
+
+        MPlug inputPlug(skinClusterPlug.node(), input);
+        if(status != MS::kSuccess)
+            return status;
+
+        // Select input[0].  skinClusters only support a single input.
+        inputPlug = inputPlug.elementByPhysicalIndex(0, &status);
+        if(status != MS::kSuccess)
+            return status;
+
+        MFnDependencyNode inputPlugDep(inputPlug.node());
+        MObject inputObject = inputPlugDep.attribute("inputGeometry", &status);
+        if(status != MS::kSuccess)
+            return status;
+
+        inputPlug = inputPlug.child(inputObject, &status);
+        if(status != MS::kSuccess)
+            return status;
+
+        fprintf(stderr, "Source (unskinned) geometry: %s\n", inputPlug.name().asChar());
+
+        MObject inputValue;
+        inputPlug.getValue(inputValue);
+
+        fprintf(stderr, "inPlug %i\n", inputObject.apiType());
+
+        if(!inputValue.hasFn(MFn::kMesh)) {
+            // XXX: only meshes are supported
+            return MS::kFailure;
+        }
+
+        // Load the input mesh.
+        Loader::Abs_mesh mesh;
+        status = load_mesh(inputValue, mesh);
+
+        // the joint's current position and its preBindMatrix is used to adjust the mesh position
+        // the adjustment is pos * joint.worldMatrix * invert(preBindMatrix)
+        //
+        // the world position of the mesh doesn't matter, it's applied afterwards: XXX change all kWorld to kObject
+        // and do everything in object space
+    }
+
+    // XXX: We need to declare our dependency on the skinCluster, probably via skinCluster.baseDirty.
+    // XXX: Also, skinCluster.preBindMatrix, but that one's an array
     MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
     if(status != MS::kSuccess) return status;
 
@@ -369,36 +420,30 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 
 
 
+    if(!pluginInterface.is_setup())
+    {
+        MObject inputObject = inputGeomDataHandle.data();
+        if (inputObject.apiType() != MFn::kMeshData) {
+            // XXX: only meshes are supported
+            return MS::kFailure;
+        }
 
+        Loader::Abs_mesh mesh;
+        status = load_mesh(inputObject, mesh);
+        if(status != MS::kSuccess) return status;
 
-
-
-
-
-    MObject inputObject = inputGeomDataHandle.data();
-    if (inputObject.apiType() != MFn::kMeshData) {
-        // XXX: only meshes are supported
-        return MS::kFailure;
+        pluginInterface.setup(mesh, skeleton);
     }
 
-    MFnMesh myMesh(inputObject, &status);
-    if(status != MS::kSuccess) {
-        printf("Couldn't get input geometry as mesh\n");
-        return status;
-    }
 
-    Loader::Abs_mesh mesh;
-    status = load_mesh(inputObject, mesh);
-    if(status != MS::kSuccess) return status;
 
-    vector<Loader::Vec3> result_verts;
-    pluginInterface.go(mesh, skeleton, result_verts);
+    // Update the skeleton.  XXX: fix dependency handling
+    pluginInterface.update_skeleton(skeleton);
 
 
 
-
-
-
+    // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
+    // applied to, so the algorithm can see the whole mesh.
     MDataHandle hInput = dataBlock.inputValue(inputPlug);
 //    MDataHandle inputGeomDataHandle = hInput.child(inputGeom);
 
@@ -408,18 +453,34 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
     MDataHandle hOutput = dataBlock.outputValue(plug);
     hOutput.copy(inputGeomDataHandle);
 
-    // do the deformation
-    MItGeometry iter(hOutput, groupId, false);
-    int idx = 0;
-    for ( ; !iter.isDone(); iter.next()) {
-        if(idx >= result_verts.size())
-            break;
-        MPoint pt = iter.position();
 
-        Loader::Vec3 v = result_verts[idx];
-        pt = MPoint(v.x, v.y, v.z);
-        iter.setPosition(pt, MSpace::kWorld);
-        idx++;
+
+    {
+        MItGeometry geomIter(hOutput, true);
+        MPointArray points;
+        geomIter.allPositions(points, MSpace::kWorld);
+
+        vector<Loader::Vertex> input_verts;
+        input_verts.reserve(points.length());
+        for(int i = 0; i < (int) points.length(); ++i)
+            input_verts.push_back(Loader::Vertex((float) points[i].x, (float) points[i].y, (float) points[i].z));
+
+        pluginInterface.update_vertices(input_verts);
+    }
+
+    // Run the algorithm.  XXX: If we're being applied to a set, can we reduce the work we're doing to
+    // just those vertices?
+    vector<Loader::Vec3> result_verts;
+    pluginInterface.go(result_verts);
+
+    // Copy out the vertices that we were actually asked to process.
+    MItGeometry geomIter(hOutput, groupId, false);
+    for ( ; !geomIter.isDone(); geomIter.next()) {
+        int vertex_index = geomIter.index();
+
+        Loader::Vec3 v = result_verts[vertex_index];
+        MPoint pt = MPoint(v.x, v.y, v.z);
+        geomIter.setPosition(pt, MSpace::kWorld);
     }
 
     return MStatus::kSuccess;
