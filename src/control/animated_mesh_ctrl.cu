@@ -29,10 +29,7 @@
 // -----------------------------------------------------------------------------
 
 Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
-    _display(true),
-    _display_points(false),
     _do_smooth(false),
-    _draw_rot_axis(false),
     _auto_precompute(true),
     _factor_bones(false),
     _nb_iter(7),
@@ -84,30 +81,9 @@ void Animated_mesh_ctrl::set_do_smoothing(bool state)
     }
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_draw_rot_axis(bool state)
-{
-    _draw_rot_axis = state;
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::set_smooth_factor(int i, float fact){
     _animesh->set_smooth_factor(i, fact);
 }
-
-void Animated_mesh_ctrl::switch_do_smoothing(){
-    set_do_smoothing(!_do_smooth);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::switch_tune_direction(){
-    std::cerr << "function not available" << std::endl;
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::enable_update_base_potential(bool state)
 {
@@ -452,12 +428,6 @@ void Animated_mesh_ctrl::set_nb_iter_smooting(int nb_iter)
     }
 }
 
-void Animated_mesh_ctrl::color_uniform(float r, float g, float b, float a){
-}
-void Animated_mesh_ctrl::color_ssd_weights(int joint_id){
-}
-void Animated_mesh_ctrl::color_type(EAnimesh::Color_type type){
-}
 void Animated_mesh_ctrl::smooth_conservative(){
     _animesh->set_smoothing_type(EAnimesh::CONSERVATIVE);
 }

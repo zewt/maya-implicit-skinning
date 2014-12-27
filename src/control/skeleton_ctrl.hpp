@@ -43,9 +43,6 @@ public:
 
     bool is_loaded() const;
 
-    bool is_displayed  (){ return _display;      }
-    void switch_display(){ _display = !_display; }
-
     /// @return the bone_id associated to the hrbf_id or -1
     int find_associated_bone(int hrbf_id);
 
@@ -122,7 +119,6 @@ private:
     /// @name Attributes
     // -------------------------------------------------------------------------
 
-    bool _display;
     std::vector<int> _selected_joints; ///< set of selected skeleton joints
 
 public: // XXX

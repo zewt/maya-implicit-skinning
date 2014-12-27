@@ -24,8 +24,7 @@
 #include "conversions.hpp"
 #include "skeleton.hpp"
 
-Skeleton_ctrl::Skeleton_ctrl():
-    _display(true)
+Skeleton_ctrl::Skeleton_ctrl()
 {
     skel = NULL;
 }

@@ -59,7 +59,6 @@ public:
     void set_factor_siblings(bool s){ _factor_bones = s;    }
     void set_bone_type(int id, int bone_type);
     void set_draw_rot_axis(bool state);
-    void set_display_points(bool state){ _display_points = state; }
 
     void update_base_potential();
 
@@ -74,7 +73,6 @@ public:
     //@}
 
     int get_nearest_bone(int vert_idx);
-    bool is_point_displayed(){ return _display_points;     }
 
     //--------------------------------------------------------------------------
     /// @name Mesh deformation
@@ -237,8 +235,6 @@ private:
     /// @name Attributes
     //--------------------------------------------------------------------------
 
-    bool _display;
-    bool _display_points;
     bool _do_smooth;
     bool _draw_rot_axis;
     bool _auto_precompute; ///< Bones are always precomputed in grids
