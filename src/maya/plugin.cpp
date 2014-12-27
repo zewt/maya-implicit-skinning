@@ -222,8 +222,8 @@ MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
             Loader::Tri_face f;
             for(unsigned faceIdx = 0; faceIdx < 3; ++faceIdx)
             {
-                f.v[faceIdx] = triangleIndexes[faceIdx];
-                f.n[faceIdx] = triangleIndexes[faceIdx];
+                f.v[faceIdx] = triangleIndexes[triIdx+faceIdx];
+                f.n[faceIdx] = triangleIndexes[triIdx+faceIdx];
             }
 
             mesh._triangles.push_back(f);
