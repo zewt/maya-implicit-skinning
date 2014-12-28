@@ -24,6 +24,7 @@
 /// which may not work with other meshes !
 
 /// if defined will evaluate the skeleton specifically for the hand model
-#define ENABLE_ADHOC_HAND
+// XXX
+// #define ENABLE_ADHOC_HAND
 
 #endif // AD_HOC_HAND_HPP__
