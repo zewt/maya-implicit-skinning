@@ -374,6 +374,11 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
         const Point_cu current_vertex = _mesh->get_vertex(i).to_point();
         for(int j = 0; j < _skel->nb_joints(); j++)
         {
+            // The root joint only exists to give other bones a single parent.  It isn't
+            // skinned, so we don't want it to be treated as the closest bone for vertices,
+            // or those vertices won't be skinned.  This is ugly.
+            if(j == _skel->root())
+                continue;
             const Bone* b = _skel->get_bone( j );
 
             if( _skel->is_leaf(j) )
