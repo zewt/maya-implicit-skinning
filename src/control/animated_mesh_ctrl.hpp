@@ -58,19 +58,10 @@ public:
     void set_auto_precompute(bool s){ _auto_precompute = s; }
     void set_factor_siblings(bool s){ _factor_bones = s;    }
     void set_bone_type(int id, int bone_type);
-    void set_draw_rot_axis(bool state);
 
     void update_base_potential();
 
     void update_clusters(int nb_voxels = 25);
-
-
-    /// Set how the mesh is colored when edited
-    //@{
-    void color_type(EAnimesh::Color_type type);
-    void color_uniform(float r, float g, float b, float a);
-    void color_ssd_weights(int joint_id);
-    //@}
 
     int get_nearest_bone(int vert_idx);
 
@@ -85,9 +76,6 @@ public:
     void set_do_smoothing(bool state);
     void set_smooth_factor(int i, float fact);
     void set_nb_iter_smooting(int nb_iter);
-
-    void switch_do_smoothing();
-    void switch_tune_direction();
 
     /// Set how the mesh is smoothed
     //@{
@@ -236,7 +224,6 @@ private:
     //--------------------------------------------------------------------------
 
     bool _do_smooth;
-    bool _draw_rot_axis;
     bool _auto_precompute; ///< Bones are always precomputed in grids
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
