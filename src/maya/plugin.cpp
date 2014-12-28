@@ -52,26 +52,6 @@
 #include <map>
 using namespace std;
 
-#if 0
-class ImplicitSkinDeformerData: public MPxData
-{
-public:
-    static MTypeId id;
-    MTypeId typeId() const { return id; }
-    MString name() const { return "ImplicitSkinDeformerData"; }
-    void copy(const MPxData &src)
-    {
-        const ImplicitSkinDeformerData &srcData = dynamic_cast<const ImplicitSkinDeformerData &>(src);
-//        pluginInterface = srcData.pluginInterface;
-    }
-
-    static void *creator() { return new ImplicitSkinDeformerData(); }
-
-
-};
-MTypeId ImplicitSkinDeformerData::id( 0x11229091 ); // XXX
-#endif
-
 class ImplicitSkinDeformer: public MPxDeformerNode
 {
 public:
@@ -89,50 +69,20 @@ public:
 
     static MObject dataAttr;
     static MObject worldMatrixInverse;
-/*
-    static MStatus getOrCreateDeformerDataFromObj(MObject implicitDeformer, ImplicitSkinDeformerData *&data)
-    {
-        MStatus status;
-
-        MPlug dataPlug(implicitDeformer, dataAttr);
-
-        MObject dataObj;
-        dataPlug.getValue(dataObj);
-        if(dataObj.isNull()) {
-            // No object exists yet, so create one.
-            MFnPluginData pluginData;
-            dataObj = pluginData.create(ImplicitSkinDeformerData::id);
-
-            status = dataPlug.setValue(dataObj);
-            if(status != MS::kSuccess) return status;
-        }
-
-        MFnPluginData pluginData(dataObj, &status);
-        if(status != MS::kSuccess) return status;
-
-        MTypeId typeId = pluginData.typeId(&status);
-        if(status != MS::kSuccess) return status;
-        if(typeId != ImplicitSkinDeformerData::id)
-            return MStatus::kFailure;
-
-        data = (ImplicitSkinDeformerData *) pluginData.data();
-        return MStatus::kSuccess;
-    }
-    */
 };
 
-MTypeId ImplicitSkinDeformer::id( 0x11229090 ); // XXX
+// XXX: http://help.autodesk.com/view/MAYAUL/2015/ENU/?guid=__cpp_ref_class_m_type_id_html says that
+// ADN assigns public blocks of IDs, but nothing says how to request a block without paying for
+// a commercial ADN account.  Let's use a value in the devkit sample range, so it's unlikely to conflict,
+// and it does, it won't conflict with somebody's internal-use IDs (0-0x7ffff).  At worst, we'll collide
+// with a sample or somebody else doing the same thing.
+MTypeId ImplicitSkinDeformer::id(0xEA115);
 MObject ImplicitSkinDeformer::dataAttr;
 MObject ImplicitSkinDeformer::worldMatrixInverse;
 
 MStatus ImplicitSkinDeformer::initialize()
 {
     MStatus status = MStatus::kSuccess;
-
-/*    MFnTypedAttribute typedAttr;
-    dataAttr = typedAttr.create("data", "d", ImplicitSkinDeformerData::id, MObject::kNullObj, &status);
-    addAttribute(dataAttr);
-    attributeAffects(ImplicitSkinDeformer::dataAttr, ImplicitSkinDeformer::outputGeom);*/
 
     MFnMatrixAttribute mAttr;
     worldMatrixInverse = mAttr.create("worldMatrixInverse", "lm");
@@ -447,9 +397,6 @@ MStatus initializePlugin(MObject obj)
 
     MFnPlugin plugin(obj, "", "1.0", "Any");
 
-//    status = plugin.registerData("ImplicitSkinDeformerData", ImplicitSkinDeformerData::id, ImplicitSkinDeformerData::creator);
-//    if(status != MS::kSuccess) return status;
-
     status = plugin.registerNode("implicit", ImplicitSkinDeformer::id, ImplicitSkinDeformer::creator, ImplicitSkinDeformer::initialize, MPxNode::kDeformerNode);
     if(status != MS::kSuccess) return status;
 
@@ -466,9 +413,6 @@ MStatus uninitializePlugin(MObject obj)
     PluginInterface::shutdown();
 
     MFnPlugin plugin(obj);
-
-//    status = plugin.deregisterData(ImplicitSkinDeformerData::id);
-//    if(status != MS::kSuccess) return status;
 
     status = plugin.deregisterNode(ImplicitSkinDeformer::id);
     if(status != MS::kSuccess) return status;

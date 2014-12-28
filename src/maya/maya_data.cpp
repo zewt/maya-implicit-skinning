@@ -110,7 +110,7 @@ MStatus MayaData::loadJointTransformsFromSkinCluster(MPlug skinClusterPlug, vect
  * If worldToObjectSpaceMat is identity, the joints are returned in world space.  worldToObjectSpaceMat can
  * be used to return joints in a different coordinate system.
  */
-MStatus loadSkeletonFromSkinCluster(MPlug skinClusterPlug, Loader::Abs_skeleton &skeleton, MMatrix worldToObjectSpaceMat, bool getBindPositions)
+MStatus MayaData::loadSkeletonFromSkinCluster(MPlug skinClusterPlug, Loader::Abs_skeleton &skeleton, MMatrix worldToObjectSpaceMat, bool getBindPositions)
 {
     MStatus status = MStatus::kSuccess;
 
