@@ -62,20 +62,18 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
 
     // We update nodes in bones
     Bone_hrbf*  hrbf_bone = new Bone_hrbf(rad_hrbf);
-    HermiteRBF& hrbf      = hrbf_bone->get_hrbf();
 
-    std::cout << "Solving for " << nodes.size() << " nodes" << std::endl;
+//    for(int i = 0; i < nodes.size(); ++i)
+//        printf("%i: %f %f %f\n", i, nodes[i].x, nodes[i].y, nodes[i].z);
 
     // Solve/compute compute HRBF weights
     Timer t;
     t.start();
-    hrbf.init_coeffs(nodes, n_nodes);
-    std::cout << "Solving in: " << t.stop() << " sec \n" << std::endl;
+    hrbf_bone->get_hrbf().init_coeffs(nodes, n_nodes);
+    printf("update_bone_samples: Solved %i nodes in %f seconds\n", nodes.size(), t.stop());
 
     hrbf_bone->set_radius( _skel->get_bone( bone_id)->radius() );
     _skel->set_bone(bone_id, hrbf_bone);
-
-    //update_base_potential();
 }
 
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)

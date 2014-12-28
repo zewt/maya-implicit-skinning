@@ -94,7 +94,6 @@ public:
     void set_smoothing_weights_diffusion_iter(int nb_iter);
 
     int  get_nb_iter_smooth(){ return _nb_iter;       }
-    bool is_smooth_on      (){ return _do_smooth;     }
 
     //--------------------------------------------------------------------------
     /// @name File import/export
@@ -132,8 +131,6 @@ public:
     void choose_hrbf_samples_ad_hoc(int bone_id, float jmax, float pmax,  float minDist, float fold);
 
     void choose_hrbf_samples_poisson(int bone_id, float jmax, float pmax,  float minDist, int nb_samples, float fold);
-
-    void choose_hrbf_samples_gael(int bone_id);
 
     void incr_junction_rad(int bone_id, float incr);
 
@@ -223,7 +220,6 @@ private:
     /// @name Attributes
     //--------------------------------------------------------------------------
 
-    bool _do_smooth;
     bool _auto_precompute; ///< Bones are always precomputed in grids
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing

@@ -29,7 +29,6 @@
 // -----------------------------------------------------------------------------
 
 Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
-    _do_smooth(false),
     _auto_precompute(true),
     _factor_bones(false),
     _nb_iter(7),
@@ -77,7 +76,6 @@ void Animated_mesh_ctrl::set_do_smoothing(bool state)
 {
     if(_animesh != 0){
         _animesh->set_smooth_mesh(state);
-        _do_smooth = state;
     }
 }
 
@@ -627,12 +625,6 @@ void Animated_mesh_ctrl::update_hrbf_samples(int bone_id, int mode)
 
         break;
     }
-
-    case 2:
-    {
-        choose_hrbf_samples_gael( bone_id );
-        break;
-    }
     }
 }
 
@@ -689,15 +681,6 @@ void Animated_mesh_ctrl::choose_hrbf_samples_poisson(int bone_id,
 
     update_bone_samples(bone_id);
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::choose_hrbf_samples_gael(int /*bone_id*/)
-{
-    std::cerr << "WARNING: Function not implemented";
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 {

@@ -138,24 +138,6 @@ public:
         int _nb_samples;
     };
 
-    // -------------------------------------------------------------------------
-
-    /// @brief some parameters to give when painting the mesh
-    /// @see paint()
-    struct Paint_setup{
-        bool _rest_pose;      ///< Use verts in rest pose
-        bool _backface_cull;  ///< Paint only front face
-        int _brush_radius;    ///< Brush radius
-        int _x, _y;           ///< Brush center
-        float _val;           ///< Value to paint (depends on the painting mode)
-    };
-
-    // -------------------------------------------------------------------------
-
-    /*-------*/
-    /*       */
-    /*-------*/
-
     /// @warning The input mesh 'm_' vertices memory layout might be changed
     /// for optimization. Yet we garantee the layout is same in Animesh as
     /// in Mesh
