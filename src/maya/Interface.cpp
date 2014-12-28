@@ -114,6 +114,11 @@ void PluginInterface::update_vertices(const vector<Loader::Vertex> &loader_verti
     impl->cudaCtrl._anim_mesh->_animesh->copy_vertices(vertices);
 }
 
+int PluginInterface::expected_vertex_count() const
+{
+    return impl->cudaCtrl._anim_mesh->_animesh->get_nb_vertices();
+}
+
 void PluginInterface::go(vector<Loader::Vec3> &out_verts)
 {
     impl->cudaCtrl._anim_mesh->set_do_smoothing(true);

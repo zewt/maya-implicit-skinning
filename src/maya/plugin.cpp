@@ -64,8 +64,7 @@ public:
     static void *creator() { return new ImplicitSkinDeformer(); }
     static MStatus initialize();
 
-//    MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
-    MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
+    MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
 
     static MObject dataAttr;
     static MObject geomMatrixAttr;
@@ -107,22 +106,17 @@ MStatus ImplicitSkinDeformer::initialize()
     return MStatus::kSuccess;
 }
 
-MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
+MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, const MMatrix &mat, unsigned int multiIndex)
 {
+// MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
     MStatus status = MStatus::kSuccess;
         
-    if (plug.attribute() != outputGeom)
-        return MStatus::kUnknownParameter;
-
     // If implicit -setup hasn't been run yet, stop.  XXX: saving/loading
     if(!pluginInterface.is_setup())
         return MStatus::kSuccess;
 
-    // The logical index of the output that we've been told to compute:
-    unsigned int logicalOutputIndex = plug.logicalIndex();
-
     // We only support a single input, like skinCluster.
-    if(logicalOutputIndex > 0)
+    if(multiIndex > 0)
         MStatus status = MStatus::kSuccess;
 
     // Get the geomMatrixAttr attribute.
@@ -167,49 +161,40 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 
     pluginInterface.update_skeleton(bone_transforms);
 
-
-
-
-    MArrayDataHandle inputArray = dataBlock.inputArrayValue(input, &status);
-    if(status != MS::kSuccess) return status;
-    inputArray.jumpToElement(logicalOutputIndex);
-
-    MDataHandle inputGeomData = inputArray.inputValue(&status);
-    if(status != MS::kSuccess) return status;
-
-    MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
-
-
-
-
-    // Get the corresponding input plug for this output:
-    MPlug inputPlug(plug.node(), input);
-
-    // Select input[index].
-    inputPlug.selectAncestorLogicalIndex(logicalOutputIndex, input);
-
     // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
     // applied to, so the algorithm can see the whole mesh.
-    MDataHandle hInput = dataBlock.inputValue(inputPlug);
-
-    // The groupId of this groupParts node:
-    MDataHandle hGroup = hInput.child(groupId);
-    unsigned int groupId = hGroup.asLong();
-    MDataHandle hOutput = dataBlock.outputValue(plug);
-    hOutput.copy(inputGeomDataHandle);
-
-
-
     {
-        MItGeometry geomIter(hOutput, true);
+        // Get input.
+        MArrayDataHandle inputArray = dataBlock.inputArrayValue(input, &status);
+        if(status != MS::kSuccess) return status;
+
+        // Get input[multiIndex].
+        MDataHandle inputGeomData = DagHelpers::readArrayHandleLogicalIndex<MDataHandle>(inputArray, multiIndex, &status);
+        if(status != MS::kSuccess) return status;
+
+        // Get input[multiIndex].inputGeometry.
+        MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
+
+        // Read all geometry.  This geometry has already had the skinCluster deformation applied to it.
+        MItGeometry allGeomIter(inputGeomDataHandle, true);
         MPointArray points;
-        geomIter.allPositions(points, MSpace::kObject);
+        allGeomIter.allPositions(points, MSpace::kObject);
 
+        // If the geometry doesn't have the correct number of vertices, we can't use it.  This can be
+        // caused by a deformer like deleteVertices being added between us and the skinCluster, and the
+        // user should bake it (delete non-deformer history).
+        // XXX: Is there a way we can tell the user about this?
+        // XXX: Will the algorithm allow us to support this, if we give it a whole new mesh with similar
+        // topology and call update_base_potential?
+        if(points.length() != pluginInterface.expected_vertex_count())
+            return MStatus::kSuccess;
 
+        // Set the deformed vertex data.
         vector<Loader::Vertex> input_verts;
         input_verts.reserve(points.length());
         for(int i = 0; i < (int) points.length(); ++i)
             input_verts.push_back(Loader::Vertex((float) points[i].x, (float) points[i].y, (float) points[i].z));
+        
         pluginInterface.update_vertices(input_verts);
     }
 
@@ -219,7 +204,6 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
     pluginInterface.go(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
-    MItGeometry geomIter(hOutput, groupId, false);
     for ( ; !geomIter.isDone(); geomIter.next()) {
         int vertex_index = geomIter.index();
 
@@ -479,10 +463,10 @@ MStatus initializePlugin(MObject obj)
 
     MFnPlugin plugin(obj, "", "1.0", "Any");
 
-    status = plugin.registerNode("implicit", ImplicitSkinDeformer::id, ImplicitSkinDeformer::creator, ImplicitSkinDeformer::initialize, MPxNode::kDeformerNode);
+    status = plugin.registerNode("implicitSkin", ImplicitSkinDeformer::id, ImplicitSkinDeformer::creator, ImplicitSkinDeformer::initialize, MPxNode::kDeformerNode);
     if(status != MS::kSuccess) return status;
 
-    status = plugin.registerCommand( "implicit", ImplicitCommand::creator );
+    status = plugin.registerCommand("implicitSkin", ImplicitCommand::creator);
     if(status != MS::kSuccess) return status;
 
     return MS::kSuccess;
@@ -499,7 +483,7 @@ MStatus uninitializePlugin(MObject obj)
     status = plugin.deregisterNode(ImplicitSkinDeformer::id);
     if(status != MS::kSuccess) return status;
 
-    status = plugin.deregisterCommand("implicit");
+    status = plugin.deregisterCommand("implicitSkin");
     if(status != MS::kSuccess) return status;
 
     return MS::kSuccess;

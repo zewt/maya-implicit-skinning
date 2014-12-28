@@ -29,11 +29,8 @@ namespace DagHelpers
     template<class T>
     T readHandle(MDataHandle handle, MStatus *status);
 
-    template<>
-    inline MMatrix readHandle(MDataHandle handle, MStatus *status)
-    {
-        return handle.asMatrix();
-    }
+    template<> inline MDataHandle readHandle(MDataHandle handle, MStatus *status) { return handle; }
+    template<> inline MMatrix readHandle(MDataHandle handle, MStatus *status) { return handle.asMatrix(); }
 
     template<class T>
     inline T readHandle(MDataBlock &dataBlock, const MObject &attribute, MStatus *status)

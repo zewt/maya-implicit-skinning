@@ -24,6 +24,10 @@ public:
     void update_vertices(const vector<Loader::Vertex> &loader_vertices);
     void go(vector<Loader::Vec3> &out_verts);
 
+    // Return the number of vertices we were initialized with.  Calls to update_vertices
+    // must have the same count.
+    int expected_vertex_count() const;
+
 private:
     PluginInterfaceImpl *impl;
 };
