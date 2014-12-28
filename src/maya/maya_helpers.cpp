@@ -47,9 +47,125 @@
 
 #include <maya/MDagModifier.h>
 
+#include <algorithm>
+using namespace std;
+
 namespace DagHelpers
 {
-    bool getPlugConnectedTo(const MObject& node, const MString &attribute, MPlug& connectedPlug);
+    Loader::CpuTransfo MMatrixToCpuTransfo(const MMatrix &mmat)
+    {
+        Loader::CpuTransfo mat;
+        mat[0] = (float) mmat[0][0];
+        mat[1] = (float) mmat[1][0];
+        mat[2] = (float) mmat[2][0];
+        mat[3] = (float) mmat[3][0];
+        mat[4] = (float) mmat[0][1];
+        mat[5] = (float) mmat[1][1];
+        mat[6] = (float) mmat[2][1];
+        mat[7] = (float) mmat[3][1];
+        mat[8] = (float) mmat[0][2];
+        mat[9] = (float) mmat[1][2];
+        mat[10] = (float) mmat[2][2];
+        mat[11] = (float) mmat[3][2];
+        mat[12] = (float) mmat[0][3];
+        mat[13] = (float) mmat[1][3];
+        mat[14] = (float) mmat[2][3];
+        mat[15] = (float) mmat[3][3];
+        return mat;
+    }
+
+
+    MStatus getConnectedPlugWithName(MPlug inputPlug, std::string name, MPlug &result)
+    {
+        MStatus status = MStatus::kSuccess;
+
+        MFnDependencyNode inputPlugDep(inputPlug.node());
+        MObject geomObj = inputPlugDep.attribute(name.c_str(), &status);
+        if(status != MS::kSuccess)
+        {
+            fprintf(stderr, "error finding inputGeom\n");
+            return status;
+        }
+
+        MPlug geomObjPlug(inputPlug.node(), geomObj);
+    
+        MPlugArray connPlugs;
+        geomObjPlug.connectedTo(connPlugs, true, false);
+        int connLength = connPlugs.length();
+        if(connLength == 0) {
+            fprintf(stderr, "no connection\n");
+            return MStatus::kFailure;
+        }
+
+        result = connPlugs[0];
+        return MStatus::kSuccess;
+    }
+
+    MMatrix getMatrixFromPlug(MPlug plug, MStatus *status)
+    {
+        MObject obj;
+        plug.getValue(obj);
+
+        MFnMatrixData fnMat(obj);
+        return fnMat.matrix();
+    }
+
+    static int compare_length(const MDagPath &lhs, const MDagPath &rhs) { return lhs.fullPathName().length() < rhs.fullPathName().length(); }
+
+    /* Return the names of the skinCluster's influence objects, sorted parents before children. */
+    MStatus getMDagPathsFromSkinCluster(MPlug skinClusterPlug, std::vector<MDagPath> &out)
+    {
+        MStatus status = MStatus::kSuccess;
+        MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
+        if(status != MS::kSuccess) return status;
+
+        // Get the influence objects (joints) for the skin cluster.
+        MDagPathArray paths;
+        skinCluster.influenceObjects(paths, &status);
+        if(status != MS::kSuccess)
+            return status;
+
+        // Convert to a vector.
+        out.clear();
+        for(unsigned i = 0; i < paths.length(); ++i) 
+            out.push_back(paths[i]);
+
+        // Sort the influence objects by the length of their full path.  Since the name of
+        // an object is prefixed by its parents, eg. "parent1|parent2|object", this guarantees
+        // that a parent is before all of its children.
+        sort(out.begin(), out.end(), compare_length);
+
+        return MStatus::kSuccess;
+    }
+
+    /* Find the nearest ancestor to path.  "a|b|c" is an ancestor of "a|b|c|d|e|f".
+     * If no nodes are an ancestor of path, return -1. */
+    int findClosestAncestor(const vector<MDagPath> &dagPaths, MDagPath dagPath)
+    {
+        string path = dagPath.fullPathName().asChar();
+
+        int best_match = -1;
+        int best_match_length = -1;
+        for(size_t i = 0; i < dagPaths.size(); ++i) {
+            string parentPath = dagPaths[i].fullPathName().asChar();
+            if(parentPath == path)
+                continue;
+
+            // If path doesn't begin with this path plus |, it's not an ancestor.
+            string compareTo = parentPath + "|";
+            if(path.compare(0, compareTo.size(), compareTo, 0, compareTo.size()) != 0)
+                continue;
+
+            if((int) parentPath.size() > best_match_length)
+            {
+                best_match = (int) i;
+                best_match_length = (int) parentPath.size();
+            }
+        }
+        return best_match;
+    }
+
+
 
     //---------------------------------------------------
     //

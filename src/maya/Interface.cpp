@@ -22,7 +22,6 @@ struct PluginInterfaceImpl
 {
     bool gotFirst;
     Cuda_ctrl::CudaCtrl cudaCtrl;
-    Loader::Abs_skeleton original_loader_skeleton; // XXX
 };
 
 PluginInterface::PluginInterface()
@@ -85,11 +84,6 @@ void PluginInterface::setup(const Loader::Abs_mesh &loader_mesh, const Loader::A
     // Tell cudaCtrl that we've loaded both the mesh and the skeleton.  This could be simplified.
     impl->cudaCtrl.load_animesh();
 
-    // Save the skeleton.  We'll compare the skeleton we get later against this to find out
-    // how it's changed.  XXX: Should we store the bind pose instead?  If so, we'll need to
-    // be in bind pose for update_all_hrbf_samples/update_base_potential.
-    impl->original_loader_skeleton = loader_skeleton;
-
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
     for(int bone_id = 1; bone_id < impl->cudaCtrl._anim_mesh->_skel->nb_joints(); ++bone_id)
         impl->cudaCtrl._anim_mesh->update_hrbf_samples(bone_id, 0);
@@ -97,21 +91,13 @@ void PluginInterface::setup(const Loader::Abs_mesh &loader_mesh, const Loader::A
     impl->cudaCtrl._anim_mesh->update_base_potential();
 }
 
-void PluginInterface::update_skeleton(const Loader::Abs_skeleton &loader_skeleton)
+void PluginInterface::update_skeleton(const vector<Loader::CpuTransfo> &bone_positions)
 {
     // Update the skeleton representation.
     vector<Transfo> transfos;
-    for(int i = 0; i < loader_skeleton._bones.size(); ++i)
-    {
-        const Loader::Abs_bone &bone = loader_skeleton._bones[i];
-        Loader::CpuTransfo currentTransform = bone._frame;
-        Loader::CpuTransfo bindTransform = impl->original_loader_skeleton._bones[i]._frame;
+    for(int i = 0; i < bone_positions.size(); ++i)
+        transfos.push_back(Transfo(bone_positions[i]));
 
-        Loader::CpuTransfo inverted = bindTransform.full_invert();
-        Loader::CpuTransfo changeToTransform = currentTransform * inverted;
-
-        transfos.push_back(Transfo(changeToTransform));
-    }
     impl->cudaCtrl._skeleton.set_transforms(transfos);
 }
 
