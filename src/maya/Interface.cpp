@@ -20,7 +20,6 @@ using namespace std;
 
 struct PluginInterfaceImpl
 {
-    bool gotFirst;
     Cuda_ctrl::CudaCtrl cudaCtrl;
 };
 
@@ -29,7 +28,6 @@ PluginInterface::PluginInterface()
     // We store this in a helper object to avoid importing CudaCtrl into the header,
     // since it's incompatible with Maya's headers.
     impl = new PluginInterfaceImpl();
-    impl->gotFirst = false;
 }
 
 PluginInterface::~PluginInterface()
@@ -58,7 +56,7 @@ void PluginInterface::shutdown()
 
 bool PluginInterface::is_setup() const
 {
-    return impl->gotFirst;
+    return impl->cudaCtrl._mesh != NULL;
 }
 
 // inputGeometry will have no translation 
@@ -67,10 +65,6 @@ bool PluginInterface::is_setup() const
 // interface.
 void PluginInterface::setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton)
 {
-    if(impl->gotFirst)
-        return;
-    impl->gotFirst = true;
-
     // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
     // Mesh.
     Mesh *ptr_mesh = new Mesh(loader_mesh);
