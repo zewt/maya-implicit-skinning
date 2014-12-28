@@ -178,6 +178,7 @@
     <ClInclude Include="..\include\blending_lib\operators.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
     <ClCompile Include="..\src\animation\loader_skel.cpp" />
+    <ClCompile Include="..\src\control\sample_set.cpp" />
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
@@ -232,6 +233,7 @@
     <ClInclude Include="..\src\control\cuda_ctrl.hpp" />
     <ClInclude Include="..\src\control\debug_ctrl.hpp" />
     <ClInclude Include="..\src\control\operators_ctrl.hpp" />
+    <ClInclude Include="..\src\control\sample_set.hpp" />
     <ClInclude Include="..\src\control\skeleton_ctrl.hpp" />
     <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp" />
     <ClInclude Include="..\src\global_datas\globals.hpp" />

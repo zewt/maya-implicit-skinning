@@ -29,6 +29,7 @@
 #include "animesh_enum.hpp"
 #include "transfo.hpp"
 #include "bone_type.hpp"
+#include "sample_set.hpp"
 
 // Forward definitions ---------------------------------------------------------
 struct Animesh;
@@ -36,27 +37,24 @@ struct Skeleton;
 namespace Loader { struct Abs_skeleton; }
 // END Forward definitions -----------------------------------------------------
 
+
+
+
 /** @brief Settings Controler for the animated mesh
     This class provide a control interface for the animated mesh.
     Point selection and coloring are handle here.
 */
 
 class Animated_mesh_ctrl {
-private:
-    struct Cap{
-        std::vector<Vec3_cu> nodes;
-        std::vector<Vec3_cu> n_nodes;
-        bool enable;
-    };
-
 public:
     Animated_mesh_ctrl(Animesh* am);
     ~Animated_mesh_ctrl();
 
+    void set_sampleset(const SampleSet &sample_set);
+
     void enable_update_base_potential(bool state);
 
     void set_auto_precompute(bool s){ _auto_precompute = s; }
-    void set_factor_siblings(bool s){ _factor_bones = s;    }
     void set_bone_type(int id, int bone_type);
 
     void update_base_potential();
@@ -109,62 +107,16 @@ public:
     /// Change the radius used to convert hrbf from global to compact
     void set_hrbf_radius(int bone_id, float rad);
 
-    /// Given a 'bone_id' and its sample index delete the sample
-    /// the operation updates rbf weights
-    void delete_sample(int bone_id, int index);
-
-    /// erase every samples of the bone
-    void empty_samples(int bone_id);
-
-    /// this method add a new sample given its position 'p' its normal 'n'
-    /// @return the sample index
-    int add_sample(int bone_id, const Vec3_cu& p, const Vec3_cu& n);
-
-    void add_samples(int bone_id,
-                     const std::vector<Vec3_cu>& p,
-                     const std::vector<Vec3_cu>& n);
-
-    // Update bone_id using the specified HRBF sampler.  XXX: if this is kept, add an enum
-    void update_hrbf_samples(int bone_id, int mode);
-
-    /// @param bone_id bone identifier
-    void choose_hrbf_samples_ad_hoc(int bone_id, float jmax, float pmax,  float minDist, float fold);
-
-    void choose_hrbf_samples_poisson(int bone_id, float jmax, float pmax,  float minDist, int nb_samples, float fold);
-
     void incr_junction_rad(int bone_id, float incr);
-
-    /// Add joint cap for the ith bone ?
-    void set_jcap(int bone_id, bool state);
-
-    /// Add parent cap for the ith bone ?
-    void set_pcap(int bone_id, bool state);
-
-    /// Re-compute caps samples. Usefull when the skeleton joints change of position
-    void update_caps(int bone_id, bool jcap, bool pcap);
-
-    /// Transform the hrbf samples of the list bone_ids.
-    /// This allows selection/display of samples even if the skeleton is moving
-    /// @param bone_ids list of bone ids to be transformed. If the list is empty
-    /// all samples are transformed
-    void transform_samples(const std::vector<int>& bone_ids = std::vector<int>());
 
 private:
     /// Append the current caps and samples and update the 'bone_id' with them
     /// also allocates the '_anim_samples_list' for nodes and n_nodes
     void update_bone_samples(int bone_id);
 
-    /// Change the vector size of attr _sample_anim_list.nodes and .n_nodes
-    void resize_samples_anim(int bone_id, int size);
-
-    /// How many samples for every bone
-    int compute_nb_samples();
-
     /// Convert all bones to the precomputed type. except for SSD bones and
     /// Already precomputed
     void precompute_all_bones();
-
-    void transform_caps(int bone_id, const Transfo& tr);
 
     //--------------------------------------------------------------------------
     /// @name Tools file export
@@ -172,13 +124,6 @@ private:
 
     /// Write the list of bone types (SSD HRBF etc.)
     void write_bone_types(std::ofstream& file);
-
-    void write_samples(std::ofstream& file,
-                       const std::vector<Vec3_cu>& nodes,
-                       const std::vector<Vec3_cu>& n_nodes );
-
-    /// Write the section related to the hrbf samples in '.ism' files
-    void write_hrbf_env(std::ofstream& file);
 
     /// Write the section related to the hrbf caps in '.ism' files
     /// @param wether we write the joint cap list or parent cap list
@@ -192,19 +137,12 @@ private:
     /// @name Tools file import
     //--------------------------------------------------------------------------
 
-    /// Read the section related to the hrbf samples in '.ism' files
-    void read_hrbf_env(std::ifstream& file);
-
     void read_hrbf_env_weights( std::ifstream& file,
                                 std::vector<std::vector<float4> >& bone_weights);
 
     /// Read the list of bone types (SSD HRBF etc.)
     void read_bone_types(std::ifstream& file,
                          std::vector<int>& bones_type);
-
-    void read_samples(std::ifstream& file,
-                      std::vector<Vec3_cu>& nodes,
-                      std::vector<Vec3_cu>& n_nodes );
 
     void read_weights(std::ifstream& file,
                       std::vector<float4>& weights );
@@ -224,27 +162,7 @@ private:
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
 
-    struct Cap_list {
-        Cap jcap;
-        Cap pcap;
-    };
-
-    /// List of samples added to the bone's caps
-    /// _bone_caps[bone_id] = two_caps
-    std::vector<Cap_list> _bone_caps;
-    std::vector<Cap_list> _bone_anim_caps;
-
-    struct HSample_list{
-        std::vector<Vec3_cu> nodes;
-        std::vector<Vec3_cu> n_nodes;
-    };
-
-    /// List of samples used for each bone
-    std::vector<HSample_list> _sample_list;
-
-    /// List of samples in animated position (
-    /// @warning animated position is only valid for currently selected bones
-    std::vector<HSample_list> _sample_anim_list;
+    SampleSet _samples;
 
 public:
     Animesh* _animesh;

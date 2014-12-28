@@ -14,6 +14,7 @@
 #include "cuda_ctrl.hpp"
 #include "skeleton.hpp"
 #include "animesh.hpp"
+#include "sample_set.hpp"
 
 #include <vector>
 using namespace std;
@@ -79,8 +80,39 @@ void PluginInterface::setup(const Loader::Abs_mesh &loader_mesh, const Loader::A
     impl->cudaCtrl.load_animesh();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
+    SampleSet samples(impl->cudaCtrl._anim_mesh->_skel->nb_joints());
+
+    // Get the default junction radius.
+    impl->cudaCtrl._anim_mesh->_animesh->get_default_junction_radius(samples._junction_radius);
+
     for(int bone_id = 1; bone_id < impl->cudaCtrl._anim_mesh->_skel->nb_joints(); ++bone_id)
-        impl->cudaCtrl._anim_mesh->update_hrbf_samples(bone_id, 0);
+    {
+        if(true)
+        {
+            samples.choose_hrbf_samples_poisson
+                    (*impl->cudaCtrl._anim_mesh->_animesh,
+                     bone_id,
+                     // Set a distance threshold from sample to the joints to choose them.
+                     -0.02f, // dSpinB_max_dist_joint->value(),
+                     -0.02f, // dSpinB_max_dist_parent->value(),
+                     0, // dSpinB_min_dist_samples->value(),
+                     // Minimal number of samples.  (this value is used only whe the value min dist is zero)
+                     50, // spinB_nb_samples_psd->value(), 20-1000
+
+                     // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
+                     0); // dSpinB_max_fold->value()
+        } else {
+            samples.choose_hrbf_samples_ad_hoc
+                    (*impl->cudaCtrl._anim_mesh->_animesh,
+                     bone_id,
+                     -0.02f, // dSpinB_max_dist_joint->value(),
+                     -0.02f, // dSpinB_max_dist_parent->value(),
+                     0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
+                     0); // dSpinB_max_fold->value()
+        }
+    }
+
+    impl->cudaCtrl._anim_mesh->set_sampleset(samples);
 
     impl->cudaCtrl._anim_mesh->update_base_potential();
 }

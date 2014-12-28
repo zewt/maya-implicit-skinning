@@ -18,34 +18,22 @@
  */
 #include "animated_mesh_ctrl.hpp"
 
-#include "conversions.hpp"
 #include "animesh.hpp"
 #include "globals.hpp"
 #include "cuda_ctrl.hpp"
 #include "std_utils.hpp"
-#include "loader_skel.hpp"
 #include "skeleton.hpp"
 
 // -----------------------------------------------------------------------------
 
 Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
     _auto_precompute(true),
-    _factor_bones(false),
     _nb_iter(7),
-    _bone_caps(am->get_skel()->nb_joints()),
-    _bone_anim_caps(am->get_skel()->nb_joints()),
-    _sample_list(am->get_skel()->nb_joints()),
-    _sample_anim_list(am->get_skel()->nb_joints()),
+    _samples(am->get_skel()->nb_joints()),
     _animesh(am),
     _skel( am->get_skel() )
 {
     int n = am->get_skel()->nb_joints();
-    for(int i = 0; i < n; i++){
-        _bone_caps[i].jcap.enable = false;
-        _bone_caps[i].pcap.enable = false;
-        _bone_anim_caps[i].jcap.enable = false;
-        _bone_anim_caps[i].pcap.enable = false;
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -122,61 +110,23 @@ void Animated_mesh_ctrl::write_bone_types(std::ofstream& file)
     }
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::write_hrbf_env(std::ofstream& file)
-{
-    file << "[HRBF_ENV]" << std::endl;
-    file << "nb_bone "   << _sample_list.size() << std::endl;
-
-    for(unsigned i = 0; i < _sample_list.size(); i++ )
-    {
-        file << "bone_id " << i << std::endl;
-
-        write_samples(file, _sample_list[i].nodes, _sample_list[i].n_nodes);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::write_hrbf_caps_env(std::ofstream& file, bool jcap)
 {
     if( jcap ) file << "[HRBF_JCAPS_ENV]" << std::endl;
     else       file << "[HRBF_PCAPS_ENV]" << std::endl;
 
-    file << "nb_bone " << _bone_caps.size() << std::endl;
+    file << "nb_bone " << _samples._bone_caps.size() << std::endl;
 
-    for(unsigned i = 0; i < _bone_caps.size(); i++ )
+    for(unsigned i = 0; i < _samples._bone_caps.size(); i++ )
     {
-        const Cap&  cap_list = jcap ? _bone_caps[i].jcap : _bone_caps[i].pcap;
-        const float rad      = _animesh->get_junction_radius(i);
+        const SampleSet::Cap&  cap_list = jcap ? _samples._bone_caps[i].jcap : _samples._bone_caps[i].pcap;
+        const float rad      = _samples._junction_radius[i];
 
         file << "bone_id "       << i               << std::endl;
         file << "is_cap_enable " << cap_list.enable << std::endl;
         file << "cap_radius "    << rad             << std::endl;
     }
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::write_samples(std::ofstream& file,
-                                       const std::vector<Vec3_cu>& nodes,
-                                       const std::vector<Vec3_cu>& n_nodes )
-{
-    assert(nodes.size() == n_nodes.size());
-
-    file << "nb_points " << nodes.size() << std::endl;
-
-    for(unsigned j = 0; j < nodes.size(); ++j)
-    {
-        const Vec3_cu pt = nodes  [j];
-        const Vec3_cu n  = n_nodes[j];
-        file << pt.x << " " << pt.y << " " << pt.z << std::endl;
-        file << n.x  << " " << n.y  << " " << n.z  << std::endl;
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::write_hrbf_radius( std::ofstream& file )
 {
@@ -202,7 +152,7 @@ void Animated_mesh_ctrl::save_ism(const char* filename)
         exit(1);
     }
 
-    write_hrbf_env( file );
+    _samples.write_hrbf_env( file );
     write_hrbf_caps_env( file, true  /*write joint caps*/);
     write_hrbf_caps_env( file, false /*write parent caps*/);
     write_bone_types( file );
@@ -228,34 +178,6 @@ void Animated_mesh_ctrl::read_bone_types(std::ifstream& file,
         file >> nil /*'bone_type '*/ >> bones_type[bone_id];
     }
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::read_samples(std::ifstream& file,
-                                      std::vector<Vec3_cu>& nodes,
-                                      std::vector<Vec3_cu>& n_nodes )
-{
-    assert(nodes.size() == n_nodes.size());
-
-    std::string nil;
-    int nb_samples = -1;
-    file >> nil /*'nb_points'*/ >> nb_samples;
-    nodes.  resize( nb_samples );
-    n_nodes.resize( nb_samples );
-
-    for(int j = 0; j < nb_samples; ++j)
-    {
-        Vec3_cu pt, n;
-        file >> pt.x >> pt.y >> pt.z;
-        file >> n.x  >> n.y  >> n.z;
-
-//        Transfo tr = Transfo::rotate(Vec3_cu::unit_x(), M_PI) * Transfo::rotate(Vec3_cu::unit_z(), M_PI);// DEBUG---
-        nodes  [j] = /*tr */ pt;
-        n_nodes[j] = /*tr */ n;
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::read_weights(std::ifstream& file,
                                       std::vector<float4>& weights )
@@ -291,33 +213,12 @@ void Animated_mesh_ctrl::read_hrbf_caps_env(std::ifstream& file, bool jcap)
         int bone_id = -1;
         file >> nil /*'bone_id'*/ >> bone_id;
 
-        Cap& cap_list = jcap ? _bone_caps[bone_id].jcap : _bone_caps[bone_id].pcap;
+        SampleSet::Cap& cap_list = jcap ? _samples._bone_caps[bone_id].jcap : _samples._bone_caps[bone_id].pcap;
         file >> nil /*'is_cap_enable'*/ >> cap_list.enable;
         file >> nil /*'cap_radius'*/    >> rad;
-        _animesh->set_junction_radius(bone_id, rad);
+        _samples._junction_radius[bone_id] = rad;
     }
 }
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::read_hrbf_env(std::ifstream& file)
-{
-    std::string nil;
-    int bone_id  = -1;
-    int nb_bones_file = 0;
-
-    file >> nil/*'nb_bone'*/ >> nb_bones_file;
-
-    for(int i = 0; i<nb_bones_file; i++ )
-    {
-        file >> nil/*'bone_id'*/ >> bone_id;
-        read_samples(file, _sample_list[bone_id].nodes, _sample_list[bone_id].n_nodes);
-        Std_utils::copy( _sample_anim_list[bone_id].  nodes, _sample_list[bone_id].  nodes);
-        Std_utils::copy( _sample_anim_list[bone_id].n_nodes, _sample_list[bone_id].n_nodes);
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::read_hrbf_env_weights(
         std::ifstream& file,
@@ -376,7 +277,7 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         string section;
         file >> section;
 
-        if(section == "[HRBF_ENV]")              read_hrbf_env( file );
+        if(section == "[HRBF_ENV]")              _samples.read_hrbf_env( file );
         else if(section == "[HRBF_ENV_WEIGHTS]") read_hrbf_env_weights(file, bone_weights);
         else if(section == "[HRBF_JCAPS_ENV]")   read_hrbf_caps_env( file, true  );
         else if(section == "[HRBF_PCAPS_ENV]")   read_hrbf_caps_env( file, false );
@@ -397,7 +298,7 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         if( radius_hrbf[i] > 0.f)
             _skel->set_bone_hrbf_radius(i, radius_hrbf[i]);
 
-        update_caps(i, true, true);
+        _samples.update_caps(*_animesh->get_skel(), i, true, true);
 
         if(t == EBone::HRBF || t == EBone::PRECOMPUTED)
         {
@@ -462,224 +363,13 @@ int Animated_mesh_ctrl::get_nearest_bone(int vert_idx){
 
 // -----------------------------------------------------------------------------
 
+// Combine the samples in _samples, and send them to the Animesh.
 void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 {
     std::vector<Vec3_cu> nodes, n_nodes;
-
-    if( _factor_bones && bone_id != _skel->root() )
-    {
-        int parent = _skel->parent( bone_id );
-        const std::vector<int>& sons = _skel->get_sons( parent );
-        assert(sons.size() > 0);
-        int son0 = sons[0];
-
-        //if(son0 != bone_id) // In factor bone mode samples are always in the first son
-            //return;
-        // <- yea but caps are not stored in the first son ...
-
-        int nb_nodes = _sample_list[son0].nodes.size();
-        nodes.  resize( nb_nodes );
-        n_nodes.resize( nb_nodes );
-        resize_samples_anim(son0, nb_nodes);
-        for(int i = 0; i < nb_nodes; i++) {
-            nodes  [i] = _sample_list[son0].nodes  [i];
-            n_nodes[i] = _sample_list[son0].n_nodes[i];
-        }
-
-        for( unsigned i = 0; i < sons.size(); i++) {
-            int bid = sons[i];
-            if(_bone_caps[bid].jcap.enable && !_skel->is_leaf(bid))
-            {
-                for(unsigned j = 0; j < _bone_caps[bid].jcap.nodes.size(); j++){
-                    nodes.  push_back( _bone_caps[bid].jcap.nodes  [j] );
-                    n_nodes.push_back( _bone_caps[bid].jcap.n_nodes[j] );
-                }
-            }
-        }
-
-        if(_bone_caps[son0].pcap.enable) {
-            for(unsigned i = 0; i < _bone_caps[son0].pcap.nodes.size(); i++){
-                nodes.  push_back( _bone_caps[son0].pcap.nodes  [i] );
-                n_nodes.push_back( _bone_caps[son0].pcap.n_nodes[i] );
-            }
-        }
-
-        _animesh->update_bone_samples(son0, nodes, n_nodes);
-    }
-    else
-    {
-        int nb_nodes = _sample_list[bone_id].nodes.size();
-        nodes.  resize( nb_nodes );
-        n_nodes.resize( nb_nodes );
-        resize_samples_anim(bone_id, nb_nodes);
-
-        // Concat nodes and normals
-        for(int i = 0; i < nb_nodes; i++)
-        {
-            nodes  [i] = _sample_list[bone_id].nodes  [i];
-            n_nodes[i] = _sample_list[bone_id].n_nodes[i];
-        }
-        // concat joint caps
-        if(_bone_caps[bone_id].jcap.enable && !_skel->is_leaf(bone_id))
-        {
-            for(unsigned j = 0; j < _bone_caps[bone_id].jcap.nodes.size(); j++) {
-                nodes.  push_back( _bone_caps[bone_id].jcap.nodes  [j] );
-                n_nodes.push_back( _bone_caps[bone_id].jcap.n_nodes[j] );
-            }
-        }
-        // concat parent caps
-        if(_bone_caps[bone_id].pcap.enable)
-        {
-            for(unsigned i = 0; i < _bone_caps[bone_id].pcap.nodes.size(); i++){
-                nodes.  push_back( _bone_caps[bone_id].pcap.nodes  [i] );
-                n_nodes.push_back( _bone_caps[bone_id].pcap.n_nodes[i] );
-            }
-        }
-        _animesh->update_bone_samples(bone_id, nodes, n_nodes);
-    }
-
+    bone_id = _samples.get_all_bone_samples(*_skel, bone_id, nodes, n_nodes);
+    _animesh->update_bone_samples(bone_id, nodes, n_nodes);
     if(_auto_precompute) precompute_all_bones();
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::update_caps(int bone_id, bool jcap, bool pcap)
-{
-    std::vector<Vec3_cu>& jnodes   = _bone_caps[bone_id].jcap.nodes;
-    std::vector<Vec3_cu>& jn_nodes = _bone_caps[bone_id].jcap.n_nodes;
-
-    std::vector<Vec3_cu>& pnodes   = _bone_caps[bone_id].pcap.nodes;
-    std::vector<Vec3_cu>& pn_nodes = _bone_caps[bone_id].pcap.n_nodes;
-
-    if(jcap && !_skel->is_leaf(bone_id))
-    {
-        jnodes.  clear();
-        jn_nodes.clear();
-        _animesh->compute_jcaps(bone_id, jnodes, jn_nodes);
-    }
-
-    if(pcap)
-    {
-        int parent = _skel->parent( bone_id );
-        if(_factor_bones && parent != -1)
-        {
-            const std::vector<int>& sons = _skel->get_sons( parent );
-            assert(sons.size() > 0);
-            _bone_caps[ sons[0] ].pcap.nodes.  clear();
-            _bone_caps[ sons[0] ].pcap.n_nodes.clear();
-            _animesh->compute_pcaps(sons[0],
-                                    (sons.size() > 1),
-                                    _bone_caps[ sons[0] ].pcap.nodes,
-                                    _bone_caps[ sons[0] ].pcap.n_nodes);
-        }
-        else
-        {
-            pnodes.  clear();
-            pn_nodes.clear();
-            _animesh->compute_pcaps(bone_id, false, pnodes, pn_nodes);
-        }
-    }
-
-    _bone_anim_caps[bone_id].jcap.enable = _bone_caps[bone_id].jcap.enable;
-    _bone_anim_caps[bone_id].jcap.nodes.  resize( jnodes.  size() );
-    _bone_anim_caps[bone_id].jcap.n_nodes.resize( jn_nodes.size() );
-
-    _bone_anim_caps[bone_id].pcap.enable = _bone_caps[bone_id].pcap.enable;
-    _bone_anim_caps[bone_id].pcap.nodes.  resize( pnodes.  size() );
-    _bone_anim_caps[bone_id].pcap.n_nodes.resize( pn_nodes.size() );
-}
-
-
-void Animated_mesh_ctrl::update_hrbf_samples(int bone_id, int mode)
-{
-    if( _skel->is_leaf(bone_id) )
-        return;
-
-    switch(mode)
-    {
-    case 0:
-    {
-        choose_hrbf_samples_poisson
-                (bone_id,
-                 // Set a distance threshold from sample to the joints to choose them.
-                 -0.02f, // dSpinB_max_dist_joint->value(),
-                 -0.02f, // dSpinB_max_dist_parent->value(),
-                 0, // dSpinB_min_dist_samples->value(),
-                 // Minimal number of samples.  (this value is used only whe the value min dist is zero)
-                 50, // spinB_nb_samples_psd->value(), 20-1000
-
-                 // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
-                 0); // dSpinB_max_fold->value() );
-
-        break;
-    }
-
-    case 1:
-    {
-        choose_hrbf_samples_ad_hoc
-                (bone_id,
-                 -0.02f, // dSpinB_max_dist_joint->value(),
-                 -0.02f, // dSpinB_max_dist_parent->value(),
-                 0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
-                 0); // dSpinB_max_fold->value() );
-
-        break;
-    }
-    }
-}
-
-void Animated_mesh_ctrl::choose_hrbf_samples_ad_hoc(int bone_id,
-                                                    float jmax,
-                                                    float pmax,
-                                                    float minDist,
-                                                    float fold)
-{
-    Animesh::Adhoc_sampling heur(_animesh);
-    heur._bone_id = bone_id;
-    heur._jmax = jmax;
-    heur._pmax = pmax;
-    heur._mind = minDist;
-    heur._fold = fold;
-    heur._factor_siblings = _factor_bones;
-
-    update_caps(bone_id, true, true); // FIXME: dunno why it's here
-
-    _sample_list[bone_id].nodes.  clear();
-    _sample_list[bone_id].n_nodes.clear();
-
-    heur.sample(_sample_list[bone_id].nodes,
-                _sample_list[bone_id].n_nodes);
-
-    update_bone_samples(bone_id);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::choose_hrbf_samples_poisson(int bone_id,
-                                                     float jmax,
-                                                     float pmax,
-                                                     float minDist,
-                                                     int nb_samples,
-                                                     float fold)
-{
-    Animesh::Poisson_disk_sampling heur(_animesh);
-    heur._bone_id = bone_id;
-    heur._jmax = jmax;
-    heur._pmax = pmax;
-    heur._mind = minDist;
-    heur._nb_samples = nb_samples;
-    heur._fold = fold;
-    heur._factor_siblings = _factor_bones;
-
-    update_caps(bone_id, true, true); // FIXME: dunno why it's here
-
-    _sample_list[bone_id].nodes.  clear();
-    _sample_list[bone_id].n_nodes.clear();
-
-    heur.sample(_sample_list[bone_id].nodes,
-                _sample_list[bone_id].n_nodes);
-
-    update_bone_samples(bone_id);
 }
 
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
@@ -702,81 +392,31 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::delete_sample(int bone_id, int idx)
+void Animated_mesh_ctrl::set_sampleset(const SampleSet &sample_set)
 {
-    std::vector<Vec3_cu>::iterator it = _sample_list[bone_id].nodes.begin();
-    _sample_list[bone_id].nodes  .erase( it+idx );
-    it = _sample_list[bone_id].n_nodes.begin();
-    _sample_list[bone_id].n_nodes.erase( it+idx );
-    update_bone_samples(bone_id);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::empty_samples(int bone_id)
-{
-    _sample_list[bone_id].nodes.  clear();
-    _sample_list[bone_id].n_nodes.clear();
-
-    update_bone_samples(bone_id);
-}
-
-// -----------------------------------------------------------------------------
-
-int Animated_mesh_ctrl::add_sample(int bone_id,
-                                   const Vec3_cu& p,
-                                   const Vec3_cu& n)
-{
-    _sample_list[bone_id].nodes.  push_back(p);
-    _sample_list[bone_id].n_nodes.push_back(n);
-
-    update_bone_samples(bone_id);
-
-    return _sample_list[bone_id].nodes.size()-1;
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::add_samples(int bone_id,
-                                     const std::vector<Vec3_cu>& p,
-                                     const std::vector<Vec3_cu>& n)
-{
-    assert(p.size() == n.size());
-
-    _sample_list[bone_id].nodes.  reserve( _sample_list[bone_id].  nodes.size() + p.size() );
-    _sample_list[bone_id].n_nodes.reserve( _sample_list[bone_id].n_nodes.size() + n.size() );
-
-    for(unsigned i = 0; i < p.size(); i++)
+    _samples = sample_set;
+    for(int bone_id = 0; bone_id < _skel->nb_joints(); ++bone_id)
     {
-        _sample_list[bone_id].nodes.  push_back(p[i]);
-        _sample_list[bone_id].n_nodes.push_back(n[i]);
+        _samples.update_caps(*_animesh->get_skel(), bone_id, true, true); // FIXME: dunno why it's here
+        update_bone_samples(bone_id);
     }
-
-    update_bone_samples(bone_id);
 }
-
-// -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::incr_junction_rad(int bone_id, float incr)
 {
-    float r = _animesh->get_junction_radius(bone_id);
-    _animesh->set_junction_radius(bone_id, r+incr);
+    _samples._junction_radius[bone_id] += incr;
 
     // Recompute caps position
-    update_caps(bone_id,
+    _samples.update_caps(*_animesh->get_skel(), bone_id,
                 false,
-                _bone_caps[bone_id].pcap.enable);
-
-    update_bone_samples(bone_id);
+                _samples._bone_caps[bone_id].pcap.enable);
 
     int pt = _skel->parent( bone_id );
     if( pt > -1)
     {
-        update_caps(pt,
-                    _bone_caps[pt].jcap.enable,
+        _samples.update_caps(*_animesh->get_skel(), pt,
+                    _samples._bone_caps[pt].jcap.enable,
                     false);
-
-        update_bone_samples(pt);
 
         /*
         const std::vector<int>& c = _skel->get_sons(pt);
@@ -785,116 +425,13 @@ void Animated_mesh_ctrl::incr_junction_rad(int bone_id, float incr)
             const int cbone = c[i];
             // Recompute caps position
             update_caps(cbone,
-                        _bone_caps[cbone].jcap.enable,
+                        _samples._bone_caps[cbone].jcap.enable,
                         false);
-
-            update_bone_samples(cbone);
         }
         */
     }
 
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_jcap(int bone_id, bool state)
-{
-    _bone_caps     [bone_id].jcap.enable = state;
-    _bone_anim_caps[bone_id].jcap.enable = state;
-
-    update_caps(bone_id,
-                state,
-                _bone_caps[bone_id].pcap.enable);
-
     update_bone_samples(bone_id);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_pcap(int bone_id, bool state)
-{
-    _bone_caps     [bone_id].pcap.enable = state;
-    _bone_anim_caps[bone_id].pcap.enable = state;
-
-    update_caps(bone_id,
-                _bone_caps[bone_id].jcap.enable,
-                state);
-
-    update_bone_samples(bone_id);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::transform_samples(const std::vector<int>& bone_ids)
-{
-    int acc = 0;
-    int nb_bones = bone_ids.size() == 0 ? _sample_list.size() : bone_ids.size();
-    for(int i = 0; i < nb_bones; i++)
-    {
-        // Transform samples
-        const int bone_id = bone_ids.size() == 0 ? i : bone_ids[i];
-        const Transfo& tr = _skel->get_transfo( bone_id );
-
-//        assert(_sample_anim_list[bone_id].nodes.  size() == _sample_list[bone_id].nodes.  size() );
-//        assert(_sample_anim_list[bone_id].n_nodes.size() == _sample_list[bone_id].n_nodes.size() );
-        if(_sample_anim_list[bone_id].nodes.size() != _sample_list[bone_id].nodes.size())
-            resize_samples_anim(bone_id, _sample_list[bone_id].nodes.size());
-
-        for(unsigned j = 0; j < _sample_list[bone_id].nodes.size(); j++)
-        {
-            Point_cu  p = Convs::to_point(_sample_list[bone_id].nodes[j]);
-            Vec3_cu n = _sample_list[bone_id].n_nodes[j];
-
-            Vec3_cu pos = Convs::to_vector(tr * p);
-            Vec3_cu nor = tr * n;
-            _sample_anim_list[bone_id].nodes  [j] = pos;
-            _sample_anim_list[bone_id].n_nodes[j] = nor;
-
-            acc++;
-        }
-
-        transform_caps(bone_id, tr);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::transform_caps(int bone_id, const Transfo& tr)
-{
-    // Transform jcaps
-    if(_bone_caps[bone_id].jcap.enable)
-        for(unsigned j = 0; j < _bone_caps[bone_id].jcap.nodes.size(); j++)
-        {
-            Point_cu p = Convs::to_point(_bone_caps[bone_id].jcap.nodes[j]);
-            Vec3_cu  n = _bone_caps[bone_id].jcap.n_nodes[j];
-            _bone_anim_caps[bone_id].jcap.nodes  [j] = Convs::to_vector(tr * p);
-            _bone_anim_caps[bone_id].jcap.n_nodes[j] = tr * n;
-        }
-
-    // Transform pcaps
-    if(_bone_caps[bone_id].pcap.enable)
-        for(unsigned j = 0; j < _bone_caps[bone_id].pcap.nodes.size(); j++)
-        {
-            Point_cu p = Convs::to_point(_bone_caps[bone_id].pcap.nodes[j]);
-            Vec3_cu  n = _bone_caps[bone_id].pcap.n_nodes[j];
-            _bone_anim_caps[bone_id].pcap.nodes  [j] = Convs::to_vector(tr * p);
-            _bone_anim_caps[bone_id].pcap.n_nodes[j] = tr * n;
-        }
-}
-
-void Animated_mesh_ctrl::resize_samples_anim(int bone_id, int size)
-{
-    _sample_anim_list[bone_id].nodes.  resize( size );
-    _sample_anim_list[bone_id].n_nodes.resize( size );
-}
-
-int Animated_mesh_ctrl::compute_nb_samples()
-{
-    int acc = 0;
-    for(unsigned i = 0; i < _sample_list.size(); i++)
-        acc += _sample_list[i].nodes.size();
-
-    return acc;
 }
 
 void Animated_mesh_ctrl::precompute_all_bones()

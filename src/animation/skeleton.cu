@@ -235,7 +235,7 @@ int Skeleton::get_hrbf_id(Bone::Id bone_id) const
 
 // -----------------------------------------------------------------------------
 
-float Skeleton::get_hrbf_radius(Bone::Id bone_id)
+float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
 {
     return _hrbf_radius[bone_id];
 }

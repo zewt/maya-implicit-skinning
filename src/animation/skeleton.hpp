@@ -200,7 +200,7 @@ struct Skeleton {
   /// if the bone is not an HRBF
   int get_hrbf_id(Bone::Id bone_id) const;
 
-  float get_hrbf_radius(Bone::Id bone_id);
+  float get_hrbf_radius(Bone::Id bone_id) const;
 
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }

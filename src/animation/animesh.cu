@@ -62,7 +62,6 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
     d_edge_mvc(_mesh->get_nb_edges()),
     d_vertices_state(_mesh->get_nb_vertices()),
     d_vertices_states_color(EAnimesh::NB_CASES),
-    h_junction_radius(_skel->nb_joints()),
 //    d_input_normals(m->get_nb_vertices()),
     d_output_vertices(_mesh->get_nb_vertices()),
     d_output_normals(_mesh->get_nb_vertices()),
@@ -424,19 +423,42 @@ void Animesh::update_nearest_bone_joint_in_device_mem()
 
 // -----------------------------------------------------------------------------
 
+void Animesh::get_default_junction_radius(std::vector<float> &nearest_rad) const
+{
+    const int nb_verts  = _mesh->get_nb_vertices();
+    const int nb_joints = _skel->nb_joints();
+
+    const float inf = std::numeric_limits<float>::infinity();
+    nearest_rad = std::vector<float>(nb_joints, inf);
+
+    // Junction radius is nearest vertex distance
+    for(int i = 0; i < nb_verts; i++)
+    {
+        const int bone_id = h_vertices_nearest_bones[i];
+        const Point_cu vert = _mesh -> get_vertex(i).to_point();
+        float dist = _skel->get_bone(bone_id)->dist_to( vert );
+
+        nearest_rad [bone_id] = std::min(nearest_rad [bone_id], dist);
+    }
+
+    for(int i = 0; i < nb_joints; i++)
+    {
+        if(nearest_rad[i] == inf)
+            nearest_rad[i] = 1.f;
+    }
+}
+
 void Animesh::set_default_bones_radius()
 {
     const int nb_verts  = _mesh->get_nb_vertices();
     const int nb_joints = _skel->nb_joints();
 
     std::vector<float> avg_rad     (nb_joints);
-    std::vector<float> nearest_rad (nb_joints);
     std::vector<float> farthest_rad(nb_joints);
     std::vector<int>   nb_smp      (nb_joints);
 
     const float inf = std::numeric_limits<float>::infinity();
     for(int i = 0; i < nb_joints; i++) {
-        nearest_rad [i] = inf;
         farthest_rad[i] = 0.f;
         avg_rad     [i] = 0.f;
         nb_smp      [i] = 0;
@@ -444,14 +466,13 @@ void Animesh::set_default_bones_radius()
 
     for(int i = 0; i < nb_verts; i++)
     {
-        const int j = h_vertices_nearest_bones[i];
+        const int bone_id = h_vertices_nearest_bones[i];
         const Point_cu vert = _mesh -> get_vertex(i).to_point();
-        float  d = _skel->get_bone(j)->dist_to( vert );
+        float dist = _skel->get_bone(bone_id)->dist_to( vert );
 
-        nearest_rad [j] = std::min(nearest_rad [j], d);
-        farthest_rad[j] = std::max(farthest_rad[j], d);
-        avg_rad[j] += d;
-        nb_smp[j]++;
+        farthest_rad[bone_id] = std::max(farthest_rad[bone_id], dist);
+        avg_rad[bone_id] += dist;
+        nb_smp[bone_id]++;
     }
 
     for(int i = 0; i < nb_joints; i++)
@@ -463,9 +484,6 @@ void Animesh::set_default_bones_radius()
         // HRBF compact support radius is farthest vertex distance
         const float radius = farthest_rad[i] == 0.f ? 1.f : farthest_rad[i];
         _skel->set_bone_hrbf_radius(i, radius);
-
-        // Junction radius is nearest vertex distance
-        h_junction_radius[i] = nearest_rad[i] == inf ? 1.f : nearest_rad[i];
     }
 }
 
@@ -618,23 +636,6 @@ void Animesh::set_bone_type(int id, int bone_type)
     // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
     // Figure out why for diagnostics.
     _skel->update_bones_pose();
-}
-
-// -----------------------------------------------------------------------------
-
-float Animesh::get_junction_radius(int bone_id){
-    assert(bone_id >=0                 );
-    assert(bone_id < _skel->nb_joints());
-    return h_junction_radius[bone_id];
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::set_junction_radius(int bone_id, float rad)
-{
-    assert(bone_id >=0                 );
-    assert(bone_id < _skel->nb_joints());
-    h_junction_radius[bone_id] = rad;
 }
 
 int Animesh::pack_vert_to_fit(Cuda_utils::Host::Array<int>& in,

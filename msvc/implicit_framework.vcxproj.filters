@@ -67,6 +67,9 @@
     <ClCompile Include="..\src\animation\loader_skel.cpp">
       <Filter>animation</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\control\sample_set.cpp">
+      <Filter>control</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -389,6 +392,9 @@
     </ClInclude>
     <ClInclude Include="..\src\animation\loader_skel.hpp">
       <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\control\sample_set.hpp">
+      <Filter>control</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

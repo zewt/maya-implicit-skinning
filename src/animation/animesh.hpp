@@ -167,19 +167,6 @@ public:
 
     float compute_nearest_vert_to_bone(int bone_id);
 
-    /// Compute caps at the tip of the bone to close the hrbf
-    /// @param use_parent_dir: add the cap following the parent direction and
-    /// not the direction of 'bone_id'
-    void compute_pcaps(int bone_id,
-                       bool use_parent_dir,
-                       std::vector<Vec3_cu>& out_verts,
-                       std::vector<Vec3_cu>& out_normals);
-
-    /// Compute caps at the tip of the bone to close the hrbf
-    void compute_jcaps(int bone_id,
-                       std::vector<Vec3_cu>& out_verts,
-                       std::vector<Vec3_cu>& out_normals);
-
     /// Update the mesh clusters according to the skeleton
     /// @param type : choose between to clusterisation algorithm either with
     /// a fast euclidean distance or a (slow) geodesic inside the volume of
@@ -221,6 +208,10 @@ public:
     /// Set bone type
     void set_bone_type(int id, int bone_type);
 
+    // Get the default junction radius for each joint.  This can be used as a default _junction_radius
+    // in SampleSet.
+    void get_default_junction_radius(std::vector<float> &radius_per_joint) const;
+
     inline void set_smooth_factor(int i, float val){
         d_input_smooth_factors.set(i, val);
     }
@@ -247,11 +238,6 @@ public:
     inline int get_nearest_bone(int vert_idx){
         return h_vertices_nearest_bones[vert_idx];
     }
-
-    float get_junction_radius(int bone_id);
-
-    // TO be deleted and moved in the ctrl
-    void set_junction_radius(int bone_id, float rad);
 
     const Mesh*     get_mesh() const { return _mesh; }
     const Skeleton* get_skel() const { return _skel; }
@@ -414,8 +400,6 @@ private:
     /// neigh_i. v = sum from 0 to nb_neigh { mvc_i * neigh_i } )
     /// @note to look up this list you need to use 'd_edge_list_offsets'
     Cuda_utils::Device::Array<float> d_edge_mvc;
-
-    std::vector<float> h_junction_radius;
 
     /// Stores in which state a vertex is when fitted into the implicit surface
     Cuda_utils::Device::Array<EAnimesh::Vert_state> d_vertices_state;
