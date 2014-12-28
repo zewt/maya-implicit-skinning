@@ -181,6 +181,7 @@
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
     <ClCompile Include="..\src\maya\Interface.cpp" />
+    <ClCompile Include="..\src\maya\maya_data.cpp" />
     <ClCompile Include="..\src\maya\maya_helpers.cpp" />
     <ClCompile Include="..\src\maya\plugin.cpp" />
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
@@ -258,6 +259,7 @@
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
     <ClInclude Include="..\src\maya\Interface.hpp" />
+    <ClInclude Include="..\src\maya\maya_data.hpp" />
     <ClInclude Include="..\src\maya\maya_helpers.hpp" />
     <ClInclude Include="..\src\meshes\mesh.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp" />

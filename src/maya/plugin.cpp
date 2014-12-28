@@ -7,9 +7,6 @@
 #include <maya/MPxCommand.h>
 #include <maya/MPxData.h>
 #include <maya/MItGeometry.h>
-#include <maya/MItMeshPolygon.h>
-#include <maya/MItMeshVertex.h>
-#include <maya/MItMeshEdge.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
 
@@ -22,7 +19,7 @@
 #include <maya/MFnPlugin.h>
 #include <maya/MFnTransform.h>
 #include <maya/MFnDependencyNode.h>
-#include <maya/MFnSkinCluster.h>
+#include <maya/MFnGeometryFilter.h>
 #include <maya/MFnPluginData.h>
 
 #include <maya/MArgList.h>
@@ -44,6 +41,8 @@
 #include <maya/MDagModifier.h>
 
 #include "maya/maya_helpers.hpp"
+#include "maya/maya_data.hpp"
+
 #include "loader_mesh.hpp"
 #include "loader_skel.hpp"
 
@@ -52,9 +51,6 @@
 #include <algorithm>
 #include <map>
 using namespace std;
-
-// Make sure that this is a string which isn't a valid DAG name.
-#define ROOT_BONE_NAME ""
 
 #if 0
 class ImplicitSkinDeformerData: public MPxData
@@ -149,250 +145,6 @@ MStatus ImplicitSkinDeformer::initialize()
 }
 
 
-
-MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
-{
-    MStatus status = MS::kSuccess;
-    MItMeshVertex meshIt(inputObject, &status);
-    if(status != MS::kSuccess) return status;
-
-    // Load vertices and normals.
-    int num_verts = meshIt.count(&status);
-    if(status != MS::kSuccess) return status;
-
-    mesh._vertices.resize(num_verts);
-    mesh._normals.resize(num_verts);
-
-    int idx = 0;
-    for ( ; !meshIt.isDone(); meshIt.next())
-    {
-        MPoint point = meshIt.position(MSpace::kObject, &status);
-        if(status != MS::kSuccess) return status;
-
-        mesh._vertices[idx] = Loader::Vertex((float)point.x, (float)point.y, (float)point.z);
-
-        // XXX: What are we supposed to do with unshared normals?
-        MVectorArray normalArray;
-        status = meshIt.getNormals(normalArray, MSpace::kObject);
-        if(status != MS::kSuccess) return status;
-
-        MVector normal = normalArray[0];
-        mesh._normals[idx] = Loader::Normal((float)normal[0], (float)normal[1], (float)normal[2]);
-
-        ++idx;
-    }
-
-    // Load tris using Maya's triangulation.
-    MItMeshPolygon polyIt(inputObject);
-    int num_faces = polyIt.count(&status);
-    if(status != MS::kSuccess) return status;
-
-    for ( ; !polyIt.isDone(); polyIt.next())
-    {
-        if(!polyIt.hasValidTriangulation())
-        {
-            int idx = polyIt.index(&status);
-            printf("Warning: Polygon with index %i doesn't have a valid triangulation", idx);
-            continue;
-        }
-
-        MPointArray trianglePoints;
-        MIntArray triangleIndexes;
-        status = polyIt.getTriangles(trianglePoints, triangleIndexes, MSpace::kObject);
-        if(status != MS::kSuccess) return status;
-
-        assert(triangleIndexes.length() % 3 == 0);
-        for(int triIdx = 0; triIdx < (int) triangleIndexes.length(); triIdx += 3)
-        {
-            Loader::Tri_face f;
-            for(int faceIdx = 0; faceIdx < 3; ++faceIdx)
-            {
-                f.v[faceIdx] = triangleIndexes[triIdx+faceIdx];
-                f.n[faceIdx] = triangleIndexes[triIdx+faceIdx];
-            }
-
-            mesh._triangles.push_back(f);
-        }
-    }
-
-    return MS::kSuccess;
-}
-
-
-/*
- * Given a skinCluster plug, create an Abs_skeleton.
- *
- * If getBindPositions is false, use the current positions of the joints, eg. the worldMatrix of the influence
- * objects.  If it's true, return the positions of the joints at bind time, which is the inverse of
- * bindPreMatrix on the skinCluster.
- *
- * If worldToObjectSpaceMat is identity, the joints are returned in world space.  worldToObjectSpaceMat can
- * be used to return joints in a different coordinate system.
- */
-MStatus loadSkeletonFromSkinCluster(MPlug skinClusterPlug, Loader::Abs_skeleton &skeleton, MMatrix worldToObjectSpaceMat, bool getBindPositions)
-{
-    MStatus status = MStatus::kSuccess;
-
-    // Get the influence objects (joints) for the skin cluster.
-    // Convert to a vector.
-    vector<MDagPath> joints;
-    status = DagHelpers::getMDagPathsFromSkinCluster(skinClusterPlug, joints);
-    if(status != MS::kSuccess) return status;
-
-    // Create a root bone.
-    {
-        // The root bone na
-        Loader::Abs_bone bone;
-        bone._name = ROOT_BONE_NAME;
-
-        // Create this joint at the origin in world space, and transform it to object space like the
-        // ones we create below.  (Multiplying by identity doesn't do anything; it's only written this
-        // way for clarity.)
-        MMatrix jointObjectMat = MMatrix::identity * worldToObjectSpaceMat;
-        bone._frame = DagHelpers::MMatrixToCpuTransfo(jointObjectMat);
-
-        skeleton._bones.push_back(bone);
-        skeleton._sons.push_back(std::vector<int>());
-        skeleton._parents.push_back(-1);
-        skeleton._root = 0;
-    }
-
-    // Create the bones.
-    for(int i = 0; i < joints.size(); ++i)
-    {
-        const MDagPath &dagPath = joints[i];
-        int boneIdx = (int) skeleton._bones.size(); 
-        string jointName = dagPath.fullPathName().asChar();
-
-        // If bind positions have been requested, get them from the bindPreMatrix.  This is the (inverse)
-        // world transform of the joint at the time it was bound.  Otherwise, just get the current transform.
-        MMatrix jointWorldMat;
-        if(getBindPositions)
-        {
-            MFnDependencyNode skinClusterDep(skinClusterPlug.node());
-            const MObject bindPreMatrixObject = skinClusterDep.attribute("bindPreMatrix", &status);
-            if(status != MS::kSuccess) return status;
-            
-            MPlug bindPreMatrixArray(skinClusterPlug.node(), bindPreMatrixObject);
-            MPlug bindPreMatrixElem = bindPreMatrixArray[i];
-
-            MMatrix bindPreMatrix = DagHelpers::getMatrixFromPlug(bindPreMatrixElem, &status);
-
-            // This is the inverse matrix.  We want the forwards matrix, so un-invert it.
-            jointWorldMat = bindPreMatrix.inverse();
-        }
-        else
-        {
-            jointWorldMat = dagPath.inclusiveMatrix();
-        }
-
-        MMatrix jointObjectMat = jointWorldMat * worldToObjectSpaceMat;
-
-        // Fill in the bone.  We don't need to calculate _length, since compute_bone_lengths will
-        // do it below.
-        Loader::Abs_bone bone;
-        bone._name = jointName;
-        bone._frame = DagHelpers::MMatrixToCpuTransfo(jointObjectMat);
-        skeleton._bones.push_back(bone);
-
-        // Find this bone's closest ancestor to be its parent.  If it has no ancestors, use the root.
-        int parentIdx = DagHelpers::findClosestAncestor(joints, dagPath);
-        if(parentIdx == -1)
-            parentIdx = 0;
-        else
-            parentIdx++; // skip the root bone added above
-
-        skeleton._parents.push_back(parentIdx);
-
-        // Add this bone as a child of its parent.
-        skeleton._sons.push_back(std::vector<int>());
-        if(parentIdx != -1)
-            skeleton._sons[parentIdx].push_back(boneIdx);
-    }
-
-    skeleton.compute_bone_lengths();
-    return MStatus::kSuccess;
-}
-
-MStatus loadJointTransformsFromSkinCluster(MPlug skinClusterPlug, vector<MMatrix> &out)
-{
-    MStatus status = MStatus::kSuccess;
-
-    MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
-    if(status != MS::kSuccess) return status;
-
-    // Get the influence objects (joints) for the skin cluster.
-    vector<MDagPath> joints;
-    status = DagHelpers::getMDagPathsFromSkinCluster(skinClusterPlug, joints);
-    if(status != MS::kSuccess) return status;
-
-    // Create a dummy first bone, to correspond with the root bone.
-    out.push_back(MMatrix::identity);
-    for(int i = 0; i < joints.size(); ++i)
-        out.push_back(joints[i].inclusiveMatrix());
-
-    return MStatus::kSuccess;
-}
-
-MStatus findAncestorDeformer(MPlug inputPlug, MFn::Type type, MPlug &resultPlug)
-{
-    while(true)
-    {
-        MStatus status = DagHelpers::getConnectedPlugWithName(inputPlug, "inputGeometry", inputPlug);
-        if(status != MS::kSuccess)
-            return status;
-
-        if(inputPlug.node().apiType() == type)
-        {
-            resultPlug = inputPlug;
-            return MStatus::kSuccess;
-        }
-    }
-}
-
-MStatus getInputGeometryForSkinClusterPlug(MPlug skinClusterPlug, MObject &plug)
-{
-    // This gets the original geometry, not the geometry input into the skinCluster:
-    /*
-    MObjectArray inputGeometries;
-    status = skinCluster.getInputGeometry(inputGeometries);
-    if(status != MS::kSuccess)
-        return status;
-
-    if(inputGeometries.length() == 0)
-    {
-        printf("skinCluster has no input geometry\n");
-        return MS::kFailure;
-    }
-
-    // skinClusters don't support more than one input geometry.
-    MObject inputValue = inputGeometries[0];
-    */
-
-    MStatus status = MStatus::kSuccess;
-    MObject inputAttr = MFnDependencyNode(skinClusterPlug.node()).attribute("input", &status);
-    if(status != MS::kSuccess) return status;
-
-    MPlug inputPlug(skinClusterPlug.node(), inputAttr);
-    if(status != MS::kSuccess) return status;
-
-    // Select input[0].  skinClusters only support a single input.
-    inputPlug = inputPlug.elementByPhysicalIndex(0, &status);
-    if(status != MS::kSuccess) return status;
-
-    MFnDependencyNode inputPlugDep(inputPlug.node());
-    MObject inputObject = inputPlugDep.attribute("inputGeometry", &status);
-    if(status != MS::kSuccess) return status;
-            
-    inputPlug = inputPlug.child(inputObject, &status);
-    if(status != MS::kSuccess) return status;
-
-    status = inputPlug.getValue(plug);
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
-}
-
 MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
@@ -420,7 +172,7 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 
     // Find the skinCluster deformer node above us.
     MPlug skinClusterPlug;
-    status = findAncestorDeformer(inputPlug, MFn::kSkinClusterFilter, skinClusterPlug);
+    status = DagHelpers::findAncestorDeformer(inputPlug, MFn::kSkinClusterFilter, skinClusterPlug);
     if(status != MS::kSuccess)
     {
         printf("Couldn't find a skinCluster deformer.  Is the node skinned?\n");
@@ -442,7 +194,7 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 
     // Get the joint world matrix transforms.
     vector<MMatrix> jointTransformsWorldSpace;
-    status = loadJointTransformsFromSkinCluster(skinClusterPlug, jointTransformsWorldSpace);
+    status = MayaData::loadJointTransformsFromSkinCluster(skinClusterPlug, jointTransformsWorldSpace);
     if(status != MS::kSuccess) return status;
 
     // XXX: Copy this data into an attribute in this node so we don't pull it externally.
@@ -539,30 +291,6 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 }
 
 
-MStatus setMatrixPlug(MPlug plug, MObject attr, MMatrix matrix)
-{
-    MStatus status;
-
-    MFnDependencyNode plugDep(plug.node(), &status);
-    if(status != MS::kSuccess) return status;
-
-    // Find the worldMatrixInverse plug.
-    MPlug attrPlug = plugDep.findPlug(attr, &status);
-    if(status != MS::kSuccess) return status;
-
-    // Create a MFnMatrixData holding the matrix.
-    MFnMatrixData fnMat;
-    MObject matObj = fnMat.create(&status);
-    if(status != MS::kSuccess) return status;
-
-    // Set the worldMatrixInverse attribute.
-    fnMat.set(matrix);
-    status = attrPlug.setValue(matObj);
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
-}
-
 
 class ImplicitCommand : public MPxCommand
 {
@@ -643,34 +371,31 @@ MStatus ImplicitCommand::setup(MString nodeName)
     MMatrix worldToObjectSpaceMat = transformNode.transformationMatrix(&status).inverse();
 
     // Store worldToObjectSpaceMat on worldMatrixInverse.
-    setMatrixPlug(implicitPlug, ImplicitSkinDeformer::worldMatrixInverse, worldToObjectSpaceMat);
+    DagHelpers::setMatrixPlug(implicitPlug, ImplicitSkinDeformer::worldMatrixInverse, worldToObjectSpaceMat);
 
     // XXX: We need to declare our dependency on the skinCluster, probably via skinCluster.baseDirty.
     // Find the skinCluster deformer node above the deformer.
     MPlug skinClusterPlug;
-    status = findAncestorDeformer(implicitPlug, MFn::kSkinClusterFilter, skinClusterPlug);
+    status = DagHelpers::findAncestorDeformer(implicitPlug, MFn::kSkinClusterFilter, skinClusterPlug);
     if(status != MS::kSuccess)
     {
         printf("Couldn't find a skinCluster deformer.  Is the node skinned?\n");
         return status;
     }
 
-    MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
-    if(status != MS::kSuccess) return status;
-
     // Load the skeleton.  Set getBindPositions to true so we get the positions the bones
     // had at bind time.  Note that we're still assuming that the current position of the
     // object is the same as bind time.  XXX: Is there anything we can do about that?
     // Maybe we should just use the current position of the geometry/joints at setup time.
     Loader::Abs_skeleton skeleton;
-    status = loadSkeletonFromSkinCluster(skinClusterPlug, skeleton, worldToObjectSpaceMat, true);
+    status = MayaData::loadSkeletonFromSkinCluster(skinClusterPlug, skeleton, worldToObjectSpaceMat, true);
     if(status != MS::kSuccess) return status;
 
     // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
     // we'll use to do initial calculations.  The bind-time positions of the joints we got above
     // should correspond with the pre-skinned geometry.
     MObject inputValue;
-    status = getInputGeometryForSkinClusterPlug(skinClusterPlug, inputValue);
+    status = DagHelpers::getInputGeometryForSkinClusterPlug(skinClusterPlug, inputValue);
     if(status != MS::kSuccess) return status;
     fprintf(stderr, "inPlug %i\n", inputValue.apiType());
 
@@ -682,7 +407,7 @@ MStatus ImplicitCommand::setup(MString nodeName)
 
     // Load the input mesh.
     Loader::Abs_mesh mesh;
-    status = load_mesh(inputValue, mesh);
+    status = MayaData::load_mesh(inputValue, mesh);
     if(status != MS::kSuccess) return status;
 
     deformer->pluginInterface.setup(mesh, skeleton);

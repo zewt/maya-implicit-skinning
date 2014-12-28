@@ -110,6 +110,23 @@ namespace DagHelpers
         return fnMat.matrix();
     }
 
+    
+    MStatus findAncestorDeformer(MPlug inputPlug, MFn::Type type, MPlug &resultPlug)
+    {
+        while(true)
+        {
+            MStatus status = DagHelpers::getConnectedPlugWithName(inputPlug, "inputGeometry", inputPlug);
+            if(status != MS::kSuccess)
+                return status;
+
+            if(inputPlug.node().apiType() == type)
+            {
+                resultPlug = inputPlug;
+                return MStatus::kSuccess;
+            }
+        }
+    }
+
     static int compare_length(const MDagPath &lhs, const MDagPath &rhs) { return lhs.fullPathName().length() < rhs.fullPathName().length(); }
 
     /* Return the names of the skinCluster's influence objects, sorted parents before children. */
@@ -166,6 +183,73 @@ namespace DagHelpers
     }
 
 
+
+    MStatus getInputGeometryForSkinClusterPlug(MPlug skinClusterPlug, MObject &plug)
+    {
+        // This gets the original geometry, not the geometry input into the skinCluster:
+        /*
+        MObjectArray inputGeometries;
+        status = skinCluster.getInputGeometry(inputGeometries);
+        if(status != MS::kSuccess)
+            return status;
+
+        if(inputGeometries.length() == 0)
+        {
+            printf("skinCluster has no input geometry\n");
+            return MS::kFailure;
+        }
+
+        // skinClusters don't support more than one input geometry.
+        MObject inputValue = inputGeometries[0];
+        */
+
+        MStatus status = MStatus::kSuccess;
+        MObject inputAttr = MFnDependencyNode(skinClusterPlug.node()).attribute("input", &status);
+        if(status != MS::kSuccess) return status;
+
+        MPlug inputPlug(skinClusterPlug.node(), inputAttr);
+        if(status != MS::kSuccess) return status;
+
+        // Select input[0].  skinClusters only support a single input.
+        inputPlug = inputPlug.elementByPhysicalIndex(0, &status);
+        if(status != MS::kSuccess) return status;
+
+        MFnDependencyNode inputPlugDep(inputPlug.node());
+        MObject inputObject = inputPlugDep.attribute("inputGeometry", &status);
+        if(status != MS::kSuccess) return status;
+            
+        inputPlug = inputPlug.child(inputObject, &status);
+        if(status != MS::kSuccess) return status;
+
+        status = inputPlug.getValue(plug);
+        if(status != MS::kSuccess) return status;
+
+        return MStatus::kSuccess;
+    }
+
+    MStatus setMatrixPlug(MPlug plug, MObject attr, MMatrix matrix)
+    {
+        MStatus status;
+
+        MFnDependencyNode plugDep(plug.node(), &status);
+        if(status != MS::kSuccess) return status;
+
+        // Find the worldMatrixInverse plug.
+        MPlug attrPlug = plugDep.findPlug(attr, &status);
+        if(status != MS::kSuccess) return status;
+
+        // Create a MFnMatrixData holding the matrix.
+        MFnMatrixData fnMat;
+        MObject matObj = fnMat.create(&status);
+        if(status != MS::kSuccess) return status;
+
+        // Set the worldMatrixInverse attribute.
+        fnMat.set(matrix);
+        status = attrPlug.setValue(matObj);
+        if(status != MS::kSuccess) return status;
+
+        return MStatus::kSuccess;
+    }
 
     //---------------------------------------------------
     //

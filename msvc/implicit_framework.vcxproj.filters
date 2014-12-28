@@ -67,6 +67,9 @@
     <ClCompile Include="..\src\maya\Interface.cpp">
       <Filter>maya</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maya\maya_data.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -388,6 +391,9 @@
       <Filter>maya</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maya\Interface.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\maya_data.hpp">
       <Filter>maya</Filter>
     </ClInclude>
   </ItemGroup>
