@@ -64,7 +64,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\parsers;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <Optimization>Disabled</Optimization>
@@ -101,7 +101,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\parsers;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -137,7 +137,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\parsers;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
@@ -177,6 +177,7 @@
     <ClInclude Include="..\include\blending_lib\opening.hpp" />
     <ClInclude Include="..\include\blending_lib\operators.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
+    <ClCompile Include="..\src\animation\loader_skel.cpp" />
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
@@ -184,11 +185,10 @@
     <ClCompile Include="..\src\maya\maya_data.cpp" />
     <ClCompile Include="..\src\maya\maya_helpers.cpp" />
     <ClCompile Include="..\src\maya\plugin.cpp" />
+    <ClCompile Include="..\src\meshes\loader_mesh.cpp" />
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
-    <ClCompile Include="..\src\parsers\loader_mesh.cpp" />
-    <ClCompile Include="..\src\parsers\loader_skel.cpp" />
     <ClCompile Include="..\src\blending_lib\controller.cpp" />
     <ClCompile Include="..\src\blending_lib\controller_tools.cpp" />
     <ClCompile Include="..\src\blending_lib\generator.cpp" />
@@ -206,6 +206,7 @@
     <ClInclude Include="..\src\animation\bone.hpp" />
     <ClInclude Include="..\src\animation\bone_type.hpp" />
     <ClInclude Include="..\src\animation\joint_type.hpp" />
+    <ClInclude Include="..\src\animation\loader_skel.hpp" />
     <ClInclude Include="..\src\animation\skeleton.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex.hpp" />
@@ -260,11 +261,10 @@
     <ClInclude Include="..\src\maya\Interface.hpp" />
     <ClInclude Include="..\src\maya\maya_data.hpp" />
     <ClInclude Include="..\src\maya\maya_helpers.hpp" />
+    <ClInclude Include="..\src\meshes\loader_mesh.hpp" />
     <ClInclude Include="..\src\meshes\mesh.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\vcg_mesh.hpp" />
-    <ClInclude Include="..\src\parsers\loader_mesh.hpp" />
-    <ClInclude Include="..\src\parsers\loader_skel.hpp" />
     <ClInclude Include="..\src\primitives\distance_field.hpp" />
     <ClInclude Include="..\src\primitives\hermiteRBF.hpp" />
     <ClInclude Include="..\src\primitives\hrbf\hrbf_core.hpp" />
