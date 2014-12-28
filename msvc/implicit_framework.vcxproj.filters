@@ -40,9 +40,6 @@
     <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp">
       <Filter>meshes\vcg_lib</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\parsers\endianess.cpp">
-      <Filter>parsers</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\parsers\loader_mesh.cpp">
       <Filter>parsers</Filter>
     </ClCompile>
@@ -265,9 +262,6 @@
       <Filter>meshes\vcg_lib</Filter>
     </ClInclude>
     <ClInclude Include="..\src\parsers\loader_skel.hpp">
-      <Filter>parsers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\parsers\endianess.hpp">
       <Filter>parsers</Filter>
     </ClInclude>
     <ClInclude Include="..\src\parsers\loader_mesh.hpp">

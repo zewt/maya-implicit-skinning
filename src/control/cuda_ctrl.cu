@@ -28,7 +28,6 @@
 #include "animesh.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
-#include "endianess.hpp"
 #include "cuda_main_kernels.hpp"
 #include "skeleton_env.hpp"
 #include "blending_env.hpp"
@@ -89,8 +88,6 @@ void init_host()
 {
     std::cout << "Initialize constants\n";
     Constants::init();
-    std::cout << "Initialize endianness system\n";
-    Endianess::init();
 
     std::cout << "Done\n";
 }

@@ -187,7 +187,6 @@
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
-    <ClCompile Include="..\src\parsers\endianess.cpp" />
     <ClCompile Include="..\src\parsers\loader_mesh.cpp" />
     <ClCompile Include="..\src\parsers\loader_skel.cpp" />
     <ClCompile Include="..\src\blending_lib\controller.cpp" />
@@ -264,7 +263,6 @@
     <ClInclude Include="..\src\meshes\mesh.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\vcg_mesh.hpp" />
-    <ClInclude Include="..\src\parsers\endianess.hpp" />
     <ClInclude Include="..\src\parsers\loader_mesh.hpp" />
     <ClInclude Include="..\src\parsers\loader_skel.hpp" />
     <ClInclude Include="..\src\primitives\distance_field.hpp" />
