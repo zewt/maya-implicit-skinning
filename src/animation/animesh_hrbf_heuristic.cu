@@ -43,42 +43,40 @@ typedef Animesh::Poisson_disk_sampling Poisond_samp;
 
 void HRBF_samp::factor_samples(std::vector<int>& vert_ids,
                                std::vector<Vec3_cu>& vertices,
-                               std::vector<Vec3_cu>& normals)
+                               std::vector<Vec3_cu>& normals) const
 {
     vert_ids.clear();
     vertices.clear();
     normals. clear();
 
-    int parent = _am->_skel->parent( _bone_id );
+    int parent = _am._skel->parent( _bone_id );
     std::vector<int> dummy(1, _bone_id);
-    const std::vector<int>& sons = parent == -1 ? dummy : _am->_skel->get_sons(parent);
+    const std::vector<int>& sons = parent == -1 ? dummy : _am._skel->get_sons(parent);
     assert(sons.size() > 0);
 
     if( sons[0] == _bone_id || _factor_siblings == false)
+    {
         for( unsigned i = 0; i < sons.size(); i++)
         {
             const int bone_id = _factor_siblings ? sons[i] : _bone_id;
-            std::vector<Vec3_cu>& nors  = _am->h_input_normals_per_bone[bone_id];
-            std::vector<Vec3_cu>& verts = _am->h_input_verts_per_bone  [bone_id];
-            std::vector<int>&     ids   = _am->h_verts_id_per_bone     [bone_id];
-            vert_ids.reserve( verts.size() + vert_ids.size() );
-            vertices.reserve( verts.size() + vertices.size() );
-            normals .reserve( verts.size() + normals .size() );
-            for( unsigned j = 0; j < ids.size(); j++)
-            {
-                vert_ids.push_back( ids  [j] );
-                vertices.push_back( verts[j] );
-                normals. push_back( nors [j] );
-            }
+            const std::vector<int>&     ids   = _am.h_verts_id_per_bone     [bone_id];
+            const std::vector<Vec3_cu>& nors  = _am.h_input_normals_per_bone[bone_id];
+            const std::vector<Vec3_cu>& verts = _am.h_input_verts_per_bone  [bone_id];
+
+            vert_ids.insert(vert_ids.end(), ids.begin(), ids.end());
+            vertices.insert(vertices.end(), verts.begin(), verts.end());
+            normals.insert(normals.end(), nors.begin(), nors.end());
+
             if( !_factor_siblings ) break;
         }
+    }
 }
 
 // -----------------------------------------------------------------------------
 
 void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
                               std::vector<Vec3_cu>& verts_,
-                              std::vector<Vec3_cu>& normals_)
+                              std::vector<Vec3_cu>& normals_) const
 {
     std::vector<int> vert_ids;
     std::vector<Vec3_cu> verts;
@@ -90,8 +88,8 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
 
     for(unsigned id = 0; id < verts_.size(); id++)
     {
-        const int nearest_bone = _am->h_vertices_nearest_bones[ vert_ids_[id] ];
-        const Bone* b = _am->_skel->get_bone(nearest_bone);
+        const int nearest_bone = _am.h_vertices_nearest_bones[ vert_ids_[id] ];
+        const Bone* b = _am._skel->get_bone(nearest_bone);
         const float length = b->length();
 
         const Point_cu vert = Convs::to_point(verts_[id]);
@@ -104,8 +102,8 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
 
         const Vec3_cu normal = normals_[id];
 
-        const std::vector<int>& sons = _am->_skel->get_sons(nearest_bone);
-        bool leaf = sons.size() > 0 ? _am->_skel->is_leaf(sons[0]) : true;
+        const std::vector<int>& sons = _am._skel->get_sons(nearest_bone);
+        bool leaf = sons.size() > 0 ? _am._skel->is_leaf(sons[0]) : true;
 
         if( (dist_proj >= -plength ) &&
             (dist_proj < (length + jlength) || leaf) &&
@@ -125,7 +123,7 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
 // -----------------------------------------------------------------------------
 
 void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
-                        std::vector<Vec3_cu>& out_normals)
+                        std::vector<Vec3_cu>& out_normals) const
 {
     std::vector<Vec3_cu> in_verts;
     std::vector<int>     in_vert_ids;
@@ -137,7 +135,7 @@ void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
     for(unsigned id = 0; id < in_verts.size(); id++)
     {
 
-        const Bone* b =_am->_skel->get_bone(_bone_id);
+        const Bone* b =_am._skel->get_bone(_bone_id);
         float length = b->length();
 
         Point_cu vert = Convs::to_point(in_verts[id]);
@@ -174,7 +172,7 @@ void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
 // -----------------------------------------------------------------------------
 
 void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
-                          std::vector<Vec3_cu>& out_normals)
+                          std::vector<Vec3_cu>& out_normals) const
 {
     // The goal here is to build from the cluster of vertices bound to a single
     // bone of id '_bone_id' its associated sub mesh, and then sample the
@@ -205,13 +203,13 @@ void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
     {
         const int idx = in_vert_ids[i];
         // Look up neighboors
-        int nb_neigh = _am->_mesh->get_edge_offset(idx*2 + 1);
-        int dep      = _am->_mesh->get_edge_offset(idx*2    );
+        int nb_neigh = _am._mesh->get_edge_offset(idx*2 + 1);
+        int dep      = _am._mesh->get_edge_offset(idx*2    );
         int end      = dep + nb_neigh;
         for(int n = dep; n < end; n++)
         {
-            int neigh0 = _am->_mesh->get_edge( n );
-            int neigh1 = _am->_mesh->get_edge((n+1) >= end ? dep : n+1);
+            int neigh0 = _am._mesh->get_edge( n );
+            int neigh1 = _am._mesh->get_edge((n+1) >= end ? dep : n+1);
 
             std::map<int, int>::iterator it0 = meshToCluster.find( neigh0 );
             std::map<int, int>::iterator it1 = meshToCluster.find( neigh1 );

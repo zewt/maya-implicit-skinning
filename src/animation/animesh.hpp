@@ -60,7 +60,7 @@ public:
     /// @brief base class to find HRBF samples on the mesh given a bone
     class HRBF_sampling {
     public:
-        HRBF_sampling( Animesh* am ) :
+        HRBF_sampling( const Animesh &am ) :
             _bone_id(-1),
             _factor_siblings(false),
             _am(am)
@@ -71,21 +71,21 @@ public:
         /// Given the mesh and the defined bone _bone_id samples the mesh
         /// surface.
         virtual void sample(std::vector<Vec3_cu>& out_verts,
-                            std::vector<Vec3_cu>& out_normals) = 0;
+                            std::vector<Vec3_cu>& out_normals) const = 0;
 
         /// factor the samples if '_factor_siblings' is true. This returns
         /// The samples factored in the first bone for bones in the same level
         /// of the skeleton tree. The other children don't have samples
         void factor_samples(std::vector<int>& vert_ids,
                             std::vector<Vec3_cu>& verts,
-                            std::vector<Vec3_cu>& normals);
+                            std::vector<Vec3_cu>& normals) const;
 
         /// Eliminates samples too far from the bone using parameters "_jmax"
         /// and "_pmax"
         /// @warning reset skeleton before using this
         void clamp_samples(std::vector<int>& vert_ids,
                            std::vector<Vec3_cu>& verts,
-                           std::vector<Vec3_cu>& normals);
+                           std::vector<Vec3_cu>& normals) const;
 
         /// Bone to base the heuristic on
         int _bone_id;
@@ -99,7 +99,7 @@ public:
         float _pmax; ///< percentage max dist from joint parent (range [-1 1])
         float _fold; ///< threshold scalar product dir projection/mesh normal
 
-        Animesh* _am;
+        const Animesh &_am;
     };
 
     // -------------------------------------------------------------------------
@@ -109,13 +109,13 @@ public:
     class Adhoc_sampling : public HRBF_sampling {
     public:
 
-        Adhoc_sampling( Animesh* am ) :
+        Adhoc_sampling( const Animesh &am ) :
             HRBF_sampling(am),
             _mind(0.f)
         {}
 
         void sample(std::vector<Vec3_cu>& out_verts,
-                    std::vector<Vec3_cu>& out_normals);
+                    std::vector<Vec3_cu>& out_normals) const;
 
         float _mind; ///< minimal distance between two samples
     };
@@ -124,14 +124,14 @@ public:
     class Poisson_disk_sampling : public HRBF_sampling {
     public:
 
-        Poisson_disk_sampling( Animesh* am ) :
+        Poisson_disk_sampling( const Animesh &am ) :
             HRBF_sampling(am),
             _mind(0.f),
             _nb_samples(0)
         {}
 
         void sample(std::vector<Vec3_cu>& out_verts,
-                    std::vector<Vec3_cu>& out_normals);
+                    std::vector<Vec3_cu>& out_normals) const;
 
         ///< minimal distance between two samples (if == 0 e use _nb_samples)
         float _mind;
