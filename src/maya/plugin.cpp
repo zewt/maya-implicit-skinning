@@ -68,7 +68,9 @@ public:
     MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
 
     static MObject dataAttr;
-    static MObject worldMatrixInverse;
+    static MObject geomMatrixAttr;
+    static MObject influenceBindMatrixAttr;
+    static MObject influenceMatrixAttr;
 };
 
 // XXX: http://help.autodesk.com/view/MAYAUL/2015/ENU/?guid=__cpp_ref_class_m_type_id_html says that
@@ -78,22 +80,32 @@ public:
 // with a sample or somebody else doing the same thing.
 MTypeId ImplicitSkinDeformer::id(0xEA115);
 MObject ImplicitSkinDeformer::dataAttr;
-MObject ImplicitSkinDeformer::worldMatrixInverse;
+MObject ImplicitSkinDeformer::geomMatrixAttr;
+MObject ImplicitSkinDeformer::influenceBindMatrixAttr;
+MObject ImplicitSkinDeformer::influenceMatrixAttr;
 
 MStatus ImplicitSkinDeformer::initialize()
 {
     MStatus status = MStatus::kSuccess;
 
     MFnMatrixAttribute mAttr;
-    worldMatrixInverse = mAttr.create("worldMatrixInverse", "lm");
+    geomMatrixAttr = mAttr.create("geomMatrix", "gm");
+    addAttribute(geomMatrixAttr);
+    attributeAffects(ImplicitSkinDeformer::geomMatrixAttr, ImplicitSkinDeformer::outputGeom);
 
-    addAttribute(worldMatrixInverse);
+    influenceBindMatrixAttr = mAttr.create("influenceBindMatrix", "ibm");
+    mAttr.setArray(true);
+    addAttribute(influenceBindMatrixAttr);
+    attributeAffects(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::outputGeom);
 
-    attributeAffects(ImplicitSkinDeformer::worldMatrixInverse, ImplicitSkinDeformer::outputGeom);
+    influenceMatrixAttr = mAttr.create("matrix", "ma");
+    mAttr.setArray(true);
+    mAttr.setConnectable(true);
+    addAttribute(influenceMatrixAttr);
+    attributeAffects(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom);
 
     return MStatus::kSuccess;
 }
-
 
 MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
@@ -113,71 +125,47 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
     if(logicalOutputIndex > 0)
         MStatus status = MStatus::kSuccess;
 
-    // Get the corresponding input plug for this output:
-    // MObject inputAttr = MFnDependencyNode(plug.node()).attribute("input", &status); // == this.input
-    MPlug inputPlug(plug.node(), input);
-
-    // Select input[index].
-    inputPlug.selectAncestorLogicalIndex(logicalOutputIndex, input);
-
-    // Find the skinCluster deformer node above us.
-    MPlug skinClusterPlug;
-    status = DagHelpers::findAncestorDeformer(inputPlug, MFn::kSkinClusterFilter, skinClusterPlug);
-    if(status != MS::kSuccess)
-    {
-        printf("Couldn't find a skinCluster deformer.  Is the node skinned?\n");
-        return status;
-    }
-
-
-    // XXX: We need to declare our dependency on the skinCluster, probably via skinCluster.baseDirty.
-    // XXX: Also, skinCluster.preBindMatrix, but that one's an array
-
-
-
-
-    // Get the worldMatrixInverse attribute.
-    MPlug worldMatrixInversePlug(thisMObject(), worldMatrixInverse);
-    MMatrix worldToObjectSpaceMat = DagHelpers::getMatrixFromPlug(worldMatrixInversePlug, &status);
-
-
-
-    // Get the joint world matrix transforms.
-    vector<MMatrix> jointTransformsWorldSpace;
-    status = MayaData::loadJointTransformsFromSkinCluster(skinClusterPlug, jointTransformsWorldSpace);
+    // Get the geomMatrixAttr attribute.
+    MMatrix objectToWorldSpaceMat = DagHelpers::readHandle<MMatrix>(dataBlock, geomMatrixAttr, &status);
     if(status != MS::kSuccess) return status;
 
-    // XXX: Copy this data into an attribute in this node so we don't pull it externally.
-    MFnDependencyNode skinClusterDep(skinClusterPlug.node());
-    const MObject bindPreMatrixObject = skinClusterDep.attribute("bindPreMatrix", &status);
+    MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
+
+    // Get the world transforms the joints had at bind time.
+    MArrayDataHandle influenceBindMatrixHandle = dataBlock.inputArrayValue(influenceBindMatrixAttr, &status);
     if(status != MS::kSuccess) return status;
-            
-    MPlug bindPreMatrixArray(skinClusterPlug.node(), bindPreMatrixObject);
 
-    // Update the skeleton.  XXX: fix dependency handling
+    // Get the world transforms the joints have now.
+    MArrayDataHandle influenceMatrixHandle = dataBlock.inputArrayValue(influenceMatrixAttr, &status);
+    if(status != MS::kSuccess) return status;
 
-    vector<Loader::CpuTransfo> bone_positions;
+    // Update the skeleton.
+    vector<Loader::CpuTransfo> bone_transforms;
 
     // The root joint is a dummy, and doesn't correspond with a Maya transform.
-    bone_positions.push_back(Loader::CpuTransfo::identity());
-
-    for(int i = 1; i < jointTransformsWorldSpace.size(); ++i)
+    bone_transforms.push_back(Loader::CpuTransfo::identity());
+    
+    for(int i = 0; i < (int) influenceMatrixHandle.elementCount(); ++i)
     {
         // We need to get the change to the joint's transformation compared to when it was bound.
         // Maya gets this by multiplying the current worldMatrix against the joint's bindPreMatrix.
         // However, it's doing that in world space; we need it in object space.
-        // XXX: There's probably a much simpler way to do this.
-        MMatrix bindPreMatrixWorldSpace = DagHelpers::getMatrixFromPlug(bindPreMatrixArray[i-1], &status); // original inverted world space transform
+        // XXX: There's probably a way to do this that doesn't require two matrix inversions.  It's
+        // probably not worth caching, though.
+        MMatrix bindPreMatrixWorldSpace = DagHelpers::readArrayHandleLogicalIndex<MMatrix>(influenceBindMatrixHandle, i, &status); // original inverted world space transform
         MMatrix bindMatrixWorldSpace = bindPreMatrixWorldSpace.inverse();                // original (non-inverted) world space transform
         MMatrix bindMatrixObjectSpace = bindMatrixWorldSpace * worldToObjectSpaceMat;    // original object space transform
         MMatrix bindMatrixObjectSpaceInv = bindMatrixObjectSpace.inverse();              // original inverted object space transform
-        MMatrix currentTransformObjectSpace = jointTransformsWorldSpace[i] * worldToObjectSpaceMat; // current object space transform
+
+        MMatrix jointTransformWorldSpace = DagHelpers::readArrayHandleLogicalIndex<MMatrix>(influenceMatrixHandle, i, &status); // current world space transform
+
+        MMatrix currentTransformObjectSpace = jointTransformWorldSpace * worldToObjectSpaceMat; // current object space transform
         MMatrix changeToTransform = bindMatrixObjectSpaceInv * currentTransformObjectSpace; // joint transform relative to bind pose in object space
         
-        bone_positions.push_back(DagHelpers::MMatrixToCpuTransfo(changeToTransform));
+        bone_transforms.push_back(DagHelpers::MMatrixToCpuTransfo(changeToTransform));
     }
 
-    pluginInterface.update_skeleton(bone_positions);
+    pluginInterface.update_skeleton(bone_transforms);
 
 
 
@@ -194,8 +182,11 @@ MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
 
 
 
+    // Get the corresponding input plug for this output:
+    MPlug inputPlug(plug.node(), input);
 
-
+    // Select input[index].
+    inputPlug.selectAncestorLogicalIndex(logicalOutputIndex, input);
 
     // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
     // applied to, so the algorithm can see the whole mesh.
@@ -318,10 +309,11 @@ MStatus ImplicitCommand::setup(MString nodeName)
     // Get the inverse transformation, which is the transformation to go from world space to
     // object space.
     MFnTransform transformNode(implicitGeometryOutputDagPath.node());
-    MMatrix worldToObjectSpaceMat = transformNode.transformationMatrix(&status).inverse();
+    MMatrix objectToWorldSpaceMat = transformNode.transformationMatrix(&status);
+    MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
 
-    // Store worldToObjectSpaceMat on worldMatrixInverse.
-    DagHelpers::setMatrixPlug(implicitPlug, ImplicitSkinDeformer::worldMatrixInverse, worldToObjectSpaceMat);
+    // Store objectToWorldSpaceMat on geomMatrixAttr.
+    DagHelpers::setMatrixPlug(implicitPlug, ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
 
     // XXX: We need to declare our dependency on the skinCluster, probably via skinCluster.baseDirty.
     // Find the skinCluster deformer node above the deformer.
@@ -336,7 +328,7 @@ MStatus ImplicitCommand::setup(MString nodeName)
     // Load the skeleton.  Set getBindPositions to true so we get the positions the bones
     // had at bind time.  Note that we're still assuming that the current position of the
     // object is the same as bind time.  XXX: Is there anything we can do about that?
-    // Maybe we should just use the current position of the geometry/joints at setup time.
+    // XXX Use skinCluster.geomMatrix (gm), and mirror it
     Loader::Abs_skeleton skeleton;
     status = MayaData::loadSkeletonFromSkinCluster(skinClusterPlug, skeleton, worldToObjectSpaceMat, true);
     if(status != MS::kSuccess) return status;
@@ -353,6 +345,96 @@ MStatus ImplicitCommand::setup(MString nodeName)
     if(!inputValue.hasFn(MFn::kMesh)) {
         // XXX: only meshes are supported
         return MS::kFailure;
+    }
+
+    // For each influence going into the skinCluster's .matrix array, connect it to our .matrix array
+    // as well.
+    MPlug influenceInfluenceMatrix(implicitPlug.node(), ImplicitSkinDeformer::influenceMatrixAttr);
+
+    {
+        MFnDependencyNode skinClusterDep(skinClusterPlug.node());
+        
+        MPlug skinClusterInputMatrix(skinClusterPlug.node(), ImplicitSkinDeformer::influenceBindMatrixAttr);
+        const MObject skinClusterMatrixObject = skinClusterDep.attribute("matrix", &status);
+        if(status != MS::kSuccess) return status;
+
+        MPlug skinClusterMatrixArray(skinClusterPlug.node(), skinClusterMatrixObject);
+        skinClusterMatrixArray.evaluateNumElements(&status);
+        if(status != MS::kSuccess) return status;
+
+        MDGModifier dgModifer;
+
+        for(int i = 0; i < (int) skinClusterMatrixArray.numElements(); ++i)
+        {
+            MPlug skinClusterMatrixElementPlug = skinClusterMatrixArray.elementByPhysicalIndex(i, &status);
+            if(status != MS::kSuccess) return status;
+
+            // XXX: test this if a skinCluster has deleted influences
+            MPlugArray plugArray;
+            skinClusterMatrixElementPlug.connectedTo(plugArray, true /* asDst */, false /* asSrc */, &status);
+            if(status != MS::kSuccess) return status;
+
+            if(plugArray.length() == 0)
+                continue;
+
+            // The joint's worldMatrix plug, which is connected to the skinCluster's matrix[n] plug.
+            MPlug connectionPlug = plugArray[0];
+
+
+            // Get the logical index on the skinCluster.matrix array, which we'll mirror.
+            int elementLogicalIndex = skinClusterMatrixElementPlug.logicalIndex(&status);
+            if(status != MS::kSuccess) return status;
+
+            MPlug matrixElementPlug = influenceInfluenceMatrix.elementByLogicalIndex(elementLogicalIndex, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = dgModifer.connect(connectionPlug, matrixElementPlug);
+            if(status != MS::kSuccess) return status;
+        }
+
+        dgModifer.doIt();
+    }
+
+    // Copy bindPreMatrix from the skinCluster to influenceBindMatrix.  This stores the transform for
+    // each influence at the time setup was done.
+    MPlug influenceBindMatrix(implicitPlug.node(), ImplicitSkinDeformer::influenceBindMatrixAttr);
+
+    {
+        MFnDependencyNode skinClusterDep(skinClusterPlug.node());
+
+        const MObject bindPreMatrixObject = skinClusterDep.attribute("bindPreMatrix", &status);
+        if(status != MS::kSuccess) return status;
+
+
+        MPlug bindPreMatrixArray(skinClusterPlug.node(), bindPreMatrixObject);
+        bindPreMatrixArray.evaluateNumElements(&status);
+        if(status != MS::kSuccess) return status;
+
+        for(int i = 0; i < (int) bindPreMatrixArray.numElements(); ++i)
+        {
+            MPlug bindPreMatrix = bindPreMatrixArray.elementByPhysicalIndex(i, &status);
+            if(status != MS::kSuccess) return status;
+
+            MMatrix bindPreMatrixWorldSpace = DagHelpers::getMatrixFromPlug(bindPreMatrix, &status);
+            if(status != MS::kSuccess) return status;
+
+            // Create a MFnMatrixData holding the matrix.
+            MFnMatrixData fnMat;
+            MObject matObj = fnMat.create(&status);
+            if(status != MS::kSuccess) return status;
+
+            // Set the geomMatrixAttr attribute.
+            fnMat.set(bindPreMatrixWorldSpace);
+
+            int elementLogicalIndex = bindPreMatrix.logicalIndex(&status);
+            if(status != MS::kSuccess) return status;
+
+            MPlug item = influenceBindMatrix.elementByLogicalIndex(elementLogicalIndex, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = item.setValue(matObj);
+            if(status != MS::kSuccess) return status;
+        }
     }
 
     // Load the input mesh.

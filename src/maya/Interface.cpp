@@ -93,10 +93,13 @@ void PluginInterface::setup(const Loader::Abs_mesh &loader_mesh, const Loader::A
 
 void PluginInterface::update_skeleton(const vector<Loader::CpuTransfo> &bone_positions)
 {
-    // Update the skeleton representation.
-    vector<Transfo> transfos;
+    // Update the skeleton transforms.
+    vector<Transfo> transfos(bone_positions.size());
     for(int i = 0; i < bone_positions.size(); ++i)
-        transfos.push_back(Transfo(bone_positions[i]));
+        transfos[i] = Transfo(bone_positions[i]);
+
+    // If we've been given fewer transformations than there are bones, set the missing ones to identity.
+    transfos.insert(transfos.end(), bone_positions.size() - bone_positions.size(), Transfo::identity());
 
     impl->cudaCtrl._skeleton.set_transforms(transfos);
 }

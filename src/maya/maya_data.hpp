@@ -13,9 +13,7 @@
 namespace MayaData
 {
     MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh);
-    MStatus loadJointTransformsFromSkinCluster(MPlug skinClusterPlug, std::vector<MMatrix> &out);
     MStatus loadSkeletonFromSkinCluster(MPlug skinClusterPlug, Loader::Abs_skeleton &skeleton, MMatrix worldToObjectSpaceMat, bool getBindPositions);
 }
-
 
 #endif

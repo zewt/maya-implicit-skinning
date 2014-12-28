@@ -80,26 +80,6 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
     return MS::kSuccess;
 }
 
-MStatus MayaData::loadJointTransformsFromSkinCluster(MPlug skinClusterPlug, vector<MMatrix> &out)
-{
-    MStatus status = MStatus::kSuccess;
-
-    MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
-    if(status != MS::kSuccess) return status;
-
-    // Get the influence objects (joints) for the skin cluster.
-    vector<MDagPath> joints;
-    status = DagHelpers::getMDagPathsFromSkinCluster(skinClusterPlug, joints);
-    if(status != MS::kSuccess) return status;
-
-    // Create a dummy first bone, to correspond with the root bone.
-    out.push_back(MMatrix::identity);
-    for(int i = 0; i < joints.size(); ++i)
-        out.push_back(joints[i].inclusiveMatrix());
-
-    return MStatus::kSuccess;
-}
-
 /*
  * Given a skinCluster plug, create an Abs_skeleton.
  *
