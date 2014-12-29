@@ -105,6 +105,9 @@ public:
     // same number of vertices.
     int get_nb_vertices() const;
 
+    Skeleton *get_skel();
+    const Skeleton *get_skel() const;
+
     //--------------------------------------------------------------------------
     /// @name File import/export
     //--------------------------------------------------------------------------
@@ -178,7 +181,6 @@ private:
 
 public:
     Animesh* _animesh;
-    Skeleton* _skel;
 };
 
 #endif // ANIMATED_MESH_CTRL_HPP__

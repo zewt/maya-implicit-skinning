@@ -31,8 +31,7 @@ Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel) :
     _auto_precompute(true),
     _nb_iter(7),
     _samples(skel->nb_joints()),
-    _animesh(new Animesh(mesh, skel)),
-    _skel(skel)
+    _animesh(new Animesh(mesh, skel))
 {
     int n = skel->nb_joints();
 }
@@ -44,9 +43,9 @@ Animated_mesh_ctrl::~Animated_mesh_ctrl()
 
 void Animated_mesh_ctrl::precompute_all_bones()
 {
-    for(int i = 0; i < _skel->nb_joints(); i++)
+    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
     {
-        if(_skel->bone_type(i) == EBone::HRBF)
+        if(_animesh->get_skel()->bone_type(i) == EBone::HRBF)
             _animesh->set_bone_type( i, EBone::PRECOMPUTED);
     }
     // XXX: don't we need to call update_bone_samples here?
@@ -95,12 +94,12 @@ void Animated_mesh_ctrl::deform_mesh()
 void Animated_mesh_ctrl::write_bone_types(std::ofstream& file)
 {
     file << "[BONE_TYPES]" << std::endl;
-    file << "nb_bone "     << _skel->nb_joints() << std::endl;
+    file << "nb_bone "     << _animesh->get_skel()->nb_joints() << std::endl;
 
-    for(int i = 0; i < _skel->nb_joints(); i++ )
+    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++ )
     {
         file << "bone_id "   << i                         << std::endl;
-        file << "bone_type " << _skel->bone_type( i ) << std::endl;
+        file << "bone_type " << _animesh->get_skel()->bone_type( i ) << std::endl;
     }
 }
 
@@ -125,12 +124,12 @@ void Animated_mesh_ctrl::write_hrbf_caps_env(std::ofstream& file, bool jcap)
 void Animated_mesh_ctrl::write_hrbf_radius( std::ofstream& file )
 {
     file << "[HRBF_RADIUS]" << std::endl;
-    file << "nb_bone "      << _skel->nb_joints() << std::endl;
+    file << "nb_bone "      << _animesh->get_skel()->nb_joints() << std::endl;
 
-    for(int i = 0; i < _skel->nb_joints(); i++ )
+    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++ )
     {
         file << "bone_id "     << i                         << std::endl;
-        file << "hrbf_radius " << _skel->get_hrbf_radius(i) << std::endl;
+        file << "hrbf_radius " << _animesh->get_skel()->get_hrbf_radius(i) << std::endl;
     }
 }
 
@@ -261,10 +260,10 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         return;
     }
 
-    std::vector<int>   bones_type (_skel->nb_joints(), EBone::SSD);
-    std::vector<float> radius_hrbf(_skel->nb_joints(), -1.f      );
+    std::vector<int>   bones_type (_animesh->get_skel()->nb_joints(), EBone::SSD);
+    std::vector<float> radius_hrbf(_animesh->get_skel()->nb_joints(), -1.f      );
 
-    std::vector<std::vector<float4> > bone_weights(_skel->nb_joints());
+    std::vector<std::vector<float4> > bone_weights(_animesh->get_skel()->nb_joints());
 
     while( !file.eof() )
     {
@@ -285,12 +284,12 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
     }
     file.close();
 
-    for(int i = 0; i < _skel->nb_joints(); i++)
+    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
     {
         const EBone::Bone_t t = (EBone::Bone_t)bones_type[i];
 
         if( radius_hrbf[i] > 0.f)
-            _skel->set_bone_hrbf_radius(i, radius_hrbf[i]);
+            _animesh->get_skel()->set_bone_hrbf_radius(i, radius_hrbf[i]);
 
         _samples.update_caps(*_animesh->get_skel(), i, true, true);
 
@@ -375,22 +374,25 @@ int Animated_mesh_ctrl::get_nb_vertices() const
     return _animesh->get_nb_vertices();
 }
 
+Skeleton *Animated_mesh_ctrl::get_skel() { return _animesh->get_skel(); }
+const Skeleton *Animated_mesh_ctrl::get_skel() const { return _animesh->get_skel(); }
+
 // -----------------------------------------------------------------------------
 
 // Combine the samples in _samples, and send them to the Animesh.
 void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 {
     std::vector<Vec3_cu> nodes, n_nodes;
-    bone_id = _samples.get_all_bone_samples(*_skel, bone_id, nodes, n_nodes);
+    bone_id = _samples.get_all_bone_samples(*_animesh->get_skel(), bone_id, nodes, n_nodes);
     _animesh->update_bone_samples(bone_id, nodes, n_nodes);
     if(_auto_precompute) precompute_all_bones();
 }
 
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 {
-    if(_skel->bone_type(bone_id) == EBone::HRBF)
-        _skel->set_bone_hrbf_radius( bone_id, rad);
-    else if( _skel->bone_type(bone_id) == EBone::PRECOMPUTED )
+    if(_animesh->get_skel()->bone_type(bone_id) == EBone::HRBF)
+        _animesh->get_skel()->set_bone_hrbf_radius( bone_id, rad);
+    else if( _animesh->get_skel()->bone_type(bone_id) == EBone::PRECOMPUTED )
     {
         bool tmp = _auto_precompute;
         // disable _auto_precompute. otherwise set_bone_type() will convert
@@ -399,7 +401,7 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
         // XXX: doing this directly with _animesh->set_bone_type, is this still needed?
         _auto_precompute = false;
         _animesh->set_bone_type(bone_id, EBone::HRBF);
-        _skel->set_bone_hrbf_radius( bone_id, rad);
+        _animesh->get_skel()->set_bone_hrbf_radius( bone_id, rad);
         _animesh->set_bone_type(bone_id, EBone::PRECOMPUTED);
         _auto_precompute = tmp;
     }
@@ -410,7 +412,7 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 void Animated_mesh_ctrl::set_sampleset(const SampleSet &sample_set)
 {
     _samples = sample_set;
-    for(int bone_id = 0; bone_id < _skel->nb_joints(); ++bone_id)
+    for(int bone_id = 0; bone_id < _animesh->get_skel()->nb_joints(); ++bone_id)
     {
         _samples.update_caps(*_animesh->get_skel(), bone_id, true, true); // FIXME: dunno why it's here
         update_bone_samples(bone_id);
@@ -426,7 +428,7 @@ void Animated_mesh_ctrl::incr_junction_rad(int bone_id, float incr)
                 false,
                 _samples._bone_caps[bone_id].pcap.enable);
 
-    int pt = _skel->parent( bone_id );
+    int pt = _animesh->get_skel()->parent( bone_id );
     if( pt > -1)
     {
         _samples.update_caps(*_animesh->get_skel(), pt,
@@ -434,7 +436,7 @@ void Animated_mesh_ctrl::incr_junction_rad(int bone_id, float incr)
                     false);
 
         /*
-        const std::vector<int>& c = _skel->get_sons(pt);
+        const std::vector<int>& c = _animesh->get_skel()->get_sons(pt);
         for(unsigned i = 0; i < c.size(); i++)
         {
             const int cbone = c[i];
