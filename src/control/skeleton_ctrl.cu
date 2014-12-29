@@ -44,8 +44,6 @@ void Skeleton_ctrl::load(const Loader::Abs_skeleton& abs_skel)
 {
     delete skel;
     skel = new Skeleton(abs_skel);
-
-    reset_selection();
 }
 
 void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
@@ -87,27 +85,6 @@ Transfo Skeleton_ctrl::bone_anim_frame(int id_bone)
 {
     return skel->bone_anim_frame( id_bone );
 }
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::reset_selection()
-{
-    _selected_joints.clear();
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::add_to_selection(int id)
-{
-    // Check for doubles
-    bool state = false;
-    for(unsigned int i=0; i<_selected_joints.size(); i++)
-        state = state || (_selected_joints[i] == id);
-
-    if(!state) _selected_joints.push_back(id);
-}
-
-// -----------------------------------------------------------------------------
 
 int Skeleton_ctrl::get_hrbf_id(int bone_id)
 {

@@ -100,27 +100,6 @@ public:
 
     const std::vector<int>& get_sons(int joint_id);
 
-    // -------------------------------------------------------------------------
-    /// @name Selection
-    // -------------------------------------------------------------------------
-
-    const std::vector<int>& get_selection_set(){ return _selected_joints; }
-
-    void reset_selection();
-
-private:
-    // -------------------------------------------------------------------------
-    /// @name Tools
-    // -------------------------------------------------------------------------
-
-    void add_to_selection(int id);
-
-    // -------------------------------------------------------------------------
-    /// @name Attributes
-    // -------------------------------------------------------------------------
-
-    std::vector<int> _selected_joints; ///< set of selected skeleton joints
-
 public: // XXX
     Skeleton *skel;
 };
