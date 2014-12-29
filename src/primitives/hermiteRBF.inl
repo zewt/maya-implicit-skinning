@@ -18,6 +18,7 @@
  */
 #pragma once
 #include "hermiteRBF.hpp"
+#include "distance_field.hpp"
 
 #if !defined(HRBF_ENV_TEX_HPP__)
 #error "You must include hrbf_env_tex.hpp before the inclusion of 'hermiteRBF.inl'"

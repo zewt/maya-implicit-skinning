@@ -23,36 +23,27 @@
 #include "vec3_cu.hpp"
 #include "point_cu.hpp"
 
-#include "precomputed_prim_env.hpp"
-
 namespace Skeleton_env {
     typedef int Skel_id;
 }
+class Bone;
 
 /**
  @class Precomputed_prim
  @brief implicit primitives stored in a 3d grid
 */
 struct Precomputed_prim {
-    __device__ __host__
+    IF_CUDA_DEVICE_HOST
     Precomputed_prim() : _id(-1)
     {  }
 
-    void initialize(){
-        assert(_id < 0);
-        _id = Precomputed_env::new_instance();
-    }
+    void initialize();
+    void clear();
 
-    void clear(){
-        assert(_id >= 0);
-        Precomputed_env::delete_instance(_id);
-    }
     __host__
-    inline void fill_grid_with(Skeleton_env::Skel_id skel_id, const Bone* bone)
-    {
-        Precomputed_env::init_instance(_id, skel_id, bone);
-    }
+    void fill_grid_with(Skeleton_env::Skel_id skel_id, const Bone* bone);
 
+#if !defined(NO_CUDA)
     __device__ inline void use_instance_device(int id);
 
     /// @name Evaluation of the potential and gradient
@@ -64,6 +55,7 @@ struct Precomputed_prim {
     __device__
     float fngf (Vec3_cu& gf, const Point_cu& p) const;
     /// @}
+#endif
 
     __host__ inline int get_id() const { return _id; }
 

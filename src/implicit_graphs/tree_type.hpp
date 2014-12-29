@@ -20,7 +20,7 @@
 #define TREE_TYPE_HPP
 
 #include "joint_type.hpp"
-#include "blending_env.hpp"
+#include "blending_env_type.hpp"
 
 // =============================================================================
 namespace Skeleton_env {

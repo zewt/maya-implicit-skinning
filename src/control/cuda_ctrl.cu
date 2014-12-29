@@ -31,6 +31,8 @@
 #include "cuda_main_kernels.hpp"
 #include "skeleton_env.hpp"
 #include "blending_env.hpp"
+#include "precomputed_prim_env.hpp"
+#include "hrbf_env.hpp"
 
 // =============================================================================
 namespace Cuda_ctrl {

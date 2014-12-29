@@ -43,19 +43,14 @@ Animated_mesh_ctrl::~Animated_mesh_ctrl()
     delete _animesh;
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_bone_type(int bone_id, int bone_type)
+void Animated_mesh_ctrl::precompute_all_bones()
 {
-    if(bone_type == _skel->bone_type(bone_id)) return;
-
-    if(bone_type == EBone::HRBF)
+    for(int i = 0; i < _skel->nb_joints(); i++)
     {
-        _animesh->set_bone_type(bone_id, bone_type);
-        update_bone_samples(bone_id);
+        if(_skel->bone_type(i) == EBone::HRBF)
+            _animesh->set_bone_type( i, EBone::PRECOMPUTED);
     }
-    else
-        _animesh->set_bone_type(bone_id, bone_type);
+    // XXX: don't we need to call update_bone_samples here?
 }
 
 // -----------------------------------------------------------------------------
@@ -313,7 +308,7 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
                 _animesh->set_bone_type( i, EBone::PRECOMPUTED);
         }
         else
-            set_bone_type(i, t);
+            _animesh->set_bone_type(i, t);
     }
 
     _animesh->update_base_potential();
@@ -382,10 +377,11 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
         // disable _auto_precompute. otherwise set_bone_type() will convert
         // back to precomputed the bone without letting us the chance to change
         // the radius first
+        // XXX: doing this directly with _animesh->set_bone_type, is this still needed?
         _auto_precompute = false;
-        this->set_bone_type(bone_id, EBone::HRBF);
+        _animesh->set_bone_type(bone_id, EBone::HRBF);
         _skel->set_bone_hrbf_radius( bone_id, rad);
-        this->set_bone_type(bone_id, EBone::PRECOMPUTED);
+        _animesh->set_bone_type(bone_id, EBone::PRECOMPUTED);
         _auto_precompute = tmp;
     }
 }
@@ -432,14 +428,4 @@ void Animated_mesh_ctrl::incr_junction_rad(int bone_id, float incr)
     }
 
     update_bone_samples(bone_id);
-}
-
-void Animated_mesh_ctrl::precompute_all_bones()
-{
-    for(int i = 0; i < _skel->nb_joints(); i++)
-    {
-        int type = _skel->bone_type( i );
-        if(type != EBone::PRECOMPUTED && type != EBone::SSD)
-            _animesh->set_bone_type( i, EBone::PRECOMPUTED);
-    }
 }

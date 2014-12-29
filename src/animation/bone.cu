@@ -18,6 +18,8 @@
  */
 #include "bone.hpp"
 #include "precomputed_prim_constants.hpp"
+#include "ray_cu.hpp"
+#include "precomputed_prim_env.hpp"
 
 // Bone CLASS ==================================================================
 

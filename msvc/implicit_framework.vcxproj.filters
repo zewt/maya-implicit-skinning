@@ -70,6 +70,9 @@
     <ClCompile Include="..\src\control\sample_set.cpp">
       <Filter>control</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\primitives\hermiteRBF.cu">
+      <Filter>primitives</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -513,6 +516,9 @@
     </CudaCompile>
     <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu">
       <Filter>rendering</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\precomputed_prim.cu">
+      <Filter>primitives</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

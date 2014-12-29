@@ -24,7 +24,6 @@
 #include "bone.hpp"
 #include "joint_type.hpp"
 #include "transfo.hpp"
-#include "cuda_utils.hpp"
 #include "blending_lib/controller.hpp"
 #include "skeleton_env_type.hpp"
 
@@ -89,8 +88,10 @@ struct Abs_skeleton;
     }
     @endcode
  */
-struct Skeleton {
+struct SkeletonImpl; // used to keep CUDA stuff out of the header
 
+struct Skeleton {
+  friend struct SkeletonImpl;
 
   /// Build skeleton from the abstract representation
   Skeleton(const Loader::Abs_skeleton& skel);
@@ -144,7 +145,7 @@ struct Skeleton {
   Transfo joint_anim_frame(int joint) const { return _anim_frames[joint];  }
 
   /// Get the frame of the bone in animated position
-  Transfo bone_anim_frame(int bone) const { return _h_transfos[bone] * _bones[bone].get_frame(); }
+  Transfo bone_anim_frame(int bone) const;
 
   IBL::Ctrl_setup get_joint_controller(int i);
 
@@ -194,7 +195,7 @@ struct Skeleton {
   /// Get the animated joints global transformations expressed with matrices
   /// in device memory. These transformation can be used as is to deformed
   /// the mesh
-  const Transfo* d_transfos() const { return _d_transfos.ptr(); }
+  const Transfo* d_transfos() const;
 
   /// @return the hrbf id associated to the bone or -1
   /// if the bone is not an HRBF
@@ -214,31 +215,15 @@ struct Skeleton {
 
 private:
 
-  typedef Cuda_utils::Host::PL_Array<Transfo> HPLA_tr;
-
   /// Factorization of every attributes allocations and inits
   void init(int nb_joints);
 
   /// Create and initilize a skeleton in the environment Skeleton_env
   void init_skel_env();
 
-  /// transform implicit surfaces computed with HRBF.
-  /// @param global_transfos array of global transformations for each bone
-  /// (device memory)
-  void transform_hrbf(const Cuda_utils::Device::Array<Transfo>& d_global_transfos);
-
-  /// transform implicit surfaces pre computed in 3D grids
-  /// @param global_transfos array of global transformations for each bone
-  void transform_precomputed_prim(const HPLA_tr& global_transfos);
-
   /// updates 'hrbf_id_to_bone_id' attributes according to the bone array
   // TODO: to be deleted
 //  void update_hrbf_id_to_bone_id();
-
-  /// Tool function for update_vertices() method. This updates '_anim_bones'
-  /// and '_anim_frames'
-  void subupdate_vertices(int root,
-                          const HPLA_tr& global_transfos);
 
   /// Once '_frames' and '_children' are filled, this compute '_bones' and
   /// '_anim_bones' according to the frames positions.
@@ -275,13 +260,6 @@ private:
   /// Skeleton scale
   float _scale;
 
-  /// List of transformations associated to each bone in order to deform a mesh.
-  /// A point will follow rigidly the ith bone movements if it is transformed
-  /// by bone_transformations[parents[ith]].
-  Cuda_utils::Host::PL_Array<Transfo> _h_transfos;
-  /// same as h_transform but in device memory
-  Cuda_utils::Device::Array<Transfo> _d_transfos;
-
   /// Array of each animated bone. Note that a bone can be subclass.
   /// @see bone.hpp
   std::vector<Bone*> _anim_bones;
@@ -293,11 +271,6 @@ private:
   /// @see bone.hpp
   std::vector<Bone_cu> _bones;
 
-  // TODO: this list might not be really needed as blending env already stores it
-  /// shape of the controller associated to each joint
-  /// for the gradient blending operators
-  Cuda_utils::Host::Array<IBL::Ctrl_setup> _controllers;
-
   std::vector<Skeleton_env::Joint_data> _joints_data;
 
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
@@ -306,6 +279,8 @@ private:
 
   /// hrbf radius to go from global to compact support
   std::vector<float> _hrbf_radius;
+
+  std::auto_ptr<SkeletonImpl> impl;
 };
 
 #endif // SKELETON_HPP__

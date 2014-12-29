@@ -25,6 +25,7 @@
 #include "conversions.hpp"
 #include "utils_sampling.hpp"
 #include "skeleton.hpp"
+#include "hrbf_env.hpp"
 
 // -----------------------------------------------------------------------------
 

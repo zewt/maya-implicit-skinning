@@ -19,6 +19,7 @@
 #ifndef CUDA_UTILS__
 #define CUDA_UTILS__
 
+#if !defined(NO_CUDA)
 #include <stdio.h>
 #include <cuda.h>
 #include <cassert>
@@ -273,5 +274,7 @@ typedef HD_Array<Point_cu> HDA_Point_cu;
 /// @}
 
 }// END CUDA_UTILS NAMESPACE ====================================================
+
+#endif
 
 #endif // CUDA_UTILS__

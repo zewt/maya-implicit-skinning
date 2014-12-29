@@ -55,8 +55,6 @@ public:
     void enable_update_base_potential(bool state);
 
     void set_auto_precompute(bool s){ _auto_precompute = s; }
-    void set_bone_type(int id, int bone_type);
-
     void update_base_potential();
 
     void update_clusters(int nb_voxels = 25);
@@ -121,7 +119,7 @@ private:
     //--------------------------------------------------------------------------
     /// @name Tools file export
     //--------------------------------------------------------------------------
-
+#if !defined(NO_CUDA) // XXX: remove this stuff
     /// Write the list of bone types (SSD HRBF etc.)
     void write_bone_types(std::ofstream& file);
 
@@ -153,7 +151,7 @@ private:
 
     void read_hrbf_radius(std::ifstream& file,
                           std::vector<float>& radius_hrbf);
-
+#endif
     //--------------------------------------------------------------------------
     /// @name Attributes
     //--------------------------------------------------------------------------

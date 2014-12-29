@@ -75,7 +75,7 @@ enum Op_t {
 enum Op_mode {
     UNION = 0,    ///< specifies Union-defined operators
     INTERSECTION, ///< specifies Intersection-defined operators
-    DIFFERENCE    ///< specifies Difference-defined operators
+    DIFFERENCE_    ///< specifies Difference-defined operators
 };
 
 }// END BLENDING_ENV NAMESPACE =================================================
