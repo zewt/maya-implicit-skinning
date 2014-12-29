@@ -131,7 +131,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
 
     // We only support a single input, like skinCluster.
     if(multiIndex > 0)
-        MStatus status = MStatus::kSuccess;
+        return MStatus::kSuccess;
 
     // Get the geomMatrixAttr attribute.
     MMatrix objectToWorldSpaceMat = DagHelpers::readHandle<MMatrix>(dataBlock, geomMatrixAttr, &status);
