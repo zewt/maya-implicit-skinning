@@ -49,8 +49,14 @@
 
 #include "loader_mesh.hpp"
 #include "loader_skel.hpp"
+#include "skeleton.hpp"
 
-#include "Interface.hpp"
+#include "loader_mesh.hpp"
+#include "sample_set.hpp"
+#include "animated_mesh_ctrl.hpp"
+#include "cuda_ctrl.hpp"
+
+// #include "animesh.hpp"
 
 #include <algorithm>
 #include <map>
@@ -61,14 +67,18 @@ class ImplicitSkinDeformer: public MPxDeformerNode
 public:
     static MTypeId id;
 
-    PluginInterface pluginInterface;
-
     virtual ~ImplicitSkinDeformer() { }
 
     static void *creator() { return new ImplicitSkinDeformer(); }
     static MStatus initialize();
 
     MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
+
+    void update_skeleton(const vector<Loader::CpuTransfo> &bone_positions);
+    void update_vertices(const vector<Loader::Vertex> &loader_vertices);
+    void setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton);
+
+    Cuda_ctrl::CudaCtrl cudaCtrl;
 
     static MObject dataAttr;
     static MObject geomMatrixAttr;
@@ -116,7 +126,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     MStatus status = MStatus::kSuccess;
         
     // If implicit -setup hasn't been run yet, stop.  XXX: saving/loading
-    if(!pluginInterface.is_setup())
+    if(cudaCtrl._mesh == NULL)
         return MStatus::kSuccess;
 
     // We only support a single input, like skinCluster.
@@ -163,7 +173,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         bone_transforms.push_back(DagHelpers::MMatrixToCpuTransfo(changeToTransform));
     }
 
-    pluginInterface.update_skeleton(bone_transforms);
+    update_skeleton(bone_transforms);
 
     // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
     // applied to, so the algorithm can see the whole mesh.
@@ -190,7 +200,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         // XXX: Is there a way we can tell the user about this?
         // XXX: Will the algorithm allow us to support this, if we give it a whole new mesh with similar
         // topology and call update_base_potential?
-        if(points.length() != pluginInterface.expected_vertex_count())
+        if(points.length() != cudaCtrl._anim_mesh->get_nb_vertices())
             return MStatus::kSuccess;
 
         // Set the deformed vertex data.
@@ -199,13 +209,16 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         for(int i = 0; i < (int) points.length(); ++i)
             input_verts.push_back(Loader::Vertex((float) points[i].x, (float) points[i].y, (float) points[i].z));
         
-        pluginInterface.update_vertices(input_verts);
+        update_vertices(input_verts);
     }
 
     // Run the algorithm.  XXX: If we're being applied to a set, can we reduce the work we're doing to
     // just those vertices?
+    cudaCtrl._anim_mesh->set_do_smoothing(true);
+    cudaCtrl._anim_mesh->deform_mesh();
+
     vector<Loader::Vec3> result_verts;
-    pluginInterface.go(result_verts);
+    cudaCtrl._anim_mesh->get_anim_vertices_aifo(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
     for ( ; !geomIter.isDone(); geomIter.next()) {
@@ -219,6 +232,85 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     return MStatus::kSuccess;
 }
 
+void ImplicitSkinDeformer::update_skeleton(const vector<Loader::CpuTransfo> &bone_positions)
+{
+    // Update the skeleton transforms.
+    vector<Transfo> transfos(bone_positions.size());
+    for(int i = 0; i < bone_positions.size(); ++i)
+        transfos[i] = Transfo(bone_positions[i]);
+
+    // If we've been given fewer transformations than there are bones, set the missing ones to identity.
+    transfos.insert(transfos.end(), bone_positions.size() - bone_positions.size(), Transfo::identity());
+
+    cudaCtrl._skeleton.set_transforms(transfos);
+}
+
+void ImplicitSkinDeformer::update_vertices(const vector<Loader::Vertex> &loader_vertices)
+{
+    size_t num_vertices = loader_vertices.size();
+    vector<Vec3_cu> vertices(num_vertices);
+    const Loader::Vertex *mesh_vertices = &loader_vertices[0];
+    for(size_t i = 0; i < num_vertices; ++i)
+        vertices[i] = Vec3_cu(mesh_vertices[i].x, mesh_vertices[i].y,mesh_vertices[i].z);
+    cudaCtrl._anim_mesh->copy_vertices(vertices);
+}
+
+
+
+// We're being given a mesh to work with.  Load it into Mesh, and hand it to the CUDA
+// interface.
+void ImplicitSkinDeformer::setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton)
+{
+    // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
+    // Mesh.
+    Mesh *ptr_mesh = new Mesh(loader_mesh);
+
+    // Hand the Mesh to Cuda_ctrl.
+    cudaCtrl.load_mesh( ptr_mesh );
+
+    // Load the skeleton.
+    cudaCtrl._skeleton.load(loader_skeleton);
+
+    // Tell cudaCtrl that we've loaded both the mesh and the skeleton.  This could be simplified.
+    cudaCtrl.load_animesh();
+
+    // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
+    SampleSet samples(cudaCtrl._anim_mesh->_skel->nb_joints());
+
+    // Get the default junction radius.
+    cudaCtrl._anim_mesh->get_default_junction_radius(samples._junction_radius);
+
+    for(int bone_id = 1; bone_id < cudaCtrl._anim_mesh->_skel->nb_joints(); ++bone_id)
+    {
+        if(true)
+        {
+            samples.choose_hrbf_samples_poisson
+                    (*cudaCtrl._anim_mesh->_animesh,
+                     bone_id,
+                     // Set a distance threshold from sample to the joints to choose them.
+                     -0.02f, // dSpinB_max_dist_joint->value(),
+                     -0.02f, // dSpinB_max_dist_parent->value(),
+                     0, // dSpinB_min_dist_samples->value(),
+                     // Minimal number of samples.  (this value is used only whe the value min dist is zero)
+                     50, // spinB_nb_samples_psd->value(), 20-1000
+
+                     // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
+                     0); // dSpinB_max_fold->value()
+        } else {
+            samples.choose_hrbf_samples_ad_hoc
+                    (*cudaCtrl._anim_mesh->_animesh,
+                     bone_id,
+                     -0.02f, // dSpinB_max_dist_joint->value(),
+                     -0.02f, // dSpinB_max_dist_parent->value(),
+                     0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
+                     0); // dSpinB_max_fold->value()
+        }
+    }
+
+    cudaCtrl._anim_mesh->set_sampleset(samples);
+
+    cudaCtrl._anim_mesh->update_base_potential();
+}
 
 
 class ImplicitCommand : public MPxCommand
@@ -430,7 +522,7 @@ MStatus ImplicitCommand::setup(MString nodeName)
     status = MayaData::load_mesh(inputValue, mesh);
     if(status != MS::kSuccess) return status;
 
-    deformer->pluginInterface.setup(mesh, skeleton);
+    deformer->setup(mesh, skeleton);
 
     return MS::kSuccess;
 }
@@ -463,7 +555,15 @@ MStatus initializePlugin(MObject obj)
 {
     MStatus status;
 
-    PluginInterface::init();
+    std::vector<Blending_env::Op_t> op;
+    op.push_back( Blending_env::B_D  );
+    op.push_back( Blending_env::U_OH );
+    op.push_back( Blending_env::C_D  );
+
+    Cuda_ctrl::cuda_start(op);
+
+    // XXX "HACK: Because blending_env initialize to elbow too ..." What?
+    IBL::Ctrl_setup shape = IBL::Shape::elbow();
 
     MFnPlugin plugin(obj, "", "1.0", "Any");
 
@@ -480,7 +580,7 @@ MStatus uninitializePlugin(MObject obj)
 {
     MStatus status;
 
-    PluginInterface::shutdown();
+    Cuda_ctrl::cleanup();
 
     MFnPlugin plugin(obj);
 

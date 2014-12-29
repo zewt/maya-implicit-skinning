@@ -91,6 +91,20 @@ public:
 
     int  get_nb_iter_smooth(){ return _nb_iter;       }
 
+    // Get the current (possibly deformed) vertices, in their original order.
+    void get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert) const;
+
+    // Copy the given vertices into the mesh.
+    void copy_vertices(const std::vector<Vec3_cu> &vertices);
+
+    // Get the default junction radius for each joint.  This can be used as a default _junction_radius
+    // in SampleSet.
+    void get_default_junction_radius(std::vector<float> &radius_per_joint) const;
+
+    // Return the number of vertices in the mesh.  Calls to copy_vertices must have the
+    // same number of vertices.
+    int get_nb_vertices() const;
+
     //--------------------------------------------------------------------------
     /// @name File import/export
     //--------------------------------------------------------------------------

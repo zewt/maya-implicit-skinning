@@ -182,11 +182,11 @@
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
-    <ClCompile Include="..\src\maya\Interface.cpp" />
     <ClCompile Include="..\src\maya\maya_data.cpp" />
     <ClCompile Include="..\src\maya\maya_helpers.cpp" />
     <ClCompile Include="..\src\maya\plugin.cpp" />
     <ClCompile Include="..\src\meshes\loader_mesh.cpp" />
+    <ClCompile Include="..\src\primitives\hermiteRBF.cu" />
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
@@ -260,7 +260,6 @@
     <ClInclude Include="..\src\maths\vec2_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
-    <ClInclude Include="..\src\maya\Interface.hpp" />
     <ClInclude Include="..\src\maya\maya_data.hpp" />
     <ClInclude Include="..\src\maya\maya_helpers.hpp" />
     <ClInclude Include="..\src\meshes\loader_mesh.hpp" />
@@ -339,6 +338,7 @@
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\implicit_graphs\skeleton_env.cu" />
+    <CudaCompile Include="..\src\primitives\precomputed_prim.cu" />
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu">
       <FileType>Document</FileType>
     </CudaCompile>

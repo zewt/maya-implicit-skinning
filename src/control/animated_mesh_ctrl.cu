@@ -356,6 +356,26 @@ int Animated_mesh_ctrl::get_nearest_bone(int vert_idx){
     return _animesh->get_nearest_bone(vert_idx);
 }
 
+void Animated_mesh_ctrl::get_anim_vertices_aifo(std::vector<Loader::Vec3>& out) const
+{
+    _animesh->get_anim_vertices_aifo(out);
+}
+
+void Animated_mesh_ctrl::copy_vertices(const std::vector<Vec3_cu> &vertices)
+{
+    _animesh->copy_vertices(vertices);
+}
+
+void Animated_mesh_ctrl::get_default_junction_radius(std::vector<float> &radius_per_joint) const
+{
+    _animesh->get_default_junction_radius(radius_per_joint);
+}
+
+int Animated_mesh_ctrl::get_nb_vertices() const
+{
+    return _animesh->get_nb_vertices();
+}
+
 // -----------------------------------------------------------------------------
 
 // Combine the samples in _samples, and send them to the Animesh.
