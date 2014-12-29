@@ -29,9 +29,10 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <cuda.h>
+#endif
+
 #include <cassert>
 #include <stdio.h>
-#endif
 
 // -----------------------------------------------------------------------------
 
