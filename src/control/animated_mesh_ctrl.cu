@@ -356,7 +356,7 @@ int Animated_mesh_ctrl::get_nearest_bone(int vert_idx){
     return _animesh->get_nearest_bone(vert_idx);
 }
 
-void Animated_mesh_ctrl::get_anim_vertices_aifo(std::vector<Loader::Vec3>& out) const
+void Animated_mesh_ctrl::get_anim_vertices_aifo(std::vector<Point_cu>& out) const
 {
     _animesh->get_anim_vertices_aifo(out);
 }

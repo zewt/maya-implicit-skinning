@@ -196,7 +196,7 @@ public:
     // -------------------------------------------------------------------------
 
     /// Fill the vector as in the imported file order
-    void get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert);
+    void get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert);
 
     // Return the number of vertices in the mesh.  Calls to copy_vertices must have the
     // same number of vertices.

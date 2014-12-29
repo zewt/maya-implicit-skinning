@@ -579,7 +579,7 @@ void Animesh::diffuse_attr(int nb_iter, float strength, float *attr)
 
 // -----------------------------------------------------------------------------
 
-void Animesh::get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert)
+void Animesh::get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert)
 {
     const int nb_vert = d_output_vertices.size();
     anim_vert.reserve(nb_vert);
@@ -587,10 +587,7 @@ void Animesh::get_anim_vertices_aifo(std::vector<Loader::Vec3>& anim_vert)
     h_out_verts.copy_from(d_output_vertices);
 
     for(int i = 0; i < nb_vert; i++)
-    {
-        Point_cu p = h_out_verts[vmap_new_old[i]];
-        anim_vert.push_back(Loader::Vec3(p.x, p.y, p.z));
-    }
+        anim_vert.push_back(h_out_verts[vmap_new_old[i]]);
 }
 
 // -----------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+#define NO_CUDA
+
 #include "maya_data.hpp"
 
 #include <assert.h>

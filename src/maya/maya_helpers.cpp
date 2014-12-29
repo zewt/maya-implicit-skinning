@@ -13,6 +13,7 @@
     http://www.opensource.org/licenses/mit-license.php
 */
 
+#define NO_CUDA
 #include "maya_helpers.hpp"
 
 #include <maya/MPxDeformerNode.h> 
@@ -46,6 +47,7 @@
 #include <maya/MMatrix.h>
 
 #include <maya/MDagModifier.h>
+#include "transfo.hpp"
 
 #include <algorithm>
 using namespace std;
@@ -55,6 +57,28 @@ namespace DagHelpers
     Loader::CpuTransfo MMatrixToCpuTransfo(const MMatrix &mmat)
     {
         Loader::CpuTransfo mat;
+        mat[0] = (float) mmat[0][0];
+        mat[1] = (float) mmat[1][0];
+        mat[2] = (float) mmat[2][0];
+        mat[3] = (float) mmat[3][0];
+        mat[4] = (float) mmat[0][1];
+        mat[5] = (float) mmat[1][1];
+        mat[6] = (float) mmat[2][1];
+        mat[7] = (float) mmat[3][1];
+        mat[8] = (float) mmat[0][2];
+        mat[9] = (float) mmat[1][2];
+        mat[10] = (float) mmat[2][2];
+        mat[11] = (float) mmat[3][2];
+        mat[12] = (float) mmat[0][3];
+        mat[13] = (float) mmat[1][3];
+        mat[14] = (float) mmat[2][3];
+        mat[15] = (float) mmat[3][3];
+        return mat;
+    }
+
+    Transfo MMatrixToTransfo(const MMatrix &mmat)
+    {
+        Transfo mat;
         mat[0] = (float) mmat[0][0];
         mat[1] = (float) mmat[1][0];
         mat[2] = (float) mmat[2][0];

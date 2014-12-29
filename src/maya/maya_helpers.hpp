@@ -1,6 +1,10 @@
 #ifndef MAYA_HELPERS_H
 #define MAYA_HELPERS_H
 
+#if !defined(NO_CUDA)
+#error This header requires NO_CUDA.
+#endif
+
 #include <maya/MArrayDataHandle.h>
 #include <maya/MDataHandle.h>
 #include <maya/MObject.h>
@@ -11,11 +15,13 @@
 #include <string>
 #include <vector>
 
+#include "transfo.hpp"
 #include "cpu_transfo.hpp"
 
 namespace DagHelpers
 {
     Loader::CpuTransfo MMatrixToCpuTransfo(const MMatrix &dagMat);
+    Transfo MMatrixToTransfo(const MMatrix &mmat);
 
     MStatus getConnectedPlugWithName(MPlug inputPlug, std::string name, MPlug &result);
     MMatrix getMatrixFromPlug(MPlug plug, MStatus *status);

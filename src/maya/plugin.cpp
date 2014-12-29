@@ -74,8 +74,6 @@ public:
 
     MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
 
-    void update_skeleton(const vector<Loader::CpuTransfo> &bone_positions);
-    void update_vertices(const vector<Loader::Vertex> &loader_vertices);
     void setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton);
 
     Cuda_ctrl::CudaCtrl cudaCtrl;
@@ -148,10 +146,10 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     if(status != MS::kSuccess) return status;
 
     // Update the skeleton.
-    vector<Loader::CpuTransfo> bone_transforms;
+    vector<Transfo> bone_transforms;
 
     // The root joint is a dummy, and doesn't correspond with a Maya transform.
-    bone_transforms.push_back(Loader::CpuTransfo::identity());
+    bone_transforms.push_back(Transfo::identity());
     
     for(int i = 0; i < (int) influenceMatrixHandle.elementCount(); ++i)
     {
@@ -170,10 +168,14 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         MMatrix currentTransformObjectSpace = jointTransformWorldSpace * worldToObjectSpaceMat; // current object space transform
         MMatrix changeToTransform = bindMatrixObjectSpaceInv * currentTransformObjectSpace; // joint transform relative to bind pose in object space
         
-        bone_transforms.push_back(DagHelpers::MMatrixToCpuTransfo(changeToTransform));
+        bone_transforms.push_back(DagHelpers::MMatrixToTransfo(changeToTransform));
     }
 
-    update_skeleton(bone_transforms);
+    // If we've been given fewer transformations than there are bones, set the missing ones to identity.
+    bone_transforms.insert(bone_transforms.end(), cudaCtrl._skeleton.get_nb_joints() - bone_transforms.size(), Transfo::identity());
+
+    // Update the skeleton transforms.
+    cudaCtrl._skeleton.set_transforms(bone_transforms);
 
     // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
     // applied to, so the algorithm can see the whole mesh.
@@ -204,12 +206,12 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
             return MStatus::kSuccess;
 
         // Set the deformed vertex data.
-        vector<Loader::Vertex> input_verts;
+        vector<Vec3_cu> input_verts;
         input_verts.reserve(points.length());
         for(int i = 0; i < (int) points.length(); ++i)
-            input_verts.push_back(Loader::Vertex((float) points[i].x, (float) points[i].y, (float) points[i].z));
+            input_verts.push_back(Vec3_cu((float) points[i].x, (float) points[i].y, (float) points[i].z));
         
-        update_vertices(input_verts);
+        cudaCtrl._anim_mesh->copy_vertices(input_verts);
     }
 
     // Run the algorithm.  XXX: If we're being applied to a set, can we reduce the work we're doing to
@@ -217,45 +219,20 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     cudaCtrl._anim_mesh->set_do_smoothing(true);
     cudaCtrl._anim_mesh->deform_mesh();
 
-    vector<Loader::Vec3> result_verts;
+    vector<Point_cu> result_verts;
     cudaCtrl._anim_mesh->get_anim_vertices_aifo(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
     for ( ; !geomIter.isDone(); geomIter.next()) {
         int vertex_index = geomIter.index();
 
-        Loader::Vec3 v = result_verts[vertex_index];
+        Point_cu v = result_verts[vertex_index];
         MPoint pt = MPoint(v.x, v.y, v.z);
         geomIter.setPosition(pt, MSpace::kObject);
     }
 
     return MStatus::kSuccess;
 }
-
-void ImplicitSkinDeformer::update_skeleton(const vector<Loader::CpuTransfo> &bone_positions)
-{
-    // Update the skeleton transforms.
-    vector<Transfo> transfos(bone_positions.size());
-    for(int i = 0; i < bone_positions.size(); ++i)
-        transfos[i] = Transfo(bone_positions[i]);
-
-    // If we've been given fewer transformations than there are bones, set the missing ones to identity.
-    transfos.insert(transfos.end(), bone_positions.size() - bone_positions.size(), Transfo::identity());
-
-    cudaCtrl._skeleton.set_transforms(transfos);
-}
-
-void ImplicitSkinDeformer::update_vertices(const vector<Loader::Vertex> &loader_vertices)
-{
-    size_t num_vertices = loader_vertices.size();
-    vector<Vec3_cu> vertices(num_vertices);
-    const Loader::Vertex *mesh_vertices = &loader_vertices[0];
-    for(size_t i = 0; i < num_vertices; ++i)
-        vertices[i] = Vec3_cu(mesh_vertices[i].x, mesh_vertices[i].y,mesh_vertices[i].z);
-    cudaCtrl._anim_mesh->copy_vertices(vertices);
-}
-
-
 
 // We're being given a mesh to work with.  Load it into Mesh, and hand it to the CUDA
 // interface.
