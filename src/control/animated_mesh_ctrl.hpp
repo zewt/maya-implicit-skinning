@@ -47,7 +47,7 @@ namespace Loader { struct Abs_skeleton; }
 
 class Animated_mesh_ctrl {
 public:
-    Animated_mesh_ctrl(Animesh* am);
+    Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel);
     ~Animated_mesh_ctrl();
 
     void set_sampleset(const SampleSet &sample_set);

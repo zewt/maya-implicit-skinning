@@ -25,7 +25,6 @@
 
 #include "skeleton.hpp"
 #include "globals.hpp"
-#include "animesh.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
 #include "cuda_main_kernels.hpp"
@@ -74,9 +73,8 @@ bool CudaCtrl::is_skeleton_loaded() const { return _skeleton.is_loaded(); }
 
 void CudaCtrl::load_animesh()
 {
-    Animesh *animesh = new Animesh(_mesh, _skeleton.skel);
     delete _anim_mesh;
-    _anim_mesh = new Animated_mesh_ctrl(animesh);
+    _anim_mesh = new Animated_mesh_ctrl(_mesh, _skeleton.skel);
 }
 
 void get_mem_usage(double& total, double& free)

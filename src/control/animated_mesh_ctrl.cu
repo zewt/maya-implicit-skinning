@@ -26,17 +26,16 @@
 
 // -----------------------------------------------------------------------------
 
-Animated_mesh_ctrl::Animated_mesh_ctrl(Animesh* am) :
+
+Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel) :
     _auto_precompute(true),
     _nb_iter(7),
-    _samples(am->get_skel()->nb_joints()),
-    _animesh(am),
-    _skel( am->get_skel() )
+    _samples(skel->nb_joints()),
+    _animesh(new Animesh(mesh, skel)),
+    _skel(skel)
 {
-    int n = am->get_skel()->nb_joints();
+    int n = skel->nb_joints();
 }
-
-// -----------------------------------------------------------------------------
 
 Animated_mesh_ctrl::~Animated_mesh_ctrl()
 {
