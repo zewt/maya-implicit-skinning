@@ -42,7 +42,7 @@ float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2);
 
 // -----------------------------------------------------------------------------
 
-Animesh::Animesh(Mesh* m_, Skeleton* s_) :
+Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     _mesh(m_), _skel(s_),
     mesh_smoothing(EAnimesh::LAPLACIAN),
     do_smooth_mesh(false),
@@ -128,7 +128,7 @@ Animesh::Animesh(Mesh* m_, Skeleton* s_) :
 
     init_smooth_factors(d_input_smooth_factors);
     init_rigid_ssd_weights();
-    init_ssd_interpolation_weights();
+    init_vert_to_fit();
 
     compute_mvc();
 
@@ -336,25 +336,6 @@ void Animesh::compute_mvc()
     d_edge_lengths.copy_from( edge_lengths );
     d_edge_mvc.    copy_from( edge_mvc     );
 }
-
-void Animesh::init_ssd_interpolation_weights()
-{
-    int n = d_input_vertices.size();
-
-//    Host::Array<float> base_potential(n);
-//    base_potential.copy_from(d_base_potential);
-
-    init_vert_to_fit();
-}
-
-// -----------------------------------------------------------------------------
-
-float Animesh::compute_nearest_vert_to_bone(int bone_id)
-{
-    return 1.f;
-}
-
-// -----------------------------------------------------------------------------
 
 void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
                                    HA_int& nb_vert_by_bone)
@@ -628,7 +609,7 @@ void Animesh::set_bone_type(int id, int bone_type)
     bone->set_radius(rad);
     _skel->set_bone(id, bone);
 
-    init_ssd_interpolation_weights();
+    init_vert_to_fit();
 
     // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
     // Figure out why for diagnostics.

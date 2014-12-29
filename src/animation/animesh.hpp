@@ -140,7 +140,7 @@ public:
     /// @warning The input mesh 'm_' vertices memory layout might be changed
     /// for optimization. Yet we garantee the layout is same in Animesh as
     /// in Mesh
-    Animesh(Mesh* m_, Skeleton* s_);
+    Animesh(const Mesh *m_, Skeleton* s_);
 
     ~Animesh();
 
@@ -164,8 +164,6 @@ public:
                              const std::vector<Vec3_cu>& nodes,
                              const std::vector<Vec3_cu>& n_nodes);
 
-    float compute_nearest_vert_to_bone(int bone_id);
-
     /// Update the mesh clusters according to the skeleton
     /// @param type : choose between to clusterisation algorithm either with
     /// a fast euclidean distance or a (slow) geodesic inside the volume of
@@ -177,13 +175,6 @@ public:
     // -------------------------------------------------------------------------
     /// @name SSD Related
     // -------------------------------------------------------------------------
-
-    /// Initialize the interpolation weights that define the proportion of
-    /// implicit skinning vs ssd. Each vertex is associated to a weight equals
-    /// to 0 (full implicit skinning) when it is inside the implicit primitive
-    /// or 1 (full SSD) when it is outside. These weights are then diffused
-    /// along the mesh to smoothen transition between SSD animation and IS.
-    void init_ssd_interpolation_weights();
 
     /// Set the weight of the ith vertex associated to the if joint,
     /// the value is clamped between [0, 1], and the value associated to the
@@ -361,7 +352,7 @@ private:
     /// deformation is computed from the initial position of the mesh stored in
     /// d_input_vertices. The mesh buffer objects attributes defines the animated
     /// mesh
-    Mesh*      _mesh;
+    const Mesh *_mesh;
     Skeleton*  _skel;
 
     EAnimesh::Smooth_type mesh_smoothing;
