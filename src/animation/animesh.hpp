@@ -24,7 +24,6 @@
 #include "animesh_enum.hpp"
 #include "cuda_utils.hpp"
 #include "mesh.hpp"
-#include "cpu_transfo.hpp"
 
 // -----------------------------------------------------------------------------
 

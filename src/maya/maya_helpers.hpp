@@ -16,11 +16,9 @@
 #include <vector>
 
 #include "transfo.hpp"
-#include "cpu_transfo.hpp"
 
 namespace DagHelpers
 {
-    Loader::CpuTransfo MMatrixToCpuTransfo(const MMatrix &dagMat);
     Transfo MMatrixToTransfo(const MMatrix &mmat);
 
     MStatus getConnectedPlugWithName(MPlug inputPlug, std::string name, MPlug &result);

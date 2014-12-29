@@ -22,7 +22,6 @@
 #include "vec3_cu.hpp"
 #include "mat3_cu.hpp"
 #include "point_cu.hpp"
-#include "cpu_transfo.hpp"
 
 /**
   @name Transfo
@@ -67,11 +66,6 @@ struct Transfo {
         m[ 4] = x.d; m[ 5] = x.e; m[ 6] = x.f; m[ 7] = 0.f;
         m[ 8] = x.g; m[ 9] = x.h; m[10] = x.i; m[11] = 0.f;
         m[12] = 0.f; m[13] = 0.f; m[14] = 0.f; m[15] = 1.f;
-    }
-
-    IF_CUDA_DEVICE_HOST
-    inline Transfo(const Loader::CpuTransfo & x){
-        memcpy(m, x.m, sizeof(m));
     }
 
     IF_CUDA_DEVICE_HOST

@@ -21,7 +21,7 @@
 
 #include <string>
 #include <vector>
-#include <cpu_transfo.hpp>
+#include <transfo.hpp>
 
 // =============================================================================
 namespace Loader {
@@ -29,7 +29,7 @@ namespace Loader {
 /// @brief intermediate representation of a bone for file loading
 struct Abs_bone {
     float       _length; ///< The bone length
-    CpuTransfo     _frame;  ///< The bone position and orientation
+    Transfo     _frame;  ///< The bone position and orientation
     std::string _name;   ///< The bone name
 };
 

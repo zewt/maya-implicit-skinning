@@ -250,7 +250,6 @@
     <ClInclude Include="..\src\implicit_graphs\tree_cu_type.hpp" />
     <ClInclude Include="..\src\implicit_graphs\tree_type.hpp" />
     <ClInclude Include="..\src\maths\bbox.hpp" />
-    <ClInclude Include="..\src\maths\cpu_transfo.hpp" />
     <ClInclude Include="..\src\maths\mat3_cu.hpp" />
     <ClInclude Include="..\src\maths\math_cu.hpp" />
     <ClInclude Include="..\src\maths\point_cu.hpp" />

@@ -30,8 +30,8 @@ void Abs_skeleton::compute_bone_lengths()
         {
             int son_id = _sons[bone_id][s];
 
-            Vec3 p0 = _bones[bone_id]._frame.get_translation();
-            Vec3 p1 = _bones[son_id ]._frame.get_translation();
+            Vec3_cu p0 = _bones[bone_id]._frame.get_translation();
+            Vec3_cu p1 = _bones[son_id ]._frame.get_translation();
 
             mean_len += (p0-p1).norm();
         }

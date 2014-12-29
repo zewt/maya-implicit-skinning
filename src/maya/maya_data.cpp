@@ -112,7 +112,7 @@ MStatus MayaData::loadSkeletonFromSkinCluster(MPlug skinClusterPlug, Loader::Abs
         // ones we create below.  (Multiplying by identity doesn't do anything; it's only written this
         // way for clarity.)
         MMatrix jointObjectMat = MMatrix::identity * worldToObjectSpaceMat;
-        bone._frame = DagHelpers::MMatrixToCpuTransfo(jointObjectMat);
+        bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
 
         skeleton._bones.push_back(bone);
         skeleton._sons.push_back(std::vector<int>());
@@ -155,7 +155,7 @@ MStatus MayaData::loadSkeletonFromSkinCluster(MPlug skinClusterPlug, Loader::Abs
         // do it below.
         Loader::Abs_bone bone;
         bone._name = jointName;
-        bone._frame = DagHelpers::MMatrixToCpuTransfo(jointObjectMat);
+        bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
         skeleton._bones.push_back(bone);
 
         // Find this bone's closest ancestor to be its parent.  If it has no ancestors, use the root.
