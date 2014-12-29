@@ -19,6 +19,16 @@
 #ifndef CUDA_COMPILER_INTEROP_HPP__
 #define CUDA_COMPILER_INTEROP_HPP__
 
+#if defined(NO_CUDA)
+
+#if defined(__CUDACC__)
+#error NO_CUDA files should not be CUDACC
+#endif
+
+#define IF_CUDA_DEVICE_HOST
+static inline bool is_device() { return false; }
+#else
+#include "cuda_compiler_interop.hpp"
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <cuda.h>
@@ -122,6 +132,8 @@ static inline void FORBID_DEVICE_CALL(){
 
 #ifndef NDEBUG
 #define FORBID_DEVICE_CALL()
+#endif
+
 #endif
 
 #endif // CUDA_COMPILER_INTEROP_HPP__

@@ -3,6 +3,10 @@
 #include <math.h>
 #include <assert.h>
 
+// Don't include CUDA headers in this file.  CUDA and Maya headers are incompatible due to
+// namespace conflicts.
+#define NO_CUDA
+
 #include <maya/MPxDeformerNode.h> 
 #include <maya/MPxCommand.h>
 #include <maya/MPxData.h>

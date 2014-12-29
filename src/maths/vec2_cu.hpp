@@ -20,7 +20,6 @@
 #define VEC2_CU_HPP__
 
 #include "macros.hpp"
-//#include <cuda_runtime.h>
 #include "math_cu.hpp"
 #include "vec3_cu.hpp"
 #include <stdlib.h>

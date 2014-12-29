@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 #include "cuda_compiler_interop.hpp"
-#include <cuda_runtime.h>
+
 #include "vec3_cu.hpp"
 
 /// Do not change these

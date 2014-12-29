@@ -20,7 +20,6 @@
 #define VEC3I_CU_HPP__
 
 #include "cuda_compiler_interop.hpp"
-//#include <cuda_runtime.h>
 #include "math_cu.hpp"
 #include <stdlib.h>
 #include <stdio.h>

@@ -21,7 +21,6 @@
 
 #include "cuda_compiler_interop.hpp"
 #include "vec3_cu.hpp"
-//#include <cuda_runtime.h>
 #include "math_cu.hpp"
 #include <stdlib.h>
 #include <stdio.h>
