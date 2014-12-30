@@ -586,34 +586,27 @@ void Animesh::set_bone_type(int id, int bone_type)
     // we could only update the correct bone so we don't do n^2 updates.
     _skel->update_bones_pose();
 
-    Bone* bone = 0;
-    const Bone* prev_bone = _skel->get_bone( id );
-    float rad = prev_bone->radius();
+    Bone *bone = _skel->get_bone( id );
     switch(bone_type){
     case EBone::PRECOMPUTED:
     {
-        // We don't precompute an already precomputed primitive
-        assert(_skel->bone_type(id) != EBone::PRECOMPUTED );
-        // Precompute a SSD bone is useless and should be forbiden
-        assert(_skel->bone_type(id) != EBone::SSD         );
-
-        Bone_precomputed* b = new Bone_precomputed( prev_bone->get_obbox() );
-        b->get_primitive().fill_grid_with( _skel->get_skel_id(), _skel->get_bone(id) );
-        bone = b;
+        bone->set_enabled(true);
+        bone->precompute(_skel->get_skel_id());
         break;
     }
-    case EBone::HRBF:     bone = new Bone_hrbf(rad);      break;
-    case EBone::SSD:      bone = new Bone_ssd();          break;
+    case EBone::HRBF:
+        bone->set_enabled(true);
+        bone->discard_precompute();
+        break;
+    case EBone::SSD:
+        bone->set_enabled(false);
+        break;
 
     default: //unknown bone type !
         assert(false);
         break;
 
     }
-
-
-    bone->set_radius(rad);
-    _skel->set_bone(id, bone);
 
     init_vert_to_fit();
 

@@ -19,7 +19,7 @@ class MeshGeom;
 
 struct GridCell;
 class VertexHash;
-class Bone_hrbf;
+class Bone;
 
 // Note that functions which don't take a dataBlock but read attributes aren't intended to be called from
 // compute().  Maya has a different API for reading attributes inside compute().

@@ -70,7 +70,7 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
     // avoid keeping Bone data around entirely that we aren't using?
 
     // We update nodes in bones
-    Bone_hrbf*  hrbf_bone = new Bone_hrbf(rad_hrbf);
+    Bone *hrbf_bone = new Bone(rad_hrbf);
 
 //    for(int i = 0; i < nodes.size(); ++i)
 //        printf("%i: %f %f %f\n", i, nodes[i].x, nodes[i].y, nodes[i].z);

@@ -209,6 +209,10 @@ struct Skeleton {
   /// warned. <\b>
   const Bone* get_bone(Bone::Id i) const{ return _joints[i]._anim_bone;  }
 
+  // Actually, set_bone doesn't do anything special, it just stores the new bone.  We do
+  // need a non-const getter now to toggle precomputation.
+  Bone *get_bone(Bone::Id i) { return _joints[i]._anim_bone;  }
+
   Blending_env::Ctrl_id get_ctrl(int joint) const {
       return _joints[joint]._joint_data._ctrl_id;
   }

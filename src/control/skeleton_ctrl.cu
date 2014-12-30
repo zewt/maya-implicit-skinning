@@ -57,7 +57,7 @@ int Skeleton_ctrl::get_hrbf_id(int bone_id)
     if( skel->bone_type(bone_id) != EBone::HRBF)
         return -1;
 
-    Bone_hrbf* b = ((Bone_hrbf*)skel->get_bone(bone_id));
+    const Bone *b = skel->get_bone(bone_id);
     return b->get_hrbf().get_id();
 }
 
@@ -69,7 +69,7 @@ int Skeleton_ctrl::get_bone_id(int hrbf_id)
     {
         if( skel->bone_type(i) == EBone::HRBF)
         {
-            Bone_hrbf* b = ((Bone_hrbf*)skel->get_bone(i));
+            const Bone *b = skel->get_bone(i);
             if(b->get_hrbf().get_id() == hrbf_id)
                 return i;
         }
@@ -154,7 +154,7 @@ int Skeleton_ctrl::find_associated_bone(int hrbf_id)
         const Bone* b = skel->get_bone(i);
         if(b->get_type() == EBone::HRBF)
         {
-            const HermiteRBF& hrbf = ((const Bone_hrbf*)b)->get_hrbf();
+            const HermiteRBF& hrbf = b->get_hrbf();
             if(hrbf.get_id() == hrbf_id)
                 return i;
         }

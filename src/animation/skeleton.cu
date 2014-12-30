@@ -119,7 +119,8 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
     for(int bid = 0; bid < (int) _joints.size(); bid++)
     {
         SkeletonJoint &joint = _joints[bid];
-        joint._anim_bone = new Bone_ssd();
+        joint._anim_bone = new Bone(1);
+        joint._anim_bone->set_enabled(false);
         joint._anim_bone->set_length( joint._bone._length );
         joint._anim_bone->set_radius(default_bone_radius);
         joint._anim_bone->_bone_id = bid;
@@ -227,7 +228,7 @@ void Skeleton::set_bone_hrbf_radius(int i, float radius)
 
     if(bone_type(i) == EBone::HRBF)
     {
-        ((Bone_hrbf*)_joints[i]._anim_bone)->set_hrbf_radius(radius);
+        _joints[i]._anim_bone->set_hrbf_radius(radius);
     }
 }
 
@@ -238,7 +239,7 @@ int Skeleton::get_hrbf_id(Bone::Id bone_id) const
     assert(bone_id >= 0);
     assert(bone_id < (int) _joints.size());
     if(bone_type(bone_id) == EBone::HRBF)
-        return ((const Bone_hrbf*)_joints[bone_id]._anim_bone)->get_hrbf().get_id();
+        return _joints[bone_id]._anim_bone->get_hrbf().get_id();
     else
         return -1;
 }
@@ -257,9 +258,8 @@ void Skeleton::transform_precomputed_prim()
         if(bone_type(i) != EBone::PRECOMPUTED)
             continue;
 
-        Bone_precomputed *bone = (Bone_precomputed*) _joints[i]._anim_bone;
+        Bone *bone = _joints[i]._anim_bone;
         Precomputed_prim &prim = bone->get_primitive();
-
         prim.set_transform(get_bone_transform(i));
     }
 
@@ -321,7 +321,7 @@ void Skeleton::update_hrbf_id_to_bone_id()
     int res = 0;
     for(int i = 0; i < (int) _joints.size(); i++){
         if(bone_type(i) == EBone::HRBF){
-            int hrbf_id = ((Bone_hrbf*)_anim_bones[i])->get_hrbf().get_id();
+            int hrbf_id = _anim_bones[i]->get_hrbf().get_id();
             res = std::max(hrbf_id , res);
         }
     }
@@ -331,7 +331,7 @@ void Skeleton::update_hrbf_id_to_bone_id()
 
     for(int i = 0; i < (int) _joints.size(); i++){
         if(bone_type(i) == EBone::HRBF){
-            int hrbf_id = ((Bone_hrbf*)_anim_bones[i])->get_hrbf().get_id();
+            int hrbf_id = _anim_bones[i]->get_hrbf().get_id();
             _hrbf_id_to_bone_id[hrbf_id] = i;
         }
     }

@@ -191,20 +191,34 @@ public:
 
   @see Bone_type Bone_cu
 */
+#include "hermiteRBF.hpp"
+#include "precomputed_prim.hpp"
+
+
 class Bone : public Bone_cu {
 public:
     friend struct Skeleton;
     /// A bone identifier
     typedef int Id;
 
-    Bone() : Bone_cu(), _bone_id(-1) {
+    /// @param rad radius used to convert hrbf from global to compact support
+    Bone(float rad) : Bone_cu(), _bone_id(-1) {
         _length = 0.f;
         _radius = 0.f;
         _dir    = Vec3_cu(0.f, 0.f, 0.f);
         _org    = Point_cu(0.f, 0.f, 0.f);
+
+        _enabled = true;
+        _precomputed = false;
+        _hrbf.initialize();
+        _hrbf.set_radius(rad);
+        _primitive.initialize();
     }
 
-    virtual ~Bone(){}
+    ~Bone(){
+        _hrbf.clear();
+        _primitive.clear();
+    }
 
     Id get_bone_id() const { return _bone_id; }
 
@@ -217,98 +231,61 @@ public:
 
     /// Get the bone type
     /// @see Bone_type
-    virtual EBone::Bone_t get_type() const = 0;
+    EBone::Bone_t get_type() const {
+        return !_enabled? EBone::SSD:
+            _precomputed? EBone::PRECOMPUTED:
+            EBone::HRBF;
+    }
 
     /// Get the oriented bounding box associated to the bone
-    virtual OBBox_cu get_obbox() const;
-    /// Get the axis aligned bounding box associated to the bone
-    virtual BBox_cu get_bbox() const;
-
-protected:
-    Id _bone_id; ///< Bone identifier in skeleton class
-};
-
-// =============================================================================
-
-#include "hermiteRBF.hpp"
-
-/** @class Bone_hrbf
-  @brief Subclass of a Bone. Adds an hrbf primitive attribute
-*/
-class Bone_hrbf : public Bone {
-public:
-    /// @param rad radius used to convert hrbf from global to compact support
-    Bone_hrbf(float rad) : Bone() {
-        _hrbf.initialize();
-        _hrbf.set_radius(rad);
-    }
-
-    ~Bone_hrbf(){
-        _hrbf.clear();
-    }
-
-    HermiteRBF& get_hrbf(){ return _hrbf; }
-
-    const HermiteRBF& get_hrbf() const { return _hrbf; }
-
-    EBone::Bone_t get_type() const { return EBone::HRBF; }
-
     OBBox_cu get_obbox() const;
 
+    /// Get the axis aligned bounding box associated to the bone
     BBox_cu get_bbox() const;
 
-    void set_hrbf_radius(float rad){ _hrbf.set_radius(rad); }
+    HermiteRBF& get_hrbf() {
+        // Always call discard_precompute before making non-const access to HermiteRBF.
+        assert(!_precomputed);
 
-    float get_hrbf_radius() const { return _hrbf.get_radius(); }
-
-private:
-    HermiteRBF _hrbf;
-};
-// =============================================================================
-
-/** @class Bone_ssd
-  @brief No implicit primitive are bound to this type of bone
-*/
-class Bone_ssd : public Bone{
-public:
-    Bone_ssd() : Bone(){ }
-
-    ~Bone_ssd(){  }
-
-    EBone::Bone_t get_type() const { return EBone::SSD; }
-};
-// =============================================================================
-
-#include "precomputed_prim.hpp"
-
-/**
-    @class Bone_precomputed
-    @brief Subclass of a Bone. Adds an precomputed implicit primitive attribute
-*/
-class Bone_precomputed : public Bone {
-public:
-    Bone_precomputed(const OBBox_cu& obbox) : Bone(), _obbox(obbox){
-        _primitive.initialize();
-    }
-
-    ~Bone_precomputed(){
-        _primitive.clear();
+        return _hrbf;
     }
 
     Precomputed_prim& get_primitive(){ return _primitive; }
-    const Precomputed_prim& get_primitive() const { return _primitive; }
+    const Precomputed_prim& get_primitive() const { assert(_precomputed); return _primitive; }
 
-    EBone::Bone_t get_type() const { return EBone::PRECOMPUTED; }
+    const HermiteRBF& get_hrbf() const { return _hrbf; }
+    bool get_enabled() const { return _enabled; }
+    void set_enabled(bool value) {
+        if(_enabled == value)
+            return;
 
-    OBBox_cu get_obbox() const;
+        _enabled = value;
+        discard_precompute();
+    }
 
-    BBox_cu get_bbox() const;
+    void set_hrbf_radius(float rad) {
+        _hrbf.set_radius(rad);
+        discard_precompute();
+    }
+    float get_hrbf_radius() const { return _hrbf.get_radius(); }
+
+    // Precompute the HRBF, allowing get_primitive() to be called.
+    void precompute(Skeleton_env::Skel_id skel_id);
+    void discard_precompute();
+    bool is_precomputed() const { return _precomputed; }
 
 private:
+    Id _bone_id; ///< Bone identifier in skeleton class
+
+    HermiteRBF _hrbf;
+
+    bool _enabled;
+    bool _precomputed;
     Precomputed_prim _primitive;
     OBBox_cu         _obbox;
 };
-// =============================================================================
+
+typedef Bone Bone_hrbf;
 
 namespace EBone {
 

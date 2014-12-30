@@ -110,8 +110,7 @@ void Grid::add_bone( Bone::Id bid )
         return;
 
     if( bone->get_type() == EBone::HRBF){
-        const Bone_hrbf* bone_hrbf = ((Bone_hrbf*)bone);
-        if( bone_hrbf->get_hrbf().empty() )
+        if( bone->get_hrbf().empty() )
             return;
     }
 

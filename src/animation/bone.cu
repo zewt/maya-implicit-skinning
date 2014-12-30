@@ -25,14 +25,6 @@ namespace { __device__ void fix_debug() { } }
 
 // Bone CLASS ==================================================================
 
-OBBox_cu Bone::get_obbox() const { return OBBox_cu(); }
-
-// -----------------------------------------------------------------------------
-
-BBox_cu Bone::get_bbox() const { return BBox_cu(); }
-
-// Bone_hrbf CLASS =============================================================
-
 // If defined enable bbox constructions visualitions with opengl
 // (white points are dichotomic steps, colored points are newton iterations)
 //#define GL_DEBUG_BBOX
@@ -207,8 +199,15 @@ void push_face(OBBox_cu& obbox,
 
 // -----------------------------------------------------------------------------
 
-OBBox_cu Bone_hrbf::get_obbox() const
+OBBox_cu Bone::get_obbox() const
 {
+    if(_precomputed)
+    {
+        OBBox_cu tmp = _obbox;
+        tmp._tr = _primitive.get_user_transform() * tmp._tr;
+        return  tmp;
+    }
+
     const int hrbf_id = _hrbf.get_id();
     std::vector<Point_cu> samp_list;
     HRBF_env::get_anim_samples(hrbf_id, samp_list);
@@ -274,33 +273,28 @@ OBBox_cu Bone_hrbf::get_obbox() const
 
 // -----------------------------------------------------------------------------
 
-BBox_cu Bone_hrbf::get_bbox() const
+BBox_cu Bone::get_bbox() const
 {
     return get_obbox().to_bbox();
+}
+
+void Bone::precompute(Skeleton_env::Skel_id skel_id)
+{
+    if(_precomputed)
+        return;
+
+    _primitive.fill_grid_with( skel_id, this );
+    _obbox = get_obbox();
+
+    _precomputed = true;
+}
+
+void Bone::discard_precompute()
+{
+    _precomputed = false;
 }
 
 // END Bone_hrbf CLASS =========================================================
-
-// Bone_precomputed CLASS ======================================================
-
-OBBox_cu Bone_precomputed::get_obbox() const
-{
-    OBBox_cu tmp = _obbox;
-
-    tmp._tr = _primitive.get_user_transform() * tmp._tr;
-
-    return  tmp;
-}
-
-// -----------------------------------------------------------------------------
-
-BBox_cu Bone_precomputed::get_bbox() const
-{
-    return get_obbox().to_bbox();
-}
-
-// END Bone_precomputed CLASS ==================================================
-
 
 // =============================================================================
 namespace EBone {

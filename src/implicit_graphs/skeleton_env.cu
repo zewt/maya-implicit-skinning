@@ -306,13 +306,14 @@ static void fill_separated_bone_types(const std::vector<const Bone*>& generic_bo
         switch( btype )
         {
         case EBone::HRBF:
-            hd_bone_arrays->hd_bone_hrbf[i] = ((const Bone_hrbf*)b)->get_hrbf();
+            hd_bone_arrays->hd_bone_hrbf[i] = b->get_hrbf();
             break;
         case EBone::SSD:
             /* There is no data to store for ssd bones*/
             break;
         case EBone::PRECOMPUTED:
-            hd_bone_arrays->hd_bone_precomputed[i] = ((const Bone_precomputed*)b)->get_primitive();
+            // XXX
+            hd_bone_arrays->hd_bone_precomputed[i] = b->get_primitive();
             break;
         }
 
