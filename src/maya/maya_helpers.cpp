@@ -1000,21 +1000,22 @@ namespace DagHelpers
         fcolor.getData ( x , y );
         return 1;
     }
+#endif
 
-    //---------------------------------------------------
-    bool getPlugValue ( const MPlug& plug, float& x, float& y, float& z )
+    MStatus getPlugValue(const MPlug& plug, float& x, float& y, float& z)
     {
         MObject obj;
-        plug.getValue ( obj );
+        plug.getValue(obj);
+
         MStatus status;
-        MFnNumericData fcolor ( obj, &status );
-        if ( !status ) return 0;
+        MFnNumericData value(obj, &status);
+        if(!status) return status;
 
-        fcolor.getData ( x , y , z );
-
-        return 1;
+        value.getData(x, y, z);
+        return MStatus::kSuccess;
     }
 
+#if 0
     //---------------------------------------------------
     bool getPlugValue ( const MObject& node, const String attributeName, MVector& value )
     {
@@ -1147,14 +1148,25 @@ namespace DagHelpers
     }
 
     //---------------------------------------------------
-    bool setPlugValue ( MPlug& plug, float x, float y )
+#endif
+
+    MStatus setPlugValue(MPlug &plug, float x, float y)
     {
         MFnNumericData data;
-        MObject obj = data.create ( MFnNumericData::k2Float );
-        data.setData ( x, y );
-        return plug.setValue ( obj );
+        MObject obj = data.create(MFnNumericData::k2Float);
+        data.setData(x, y);
+        return plug.setValue(obj);
     }
 
+    MStatus setPlugValue(MPlug &plug, float x, float y, float z)
+    {
+        MFnNumericData data;
+        MObject obj = data.create(MFnNumericData::k3Float);
+        data.setData(x, y, z);
+        return plug.setValue(obj);
+    }
+
+#if 0
     //---------------------------------------------------
     bool setPlugValue ( MPlug& plug, int value )
     {

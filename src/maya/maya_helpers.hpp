@@ -35,6 +35,7 @@ namespace DagHelpers
 
     template<> inline MDataHandle readHandle(MDataHandle handle, MStatus *status) { return handle; }
     template<> inline MMatrix readHandle(MDataHandle handle, MStatus *status) { return handle.asMatrix(); }
+    template<> inline bool readHandle(MDataHandle handle, MStatus *status) { return handle.asBool(); }
 
     template<class T>
     inline T readHandle(MDataBlock &dataBlock, const MObject &attribute, MStatus *status)
@@ -68,6 +69,11 @@ namespace DagHelpers
     bool getPlugConnectedTo ( const MObject& node, const MString &attribute, MPlug& connectedPlug );
     bool getPlugConnectedTo ( const MPlug& inPlug, MPlug& plug );
     MObject getNodeConnectedTo ( const MPlug& plug );
+
+
+    MStatus setPlugValue(MPlug& plug, float x, float y);
+    MStatus setPlugValue(MPlug& plug, float x, float y, float z);
+    MStatus getPlugValue(const MPlug& plug, float& x, float& y, float& z);
 }
 
 #endif
