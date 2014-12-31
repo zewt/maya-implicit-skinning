@@ -153,6 +153,9 @@ struct Array : Cuda_utils::Common::Array<T>{
     /// swap this array pointer and attributes with the given array
     inline void swap(Array& d);
 
+    // For convenience and debugging: copy the array to host memory, and return it as a vector.
+    inline std::vector<T> to_host_vector() const;
+
     #ifdef __CUDACC__
     /// access to array elements
     /// @warning only possible from device code
@@ -765,6 +768,17 @@ swap(Array& d)
     d.data = data_tmp;
     d.state = state_tmp;
     d.nb_elt = nb_tmp;
+}
+
+
+template <class T>
+inline std::vector<T> Cuda_utils::Device::Array<T>::
+to_host_vector() const
+{
+    Cuda_utils::Host::Array<T> host_array;
+    host_array.malloc(size());
+    host_array.copy_from(*this);
+    return std::vector<T>(&host_array[0], &host_array[0] + size());
 }
 
 // -----------------------------------------------------------------------------
