@@ -30,39 +30,40 @@
 struct Animesh;
 struct Skeleton;
 
+namespace SampleSet
+{
+struct Cap {
+    Cap() { enable = false; }
+    std::vector<Vec3_cu> nodes;
+    std::vector<Vec3_cu> n_nodes;
+    bool enable;
+};
+
+struct Cap_list {
+    Cap jcap;
+    Cap pcap;
+};
+
+struct HSample_list {
+    std::vector<Vec3_cu> nodes;
+    std::vector<Vec3_cu> n_nodes;
+};
+
+struct InputSample
+{
+    Cap_list _bone_cap;
+
+    /// List of samples
+    HSample_list _sample_list;
+
+    float _junction_radius;
+};
+
 struct SampleSet
 {
-    struct Cap {
-        Cap() { enable = false; }
-        std::vector<Vec3_cu> nodes;
-        std::vector<Vec3_cu> n_nodes;
-        bool enable;
-    };
+    SampleSet(int nb_joints): _samples(nb_joints) { }
 
-    struct Cap_list {
-        Cap jcap;
-        Cap pcap;
-    };
-
-    struct HSample_list{
-        std::vector<Vec3_cu> nodes;
-        std::vector<Vec3_cu> n_nodes;
-    };
-
-    SampleSet(int nb_joints):
-        _sample_list(nb_joints),
-        _bone_caps(nb_joints),
-        _junction_radius(nb_joints)
-    {
-    }
-
-    /// List of samples added to the bone's caps
-    std::vector<Cap_list> _bone_caps;
-
-    /// List of samples used for each bone
-    std::vector<HSample_list> _sample_list;
-
-    std::vector<float> _junction_radius;
+    std::vector<InputSample> _samples;
 
     // factor hrbf samples of siblings in a single bone
     bool _factor_bones;
@@ -131,5 +132,7 @@ private:
                                      std::vector<Vec3_cu>& out_verts,
                                      std::vector<Vec3_cu>& out_normals) const;
 };
+
+}
 
 #endif

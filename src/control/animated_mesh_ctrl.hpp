@@ -50,7 +50,7 @@ public:
     Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel);
     ~Animated_mesh_ctrl();
 
-    void set_sampleset(const SampleSet &sample_set);
+    void set_sampleset(const SampleSet::SampleSet &sample_set);
 
     void enable_update_base_potential(bool state);
 
@@ -177,7 +177,7 @@ private:
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
 
-    SampleSet _samples;
+    SampleSet::SampleSet _samples;
 
 public:
     Animesh* _animesh;

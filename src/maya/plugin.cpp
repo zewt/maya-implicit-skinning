@@ -267,13 +267,16 @@ void ImplicitSkinDeformer::setup(const Loader::Abs_mesh &loader_mesh, const Load
     cudaCtrl.load_animesh();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
-    SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
+    SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
 
     // Get the default junction radius.
-    cudaCtrl._anim_mesh->get_default_junction_radius(samples._junction_radius);
+    vector<float> junction_radius;
+    cudaCtrl._anim_mesh->get_default_junction_radius(junction_radius);
 
     for(int bone_id = 1; bone_id < cudaCtrl._anim_mesh->get_skel()->nb_joints(); ++bone_id)
     {
+        samples._samples[bone_id]._junction_radius = junction_radius[bone_id];
+        
         if(true)
         {
             samples.choose_hrbf_samples_poisson
