@@ -48,7 +48,6 @@ void Animated_mesh_ctrl::precompute_all_bones()
         if(_animesh->get_skel()->bone_type(i) == EBone::HRBF)
             _animesh->set_bone_type( i, EBone::PRECOMPUTED);
     }
-    // XXX: don't we need to call update_bone_samples here?
 }
 
 // -----------------------------------------------------------------------------
