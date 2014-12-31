@@ -75,10 +75,6 @@ struct SkeletonImpl
     /// transform implicit surfaces pre computed in 3D grids
     /// @param global_transfos array of global transformations for each bone
     void transform_precomputed_prim(Skeleton *self, const HPLA_tr& global_transfos);
-
-    /// Tool function for update_vertices() method. This updates '_anim_bones'
-    /// and '_anim_frames'
-    void subupdate_vertices(Skeleton *self, int root, const HPLA_tr& global_transfos);
 };
 
 Transfo Skeleton::bone_anim_frame(int bone) const { return impl->_h_transfos[bone] * _bones[bone].get_frame(); }
@@ -320,9 +316,14 @@ void Skeleton::set_transforms(const std::vector<Transfo> &transfos)
 
 void Skeleton::update_bones_pose()
 {
-    // Update joints position in animated position and the associated
-    // transformations
-    impl->subupdate_vertices( this, _root, impl->_h_transfos );
+    // Put _anim_bones in the position specified by _h_transfos.
+    for(unsigned i = 0; i < _bones.size(); i++)
+    {
+        const Transfo tr = impl->_h_transfos[i];
+        Bone_cu b = _bones[i];
+        _anim_bones[i]->set_length( b.length() );
+        _anim_bones[i]->set_orientation(tr * b.org(), tr * b.dir());
+    }
 
     // Update joint positions in texture.
     impl->_d_transfos.copy_from( impl->_h_transfos );
@@ -335,21 +336,6 @@ void Skeleton::update_bones_pose()
     // positions will not be updated correctly within the Skeleton_env.
     Skeleton_env::update_bones_data(_skel_id, _anim_bones);
 }
-
-// -----------------------------------------------------------------------------
-
-void SkeletonImpl::subupdate_vertices(Skeleton *self,  int root, const HPLA_tr& global_transfos)
-{
-    const Transfo tr = global_transfos[root];
-    Bone_cu b = self->_bones[root];
-    self->_anim_bones[root]->set_length( b.length() );
-    self->_anim_bones[root]->set_orientation(tr * b.org(), tr * b.dir());
-
-    for(unsigned i = 0; i < self->_children[root].size(); i++)
-        subupdate_vertices(self, self->_children[root][i], global_transfos);
-}
-
-// -----------------------------------------------------------------------------
 
 /*
   // TODO: to be deleted
