@@ -15,6 +15,7 @@
 #include <maya/MDagPathArray.h>
 
 #include <maya/MFnNumericAttribute.h>
+#include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnMatrixAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnMatrixData.h>
@@ -81,6 +82,7 @@ public:
     static MObject dataAttr;
     static MObject geomMatrixAttr;
     static MObject influenceBindMatrixAttr;
+    static MObject influenceJointsAttr;
     static MObject influenceMatrixAttr;
 };
 
@@ -93,6 +95,7 @@ MTypeId ImplicitSkinDeformer::id(0xEA115);
 MObject ImplicitSkinDeformer::dataAttr;
 MObject ImplicitSkinDeformer::geomMatrixAttr;
 MObject ImplicitSkinDeformer::influenceBindMatrixAttr;
+MObject ImplicitSkinDeformer::influenceJointsAttr;
 MObject ImplicitSkinDeformer::influenceMatrixAttr;
 
 MStatus ImplicitSkinDeformer::initialize()
@@ -105,15 +108,20 @@ MStatus ImplicitSkinDeformer::initialize()
     attributeAffects(ImplicitSkinDeformer::geomMatrixAttr, ImplicitSkinDeformer::outputGeom);
 
     influenceBindMatrixAttr = mAttr.create("influenceBindMatrix", "ibm");
-    mAttr.setArray(true);
     addAttribute(influenceBindMatrixAttr);
-    attributeAffects(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::outputGeom);
+    attributeAffects(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::outputGeom); // XXX ?
 
     influenceMatrixAttr = mAttr.create("matrix", "ma");
-    mAttr.setArray(true);
-    mAttr.setConnectable(true);
     addAttribute(influenceMatrixAttr);
-    attributeAffects(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom);
+    attributeAffects(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom); // XXX ?
+
+    MFnCompoundAttribute cmpAttr;
+    influenceJointsAttr = cmpAttr.create("joints", "jt", &status);
+    cmpAttr.setArray(true);
+    cmpAttr.addChild(influenceBindMatrixAttr);
+    cmpAttr.addChild(influenceMatrixAttr);
+    addAttribute(influenceJointsAttr);
+    attributeAffects(ImplicitSkinDeformer::influenceJointsAttr, ImplicitSkinDeformer::outputGeom);
 
     return MStatus::kSuccess;
 }
@@ -137,12 +145,8 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
 
     MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
 
-    // Get the world transforms the joints had at bind time.
-    MArrayDataHandle influenceBindMatrixHandle = dataBlock.inputArrayValue(influenceBindMatrixAttr, &status);
-    if(status != MS::kSuccess) return status;
-
-    // Get the world transforms the joints have now.
-    MArrayDataHandle influenceMatrixHandle = dataBlock.inputArrayValue(influenceMatrixAttr, &status);
+    // Get the joint array.
+    MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
 
     // Update the skeleton.
@@ -151,19 +155,29 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     // The root joint is a dummy, and doesn't correspond with a Maya transform.
     bone_transforms.push_back(Transfo::identity());
     
-    for(int i = 0; i < (int) influenceMatrixHandle.elementCount(); ++i)
+    for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
+        status = influenceJointsHandle.jumpToElement(i);
+
+        // The world transform the joint has now:
+        MDataHandle matrixHandle = influenceJointsHandle.inputValue(&status).child(influenceMatrixAttr);
+        if(status != MS::kSuccess) return status;
+        
+        // The world transform the joint had at bind time:
+        MDataHandle bindMatrixHandle = influenceJointsHandle.inputValue(&status).child(influenceBindMatrixAttr);
+        if(status != MS::kSuccess) return status;
+
         // We need to get the change to the joint's transformation compared to when it was bound.
         // Maya gets this by multiplying the current worldMatrix against the joint's bindPreMatrix.
         // However, it's doing that in world space; we need it in object space.
         // XXX: There's probably a way to do this that doesn't require two matrix inversions.  It's
         // probably not worth caching, though.
-        MMatrix bindPreMatrixWorldSpace = DagHelpers::readArrayHandleLogicalIndex<MMatrix>(influenceBindMatrixHandle, i, &status); // original inverted world space transform
+        MMatrix bindPreMatrixWorldSpace = DagHelpers::readHandle<MMatrix>(bindMatrixHandle, &status); // original inverted world space transform
         MMatrix bindMatrixWorldSpace = bindPreMatrixWorldSpace.inverse();                // original (non-inverted) world space transform
         MMatrix bindMatrixObjectSpace = bindMatrixWorldSpace * worldToObjectSpaceMat;    // original object space transform
         MMatrix bindMatrixObjectSpaceInv = bindMatrixObjectSpace.inverse();              // original inverted object space transform
 
-        MMatrix jointTransformWorldSpace = DagHelpers::readArrayHandleLogicalIndex<MMatrix>(influenceMatrixHandle, i, &status); // current world space transform
+        MMatrix jointTransformWorldSpace = DagHelpers::readHandle<MMatrix>(matrixHandle, &status); // current world space transform
 
         MMatrix currentTransformObjectSpace = jointTransformWorldSpace * worldToObjectSpaceMat; // current object space transform
         MMatrix changeToTransform = bindMatrixObjectSpaceInv * currentTransformObjectSpace; // joint transform relative to bind pose in object space
@@ -249,6 +263,7 @@ void ImplicitSkinDeformer::setup(const Loader::Abs_mesh &loader_mesh, const Load
     cudaCtrl._skeleton.load(loader_skeleton);
 
     // Tell cudaCtrl that we've loaded both the mesh and the skeleton.  This could be simplified.
+    // XXX: always load the skeleton first, and move load_animesh into load_mesh?
     cudaCtrl.load_animesh();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
@@ -404,14 +419,13 @@ MStatus ImplicitCommand::setup(MString nodeName)
         return MS::kFailure;
     }
 
+
     // For each influence going into the skinCluster's .matrix array, connect it to our .matrix array
     // as well.
-    MPlug influenceInfluenceMatrix(implicitPlug.node(), ImplicitSkinDeformer::influenceMatrixAttr);
+    MPlug jointArrayPlug(implicitPlug.node(), ImplicitSkinDeformer::influenceJointsAttr);
 
     {
         MFnDependencyNode skinClusterDep(skinClusterPlug.node());
-        
-        MPlug skinClusterInputMatrix(skinClusterPlug.node(), ImplicitSkinDeformer::influenceBindMatrixAttr);
         const MObject skinClusterMatrixObject = skinClusterDep.attribute("matrix", &status);
         if(status != MS::kSuccess) return status;
 
@@ -442,7 +456,10 @@ MStatus ImplicitCommand::setup(MString nodeName)
             int elementLogicalIndex = skinClusterMatrixElementPlug.logicalIndex(&status);
             if(status != MS::kSuccess) return status;
 
-            MPlug matrixElementPlug = influenceInfluenceMatrix.elementByLogicalIndex(elementLogicalIndex, &status);
+            MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(elementLogicalIndex, &status);
+            if(status != MS::kSuccess) return status;
+
+            MPlug matrixElementPlug = jointPlug.child(ImplicitSkinDeformer::influenceMatrixAttr, &status);
             if(status != MS::kSuccess) return status;
 
             status = dgModifer.connect(connectionPlug, matrixElementPlug);
@@ -458,10 +475,8 @@ MStatus ImplicitCommand::setup(MString nodeName)
 
     {
         MFnDependencyNode skinClusterDep(skinClusterPlug.node());
-
         const MObject bindPreMatrixObject = skinClusterDep.attribute("bindPreMatrix", &status);
         if(status != MS::kSuccess) return status;
-
 
         MPlug bindPreMatrixArray(skinClusterPlug.node(), bindPreMatrixObject);
         bindPreMatrixArray.evaluateNumElements(&status);
@@ -486,7 +501,10 @@ MStatus ImplicitCommand::setup(MString nodeName)
             int elementLogicalIndex = bindPreMatrix.logicalIndex(&status);
             if(status != MS::kSuccess) return status;
 
-            MPlug item = influenceBindMatrix.elementByLogicalIndex(elementLogicalIndex, &status);
+            MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(elementLogicalIndex, &status);
+            if(status != MS::kSuccess) return status;
+
+            MPlug item = jointPlug.child(ImplicitSkinDeformer::influenceBindMatrixAttr, &status);
             if(status != MS::kSuccess) return status;
 
             status = item.setValue(matObj);
