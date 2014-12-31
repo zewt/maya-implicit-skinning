@@ -516,7 +516,8 @@ MStatus ImplicitSkinDeformer::load_sampleset()
 
     // XXX: base potential should depend on both the input geometry and sampleSetUpdateAttr
     // add a basePotentialDep attribute
-    cudaCtrl._anim_mesh->update_base_potential();
+    // XXX: need to load the base mesh when we do this
+//    cudaCtrl._anim_mesh->update_base_potential();
 
     return MStatus::kSuccess;
 }
