@@ -229,6 +229,10 @@ void Skeleton::set_bone(int i, Bone* b)
     delete _anim_bones[i];
     _anim_bones[i] = b;
 
+    // Update _anim_bones (and HRBF/precomputed equivalents) for the new bone.
+    // XXX: We're updating all bones, which means we're updating n^2 bones when we
+    // convert all bones to precomputed.  Check if this is a performance issue.
+    update_bones_pose();
 //    // TODO: to be deleted update_hrbf_id_to_bone_id();
 }
 
