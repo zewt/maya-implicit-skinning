@@ -63,19 +63,8 @@ public:
     /// @return identifier of the root bone
     int root();
 
-    Vec3_cu joint_pos(int idx);
-
-    /// Get local frame of the bone ( fx will  be oriented along the bone)
-    /// no asumption can be done for fy and fz
-    void joint_anim_frame(int id_bone,
-                          Vec3_cu& fx,
-                          Vec3_cu& fy,
-                          Vec3_cu& fz);
-
     // Set the current joint transforms.
     void set_transforms(const std::vector<Transfo> &transfos);
-
-    Transfo joint_anim_frame(int id_bone);
 
     Transfo bone_anim_frame(int id_bone);
 

@@ -55,32 +55,6 @@ void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
 
 bool Skeleton_ctrl::is_loaded() const { return skel != 0; }
 
-Vec3_cu Skeleton_ctrl::joint_pos(int idx) {
-    return skel->joint_pos(idx);
-}
-
-// -----------------------------------------------------------------------------
-
-void Skeleton_ctrl::joint_anim_frame(int id_bone,
-                              Vec3_cu& fx,
-                              Vec3_cu& fy,
-                              Vec3_cu& fz)
-{
-    Mat3_cu m = skel->joint_anim_frame(id_bone).get_mat3();
-    fx = m.x();
-    fy = m.y();
-    fz = m.z();
-}
-
-// -----------------------------------------------------------------------------
-
-Transfo Skeleton_ctrl::joint_anim_frame(int id_joint)
-{
-    return skel->joint_anim_frame( id_joint );
-}
-
-// -----------------------------------------------------------------------------
-
 Transfo Skeleton_ctrl::bone_anim_frame(int id_bone)
 {
     return skel->bone_anim_frame( id_bone );

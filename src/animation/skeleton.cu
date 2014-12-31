@@ -92,7 +92,6 @@ void Skeleton::init(int nb_joints)
     _children.resize(nb_joints);
     _parents.resize(nb_joints);
     _frames.resize(nb_joints);
-    _anim_frames.resize(nb_joints);
     _joints_data.resize(nb_joints);
     _anim_bones.resize(nb_joints);
     _bones.resize(nb_joints);
@@ -284,12 +283,6 @@ float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
     return _hrbf_radius[bone_id];
 }
 
-Vec3_cu Skeleton::joint_pos(int joint) const {
-    assert(joint >= 0        );
-    assert(joint <  _nb_joints);
-    return _anim_frames[joint].get_translation();
-}
-
 void SkeletonImpl::transform_hrbf(Skeleton *self, const Cuda_utils::Device::Array<Transfo>& d_global_transfos)
 {
     for (int i = 0; i < self->nb_joints(); ++i)
@@ -348,8 +341,6 @@ void Skeleton::update_bones_pose()
 void SkeletonImpl::subupdate_vertices(Skeleton *self,  int root, const HPLA_tr& global_transfos)
 {
     const Transfo tr = global_transfos[root];
-    self->_anim_frames[root] = tr * self->_frames[root];
-
     Bone_cu b = self->_bones[root];
     self->_anim_bones[root]->set_length( b.length() );
     self->_anim_bones[root]->set_orientation(tr * b.org(), tr * b.dir());

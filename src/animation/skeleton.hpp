@@ -138,12 +138,6 @@ struct Skeleton {
   /// Get the number of joints in the skeleton
   int nb_joints() const { return _nb_joints; }
 
-  /// Get the position of a joint in animated position
-  Vec3_cu joint_pos(int joint) const;
-
-  /// Get the frame of the joint in animated position
-  Transfo joint_anim_frame(int joint) const { return _anim_frames[joint];  }
-
   /// Get the frame of the bone in animated position
   Transfo bone_anim_frame(int bone) const;
 
@@ -246,9 +240,6 @@ private:
 
   /// Joints frames in rest position
   std::vector<Transfo> _frames;
-
-  /// Joints frame animated
-  std::vector<Transfo> _anim_frames;
 
   int _nb_joints;
   /// Id root joint
