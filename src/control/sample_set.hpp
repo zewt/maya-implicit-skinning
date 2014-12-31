@@ -57,6 +57,22 @@ struct InputSample
     HSample_list _sample_list;
 
     float _junction_radius;
+
+    // Enable or disable joint and parent caps for the ith bone.  update_caps() must be called
+    // after this is changed.
+    void set_jcap(bool state);
+    void set_pcap(bool state);
+
+    // Add one or multiple samples to a bone, given a position and a normal.
+    // Return the sample index.
+    int add_sample(const Vec3_cu& p, const Vec3_cu& n);
+    void add_samples(const std::vector<Vec3_cu>& p, const std::vector<Vec3_cu>& n);
+
+    /// Given a 'bone_id' and its sample index, delete the sample.
+    void delete_sample(int index);
+
+    // Erase all samples from a bone.
+    void clear();
 };
 
 struct SampleSet
@@ -84,23 +100,7 @@ struct SampleSet
     // Re-compute caps samples. Useful when the skeleton joints change of position
     void update_caps(const Skeleton &skel, int bone_id, bool jcap, bool pcap);
 
-    // Enable or disable joint and parent caps for the ith bone.  update_caps() must be called
-    // after this is changed.
-    void set_jcap(int bone_id, bool state);
-    void set_pcap(int bone_id, bool state);
-
     int get_all_bone_samples(const Skeleton &skel, int bone_id, std::vector<Vec3_cu> &nodes, std::vector<Vec3_cu> &n_nodes) const;
-
-    // Add one or multiple samples to a bone, given a position and a normal.
-    // Return the sample index.
-    int add_sample(int bone_id, const Vec3_cu& p, const Vec3_cu& n);
-    void add_samples(int bone_id, const std::vector<Vec3_cu>& p, const std::vector<Vec3_cu>& n);
-
-    /// Given a 'bone_id' and its sample index, delete the sample.
-    void delete_sample(int bone_id, int index);
-
-    // Erase all samples from a bone.
-    void clear(int bone_id);
 
     /// Write the section related to the hrbf samples in '.ism' files
     void write_hrbf_env(std::ofstream& file) const;

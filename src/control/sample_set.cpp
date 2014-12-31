@@ -202,54 +202,50 @@ void SampleSet::SampleSet::update_caps(const Skeleton &skel, int bone_id, bool j
     }
 }
 
-void SampleSet::SampleSet::set_jcap(int bone_id, bool state)
+void SampleSet::InputSample::set_jcap(bool state)
 {
-    _samples[bone_id]._bone_cap.jcap.enable = state;
+    _bone_cap.jcap.enable = state;
 }
 
-void SampleSet::SampleSet::set_pcap(int bone_id, bool state)
+void SampleSet::InputSample::set_pcap(bool state)
 {
-    _samples[bone_id]._bone_cap.pcap.enable = state;
+    _bone_cap.pcap.enable = state;
 }
 
-void SampleSet::SampleSet::delete_sample(int bone_id, int idx)
+void SampleSet::InputSample::delete_sample(int idx)
 {
-    std::vector<Vec3_cu>::iterator it = _samples[bone_id]._sample_list.nodes.begin();
-    _samples[bone_id]._sample_list.nodes  .erase( it+idx );
-    it = _samples[bone_id]._sample_list.n_nodes.begin();
-    _samples[bone_id]._sample_list.n_nodes.erase( it+idx );
-}
-
-// -----------------------------------------------------------------------------
-
-void SampleSet::SampleSet::clear(int bone_id)
-{
-    _samples[bone_id]._sample_list.nodes.  clear();
-    _samples[bone_id]._sample_list.n_nodes.clear();
+    std::vector<Vec3_cu>::iterator it = _sample_list.nodes.begin();
+    _sample_list.nodes  .erase( it+idx );
+    it = _sample_list.n_nodes.begin();
+    _sample_list.n_nodes.erase( it+idx );
 }
 
 // -----------------------------------------------------------------------------
 
-int SampleSet::SampleSet::add_sample(int bone_id,
-                                   const Vec3_cu& p,
-                                   const Vec3_cu& n)
+void SampleSet::InputSample::clear()
 {
-    _samples[bone_id]._sample_list.nodes.  push_back(p);
-    _samples[bone_id]._sample_list.n_nodes.push_back(n);
-
-    return (int) _samples[bone_id]._sample_list.nodes.size()-1;
+    _sample_list.nodes.  clear();
+    _sample_list.n_nodes.clear();
 }
 
 // -----------------------------------------------------------------------------
 
-void SampleSet::SampleSet::add_samples(int bone_id,
-                                     const std::vector<Vec3_cu>& p,
-                                     const std::vector<Vec3_cu>& n)
+int SampleSet::InputSample::add_sample(const Vec3_cu& p, const Vec3_cu& n)
+{
+    _sample_list.nodes.  push_back(p);
+    _sample_list.n_nodes.push_back(n);
+
+    return (int) _sample_list.nodes.size()-1;
+}
+
+// -----------------------------------------------------------------------------
+
+void SampleSet::InputSample::add_samples(const std::vector<Vec3_cu>& p, const std::vector<Vec3_cu>& n)
 {
     assert(p.size() == n.size());
 
-    _samples[bone_id]._sample_list.nodes.insert(_samples[bone_id]._sample_list.nodes.end(), p.begin(), p.end());
-    _samples[bone_id]._sample_list.n_nodes.insert(_samples[bone_id]._sample_list.n_nodes.end(), n.begin(), n.end());
+    _sample_list.nodes.insert(_sample_list.nodes.end(), p.begin(), p.end());
+    _sample_list.n_nodes.insert(_sample_list.n_nodes.end(), n.begin(), n.end());
 }
 
 void SampleSet::SampleSet::write_hrbf_env(std::ofstream& file) const
