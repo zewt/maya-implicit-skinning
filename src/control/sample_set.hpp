@@ -32,26 +32,35 @@ struct Skeleton;
 
 namespace SampleSet
 {
-struct Cap {
-    Cap() { enable = false; }
-    std::vector<Vec3_cu> nodes;
-    std::vector<Vec3_cu> n_nodes;
-    bool enable;
-};
-
-struct Cap_list {
-    Cap jcap;
-    Cap pcap;
-};
-
 struct HSample_list {
     std::vector<Vec3_cu> nodes;
     std::vector<Vec3_cu> n_nodes;
+
+    void clear()
+    {
+        nodes.clear();
+        n_nodes.clear();
+    }
+
+    void append(const HSample_list &rhs)
+    {
+        nodes.insert(nodes.end(), rhs.nodes.begin(), rhs.nodes.end());
+        n_nodes.insert(n_nodes.end(), rhs.n_nodes.begin(), rhs.n_nodes.end());
+    }
+};
+
+struct Cap {
+    Cap() { enable = false; }
+    HSample_list samples;
+    bool enable;
 };
 
 struct InputSample
 {
-    Cap_list _bone_cap;
+    InputSample(): _junction_radius(0) { }
+
+    Cap jcap;
+    Cap pcap;
 
     /// List of samples
     HSample_list _sample_list;
@@ -100,7 +109,7 @@ struct SampleSet
     // Re-compute caps samples. Useful when the skeleton joints change of position
     void update_caps(const Skeleton &skel, int bone_id, bool jcap, bool pcap);
 
-    int get_all_bone_samples(const Skeleton &skel, int bone_id, std::vector<Vec3_cu> &nodes, std::vector<Vec3_cu> &n_nodes) const;
+    int get_all_bone_samples(const Skeleton &skel, int bone_id, HSample_list &out) const;
 
     /// Write the section related to the hrbf samples in '.ism' files
     void write_hrbf_env(std::ofstream& file) const;
@@ -120,17 +129,14 @@ private:
     void transform_caps(int bone_id, const Transfo& tr);
 
     /// Compute caps at the tip of the bone to close the hrbf
-    void compute_jcaps(const Skeleton &skel, int bone_id,
-                                 std::vector<Vec3_cu>& out_verts,
-                                 std::vector<Vec3_cu>& out_normals) const;
+    void compute_jcaps(const Skeleton &skel, int bone_id, HSample_list &out) const;
 
     /// Compute caps at the tip of the bone to close the hrbf
     /// @param use_parent_dir: add the cap following the parent direction and
     /// not the direction of 'bone_id'
     void compute_pcaps(const Skeleton &skel, int bone_id,
                                      bool use_parent_dir,
-                                     std::vector<Vec3_cu>& out_verts,
-                                     std::vector<Vec3_cu>& out_normals) const;
+                                     HSample_list &out) const;
 };
 
 }

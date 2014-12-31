@@ -115,9 +115,7 @@ void SampleSet::SampleSet::choose_hrbf_samples_poisson(const Animesh &animesh,
                 _samples[bone_id]._sample_list.n_nodes);
 }
 
-void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, int bone_id,
-                                 std::vector<Vec3_cu>& out_verts,
-                                 std::vector<Vec3_cu>& out_normals) const
+void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, int bone_id, HSample_list &out) const
 {
     const Bone* b = skel.get_bone(bone_id);
 
@@ -130,16 +128,15 @@ void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, int bone_id,
 
     Point_cu p = b->end() + b->dir().normalized() * jrad;
     Vec3_cu  n = b->dir().normalized();
-    out_verts.  push_back( p );
-    out_normals.push_back( n );
+    out.nodes.  push_back( p );
+    out.n_nodes.push_back( n );
 
     //add_circle(jrad, b->get_org(), n, out_verts, out_normals);
 }
 
 void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, int bone_id,
                                  bool use_parent_dir,
-                                 std::vector<Vec3_cu>& out_verts,
-                                 std::vector<Vec3_cu>& out_normals) const
+                                 HSample_list &out) const
 {
     const Bone* b = skel.get_bone(bone_id);
     int parent = skel.parent(bone_id);
@@ -158,58 +155,45 @@ void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, int bone_id,
         p =  b->org() - b->dir().normalized() * prad;
         n = -b->dir().normalized();
     }
-    out_verts.  push_back(p);
-    out_normals.push_back(n);
+    out.nodes.push_back(p);
+    out.n_nodes.push_back(n);
     //add_circle(prad, b->get_org() + b->get_dir(), n, out_verts, out_normals);
 }
 
 
 void SampleSet::SampleSet::update_caps(const Skeleton &skel, int bone_id, bool jcap, bool pcap)
 {
-    std::vector<Vec3_cu>& jnodes   = _samples[bone_id]._bone_cap.jcap.nodes;
-    std::vector<Vec3_cu>& jn_nodes = _samples[bone_id]._bone_cap.jcap.n_nodes;
-
-    std::vector<Vec3_cu>& pnodes   = _samples[bone_id]._bone_cap.pcap.nodes;
-    std::vector<Vec3_cu>& pn_nodes = _samples[bone_id]._bone_cap.pcap.n_nodes;
-
     if(jcap && !skel.is_leaf(bone_id))
     {
-        jnodes.  clear();
-        jn_nodes.clear();
-        compute_jcaps(skel, bone_id, jnodes, jn_nodes);
+        _samples[bone_id].jcap.samples.clear();
+        compute_jcaps(skel, bone_id, _samples[bone_id].jcap.samples);
     }
 
     if(pcap)
     {
         int parent = skel.parent( bone_id );
+        bool use_parent_dir = false;
         if(_factor_bones && parent != -1)
         {
             const std::vector<int>& sons = skel.get_sons( parent );
             assert(sons.size() > 0);
-            _samples[ sons[0] ]._bone_cap.pcap.nodes.  clear();
-            _samples[ sons[0] ]._bone_cap.pcap.n_nodes.clear();
-            compute_pcaps(skel, sons[0],
-                                    (sons.size() > 1),
-                                    _samples[ sons[0] ]._bone_cap.pcap.nodes,
-                                    _samples[ sons[0] ]._bone_cap.pcap.n_nodes);
+            bone_id = sons[0];
+            use_parent_dir = sons.size() > 1;
         }
-        else
-        {
-            pnodes.  clear();
-            pn_nodes.clear();
-            compute_pcaps(skel, bone_id, false, pnodes, pn_nodes);
-        }
+
+        _samples[bone_id].pcap.samples.clear();
+        compute_pcaps(skel, bone_id, use_parent_dir, _samples[bone_id].pcap.samples);
     }
 }
 
 void SampleSet::InputSample::set_jcap(bool state)
 {
-    _bone_cap.jcap.enable = state;
+    jcap.enable = state;
 }
 
 void SampleSet::InputSample::set_pcap(bool state)
 {
-    _bone_cap.pcap.enable = state;
+    pcap.enable = state;
 }
 
 void SampleSet::InputSample::delete_sample(int idx)
@@ -224,8 +208,7 @@ void SampleSet::InputSample::delete_sample(int idx)
 
 void SampleSet::InputSample::clear()
 {
-    _sample_list.nodes.  clear();
-    _sample_list.n_nodes.clear();
+    _sample_list.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -308,23 +291,23 @@ void SampleSet::SampleSet::transform_samples(const std::vector<Transfo> &transfo
 void SampleSet::SampleSet::transform_caps(int bone_id, const Transfo& tr)
 {
     // Transform jcaps
-    if(_samples[bone_id]._bone_cap.jcap.enable)
-        for(unsigned j = 0; j < _samples[bone_id]._bone_cap.jcap.nodes.size(); j++)
+    if(_samples[bone_id].jcap.enable)
+        for(unsigned j = 0; j < _samples[bone_id].jcap.samples.nodes.size(); j++)
         {
-            Point_cu p = Convs::to_point(_samples[bone_id]._bone_cap.jcap.nodes[j]);
-            Vec3_cu  n = _samples[bone_id]._bone_cap.jcap.n_nodes[j];
-            _samples[bone_id]._bone_cap.jcap.nodes  [j] = Convs::to_vector(tr * p);
-            _samples[bone_id]._bone_cap.jcap.n_nodes[j] = tr * n;
+            Point_cu p = Convs::to_point(_samples[bone_id].jcap.samples.nodes[j]);
+            Vec3_cu  n = _samples[bone_id].jcap.samples.n_nodes[j];
+            _samples[bone_id].jcap.samples.nodes  [j] = Convs::to_vector(tr * p);
+            _samples[bone_id].jcap.samples.n_nodes[j] = tr * n;
         }
 
     // Transform pcaps
-    if(_samples[bone_id]._bone_cap.pcap.enable)
-        for(unsigned j = 0; j < _samples[bone_id]._bone_cap.pcap.nodes.size(); j++)
+    if(_samples[bone_id].pcap.enable)
+        for(unsigned j = 0; j < _samples[bone_id].pcap.samples.nodes.size(); j++)
         {
-            Point_cu p = Convs::to_point(_samples[bone_id]._bone_cap.pcap.nodes[j]);
-            Vec3_cu  n = _samples[bone_id]._bone_cap.pcap.n_nodes[j];
-            _samples[bone_id]._bone_cap.pcap.nodes  [j] = Convs::to_vector(tr * p);
-            _samples[bone_id]._bone_cap.pcap.n_nodes[j] = tr * n;
+            Point_cu p = Convs::to_point(_samples[bone_id].pcap.samples.nodes[j]);
+            Vec3_cu  n = _samples[bone_id].pcap.samples.n_nodes[j];
+            _samples[bone_id].pcap.samples.nodes  [j] = Convs::to_vector(tr * p);
+            _samples[bone_id].pcap.samples.n_nodes[j] = tr * n;
         }
 }
 
@@ -337,7 +320,7 @@ int SampleSet::SampleSet::compute_nb_samples() const
     return acc;
 }
 
-int SampleSet::SampleSet::get_all_bone_samples(const Skeleton &skel, int bone_id, std::vector<Vec3_cu> &nodes, std::vector<Vec3_cu> &n_nodes) const
+int SampleSet::SampleSet::get_all_bone_samples(const Skeleton &skel, int bone_id, HSample_list &out) const
 {
     std::vector<int> sons;
     if( _factor_bones && bone_id != skel.root() )
@@ -353,23 +336,20 @@ int SampleSet::SampleSet::get_all_bone_samples(const Skeleton &skel, int bone_id
     }
 
     // Concat nodes and normals
-    nodes = _samples[bone_id]._sample_list.nodes;
-    n_nodes = _samples[bone_id]._sample_list.n_nodes;
+    out.append(_samples[bone_id]._sample_list);
 
     // concat joint caps
     for( unsigned i = 0; i < sons.size(); i++) {
         int bid = sons[i];
-        if(!_samples[bid]._bone_cap.jcap.enable || skel.is_leaf(bid))
+        if(!_samples[bid].jcap.enable || skel.is_leaf(bid))
             continue;
 
-        nodes.insert(nodes.end(), _samples[bid]._bone_cap.jcap.nodes.begin(), _samples[bid]._bone_cap.jcap.nodes.end());
-        n_nodes.insert(n_nodes.end(),  _samples[bid]._bone_cap.jcap.n_nodes.begin(),  _samples[bid]._bone_cap.jcap.n_nodes.end());
+        out.append(_samples[bid].jcap.samples);
     }
 
     // concat parent caps
-    if(_samples[bone_id]._bone_cap.pcap.enable) {
-        nodes.insert(nodes.begin(), _samples[bone_id]._bone_cap.pcap.nodes.begin(), _samples[bone_id]._bone_cap.pcap.nodes.end() );
-        n_nodes.insert(n_nodes.begin(), _samples[bone_id]._bone_cap.pcap.n_nodes.begin(), _samples[bone_id]._bone_cap.pcap.n_nodes.end());
+    if(_samples[bone_id].pcap.enable) {
+        out.append(_samples[bone_id].pcap.samples);
     }
 
     return bone_id;
