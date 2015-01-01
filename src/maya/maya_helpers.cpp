@@ -77,11 +77,11 @@ namespace DagHelpers
     }
 
 
-    MStatus getConnectedPlugWithName(MPlug inputPlug, std::string name, MPlug &result)
+    MStatus getConnectedPlugWithName(MObject inputNode, std::string name, MObject &result)
     {
         MStatus status = MStatus::kSuccess;
 
-        MFnDependencyNode inputPlugDep(inputPlug.node());
+        MFnDependencyNode inputPlugDep(inputNode);
         MObject geomObj = inputPlugDep.attribute(name.c_str(), &status);
         if(status != MS::kSuccess)
         {
@@ -89,7 +89,7 @@ namespace DagHelpers
             return status;
         }
 
-        MPlug geomObjPlug(inputPlug.node(), geomObj);
+        MPlug geomObjPlug(inputNode, geomObj);
     
         MPlugArray connPlugs;
         geomObjPlug.connectedTo(connPlugs, true, false);
@@ -99,7 +99,7 @@ namespace DagHelpers
             return MStatus::kFailure;
         }
 
-        result = connPlugs[0];
+        result = connPlugs[0].node();
         return MStatus::kSuccess;
     }
 
@@ -113,17 +113,17 @@ namespace DagHelpers
     }
 
     
-    MStatus findAncestorDeformer(MPlug inputPlug, MFn::Type type, MPlug &resultPlug)
+    MStatus findAncestorDeformer(MObject node, MFn::Type type, MObject &resultNode)
     {
         while(true)
         {
-            MStatus status = DagHelpers::getConnectedPlugWithName(inputPlug, "inputGeometry", inputPlug);
+            MStatus status = DagHelpers::getConnectedPlugWithName(node, "inputGeometry", node);
             if(status != MS::kSuccess)
                 return status;
 
-            if(inputPlug.node().apiType() == type)
+            if(node.apiType() == type)
             {
-                resultPlug = inputPlug;
+                resultNode = node;
                 return MStatus::kSuccess;
             }
         }
@@ -132,10 +132,10 @@ namespace DagHelpers
     static int compare_length(const MDagPath &lhs, const MDagPath &rhs) { return lhs.fullPathName().length() < rhs.fullPathName().length(); }
 
     /* Return the names of the skinCluster's influence objects, sorted parents before children. */
-    MStatus getMDagPathsFromSkinCluster(MPlug skinClusterPlug, std::vector<MDagPath> &out)
+    MStatus getMDagPathsFromSkinCluster(MObject skinClusterNode, std::vector<MDagPath> &out)
     {
         MStatus status = MStatus::kSuccess;
-        MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
+        MFnSkinCluster skinCluster(skinClusterNode, &status);
         if(status != MS::kSuccess) return status;
 
         // Get the influence objects (joints) for the skin cluster.
@@ -186,7 +186,7 @@ namespace DagHelpers
 
 
 
-    MStatus getInputGeometryForSkinClusterPlug(MPlug skinClusterPlug, MObject &plug)
+    MStatus getInputGeometryForSkinClusterPlug(MObject skinClusterNode, MPlug &outPlug)
     {
         // This gets the original geometry, not the geometry input into the skinCluster:
         /*
@@ -206,10 +206,10 @@ namespace DagHelpers
         */
 
         MStatus status = MStatus::kSuccess;
-        MObject inputAttr = MFnDependencyNode(skinClusterPlug.node()).attribute("input", &status);
+        MObject inputAttr = MFnDependencyNode(skinClusterNode).attribute("input", &status);
         if(status != MS::kSuccess) return status;
 
-        MPlug inputPlug(skinClusterPlug.node(), inputAttr);
+        MPlug inputPlug(skinClusterNode, inputAttr);
         if(status != MS::kSuccess) return status;
 
         // Select input[0].  skinClusters only support a single input.
@@ -220,25 +220,15 @@ namespace DagHelpers
         MObject inputObject = inputPlugDep.attribute("inputGeometry", &status);
         if(status != MS::kSuccess) return status;
             
-        inputPlug = inputPlug.child(inputObject, &status);
-        if(status != MS::kSuccess) return status;
-
-        status = inputPlug.getValue(plug);
-        if(status != MS::kSuccess) return status;
-
-        return MStatus::kSuccess;
+        outPlug = inputPlug.child(inputObject, &status);
+        return status;
     }
 
-    MStatus setMatrixPlug(MPlug plug, MObject attr, MMatrix matrix)
+    MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix)
     {
         MStatus status;
 
-        MFnDependencyNode plugDep(plug.node(), &status);
-        if(status != MS::kSuccess) return status;
-
-        // Find the worldMatrixInverse plug.
-        MPlug attrPlug = plugDep.findPlug(attr, &status);
-        if(status != MS::kSuccess) return status;
+        MPlug attrPlug(node, attr);
 
         // Create a MFnMatrixData holding the matrix.
         MFnMatrixData fnMat;
@@ -251,6 +241,23 @@ namespace DagHelpers
         if(status != MS::kSuccess) return status;
 
         return MStatus::kSuccess;
+    }
+
+    MStatus getMatrixPlug(MObject node, MObject attr, MMatrix &matrix)
+    {
+        MStatus status;
+        MPlug attrPlug(node, attr);
+
+        MObject matObj;
+        status = attrPlug.getValue(matObj);
+        if(status != MS::kSuccess) return status;
+
+        // Create a MFnMatrixData holding the matrix.
+        MFnMatrixData fnMat(matObj, &status);
+        if(status != MS::kSuccess) return status;
+        matrix = fnMat.matrix(&status);
+
+        return status;
     }
 
     //---------------------------------------------------
@@ -1420,6 +1427,58 @@ namespace DagHelpers
         return parent.numElements() +1;
     }
 #endif
+
+// Changes to from affect to, and everything that to effects.
+void MayaDependencies::add(const MObject &from, const MObject &to)
+{
+    dependencies[&from].insert(&to);
+}
+
+// Apply all dependencies.
+MStatus MayaDependencies::apply()
+{
+    set<const MObject *> stack;
+    MStatus status = MStatus::kSuccess;
+
+    // Apply each dependency from it source to its destination.
+    for(map<const MObject*, set<const MObject*> >::iterator it = dependencies.begin(); it != dependencies.end(); ++it)
+    {
+        const MObject *from = it->first;
+        const set<const MObject*> &deps = it->second;
+        for(set<const MObject*>::iterator it2 = deps.begin(); it2 != deps.end(); ++it2)
+        {
+            MStatus status = apply_one(from, *it2, stack);
+            if(status != MS::kSuccess) return status;
+        }
+    }
+
+    return MStatus::kSuccess;
+}
+
+MStatus MayaDependencies::apply_one(const MObject *from, const MObject *to, set<const MObject*> &stack)
+{
+    MStatus status = MS::kSuccess;
+
+    // If this assertion triggers, there's a circular dependency.
+    assert(stack.find(to) == stack.end());
+
+    status = MPxNode::attributeAffects(*from, *to);
+    if(status != MS::kSuccess) return status;
+
+    stack.insert(to);
+
+    const set<const MObject *> &deps = dependencies[to];
+    for(set<const MObject*>::iterator it = deps.begin(); it != deps.end(); ++it)
+    {
+        status = apply_one(from, *it, stack);
+        if(status != MS::kSuccess) break;
+    }
+
+    stack.erase(to);
+
+    return status;
+}
+
 }
 
 

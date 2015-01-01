@@ -14,28 +14,44 @@
 #include <maya/MDagPath.h>
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
+using namespace std;
 
 #include "transfo.hpp"
 
 namespace DagHelpers
 {
+    // This exists only to work around Maya's float3, etc. vector types.  They're array typedefs,
+    // which is inconsistent with the other types in that it can't be returned by value.
+    struct simpleFloat3 {
+        simpleFloat3(): x(0), y(0), z(0) { }
+        simpleFloat3(float3 value): x(value[0]), y(value[1]), z(value[2]) { }
+        void to_float3(float3 &value) { value[0] = x; value[1] = y; value[2] = z; }
+
+        float x, y, z;
+    };
     Transfo MMatrixToTransfo(const MMatrix &mmat);
 
-    MStatus getConnectedPlugWithName(MPlug inputPlug, std::string name, MPlug &result);
+    MStatus getConnectedPlugWithName(MObject inputNode, std::string name, MObject &result);
     MMatrix getMatrixFromPlug(MPlug plug, MStatus *status);
-    MStatus findAncestorDeformer(MPlug inputPlug, MFn::Type type, MPlug &resultPlug);
-    MStatus getMDagPathsFromSkinCluster(MPlug skinClusterPlug, std::vector<MDagPath> &out);
+    MStatus findAncestorDeformer(MObject node, MFn::Type type, MObject &resultNode);
+    MStatus getMDagPathsFromSkinCluster(MObject skinClusterNode, std::vector<MDagPath> &out);
     int findClosestAncestor(const std::vector<MDagPath> &dagPaths, MDagPath dagPath);
-    MStatus getInputGeometryForSkinClusterPlug(MPlug skinClusterPlug, MObject &plug);
-    MStatus setMatrixPlug(MPlug plug, MObject attr, MMatrix matrix);
+    MStatus getInputGeometryForSkinClusterPlug(MObject skinClusterNode, MPlug &outPlug);
+    MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix);
+    MStatus getMatrixPlug(MObject node, MObject attr, MMatrix &matrix);
 
 
     template<class T>
     T readHandle(MDataHandle handle, MStatus *status);
 
     template<> inline MDataHandle readHandle(MDataHandle handle, MStatus *status) { return handle; }
+    template<> inline int readHandle(MDataHandle handle, MStatus *status) { return handle.asInt(); }
+    template<> inline float readHandle(MDataHandle handle, MStatus *status) { return handle.asFloat(); }
     template<> inline MMatrix readHandle(MDataHandle handle, MStatus *status) { return handle.asMatrix(); }
     template<> inline bool readHandle(MDataHandle handle, MStatus *status) { return handle.asBool(); }
+    template<> inline simpleFloat3 readHandle(MDataHandle handle, MStatus *status) { return (simpleFloat3) handle.asFloat3(); }
 
     template<class T>
     inline T readHandle(MDataBlock &dataBlock, const MObject &attribute, MStatus *status)
@@ -74,6 +90,30 @@ namespace DagHelpers
     MStatus setPlugValue(MPlug& plug, float x, float y);
     MStatus setPlugValue(MPlug& plug, float x, float y, float z);
     MStatus getPlugValue(const MPlug& plug, float& x, float& y, float& z);
+
+    /*
+     * This class works around strange behavior in Maya's dependency system.  If A depends on B,
+     * and B depends on C, then by definition A depends on C.  However, Maya's dependencies don't
+     * handle this correctly, requiring the user to declare every recursive dependency explicitly.
+     * That's unmaintainable with more than a couple dependencies, so this class handles it.
+     */
+    class MayaDependencies
+    {
+    public:
+        // Changes to from affect to, and everything that to effects.
+        void add(const MObject &from, const MObject &to);
+
+        // Apply all dependencies.
+        MStatus apply();
+
+    private:
+        MStatus apply_one(const MObject *from, const MObject *to, set<const MObject*> &stack);
+
+        // MObject isn't ordered, so we can't use it in a map normally.  Since we're only using this with static attribute
+        // objects, we can make sure that we only ever have a single instance of the MObject, as long as we're careful to
+        // not make copies.
+        map<const MObject*, set<const MObject*> > dependencies;
+    };
 }
 
 #endif

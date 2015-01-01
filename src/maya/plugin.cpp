@@ -64,10 +64,12 @@
 #include <map>
 using namespace std;
 
+// Note that functions which don't take a dataBlock but read attributes aren't intended to be called from
+// compute().  Maya has a different API for reading attributes inside compute().
 class ImplicitSkinDeformer: public MPxDeformerNode
 {
 public:
-    static MTypeId id;
+    static const MTypeId id;
 
     virtual ~ImplicitSkinDeformer() { }
 
@@ -77,27 +79,63 @@ public:
     MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
     MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
 
-    MStatus setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton);
-
     MStatus save_sampleset(const SampleSet::SampleSet &samples);
-    MStatus load_sampleset();
+    MStatus set_bind_pose();
 
-    Cuda_ctrl::CudaCtrl cudaCtrl;
+    MStatus load_skeleton(MDataBlock &dataBlock);
+    MStatus load_sampleset(MDataBlock &dataBlock);
+    MStatus load_mesh(MDataBlock &dataBlock);
+    MStatus load_base_potential(MDataBlock &dataBlock);
 
-    static MObject dataAttr;
+    MStatus sample_all_joints();
+
+    static MObject unskinnedGeomAttr;
+
+    // The geomMatrix of the skinCluster at setup time.
     static MObject geomMatrixAttr;
 
     // Per-joint attributes:
     static MObject influenceJointsAttr;
+
+    // The parent index of each joint.  This is relative to other entries in influenceJointsAttr.  Root
+    // joints are set to -1.
+    static MObject parentJointAttr;
+
+    // Each joint's influenceBindMatrix at setup time.
     static MObject influenceBindMatrixAttr;
+
+    // The world matrix of each influence.  This is usually linked to the worldMatrix attribute of the joint.
     static MObject influenceMatrixAttr;
     static MObject junctionRadiusAttr;
     static MObject samplePointAttr;
     static MObject sampleNormalAttr;
 
+private:
+    Cuda_ctrl::CudaCtrl cudaCtrl;
+
+    // The *UpdateAttr attributes are for tracking when we need to update an internal data structure to reflect
+    // a change made to the Maya attributes.  These aren't saved to disk or shown to the user.  For example, when
+    // we set new data samplePointAttr, it will trigger sampleSetUpdateAttr's dependency on it, causing
+    // us to update the SampleSet.  Triggering the sampleSetUpdateAttr dependency will then trigger
+    // basePotentialUpdateAttr, causing us to update the base potential.  This allows data to be manipulated
+    // normally within Maya, and we just update our data based on it as needed.
+
     // Internal dependency attributes:
     // Evaluated when we need to update a SampleSet and load it:
     static MObject sampleSetUpdateAttr;
+
+    // Represents cudaCtrl._skeleton being up to date:
+    static MObject skeletonUpdateAttr;
+
+    // Represents cudaCtrl._anim_mesh being up to date with the skinned geometry.
+    static MObject meshUpdateAttr;
+    
+    // Represents the base potential being up to date for the current SampleSet and unskinned mesh.
+    static MObject basePotentialUpdateAttr;
+
+    MStatus createSkeleton(MDataBlock &dataBlock, Loader::Abs_skeleton &skeleton);
+    MStatus setGeometry(MDataHandle &inputGeomDataHandle);
+
 };
 
 // XXX: http://help.autodesk.com/view/MAYAUL/2015/ENU/?guid=__cpp_ref_class_m_type_id_html says that
@@ -105,20 +143,37 @@ public:
 // a commercial ADN account.  Let's use a value in the devkit sample range, so it's unlikely to conflict,
 // and it does, it won't conflict with somebody's internal-use IDs (0-0x7ffff).  At worst, we'll collide
 // with a sample or somebody else doing the same thing.
-MTypeId ImplicitSkinDeformer::id(0xEA115);
-MObject ImplicitSkinDeformer::dataAttr;
+const MTypeId ImplicitSkinDeformer::id(0xEA115);
+MObject ImplicitSkinDeformer::unskinnedGeomAttr;
 MObject ImplicitSkinDeformer::geomMatrixAttr;
 MObject ImplicitSkinDeformer::influenceJointsAttr;
+MObject ImplicitSkinDeformer::parentJointAttr;
 MObject ImplicitSkinDeformer::influenceBindMatrixAttr;
 MObject ImplicitSkinDeformer::influenceMatrixAttr;
 MObject ImplicitSkinDeformer::junctionRadiusAttr;
 MObject ImplicitSkinDeformer::sampleSetUpdateAttr;
+MObject ImplicitSkinDeformer::skeletonUpdateAttr;
+MObject ImplicitSkinDeformer::meshUpdateAttr;
+MObject ImplicitSkinDeformer::basePotentialUpdateAttr;
 MObject ImplicitSkinDeformer::samplePointAttr;
 MObject ImplicitSkinDeformer::sampleNormalAttr;
+
+static void loadDependency(MObject obj, MObject attr, MStatus *status)
+{
+    if(*status != MStatus::kSuccess)
+        return;
+
+    MPlug updatePlug(obj, attr);
+
+    bool unused;
+    *status = updatePlug.getValue(unused);
+}
 
 MStatus ImplicitSkinDeformer::initialize()
 {
     MStatus status = MStatus::kSuccess;
+
+    DagHelpers::MayaDependencies dep;
 
     // XXX
     // MGlobal::executeCommand("makePaintable -attrType multiFloat -sm deformer blendNode weights;");
@@ -126,27 +181,28 @@ MStatus ImplicitSkinDeformer::initialize()
     MFnMatrixAttribute mAttr;
     MFnNumericAttribute numAttr;
     MFnCompoundAttribute cmpAttr;
+    MFnTypedAttribute typeAttr;
 
-    // The joint's output matrix.  Note that this dependency is sort of redundant, since the
-    // skinCluster will recompute first, and that will change the geometry input that we also
-    // depend on.
+    unskinnedGeomAttr = typeAttr.create("unskinnedGeom", "unskinnedGeom", MFnData::Type::kMesh, MObject::kNullObj, &status);
+    addAttribute(unskinnedGeomAttr);
+
     geomMatrixAttr = mAttr.create("geomMatrix", "gm");
     addAttribute(geomMatrixAttr);
-    attributeAffects(ImplicitSkinDeformer::geomMatrixAttr, ImplicitSkinDeformer::outputGeom);
 
     influenceBindMatrixAttr = mAttr.create("influenceBindMatrix", "ibm");
     addAttribute(influenceBindMatrixAttr);
-    attributeAffects(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::outputGeom); // XXX ?
 
+    parentJointAttr = numAttr.create("parentIdx", "parentIdx", MFnNumericData::Type::kInt, -1, &status);
+    addAttribute(parentJointAttr);
+
+    // The joint's output matrix.
     influenceMatrixAttr = mAttr.create("matrix", "ma");
     addAttribute(influenceMatrixAttr);
-    attributeAffects(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom); // XXX ?
 
+    // SampleSet:
     junctionRadiusAttr = numAttr.create("junctionRadius", "jr", MFnNumericData::Type::kFloat, 0, &status);
     addAttribute(junctionRadiusAttr);
-//    attributeAffects(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom); // XXX ?
 
-    // XXX: check deps
     samplePointAttr = numAttr.create("point", "p", MFnNumericData::Type::k3Float, 0, &status);
     numAttr.setArray(true);
     addAttribute(samplePointAttr);
@@ -155,27 +211,63 @@ MStatus ImplicitSkinDeformer::initialize()
     numAttr.setArray(true);
     addAttribute(sampleNormalAttr);
 
+    // The main joint array:
     influenceJointsAttr = cmpAttr.create("joints", "jt", &status);
     cmpAttr.setArray(true);
     cmpAttr.addChild(influenceBindMatrixAttr);
+    cmpAttr.addChild(parentJointAttr);
     cmpAttr.addChild(influenceMatrixAttr);
     cmpAttr.addChild(junctionRadiusAttr);
     cmpAttr.addChild(samplePointAttr);
     cmpAttr.addChild(sampleNormalAttr);
     addAttribute(influenceJointsAttr);
-    attributeAffects(ImplicitSkinDeformer::influenceJointsAttr, ImplicitSkinDeformer::outputGeom);
 
-    sampleSetUpdateAttr = numAttr.create("sampleSetUpdate", "ssu", MFnNumericData::Type::kBoolean, 0, &status);
+    sampleSetUpdateAttr = numAttr.create("sampleSetUpdate", "sampleSetUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
-//    numAttr.setWritable(false);
+    numAttr.setHidden(true);
     addAttribute(sampleSetUpdateAttr);
-    status = attributeAffects(ImplicitSkinDeformer::influenceJointsAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+
+    dep.add(ImplicitSkinDeformer::junctionRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::samplePointAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::sampleNormalAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+
+    // Reloading the mesh recreates animesh, which resets bones, so if we reload the whole mesh we need to
+    // reload the SampleSet as well.
+    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+
+    meshUpdateAttr = numAttr.create("meshUpdate", "meshUpdate", MFnNumericData::Type::kInt, 0, &status);
+    numAttr.setStorable(false);
+    numAttr.setHidden(true);
+    addAttribute(meshUpdateAttr);
+    dep.add(ImplicitSkinDeformer::unskinnedGeomAttr, ImplicitSkinDeformer::meshUpdateAttr);
+
+    skeletonUpdateAttr = numAttr.create("skeletonUpdate", "skeletonUpdate", MFnNumericData::Type::kInt, 0, &status);
+    numAttr.setStorable(false);
+    numAttr.setHidden(true);
+    addAttribute(skeletonUpdateAttr);
     if(status != MS::kSuccess) return status;
 
-    status = attributeAffects(ImplicitSkinDeformer::junctionRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-    if(status != MS::kSuccess) return status;
+    dep.add(ImplicitSkinDeformer::parentJointAttr, ImplicitSkinDeformer::skeletonUpdateAttr);
+    dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::skeletonUpdateAttr);
 
-    status = attributeAffects(ImplicitSkinDeformer::sampleSetUpdateAttr, ImplicitSkinDeformer::outputGeom);
+    basePotentialUpdateAttr = numAttr.create("basePotentialUpdate", "basePotentialUpdate", MFnNumericData::Type::kInt, 0, &status);
+    numAttr.setStorable(false);
+    numAttr.setHidden(true);
+    addAttribute(basePotentialUpdateAttr);
+
+    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
+    dep.add(ImplicitSkinDeformer::sampleSetUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
+    dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
+
+    // All of the dependency nodes are required by the output geometry.
+    dep.add(ImplicitSkinDeformer::geomMatrixAttr, ImplicitSkinDeformer::outputGeom);
+    dep.add(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom);
+    dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::outputGeom);
+    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::outputGeom);
+    dep.add(ImplicitSkinDeformer::basePotentialUpdateAttr, ImplicitSkinDeformer::outputGeom);
+
+    status = dep.apply();
     if(status != MS::kSuccess) return status;
 
     return MStatus::kSuccess;
@@ -183,36 +275,40 @@ MStatus ImplicitSkinDeformer::initialize()
 
 MStatus ImplicitSkinDeformer::compute(const MPlug& plug, MDataBlock& dataBlock)
 {
+    MStatus status = MStatus::kSuccess;
+
     // If we're calculating the output geometry, use the default implementation, which will
     // call deform().
-    if(plug.attribute() == outputGeom) {
-        MStatus status = MStatus::kSuccess;
-        DagHelpers::readHandle<bool>(dataBlock, sampleSetUpdateAttr, &status);
-
-        return MStatus::kUnknownParameter;
-    }
-
-    if(plug.attribute() == sampleSetUpdateAttr) {
-        // When sampleSetUpdateAttr has changed, one of the inputs to the SampleSet has changed.
-        // Reload it.
-        return load_sampleset();
-    }
-
-    // setClean
-    return MStatus::kUnknownParameter;
+    printf("Compute: %s\n", plug.name().asChar());
+    if(plug.attribute() == outputGeom) return MPxDeformerNode::compute(plug, dataBlock);
+    else if(plug.attribute() == sampleSetUpdateAttr) return load_sampleset(dataBlock);
+    else if(plug.attribute() == skeletonUpdateAttr) return load_skeleton(dataBlock);
+    else if(plug.attribute() == meshUpdateAttr) return load_mesh(dataBlock);
+    else if(plug.attribute() == basePotentialUpdateAttr) return load_base_potential(dataBlock);
+    else return MStatus::kUnknownParameter;
 }
 
 MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, const MMatrix &mat, unsigned int multiIndex)
 {
-// MStatus ImplicitSkinDeformer::compute(const MPlug &plug, MDataBlock &dataBlock)
-    MStatus status = MStatus::kSuccess;
-        
-    // If implicit -setup hasn't been run yet, stop.  XXX: saving/loading
-    if(cudaCtrl._mesh == NULL)
-        return MStatus::kSuccess;
-
     // We only support a single input, like skinCluster.
     if(multiIndex > 0)
+        return MStatus::kSuccess;
+
+    MStatus status = MStatus::kSuccess;
+
+    // Read the dependency attributes that represent data we need.  We don't actually use the
+    // results of inputvalue(); this is triggering updates for cudaCtrl data.
+    dataBlock.inputValue(ImplicitSkinDeformer::basePotentialUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    // If we don't have a mesh to work with yet, stop.
+    if(cudaCtrl._mesh == NULL)
         return MStatus::kSuccess;
 
     // Get the geomMatrixAttr attribute.
@@ -234,6 +330,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
         status = influenceJointsHandle.jumpToElement(i);
+        if(status != MS::kSuccess) return status;
 
         // The world transform the joint has now:
         MDataHandle matrixHandle = influenceJointsHandle.inputValue(&status).child(influenceMatrixAttr);
@@ -283,27 +380,9 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         // Get input[multiIndex].inputGeometry.
         MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
 
-        // Read all geometry.  This geometry has already had the skinCluster deformation applied to it.
-        MItGeometry allGeomIter(inputGeomDataHandle, true);
-        MPointArray points;
-        allGeomIter.allPositions(points, MSpace::kObject);
-
-        // If the geometry doesn't have the correct number of vertices, we can't use it.  This can be
-        // caused by a deformer like deleteVertices being added between us and the skinCluster, and the
-        // user should bake it (delete non-deformer history).
-        // XXX: Is there a way we can tell the user about this?
-        // XXX: Will the algorithm allow us to support this, if we give it a whole new mesh with similar
-        // topology and call update_base_potential?
-        if(points.length() != cudaCtrl._anim_mesh->get_nb_vertices())
-            return MStatus::kSuccess;
-
-        // Set the deformed vertex data.
-        vector<Vec3_cu> input_verts;
-        input_verts.reserve(points.length());
-        for(int i = 0; i < (int) points.length(); ++i)
-            input_verts.push_back(Vec3_cu((float) points[i].x, (float) points[i].y, (float) points[i].z));
-        
-        cudaCtrl._anim_mesh->copy_vertices(input_verts);
+        // Load the vertex positions into cudaCtrl._anim_mesh.
+        status = setGeometry(inputGeomDataHandle);
+        if(status != MS::kSuccess) return status;
     }
 
     // Run the algorithm.  XXX: If we're being applied to a set, can we reduce the work we're doing to
@@ -326,67 +405,112 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     return MStatus::kSuccess;
 }
 
-// We're being given a mesh to work with.  Load it into Mesh, and hand it to the CUDA
-// interface.
-MStatus ImplicitSkinDeformer::setup(const Loader::Abs_mesh &loader_mesh, const Loader::Abs_skeleton &loader_skeleton)
+MStatus ImplicitSkinDeformer::load_skeleton(MDataBlock &dataBlock)
 {
-    // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into
-    // Mesh.
-    Mesh *ptr_mesh = new Mesh(loader_mesh);
+    MStatus status = MStatus::kSuccess;
 
-    // Hand the Mesh to Cuda_ctrl.
-    cudaCtrl.load_mesh( ptr_mesh );
-
-    // Load the skeleton.
-    cudaCtrl._skeleton.load(loader_skeleton);
-
-    // Tell cudaCtrl that we've loaded both the mesh and the skeleton.  This could be simplified.
-    // XXX: always load the skeleton first, and move load_animesh into load_mesh?
-    cudaCtrl.load_animesh();
-
-    // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
-    SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
-
-    // Get the default junction radius.
-    vector<float> junction_radius;
-    cudaCtrl._anim_mesh->get_default_junction_radius(junction_radius);
-
-    for(int bone_id = 1; bone_id < cudaCtrl._anim_mesh->get_skel()->nb_joints(); ++bone_id)
-    {
-        samples._samples[bone_id]._junction_radius = junction_radius[bone_id];
-        
-        if(true)
-        {
-            samples.choose_hrbf_samples_poisson
-                    (*cudaCtrl._anim_mesh->_animesh,
-                     bone_id,
-                     // Set a distance threshold from sample to the joints to choose them.
-                     -0.02f, // dSpinB_max_dist_joint->value(),
-                     -0.02f, // dSpinB_max_dist_parent->value(),
-                     0, // dSpinB_min_dist_samples->value(),
-                     // Minimal number of samples.  (this value is used only whe the value min dist is zero)
-                     50, // spinB_nb_samples_psd->value(), 20-1000
-
-                     // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
-                     0); // dSpinB_max_fold->value()
-        } else {
-            samples.choose_hrbf_samples_ad_hoc
-                    (*cudaCtrl._anim_mesh->_animesh,
-                     bone_id,
-                     -0.02f, // dSpinB_max_dist_joint->value(),
-                     -0.02f, // dSpinB_max_dist_parent->value(),
-                     0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
-                     0); // dSpinB_max_fold->value()
-        }
-    }
-
-    // Save the SampleSet.
-    MStatus status = save_sampleset(samples);
+    // Load the skeleton from the node.
+    // Note that we're still assuming that the current position of the
+    // object is the same as bind time.  XXX: Is there anything we can do about that?
+    // XXX Use skinCluster.geomMatrix (gm), and mirror it
+    Loader::Abs_skeleton skeleton;
+    status = createSkeleton(dataBlock, skeleton);
     if(status != MS::kSuccess) return status;
 
-    cudaCtrl._anim_mesh->set_sampleset(samples);
+    // Load the skeleton into cudaCtrl.
+    cudaCtrl._skeleton.load(skeleton);
+    if(cudaCtrl._mesh != NULL)
+        cudaCtrl.load_animesh();
 
-    cudaCtrl._anim_mesh->update_base_potential();
+    return MStatus::kSuccess;
+}
+
+/*
+ * Create an Abs_skeleton for the bind pose skeleton described by our attributes.
+ */
+MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_skeleton &skeleton)
+{
+    MStatus status = MStatus::kSuccess;
+
+    // Get the geomMatrixAttr.
+    MMatrix objectToWorldSpaceMat;
+    status = DagHelpers::getMatrixPlug(thisMObject(), ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
+    if(status != MS::kSuccess) return status;
+
+    MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
+
+    // Create a root bone.
+    {
+        // The root bone na
+        Loader::Abs_bone bone;
+        bone._name = "";
+
+        // Create this joint at the origin in world space, and transform it to object space like the
+        // ones we create below.  (Multiplying by identity doesn't do anything; it's only written this
+        // way for clarity.)
+        MMatrix jointObjectMat = MMatrix::identity * worldToObjectSpaceMat;
+        bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
+
+        skeleton._bones.push_back(bone);
+        skeleton._sons.push_back(std::vector<int>());
+        skeleton._parents.push_back(-1);
+        skeleton._root = 0;
+    }
+
+    // Create the bones.
+    MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
+    {
+        status = influenceJointsHandle.jumpToElement(i);
+        if(status != MS::kSuccess) return status;
+
+        int boneIdx = (int) skeleton._bones.size(); 
+
+        // Get bind positions from the bindPreMatrix.
+        MMatrix jointWorldMat;
+
+        {
+            MDataHandle influenceBindMatrixHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::influenceBindMatrixAttr);
+            if(status != MS::kSuccess) return status;
+
+            MMatrix influenceBindMatrix = DagHelpers::readHandle<MMatrix>(influenceBindMatrixHandle, &status);
+            if(status != MS::kSuccess) return status;
+            
+            // This is the inverse matrix.  We want the forwards matrix, so un-invert it.
+            jointWorldMat = influenceBindMatrix.inverse();
+        }
+
+        MMatrix jointObjectMat = jointWorldMat * worldToObjectSpaceMat;
+
+        // Fill in the bone.  We don't need to calculate _length, since compute_bone_lengths will
+        // do it below.
+        Loader::Abs_bone bone;
+        bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
+        skeleton._bones.push_back(bone);
+
+
+        // Read this joint's parent joint index.
+        MDataHandle parentJointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::parentJointAttr);
+        if(status != MS::kSuccess) return status;
+
+        int parentIdx = DagHelpers::readHandle<int>(parentJointHandle, &status);
+        if(status != MS::kSuccess) return status;
+
+        // parentIndexes don't include the root joint 0, so add 1.  A parentIndex of -1
+        // means the root joint, so we can just add 1 in that case too to get 0.
+        parentIdx++;
+
+        skeleton._parents.push_back(parentIdx);
+
+        // Add this bone as a child of its parent.
+        skeleton._sons.push_back(std::vector<int>());
+        if(parentIdx != -1)
+            skeleton._sons[parentIdx].push_back(boneIdx);
+    }
+
+    skeleton.compute_bone_lengths();
     return MStatus::kSuccess;
 }
 
@@ -394,8 +518,7 @@ MStatus ImplicitSkinDeformer::save_sampleset(const SampleSet::SampleSet &samples
 {
     MStatus status = MStatus::kSuccess;
 
-    MPlug implicitPlug(thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
-    MPlug jointArrayPlug(implicitPlug.node(), ImplicitSkinDeformer::influenceJointsAttr);
+    MPlug jointArrayPlug(thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
     
     // Skip the dummy root joint.
     for(int i = 1; i < (int) samples._samples.size(); ++i)
@@ -448,80 +571,173 @@ MStatus ImplicitSkinDeformer::save_sampleset(const SampleSet::SampleSet &samples
     return MStatus::kSuccess;
 }
 
-// XXX: should we be saving the sampleset, or the HRBF bone node data?
-MStatus ImplicitSkinDeformer::load_sampleset()
+MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
     // If the mesh isn't loaded yet, don't do anything.
-    // XXX: make sure this we get run again once the mesh is loaded
-    // XXX: we need a dependency on the input geometry to tell us that it's available for us
-    // to load _anim_mesh
     if(cudaCtrl._anim_mesh == NULL)
         return MStatus::kSuccess;
 
-    MPlug implicitPlug(thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
-    MPlug jointArrayPlug(implicitPlug.node(), ImplicitSkinDeformer::influenceJointsAttr);
+    MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
+    if(status != MS::kSuccess) return status;
 
     // Create a new SampleSet, and load its values from the node.
     SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
 
     // Skip the dummy root joint.
-    for(int i = 1; i < (int) samples._samples.size(); ++i)
+    for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
-        SampleSet::InputSample &inputSample = samples._samples[i];
+        SampleSet::InputSample &inputSample = samples._samples[i+1];
 
-        MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i-1, &status);
+        status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;
 
-        MPlug junctionRadiusPlug = jointPlug.child(ImplicitSkinDeformer::junctionRadiusAttr, &status);
+        MDataHandle junctionRadiusHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::junctionRadiusAttr);
         if(status != MS::kSuccess) return status;
 
-        status = junctionRadiusPlug.getValue(inputSample._junction_radius);
+        inputSample._junction_radius = DagHelpers::readHandle<float>(junctionRadiusHandle, &status);
         if(status != MS::kSuccess) return status;
 
         // Load the samples.
-        MPlug samplePointPlug = jointPlug.child(ImplicitSkinDeformer::samplePointAttr, &status);
+        MArrayDataHandle samplePointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::samplePointAttr);
         if(status != MS::kSuccess) return status;
 
-        MPlug sampleNormalPlug = jointPlug.child(ImplicitSkinDeformer::sampleNormalAttr, &status);
+        MArrayDataHandle sampleNormalHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::sampleNormalAttr);
         if(status != MS::kSuccess) return status;
 
-        if(samplePointPlug.numElements() != sampleNormalPlug.numElements())
+        if(samplePointHandle.elementCount() != sampleNormalHandle.elementCount())
             return MStatus::kFailure;
 
-        for(int sampleIdx = 0; sampleIdx < (int) samplePointPlug.numElements(); ++sampleIdx)
+        for(int sampleIdx = 0; sampleIdx < (int) samplePointHandle.elementCount(); ++sampleIdx)
         {
-            MPlug samplePlug = samplePointPlug.elementByLogicalIndex(sampleIdx, &status);
+            status = samplePointHandle.jumpToElement(sampleIdx);
             if(status != MS::kSuccess) return status;
 
-            float x, y, z;
-            status = DagHelpers::getPlugValue(samplePlug, x, y, z);
-            if(status != MStatus::kSuccess) return status;
-            inputSample._sample_list.nodes.push_back(Vec3_cu(x, y, z));
-
-            MPlug normalPlug = sampleNormalPlug.elementByLogicalIndex(sampleIdx, &status);
+            status = sampleNormalHandle.jumpToElement(sampleIdx);
             if(status != MS::kSuccess) return status;
 
-            status = DagHelpers::getPlugValue(normalPlug, x, y, z);
-            if(status != MStatus::kSuccess) return status;
-            inputSample._sample_list.n_nodes.push_back(Vec3_cu(x, y, z));
+            DagHelpers::simpleFloat3 samplePoint = DagHelpers::readArrayHandle<DagHelpers::simpleFloat3>(samplePointHandle, &status);
+            if(status != MS::kSuccess) return status;
+
+            DagHelpers::simpleFloat3 sampleNormal = DagHelpers::readArrayHandle<DagHelpers::simpleFloat3>(sampleNormalHandle, &status);
+            if(status != MS::kSuccess) return status;
+
+            inputSample._sample_list.nodes.push_back(Vec3_cu(samplePoint.x, samplePoint.y, samplePoint.z));
+
+            inputSample._sample_list.n_nodes.push_back(Vec3_cu(sampleNormal.x, sampleNormal.y, sampleNormal.z));
         }
-
-
     }
 
     // Load the SampleSet into _anim_mesh.
-//    cudaCtrl._anim_mesh->set_sampleset(samples);
-
-    // XXX: base potential should depend on both the input geometry and sampleSetUpdateAttr
-    // add a basePotentialDep attribute
-    // XXX: need to load the base mesh when we do this
-//    cudaCtrl._anim_mesh->update_base_potential();
+    cudaCtrl._anim_mesh->set_sampleset(samples);
 
     return MStatus::kSuccess;
 }
 
+MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+
+    // Load the geometry.
+    MDataHandle geomHandle = dataBlock.inputValue(ImplicitSkinDeformer::unskinnedGeomAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    MObject geom = geomHandle.asMesh();
+    if(!geom.hasFn(MFn::kMesh)) {
+        // XXX: only meshes are supported
+        return MStatus::kFailure;
+    }
+
+    // Load the input mesh from the unskinned geometry.
+    Loader::Abs_mesh loaderMesh;
+    status = MayaData::load_mesh(geom, loaderMesh);
+    if(status != MS::kSuccess) return status;
+
+    // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
+    Mesh *mesh = new Mesh(loaderMesh);
+
+    // Hand the Mesh to Cuda_ctrl.
+    cudaCtrl.load_mesh(mesh);
+
+    // XXX: This will wipe out the loaded bones and require a skeleton/sampleset reload
+    cudaCtrl.load_animesh();
+
+    return MStatus::kSuccess;
+}
+
+MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle)
+{
+    MItGeometry allGeomIter(inputGeomDataHandle, true);
+
+    MPointArray points;
+    allGeomIter.allPositions(points, MSpace::kObject);
+
+    // If the geometry doesn't have the same number of vertices, we can't use it.  This can be
+    // caused by a deformer like deleteVertices being added between us and the skinCluster, and the
+    // user should bake it (delete non-deformer history).
+    // XXX: Is there a way we can tell the user about this?
+    // XXX: Will the algorithm allow us to support this, if we give it a whole new mesh with similar
+    // topology and call update_base_potential?
+    if(points.length() != cudaCtrl._anim_mesh->get_nb_vertices())
+        return MStatus::kSuccess;
+
+    // Set the deformed vertex data.
+    vector<Vec3_cu> input_verts;
+    input_verts.reserve(points.length());
+    for(int i = 0; i < (int) points.length(); ++i)
+        input_verts.push_back(Vec3_cu((float) points[i].x, (float) points[i].y, (float) points[i].z));
+        
+    cudaCtrl._anim_mesh->copy_vertices(input_verts);
+
+    return MStatus::kSuccess;
+}
+
+MStatus ImplicitSkinDeformer::set_bind_pose()
+{
+    MStatus status = MStatus::kSuccess;
+
+    // Reset the relative joint transformations to identity, eg. no change after setup.  deform() will reload the
+    // current transforms the next time it needs them.
+    vector<Transfo> bone_transforms(cudaCtrl._skeleton.get_nb_joints(), Transfo::identity());
+    cudaCtrl._skeleton.set_transforms(bone_transforms);
+
+    // Load the unskinned geometry, which matches with the identity transforms.
+    MPlug unskinnedGeomPlug(thisMObject(), unskinnedGeomAttr);
+    MDataHandle inputGeomDataHandle;
+    status = unskinnedGeomPlug.getValue(inputGeomDataHandle);
+    if(status != MS::kSuccess) return status;
+
+    status = setGeometry(inputGeomDataHandle);
+    if(status != MS::kSuccess) return status;
+
+    return MStatus::kSuccess;
+}
+
+// Update the base potential for the current mesh and samples.  This requires loading the unskinned geometry.
+MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+
+    // Make sure our dependencies are up to date.
+    dataBlock.inputValue(ImplicitSkinDeformer::sampleSetUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+    dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+    dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    // If we don't have a mesh yet, don't do anything.
+    if(cudaCtrl._anim_mesh == NULL)
+        return MStatus::kSuccess;
+
+    set_bind_pose();
+
+    // Update base potential while in bind pose.
+    cudaCtrl._anim_mesh->update_base_potential();
+
+    return MStatus::kSuccess;
+}
 
 class ImplicitCommand : public MPxCommand
 {
@@ -531,7 +747,10 @@ public:
 //    MStatus redoIt();
 //    MStatus undoIt();
 
-    MStatus setup(MString nodeName);
+    MStatus setup(MString nodeName); // sets up graph; will be moved to python
+    MStatus setup2(MString nodeName); // runs all sampling
+
+    ImplicitSkinDeformer *getDeformerByName(MString nodeName, MStatus *status);
 
     bool isUndoable() const { return false; }
     static void *creator() { return new ImplicitCommand(); }
@@ -559,35 +778,95 @@ MStatus ImplicitCommand::getOnePlugByName(MString nodeName, MPlug &plug)
     return slist.getPlug(0, plug);
 }
 
-MStatus ImplicitCommand::setup(MString nodeName)
+MStatus ImplicitSkinDeformer::sample_all_joints()
 {
-    MStatus status;
+    MStatus status = MStatus::kSuccess;
 
-    // Get the MPlug for the selected node.
-    MPlug implicitPlug;
-    status = getOnePlugByName(nodeName, implicitPlug);
+    // Force skeletonUpdateAttr to be updated.
+    loadDependency(thisMObject(), ImplicitSkinDeformer::skeletonUpdateAttr, &status);
+    loadDependency(thisMObject(), ImplicitSkinDeformer::meshUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
-    MFnDependencyNode implicitPlugDep(implicitPlug.node(), &status);
-    if(status != MS::kSuccess) return status;
+    // If we don't have a mesh yet, don't do anything.
+    if(cudaCtrl._anim_mesh == NULL)
+        return MStatus::kSuccess;
 
-    // Verify that this is one of our nodes.
+    set_bind_pose();
+
+    // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
+    SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
+
+    // Get the default junction radius.
+    vector<float> junction_radius;
+    cudaCtrl._anim_mesh->get_default_junction_radius(junction_radius);
+
+    for(int bone_id = 1; bone_id < cudaCtrl._anim_mesh->get_skel()->nb_joints(); ++bone_id)
     {
-        MTypeId type = implicitPlugDep.typeId(&status);
-        if(status != MS::kSuccess) return status;
-
-        if(type != ImplicitSkinDeformer::id)
+        samples._samples[bone_id]._junction_radius = junction_radius[bone_id];
+        
+        if(true)
         {
-            displayError("Node not an implicitDeformer: " + nodeName);
-            return MS::kFailure;
+            samples.choose_hrbf_samples_poisson
+                    (*cudaCtrl._anim_mesh->_animesh,
+                     bone_id,
+                     // Set a distance threshold from sample to the joints to choose them.
+                     -0.02f, // dSpinB_max_dist_joint->value(),
+                     -0.02f, // dSpinB_max_dist_parent->value(),
+                     0, // dSpinB_min_dist_samples->value(),
+                     // Minimal number of samples.  (this value is used only whe the value min dist is zero)
+                     50, // spinB_nb_samples_psd->value(), 20-1000
+
+                     // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
+                     0); // dSpinB_max_fold->value()
+        } else {
+            samples.choose_hrbf_samples_ad_hoc
+                    (*cudaCtrl._anim_mesh->_animesh,
+                     bone_id,
+                     -0.02f, // dSpinB_max_dist_joint->value(),
+                     -0.02f, // dSpinB_max_dist_parent->value(),
+                     0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
+                     0); // dSpinB_max_fold->value()
         }
     }
 
-    ImplicitSkinDeformer *deformer = (ImplicitSkinDeformer *) implicitPlugDep.userNode(&status);
+    // Save the new SampleSet.
+    return save_sampleset(samples);
+}
+
+ImplicitSkinDeformer *ImplicitCommand::getDeformerByName(MString nodeName, MStatus *status)
+{
+    // Get the MPlug for the selected node.
+    MPlug implicitPlug;
+    *status = getOnePlugByName(nodeName, implicitPlug);
+    if(*status != MS::kSuccess) return NULL;
+
+    MFnDependencyNode plugDep(implicitPlug.node(), status);
+    if(*status != MS::kSuccess) return NULL;
+
+    // Verify that this is one of our nodes.
+    MTypeId type = plugDep.typeId(status);
+    if(*status != MS::kSuccess) return NULL;
+
+    if(type != ImplicitSkinDeformer::id)
+    {
+        displayError("Node not an implicitDeformer: " + nodeName);
+        *status = MStatus::kFailure;;
+        return NULL;
+    }
+
+    ImplicitSkinDeformer *deformer = (ImplicitSkinDeformer *) plugDep.userNode(status);
+    if(*status != MS::kSuccess) return NULL;
+    return deformer;
+}
+
+MStatus ImplicitCommand::setup(MString nodeName)
+{
+    MStatus status;
+    ImplicitSkinDeformer *deformer = getDeformerByName(nodeName, &status);
     if(status != MS::kSuccess) return status;
 
     // Create an MFnGeometryFilter on the ImplicitSkinDeformer.
-    MFnGeometryFilter implicitGeometryFilter(implicitPlug.node(), &status);
+    MFnGeometryFilter implicitGeometryFilter(deformer->thisMObject(), &status);
     if(status != MS::kSuccess) return status;
 
     // Ask the MFnGeometryFilter for the MDagPath of the output, and pop to get to the transform
@@ -596,62 +875,41 @@ MStatus ImplicitCommand::setup(MString nodeName)
     implicitGeometryFilter.getPathAtIndex(0, implicitGeometryOutputDagPath);
     implicitGeometryOutputDagPath.pop();
 
-    // Get the inverse transformation, which is the transformation to go from world space to
-    // object space.
-    MFnTransform transformNode(implicitGeometryOutputDagPath.node());
-    MMatrix objectToWorldSpaceMat = transformNode.transformationMatrix(&status);
-    MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
+    {
+        // Get the inverse transformation, which is the transformation to go from world space to
+        // object space.
+        MFnTransform transformNode(implicitGeometryOutputDagPath.node());
+        MMatrix objectToWorldSpaceMat = transformNode.transformationMatrix(&status);
+        MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
 
-    // Store objectToWorldSpaceMat on geomMatrixAttr.
-    DagHelpers::setMatrixPlug(implicitPlug, ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
+        // Store objectToWorldSpaceMat on geomMatrixAttr.
+        status = DagHelpers::setMatrixPlug(deformer->thisMObject(), ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
+        if(status != MS::kSuccess) return status;
+    }
 
-    // XXX: We need to declare our dependency on the skinCluster, probably via skinCluster.baseDirty.
     // Find the skinCluster deformer node above the deformer.
-    MPlug skinClusterPlug;
-    status = DagHelpers::findAncestorDeformer(implicitPlug, MFn::kSkinClusterFilter, skinClusterPlug);
+    MObject skinClusterNode;
+    status = DagHelpers::findAncestorDeformer(deformer->thisMObject(), MFn::kSkinClusterFilter, skinClusterNode);
     if(status != MS::kSuccess)
     {
         printf("Couldn't find a skinCluster deformer.  Is the node skinned?\n");
         return status;
     }
 
-    // Load the skeleton.  Set getBindPositions to true so we get the positions the bones
-    // had at bind time.  Note that we're still assuming that the current position of the
-    // object is the same as bind time.  XXX: Is there anything we can do about that?
-    // XXX Use skinCluster.geomMatrix (gm), and mirror it
-    Loader::Abs_skeleton skeleton;
-    status = MayaData::loadSkeletonFromSkinCluster(skinClusterPlug, skeleton, worldToObjectSpaceMat, true);
-    if(status != MS::kSuccess) return status;
-
-    // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
-    // we'll use to do initial calculations.  The bind-time positions of the joints we got above
-    // should correspond with the pre-skinned geometry.
-    MObject inputValue;
-    status = DagHelpers::getInputGeometryForSkinClusterPlug(skinClusterPlug, inputValue);
-    if(status != MS::kSuccess) return status;
-    fprintf(stderr, "inPlug %i\n", inputValue.apiType());
-
-
-    if(!inputValue.hasFn(MFn::kMesh)) {
-        // XXX: only meshes are supported
-        return MS::kFailure;
-    }
-
-
     // For each influence going into the skinCluster's .matrix array, connect it to our .matrix array
     // as well.
-    MPlug jointArrayPlug(implicitPlug.node(), ImplicitSkinDeformer::influenceJointsAttr);
+    MPlug jointArrayPlug(deformer->thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
 
     {
-        MFnDependencyNode skinClusterDep(skinClusterPlug.node());
+        MFnDependencyNode skinClusterDep(skinClusterNode);
         const MObject skinClusterMatrixObject = skinClusterDep.attribute("matrix", &status);
         if(status != MS::kSuccess) return status;
 
-        MPlug skinClusterMatrixArray(skinClusterPlug.node(), skinClusterMatrixObject);
+        MPlug skinClusterMatrixArray(skinClusterNode, skinClusterMatrixObject);
         skinClusterMatrixArray.evaluateNumElements(&status);
         if(status != MS::kSuccess) return status;
 
-        MDGModifier dgModifer;
+        MDGModifier dgModifier;
 
         for(int i = 0; i < (int) skinClusterMatrixArray.numElements(); ++i)
         {
@@ -680,23 +938,25 @@ MStatus ImplicitCommand::setup(MString nodeName)
             MPlug matrixElementPlug = jointPlug.child(ImplicitSkinDeformer::influenceMatrixAttr, &status);
             if(status != MS::kSuccess) return status;
 
-            status = dgModifer.connect(connectionPlug, matrixElementPlug);
+            status = dgModifier.connect(connectionPlug, matrixElementPlug);
             if(status != MS::kSuccess) return status;
         }
 
-        dgModifer.doIt();
+        dgModifier.doIt();
     }
 
-    // Copy bindPreMatrix from the skinCluster to influenceBindMatrix.  This stores the transform for
-    // each influence at the time setup was done.
-    MPlug influenceBindMatrix(implicitPlug.node(), ImplicitSkinDeformer::influenceBindMatrixAttr);
-
     {
-        MFnDependencyNode skinClusterDep(skinClusterPlug.node());
+        vector<int> parentIndexes;
+        status = MayaData::loadSkeletonHierarchyFromSkinCluster(skinClusterNode, parentIndexes);
+        if(status != MS::kSuccess) return status;
+
+        // Copy bindPreMatrix from the skinCluster to influenceBindMatrix.  This stores the transform for
+        // each influence at the time setup was done.
+        MFnDependencyNode skinClusterDep(skinClusterNode);
         const MObject bindPreMatrixObject = skinClusterDep.attribute("bindPreMatrix", &status);
         if(status != MS::kSuccess) return status;
 
-        MPlug bindPreMatrixArray(skinClusterPlug.node(), bindPreMatrixObject);
+        MPlug bindPreMatrixArray(skinClusterNode, bindPreMatrixObject);
         bindPreMatrixArray.evaluateNumElements(&status);
         if(status != MS::kSuccess) return status;
 
@@ -727,17 +987,49 @@ MStatus ImplicitCommand::setup(MString nodeName)
 
             status = item.setValue(matObj);
             if(status != MS::kSuccess) return status;
+
+
+
+
+            item = jointPlug.child(ImplicitSkinDeformer::parentJointAttr, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = item.setValue(parentIndexes[i]);
+            if(status != MS::kSuccess) return status;
         }
     }
 
-    // Load the input mesh.
-    Loader::Abs_mesh mesh;
-    status = MayaData::load_mesh(inputValue, mesh);
+    // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
+    // we'll use to do initial calculations.  The bind-time positions of the joints we got above
+    // should correspond with the pre-skinned geometry.
+
+    MPlug unskinnedGeomPlug(deformer->thisMObject(), ImplicitSkinDeformer::unskinnedGeomAttr);
+    {
+        // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
+        // we'll use to do initial calculations.  The bind-time positions of the joints we got above
+        // should correspond with the pre-skinned geometry.
+        MPlug skinInputGeometryPlug;
+        status = DagHelpers::getInputGeometryForSkinClusterPlug(skinClusterNode, skinInputGeometryPlug);
+        if(status != MS::kSuccess) return status;
+
+        // Connect the input geometry to unskinnedGeomPlug.  This way, we can always get access to
+        // the base geometry without having to dig through the DG.
+        MDGModifier dgModifier;
+        status = dgModifier.connect(skinInputGeometryPlug, unskinnedGeomPlug);
+        if(status != MS::kSuccess) return status;
+        dgModifier.doIt();
+    }
+
+    return MStatus::kSuccess;
+}
+
+MStatus ImplicitCommand::setup2(MString nodeName)
+{
+    MStatus status;
+    ImplicitSkinDeformer *deformer = getDeformerByName(nodeName, &status);
     if(status != MS::kSuccess) return status;
 
-    deformer->setup(mesh, skeleton);
-
-    return MS::kSuccess;
+    return deformer->sample_all_joints();
 }
 
 MStatus ImplicitCommand::doIt(const MArgList &args)
@@ -752,6 +1044,19 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
             if(status != MS::kSuccess) return status;
 
             status = setup(nodeName);
+
+            if(status != MS::kSuccess) {
+                displayError(status.errorString());
+                return status;
+            }
+        }
+        else if(args.asString(i, &status) == MString("-setup2") && MS::kSuccess == status)
+        {
+            ++i;
+            MString nodeName = args.asString(i, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = setup2(nodeName);
 
             if(status != MS::kSuccess) {
                 displayError(status.errorString());
