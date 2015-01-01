@@ -419,7 +419,7 @@ MStatus ImplicitSkinDeformer::load_skeleton(MDataBlock &dataBlock)
 
     // Load the skeleton into cudaCtrl.
     cudaCtrl._skeleton.load(skeleton);
-    if(cudaCtrl._mesh != NULL)
+    if(cudaCtrl._mesh != NULL && cudaCtrl.is_skeleton_loaded())
         cudaCtrl.load_animesh();
 
     return MStatus::kSuccess;
@@ -661,7 +661,8 @@ MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
     cudaCtrl.load_mesh(mesh);
 
     // XXX: This will wipe out the loaded bones and require a skeleton/sampleset reload
-    cudaCtrl.load_animesh();
+    if(cudaCtrl._mesh != NULL && cudaCtrl.is_skeleton_loaded())
+        cudaCtrl.load_animesh();
 
     return MStatus::kSuccess;
 }
