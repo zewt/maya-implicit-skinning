@@ -42,7 +42,6 @@ Mesh::Mesh(const Mesh& m) :
     _nb_vert(m._nb_vert),
     _nb_tri(m._nb_tri),
     _nb_edges(m._nb_edges),
-    _tri_list_per_vert(m._tri_list_per_vert),
     _size_unpacked_vert_array(m._size_unpacked_vert_array)
 {
 
@@ -119,8 +118,6 @@ void Mesh::free_mesh_data()
     _piv               = 0;
     _edge_list         = 0;
     _edge_list_offsets = 0;
-
-    _tri_list_per_vert.clear();
 }
 
 void Mesh::compute_piv()
@@ -207,24 +204,6 @@ void Mesh::compute_normals()
         }
     }
     delete[] new_normals;
-}
-
-// -----------------------------------------------------------------------------
-
-void Mesh::compute_face_index()
-{
-    assert(_size_unpacked_vert_array > 0);
-
-    _tri_list_per_vert.clear();
-    _tri_list_per_vert. resize(_nb_vert);
-
-    for(int i = 0; i < _nb_tri; i++){
-        for(int j = 0; j < 3; j++){
-            int v = _tri[3*i +j ];
-            assert(v>=0);
-            _tri_list_per_vert[v].push_back(i);
-        }
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -344,7 +323,6 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
         compute_normals();
     // Initialize VBOs
     compute_piv();
-    compute_face_index();
     compute_edges();
     _is_initialized = true;
 }
@@ -409,6 +387,16 @@ bool add_to_ring(std::deque<int>& ring, int neigh)
 
 void Mesh::compute_edges()
 {
+    // Create a list of the tris each vertex is in.
+    std::vector<std::vector<int> > tri_list_per_vert(_nb_vert);
+    for(int i = 0; i < _nb_tri; i++){
+        for(int j = 0; j < 3; j++){
+            int v = _tri[3*i +j ];
+            assert(v>=0);
+            tri_list_per_vert[v].push_back(i);
+        }
+    }
+
     Timer t;
     t.start();
 
@@ -426,8 +414,8 @@ void Mesh::compute_edges()
 
         list_pairs.clear();
         // fill pairs with the first ring of neighborhood of quads and triangles
-        for(unsigned int j=0; j<_tri_list_per_vert[i].size(); j++)
-            list_pairs.push_back(pair_from_tri(_tri_list_per_vert[i][j], i));
+        for(unsigned int j=0; j<tri_list_per_vert[i].size(); j++)
+            list_pairs.push_back(pair_from_tri(tri_list_per_vert[i][j], i));
 
         // Try to build the ordered list of the first ring of neighborhood of i
         std::deque<int> ring;

@@ -216,10 +216,6 @@ private:
     /// Compute the normals on CPU
     void compute_normals();
 
-    /// For each vertex compute the list of faces it belongs to and stores it
-    /// in the attribute 'tri_list_per_vert'
-    void compute_face_index();
-
     /// Compute the list of the mesh edges
     /// updates 'edge_list' and 'edge_list_offsets'
     void compute_edges();
@@ -263,11 +259,6 @@ private:
     std::vector<bool> _is_side;      ///< Does the ith vertex belongs to a mesh boundary
 
     int* _tri;           ///< triangle index
-
-    /// list of triangles index connected to a vertices.
-    /// tri_list_per_vert[index_vert][nb_connected_triangles] = index triangle in
-    /// attribute 'tri'
-    std::vector<std::vector<int> > _tri_list_per_vert;
 
     /// ?
     int* _piv;
