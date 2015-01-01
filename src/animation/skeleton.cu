@@ -77,8 +77,6 @@ struct SkeletonImpl
     void transform_precomputed_prim(Skeleton *self, const HPLA_tr& global_transfos);
 };
 
-Transfo Skeleton::bone_anim_frame(int bone) const { return impl->_h_transfos[bone] * _bones[bone].get_frame(); }
-
 const Transfo* Skeleton::d_transfos() const { return impl->_d_transfos.ptr(); }
 
 void Skeleton::init(int nb_joints)

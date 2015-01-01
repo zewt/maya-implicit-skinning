@@ -55,11 +55,6 @@ void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
 
 bool Skeleton_ctrl::is_loaded() const { return skel != 0; }
 
-Transfo Skeleton_ctrl::bone_anim_frame(int id_bone)
-{
-    return skel->bone_anim_frame( id_bone );
-}
-
 int Skeleton_ctrl::get_hrbf_id(int bone_id)
 {
 

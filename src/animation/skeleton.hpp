@@ -138,9 +138,6 @@ struct Skeleton {
   /// Get the number of joints in the skeleton
   int nb_joints() const { return _nb_joints; }
 
-  /// Get the frame of the bone in animated position
-  Transfo bone_anim_frame(int bone) const;
-
   IBL::Ctrl_setup get_joint_controller(int i);
 
   /// Get the list of children for the ith bone
