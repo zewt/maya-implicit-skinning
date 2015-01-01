@@ -89,6 +89,28 @@ struct Abs_skeleton;
     @endcode
  */
 struct SkeletonImpl; // used to keep CUDA stuff out of the header
+struct SkeletonJoint
+{
+    Bone *_anim_bone;
+
+    /// Bone in rest position.
+    /// @warning a bone can have a orientation different from its associated joint
+    /// Bones orientations are solely deduce from joint positions. _frame[i]
+    /// is not necessarily equal to the _bones[i] frame.
+    /// @see bone.hpp
+    Bone_cu _bone;
+
+    // List of children IDs for this bone.
+    std::vector<Bone::Id> _children;
+
+    // This joint's parent ID.
+    Bone::Id _parent;
+
+    Skeleton_env::Joint_data _joint_data;
+
+    /// hrbf radius to go from global to compact support
+    float _hrbf_radius;
+};
 
 struct Skeleton {
   friend struct SkeletonImpl;
@@ -136,19 +158,24 @@ struct Skeleton {
   int root() const { return _root; }
 
   /// Get the number of joints in the skeleton
-  int nb_joints() const { return _nb_joints; }
+  int nb_joints() const { return (int) _joints.size(); }
 
   IBL::Ctrl_setup get_joint_controller(int i);
 
   /// Get the list of children for the ith bone
-  const std::vector<int>& get_sons(int i) const { return _children[i];  }
+  const std::vector<int>& get_sons(int i) const { return _joints[i]._children;  }
 
-  int parent(int i) const { return _parents[i]; }
+  int parent(int i) const { return _joints[i]._parent; }
 
-  bool is_leaf(int i) const { return _children[i].size() == 0; }
+  bool is_leaf(int i) const { return _joints[i]._children.size() == 0; }
 
   /// Get the animated bones of the skeleton
-  const std::vector<Bone*>& get_bones() const { return _anim_bones; }
+  std::vector<Bone*> get_bones() const {
+      std::vector<Bone*> bones(_joints.size());
+      for(int i = 0; i < (int) _joints.size(); ++i)
+          bones[i] = _joints[i]._anim_bone;
+      return bones;
+  }
 
   /// @note A bone is a part of the skeleton, as such you cannot change its
   /// properties outside the skeleton class. Changes are to be made with the
@@ -156,14 +183,14 @@ struct Skeleton {
   /// ensure that the skeleton updates its state according to the bone properties.
   /// Do not even think about using the dreadfull const_cast<>(). <b> You've been
   /// warned. <\b>
-  const Bone* get_bone(Bone::Id i) const{ return _anim_bones[i];  }
+  const Bone* get_bone(Bone::Id i) const{ return _joints[i]._anim_bone;  }
 
   Blending_env::Ctrl_id get_ctrl(int joint) const {
-      return _joints_data[joint]._ctrl_id;
+      return _joints[joint]._joint_data._ctrl_id;
   }
 
   float get_joints_bulge_magnitude(Bone::Id i) const {
-      return _joints_data[i]._bulge_strength;
+      return _joints[i]._joint_data._bulge_strength;
   }
 
   Skeleton_env::DBone_id get_bone_didx(Bone::Id i) const;
@@ -171,12 +198,12 @@ struct Skeleton {
   /// bone type (whether a primitive is attached to it)
   /// @see Bone Bone_hrbf Bone_ssd Bone_cylinder Bone_precomputed EBone
   EBone::Bone_t bone_type(Bone::Id id_bone) const {
-      return _anim_bones[id_bone]->get_type();
+      return _joints[id_bone]._anim_bone->get_type();
   }
 
   /// @return The joint type in the enum field in EJoint namespace
   EJoint::Joint_t joint_blending(Bone::Id i) const {
-      return _joints_data[i]._blend_type;
+      return _joints[i]._joint_data._blend_type;
   }
 
   /// Get the animated joints global transformations expressed with matrices.
@@ -213,6 +240,8 @@ private:
   // TODO: to be deleted
 //  void update_hrbf_id_to_bone_id();
 
+  std::vector<Skeleton_env::Joint_data> get_joints_data() const;
+
   void rec_to_string(int id, int depth, std::string& str);
 
   //----------------------------------------------------------------------------
@@ -222,13 +251,8 @@ private:
   /// Id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id _skel_id;
 
-  /// List of children IDs for the bone of identifier boneID :
-  /// children[bone_ID][List_of_childIDs]
-  std::vector< std::vector<Bone::Id> > _children;
-  /// Map each bone to its parent : parents[bone_ID] = parent_bone_ID
-  std::vector<Bone::Id> _parents;
+  std::vector<SkeletonJoint> _joints;
 
-  int _nb_joints;
   /// Id root joint
   Bone::Id _root;
 
@@ -238,25 +262,9 @@ private:
   /// Skeleton scale
   float _scale;
 
-  /// Array of each animated bone. Note that a bone can be subclass.
-  /// @see bone.hpp
-  std::vector<Bone*> _anim_bones;
-
-  /// Array of bones in rest position.
-  /// @warning a bone can have a orientation different from its associated joint
-  /// Bones orientations are solely deduce from joint positions. _frame[i]
-  /// is not necessarily equal to the _bones[i] frame.
-  /// @see bone.hpp
-  std::vector<Bone_cu> _bones;
-
-  std::vector<Skeleton_env::Joint_data> _joints_data;
-
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
   // TODO: to be deleted
   //std::vector<int> _hrbf_id_to_bone_id;
-
-  /// hrbf radius to go from global to compact support
-  std::vector<float> _hrbf_radius;
 
   std::auto_ptr<SkeletonImpl> impl;
 };

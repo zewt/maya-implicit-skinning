@@ -95,13 +95,13 @@ void set_grid_res(Skel_id id, int res);
 
 /// Create a new skeleton instance
 Skel_id new_skel_instance(Bone::Id root_idx,
-                          const std::vector<Bone*>& bones,
+                          const std::vector<const Bone*>& bones,
                           const std::vector<int>& parents);
 
 void delete_skel_instance(Skel_id i);
 
 /// Update the bone data ( type length etc.) of the skeleton in device memory
-void update_bones_data(Skel_id i, const std::vector<Bone*>& bones);
+void update_bones_data(Skel_id i, const std::vector<const Bone*>& bones);
 
 /// Update the joints data (type, controller id, bulge strength)
 /// in device memory.

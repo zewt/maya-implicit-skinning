@@ -31,7 +31,7 @@ namespace Skeleton_env {
 struct Tree {
 
     Tree(int root,
-         const std::vector<Bone*>& bones,
+         const std::vector<const Bone*>& bones,
          const std::vector<int>& parents);
 
     /// Compute the axis aligned bounding box of the tree
@@ -41,7 +41,7 @@ struct Tree {
     /// @name Getter and Setters
     // -------------------------------------------------------------------------
 
-    void set_bones(const std::vector<Bone*>& bones){ _bones = bones; }
+    void set_bones(const std::vector<const Bone*>& bones){ _bones = bones; }
 
     void set_joints_data(const std::vector<Joint_data>& datas){ _datas = datas; }
 
@@ -54,7 +54,6 @@ struct Tree {
 
     Joint_data& data(Bone::Id hid){ return _datas[hid]; }
 
-          Bone* bone(Bone::Id hid)       { return _bones[hid]; }
     const Bone* bone(Bone::Id hid) const { return _bones[hid]; }
 
     int bone_size() const { return (int)_bones.size(); }
@@ -69,7 +68,7 @@ private:
     Bone::Id _root;
     std::vector< std::vector<Bone::Id> > _sons;
     std::vector<Joint_data> _datas;
-    std::vector<Bone*> _bones;
+    std::vector<const Bone*> _bones;
     std::vector<Bone::Id> _parents;
 };
 

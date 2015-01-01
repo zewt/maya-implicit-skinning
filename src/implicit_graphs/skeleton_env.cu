@@ -439,7 +439,7 @@ void init_env()
 // -----------------------------------------------------------------------------
 
 Skel_id new_skel_instance(Bone::Id root_idx,
-                          const std::vector<Bone*>& bones,
+                          const std::vector<const Bone*>& bones,
                           const std::vector<int>& parents)
 {
     SkeletonEnv *env = new SkeletonEnv();
@@ -482,7 +482,7 @@ void delete_skel_instance(Skel_id skel_id)
 
 // -----------------------------------------------------------------------------
 
-void update_bones_data(Skel_id i, const std::vector<Bone*>& bones)
+void update_bones_data(Skel_id i, const std::vector<const Bone*>& bones)
 {
     h_envs[i]->h_tree->set_bones( bones );
     h_envs[i]->h_grid->build_grid();

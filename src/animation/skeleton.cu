@@ -81,26 +81,27 @@ const Transfo* Skeleton::d_transfos() const { return impl->_d_transfos.ptr(); }
 
 void Skeleton::init_skel_env()
 {
-    _skel_id = Skeleton_env::new_skel_instance(_root, _anim_bones, _parents);
+    std::vector<int> parents(_joints.size());
+    std::vector<const Bone*> bones(_joints.size());
+    for(int i = 0; i < (int) _joints.size(); ++i) {
+        parents[i] = _joints[i]._parent;
+        bones[i] = _joints[i]._anim_bone;
+    }
+
+    _skel_id = Skeleton_env::new_skel_instance(_root, bones, parents);
     update_bones_pose();
-    Skeleton_env::update_joints_data(_skel_id, _joints_data);
-    Skeleton_env::update_bones_data (_skel_id, _anim_bones );
+    Skeleton_env::update_joints_data(_skel_id, get_joints_data());
+    Skeleton_env::update_bones_data (_skel_id, bones);
 }
 
 Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
     impl(new SkeletonImpl())
 {
-    _nb_joints = skel._bones.size();
-    impl->init(_nb_joints);
+    impl->init(skel._bones.size());
 
-    _children.resize(_nb_joints);
-    _parents.resize(_nb_joints);
-    _joints_data.resize(_nb_joints);
-    _anim_bones.resize(_nb_joints);
-    _bones.resize(_nb_joints);
-    _hrbf_radius.resize(_nb_joints, 1.f);
+    _joints.resize(skel._bones.size());
 
-    for(int i = 0; i < _nb_joints; i++)
+    for(int i = 0; i < (int) _joints.size(); i++)
     {
         Skeleton_env::Joint_data d;
         d._blend_type     = EJoint::MAX;
@@ -108,7 +109,7 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
         d._bulge_strength = 0.7f;
 
         impl->_controllers[i] = IBL::Shape::caml();
-        _joints_data[i] = d;
+        _joints[i]._joint_data = d;
         Blending_env::update_controller(d._ctrl_id, impl->_controllers[i]);
 
         impl->_h_transfos[i] = Transfo::identity();
@@ -118,37 +119,38 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
     _offset = Vec3_cu::zero();
 
     _root = skel._root;
-    _children = skel._sons;
-    _parents = skel._parents;
 
     std::vector<Transfo> _frames(skel._bones.size());
-    for(int bid = 0; bid < _nb_joints; bid++ )
+    for(int bid = 0; bid < (int) _joints.size(); bid++ )
         _frames[bid] = skel._bones[bid]._frame;
 
-    for(int bid = 0; bid < _nb_joints; bid++)
+    for(int bid = 0; bid < (int) _joints.size(); bid++)
     {
-        int parent_bone_id = _parents[bid];
+        _joints[bid]._children = skel._sons[bid];
+        _joints[bid]._parent = skel._parents[bid];
+
+        int parent_bone_id = _joints[bid]._parent;
         Vec3_cu org = _frames[bid].get_translation();
         Vec3_cu end = Vec3_cu::zero();
-        int nb_sons = _children[bid].size();
+        int nb_sons = _joints[bid]._children.size();
         for(int s = 0; s < nb_sons; s++)
         {
-            int sid = _children[bid][s];
+            int sid = _joints[bid]._children[s];
             end += _frames[sid].get_translation();
         }
         end /= (float)nb_sons;
 
         if(nb_sons == 0 ){
             // We set a minimal length for the leaves
-            _bones[bid] = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
+            _joints[bid]._bone = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
         }else{
-            _bones[bid] = Bone_cu(org.to_point(), end.to_point(), 0.f);
+            _joints[bid]._bone = Bone_cu(org.to_point(), end.to_point(), 0.f);
         }
 
-        _anim_bones[bid] = new Bone_ssd();
-        _anim_bones[bid]->set_length( _bones[bid]._length );
-        _anim_bones[bid]->set_radius(default_bone_radius);
-        _anim_bones[bid]->_bone_id = bid;
+        _joints[bid]._anim_bone = new Bone_ssd();
+        _joints[bid]._anim_bone->set_length( _joints[bid]._bone._length );
+        _joints[bid]._anim_bone->set_radius(default_bone_radius);
+        _joints[bid]._anim_bone->_bone_id = bid;
     }
 
     // must be called last
@@ -159,10 +161,10 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
 
 Skeleton::~Skeleton()
 {
-    for(unsigned i = 0; i < _anim_bones.size(); i++){
-        _children[i].clear();
-        delete _anim_bones[i];
-        const int ctrl_id = _joints_data[i]._ctrl_id;
+    for(unsigned i = 0; i < _joints.size(); i++){
+        _joints[i]._children.clear();
+        delete _joints[i]._anim_bone;
+        const int ctrl_id = _joints[i]._joint_data._ctrl_id;
         if( ctrl_id >= 0)
             Blending_env::delete_ctrl_instance(ctrl_id);
     }
@@ -178,8 +180,8 @@ void Skeleton::rec_to_string(int id, int depth, std::string& str)
     str += "Bone: " + Std_utils::to_string(id) + " ";
     str += EBone::type_to_string( bone_type(id) ) + "\n";
 
-    for(unsigned i = 0; i < _children[id].size(); ++i)
-        rec_to_string( _children[id][i], depth+1, str);
+    for(unsigned i = 0; i < _joints[id]._children.size(); ++i)
+        rec_to_string( _joints[id]._children[i], depth+1, str);
 }
 
 // -----------------------------------------------------------------------------
@@ -197,21 +199,30 @@ void Skeleton::set_joint_controller(Blending_env::Ctrl_id i,
                                     const IBL::Ctrl_setup& shape)
 {
     assert( i >= 0);
-    assert( i < _nb_joints);
+    assert( i < (int) _joints.size());
 
     impl->_controllers[i] = shape;
-    Blending_env::update_controller(_joints_data[i]._ctrl_id, shape);
+    Blending_env::update_controller(_joints[i]._joint_data._ctrl_id, shape);
 }
 
 // -----------------------------------------------------------------------------
 
+std::vector<Skeleton_env::Joint_data> Skeleton::get_joints_data() const
+{
+    std::vector<Skeleton_env::Joint_data> joints_data(_joints.size());
+    for(int i = 0; i < (int) _joints.size(); ++i)
+        joints_data[i] = _joints[i]._joint_data;
+    return joints_data;
+}
+
 void Skeleton::set_joint_blending(int i, EJoint::Joint_t type)
 {
     assert( i >= 0);
-    assert( i < _nb_joints);
+    assert( i < (int) _joints.size());
 
-    _joints_data[i]._blend_type = type;
-    Skeleton_env::update_joints_data(_skel_id, _joints_data);
+    _joints[i]._joint_data._blend_type = type;
+
+    Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
 // -----------------------------------------------------------------------------
@@ -219,23 +230,23 @@ void Skeleton::set_joint_blending(int i, EJoint::Joint_t type)
 void Skeleton::set_joint_bulge_mag(int i, float m)
 {
     assert( i >= 0);
-    assert( i < _nb_joints);
+    assert( i < (int) _joints.size());
 
-    _joints_data[i]._bulge_strength = std::min(std::max(m, 0.f), 1.f);
-    Skeleton_env::update_joints_data(_skel_id, _joints_data);
+    _joints[i]._joint_data._bulge_strength = std::min(std::max(m, 0.f), 1.f);
+    Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
 // -----------------------------------------------------------------------------
 
 void Skeleton::set_bone(int i, Bone* b)
 {
-    assert(i < _nb_joints);
+    assert(i < (int) _joints.size());
     assert(i >= 0);
 
     b->_bone_id = i;
 
-    delete _anim_bones[i];
-    _anim_bones[i] = b;
+    delete _joints[i]._anim_bone;
+    _joints[i]._anim_bone = b;
 
     // Update _anim_bones (and HRBF/precomputed equivalents) for the new bone.
     // XXX: We're updating all bones, which means we're updating n^2 bones when we
@@ -248,7 +259,7 @@ void Skeleton::set_bone(int i, Bone* b)
 
 void Skeleton::set_bone_radius(int i, float radius)
 {
-    _anim_bones[i]->set_radius(radius);
+    _joints[i]._anim_bone->set_radius(radius);
 }
 
 // -----------------------------------------------------------------------------
@@ -256,7 +267,7 @@ void Skeleton::set_bone_radius(int i, float radius)
 IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 {
     assert( i >= 0);
-    assert( i < _nb_joints);
+    assert( i < (int) _joints.size());
     return impl->_controllers[i];
 }
 
@@ -264,11 +275,11 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 
 void Skeleton::set_bone_hrbf_radius(int i, float radius)
 {
-    _hrbf_radius[i] = radius;
+    _joints[i]._hrbf_radius = radius;
 
     if(bone_type(i) == EBone::HRBF)
     {
-        ((Bone_hrbf*)_anim_bones[i])->set_hrbf_radius(radius);
+        ((Bone_hrbf*)_joints[i]._anim_bone)->set_hrbf_radius(radius);
     }
 }
 
@@ -277,9 +288,9 @@ void Skeleton::set_bone_hrbf_radius(int i, float radius)
 int Skeleton::get_hrbf_id(Bone::Id bone_id) const
 {
     assert(bone_id >= 0);
-    assert(bone_id < _nb_joints);
+    assert(bone_id < (int) _joints.size());
     if(bone_type(bone_id) == EBone::HRBF)
-        return ((const Bone_hrbf*)_anim_bones[bone_id])->get_hrbf().get_id();
+        return ((const Bone_hrbf*)_joints[bone_id]._anim_bone)->get_hrbf().get_id();
     else
         return -1;
 }
@@ -288,7 +299,7 @@ int Skeleton::get_hrbf_id(Bone::Id bone_id) const
 
 float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
 {
-    return _hrbf_radius[bone_id];
+    return _joints[bone_id]._hrbf_radius;
 }
 
 void SkeletonImpl::transform_hrbf(Skeleton *self, const Cuda_utils::Device::Array<Transfo>& d_global_transfos)
@@ -306,13 +317,12 @@ void SkeletonImpl::transform_hrbf(Skeleton *self, const Cuda_utils::Device::Arra
 
 void SkeletonImpl::transform_precomputed_prim(Skeleton *self, const HPLA_tr &global_transfos )
 {
-    // XXX: why does _nb_joints exist isntead of just _anim_bones.size()
-    for( int i = 0; i < self->_nb_joints; i++)
+    for( int i = 0; i < (int) self->_joints.size(); i++)
     {
         if(self->bone_type(i) != EBone::PRECOMPUTED)
             continue;
 
-        Bone_precomputed *bone = (Bone_precomputed*) self->_anim_bones[i];
+        Bone_precomputed *bone = (Bone_precomputed*) self->_joints[i]._anim_bone;
         Precomputed_prim &prim = bone->get_primitive();
         Precomputed_env::set_transform(prim.get_id(), global_transfos[i]);
     }
@@ -329,18 +339,18 @@ void Skeleton::set_transforms(const std::vector<Transfo> &transfos)
 void Skeleton::update_bones_pose()
 {
     // Put _anim_bones in the position specified by _h_transfos.
-    for(unsigned i = 0; i < _bones.size(); i++)
+    for(unsigned i = 0; i < _joints.size(); i++)
     {
         const Transfo tr = impl->_h_transfos[i];
-        Bone_cu b = _bones[i];
-        _anim_bones[i]->set_length( b.length() );
+        Bone_cu b = _joints[i]._bone;
+        _joints[i]._anim_bone->set_length( b.length() );
 
         // Check that we don't have a zero orientation.  It's an invalid value that will
         // trickle down through a bunch of other data as IND/INFs and eventually cause other
         // assertion failures, so flag it here to make it easier to debug.
         assert(b.dir().norm_squared() > 0);
 
-        _anim_bones[i]->set_orientation(tr * b.org(), tr * b.dir());
+        _joints[i]._anim_bone->set_orientation(tr * b.org(), tr * b.dir());
     }
 
     // Update joint positions in texture.
@@ -352,7 +362,11 @@ void Skeleton::update_bones_pose()
     // In order to this call to take effect correctly it MUST be done after
     // transform_hrbf() and transform_precomputed_prim() otherwise bones
     // positions will not be updated correctly within the Skeleton_env.
-    Skeleton_env::update_bones_data(_skel_id, _anim_bones);
+    std::vector<const Bone*> bones(_joints.size());
+    for(int i = 0; i < (int) _joints.size(); ++i)
+        bones[i] = _joints[i]._anim_bone;
+
+    Skeleton_env::update_bones_data(_skel_id, bones);
 }
 
 /*
@@ -360,7 +374,7 @@ void Skeleton::update_bones_pose()
 void Skeleton::update_hrbf_id_to_bone_id()
 {
     int res = 0;
-    for(int i = 0; i < _nb_joints; i++){
+    for(int i = 0; i < (int) _joints.size(); i++){
         if(bone_type(i) == EBone::HRBF){
             int hrbf_id = ((Bone_hrbf*)_anim_bones[i])->get_hrbf().get_id();
             res = std::max(hrbf_id , res);
@@ -370,7 +384,7 @@ void Skeleton::update_hrbf_id_to_bone_id()
     _hrbf_id_to_bone_id.clear();
     _hrbf_id_to_bone_id.resize(res+1);
 
-    for(int i = 0; i < _nb_joints; i++){
+    for(int i = 0; i < (int) _joints.size(); i++){
         if(bone_type(i) == EBone::HRBF){
             int hrbf_id = ((Bone_hrbf*)_anim_bones[i])->get_hrbf().get_id();
             _hrbf_id_to_bone_id[hrbf_id] = i;
@@ -385,6 +399,6 @@ Skeleton_env::DBone_id Skeleton::get_bone_didx(Bone::Id i) const {
 
 const Transfo&  Skeleton::get_transfo(Bone::Id bone_id) const {
     assert(bone_id >= 0);
-    assert(bone_id < _nb_joints);
+    assert(bone_id < (int) _joints.size());
     return impl->_h_transfos[bone_id];
 }
