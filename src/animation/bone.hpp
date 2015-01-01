@@ -296,6 +296,7 @@ public:
     }
 
     Precomputed_prim& get_primitive(){ return _primitive; }
+    const Precomputed_prim& get_primitive() const { return _primitive; }
 
     EBone::Bone_t get_type() const { return EBone::PRECOMPUTED; }
 

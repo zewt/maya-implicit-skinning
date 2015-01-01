@@ -42,7 +42,7 @@ private:
 
     DBone_id compute_clusters(Bone::Id bid,
                               DBone_id acc,
-                              std::vector<Bone*>& bone_aranged,
+                              std::vector<const Bone*>& bone_aranged,
                               std::vector<Cluster>& clusters,
                               std::vector<Cluster_id>& bone_to_cluster,
                               std::map<Bone::Id, DBone_id>& hidx_to_didx,
@@ -110,7 +110,7 @@ public:
     /// Bones list organized for device memory.
     /// Bones with same parents are contigus in memory.
     /// Index to acces this array must be a DBone_id.
-    std::vector<Bone*> _bone_aranged;
+    std::vector<const Bone*> _bone_aranged;
 
     /// Parents of bones in '_bone_aranged'
     /// _parents_arranged[DBone_id] = Dparent_bone

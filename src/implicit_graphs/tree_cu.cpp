@@ -71,7 +71,7 @@ Tree_cu::Tree_cu(Tree* tree) :
 //      bones with same parents are concatenated in bone_aranged
 DBone_id Tree_cu::compute_clusters(Bone::Id bid,
                                    DBone_id acc,
-                                   std::vector<Bone*>& bone_aranged,
+                                   std::vector<const Bone*>& bone_aranged,
                                    std::vector<Cluster>& clusters,
                                    std::vector<Cluster_id>& bone_to_cluster,
                                    std::map<Bone::Id, DBone_id>& hidx_to_didx,

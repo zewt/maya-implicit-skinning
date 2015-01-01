@@ -239,7 +239,7 @@ static void update_device_grid()
 
 /// Fill device array : hd_bone_types; hd_bone; hd_bone_hrbf;
 /// hd_bone_precomputed; hd_bulge_strength;
-static void fill_separated_bone_types(const std::vector<Bone*>& generic_bones)
+static void fill_separated_bone_types(const std::vector<const Bone*>& generic_bones)
 {
     assert( !binded   );
     assert( allocated );
@@ -253,13 +253,13 @@ static void fill_separated_bone_types(const std::vector<Bone*>& generic_bones)
         switch( btype )
         {
         case EBone::HRBF:
-            hd_bone_arrays->hd_bone_hrbf[i] = ((Bone_hrbf*)b)->get_hrbf();
+            hd_bone_arrays->hd_bone_hrbf[i] = ((const Bone_hrbf*)b)->get_hrbf();
             break;
         case EBone::SSD:
             /* There is no data to store for ssd bones*/
             break;
         case EBone::PRECOMPUTED:
-            hd_bone_arrays->hd_bone_precomputed[i] = ((Bone_precomputed*)b)->get_primitive();
+            hd_bone_arrays->hd_bone_precomputed[i] = ((const Bone_precomputed*)b)->get_primitive();
             break;
         }
 
@@ -275,7 +275,7 @@ static void fill_separated_bone_types(const std::vector<Bone*>& generic_bones)
 
 /// Fill device array : hd_blending_list; hd_offset (only list_data field);
 /// h_generic_bones; _hidx_to_didx; _didx_to_hidx;
-static void update_device_tree(std::vector<Bone*> &h_generic_bones)
+static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
 {
     assert( !binded );
     // Convert host layout to the GPU friendly layout
@@ -365,7 +365,7 @@ void update_device()
     unbind();
     
     // List of concatened bones for every skeletons in 'h_envs'
-    std::vector<Bone*> h_generic_bones;
+    std::vector<const Bone*> h_generic_bones;
     update_device_tree(h_generic_bones);
 
     fill_separated_bone_types( h_generic_bones );
