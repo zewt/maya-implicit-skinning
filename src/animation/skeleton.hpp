@@ -206,9 +206,6 @@ struct Skeleton {
 
 private:
 
-  /// Factorization of every attributes allocations and inits
-  void init(int nb_joints);
-
   /// Create and initilize a skeleton in the environment Skeleton_env
   void init_skel_env();
 

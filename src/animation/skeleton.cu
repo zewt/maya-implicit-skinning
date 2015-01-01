@@ -79,42 +79,6 @@ struct SkeletonImpl
 
 const Transfo* Skeleton::d_transfos() const { return impl->_d_transfos.ptr(); }
 
-void Skeleton::init(int nb_joints)
-{
-    impl->init(nb_joints);
-    _nb_joints = nb_joints;
-    _children.resize(nb_joints);
-    _parents.resize(nb_joints);
-    _joints_data.resize(nb_joints);
-    _anim_bones.resize(nb_joints);
-    _bones.resize(nb_joints);
-    _hrbf_radius.resize(nb_joints, 1.f);
-
-    for(int i = 0; i < nb_joints; i++)
-    {
-        _anim_bones[i] = new Bone_ssd();
-
-        Skeleton_env::Joint_data d;
-        d._blend_type     = EJoint::MAX;
-        d._ctrl_id        = Blending_env::new_ctrl_instance();
-        d._bulge_strength = 0.7f;
-
-        impl->_controllers[i] = IBL::Shape::caml();
-        _joints_data[i] = d;
-        Blending_env::update_controller(d._ctrl_id, impl->_controllers[i]);
-
-        _anim_bones[i]->set_radius(default_bone_radius);
-        _anim_bones[i]->_bone_id = i;
-
-        impl->_h_transfos[i] = Transfo::identity();
-    }
-
-    _scale = 1.f;
-    _offset = Vec3_cu::zero();
-}
-
-// -----------------------------------------------------------------------------
-
 void Skeleton::init_skel_env()
 {
     _skel_id = Skeleton_env::new_skel_instance(_root, _anim_bones, _parents);
@@ -124,25 +88,46 @@ void Skeleton::init_skel_env()
 }
 
 Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
-    _root(skel._root),
     impl(new SkeletonImpl())
 {
-    init( skel._bones.size() );
+    _nb_joints = skel._bones.size();
+    impl->init(_nb_joints);
 
+    _children.resize(_nb_joints);
+    _parents.resize(_nb_joints);
+    _joints_data.resize(_nb_joints);
+    _anim_bones.resize(_nb_joints);
+    _bones.resize(_nb_joints);
+    _hrbf_radius.resize(_nb_joints, 1.f);
+
+    for(int i = 0; i < _nb_joints; i++)
+    {
+        Skeleton_env::Joint_data d;
+        d._blend_type     = EJoint::MAX;
+        d._ctrl_id        = Blending_env::new_ctrl_instance();
+        d._bulge_strength = 0.7f;
+
+        impl->_controllers[i] = IBL::Shape::caml();
+        _joints_data[i] = d;
+        Blending_env::update_controller(d._ctrl_id, impl->_controllers[i]);
+
+        impl->_h_transfos[i] = Transfo::identity();
+    }
+
+    _scale = 1.f;
+    _offset = Vec3_cu::zero();
+
+    _root = skel._root;
     _children = skel._sons;
+    _parents = skel._parents;
 
     std::vector<Transfo> _frames(skel._bones.size());
-
     for(int bid = 0; bid < _nb_joints; bid++ )
-    {
-        _frames    [bid] = skel._bones[bid]._frame;
-        _parents   [bid] = skel._parents[bid];
-
-        _anim_bones[bid]->set_length( skel._bones[bid]._length );
-    }
+        _frames[bid] = skel._bones[bid]._frame;
 
     for(int bid = 0; bid < _nb_joints; bid++)
     {
+        int parent_bone_id = _parents[bid];
         Vec3_cu org = _frames[bid].get_translation();
         Vec3_cu end = Vec3_cu::zero();
         int nb_sons = _children[bid].size();
@@ -156,12 +141,14 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
         if(nb_sons == 0 ){
             // We set a minimal length for the leaves
             _bones[bid] = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
-            _anim_bones[bid]->set_length( 0.01f );
         }else{
             _bones[bid] = Bone_cu(org.to_point(), end.to_point(), 0.f);
-            _anim_bones[bid]->set_length( (org-end).norm() );
         }
 
+        _anim_bones[bid] = new Bone_ssd();
+        _anim_bones[bid]->set_length( _bones[bid]._length );
+        _anim_bones[bid]->set_radius(default_bone_radius);
+        _anim_bones[bid]->_bone_id = bid;
     }
 
     // must be called last
