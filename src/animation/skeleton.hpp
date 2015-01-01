@@ -88,7 +88,6 @@ struct Abs_skeleton;
     }
     @endcode
  */
-struct SkeletonImpl; // used to keep CUDA stuff out of the header
 struct SkeletonJoint
 {
     Bone *_anim_bone;
@@ -106,10 +105,20 @@ struct SkeletonJoint
     // This joint's parent ID.
     Bone::Id _parent;
 
+    /// List of transformations associated to each bone in order to deform a mesh.
+    /// A point will follow rigidly the ith bone movements if it is transformed
+    /// by bone_transformations[parents[ith]].
+    Transfo _h_transfo;
+
     Skeleton_env::Joint_data _joint_data;
 
     /// hrbf radius to go from global to compact support
     float _hrbf_radius;
+
+    // TODO: this might not be really needed as blending env already stores it
+    /// shape of the controller associated to each joint
+    /// for the gradient blending operators
+    IBL::Ctrl_setup _controller;
 };
 
 struct Skeleton {
@@ -210,11 +219,6 @@ struct Skeleton {
   /// These transformation can be used as is to deformed the mesh
   const Transfo& get_transfo(Bone::Id bone_id) const;
 
-  /// Get the animated joints global transformations expressed with matrices
-  /// in device memory. These transformation can be used as is to deformed
-  /// the mesh
-  const Transfo* d_transfos() const;
-
   /// @return the hrbf id associated to the bone or -1
   /// if the bone is not an HRBF
   int get_hrbf_id(Bone::Id bone_id) const;
@@ -240,6 +244,10 @@ private:
   // TODO: to be deleted
 //  void update_hrbf_id_to_bone_id();
 
+  /// transform implicit surfaces pre computed in 3D grids
+  /// @param global_transfos array of global transformations for each bone
+  void transform_precomputed_prim();
+
   std::vector<Skeleton_env::Joint_data> get_joints_data() const;
 
   void rec_to_string(int id, int depth, std::string& str);
@@ -259,8 +267,6 @@ private:
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
   // TODO: to be deleted
   //std::vector<int> _hrbf_id_to_bone_id;
-
-  std::auto_ptr<SkeletonImpl> impl;
 };
 
 #endif // SKELETON_HPP__

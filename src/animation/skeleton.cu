@@ -34,50 +34,9 @@
 #include "globals.hpp"
 #include "cuda_utils.hpp"
 
-// -----------------------------------------------------------------------------
-
-#ifndef PI
-#define PI (3.14159265358979323846f)
-#endif
-
 using namespace Cuda_utils;
 
 const float default_bone_radius = 1.f;
-
-struct SkeletonImpl
-{
-    /// List of transformations associated to each bone in order to deform a mesh.
-    /// A point will follow rigidly the ith bone movements if it is transformed
-    /// by bone_transformations[parents[ith]].
-    Cuda_utils::Host::PL_Array<Transfo> _h_transfos;
-    /// same as h_transform but in device memory
-    Cuda_utils::Device::Array<Transfo> _d_transfos;
-
-    // TODO: this list might not be really needed as blending env already stores it
-    /// shape of the controller associated to each joint
-    /// for the gradient blending operators
-    Cuda_utils::Host::Array<IBL::Ctrl_setup> _controllers;
-
-    void init(int nb_joints)
-    {
-        _h_transfos.malloc(nb_joints);
-        _d_transfos.malloc(nb_joints);
-        _controllers.malloc(nb_joints);
-    }
-
-    typedef Cuda_utils::Host::PL_Array<Transfo> HPLA_tr;
-
-    /// transform implicit surfaces computed with HRBF.
-    /// @param global_transfos array of global transformations for each bone
-    /// (device memory)
-    void transform_hrbf(Skeleton *self, const Cuda_utils::Device::Array<Transfo>& d_global_transfos);
-
-    /// transform implicit surfaces pre computed in 3D grids
-    /// @param global_transfos array of global transformations for each bone
-    void transform_precomputed_prim(Skeleton *self, const HPLA_tr& global_transfos);
-};
-
-const Transfo* Skeleton::d_transfos() const { return impl->_d_transfos.ptr(); }
 
 void Skeleton::init_skel_env()
 {
@@ -94,11 +53,8 @@ void Skeleton::init_skel_env()
     Skeleton_env::update_bones_data (_skel_id, bones);
 }
 
-Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
-    impl(new SkeletonImpl())
+Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
 {
-    impl->init(skel._bones.size());
-
     _joints.resize(skel._bones.size());
 
     for(int i = 0; i < (int) _joints.size(); i++)
@@ -107,12 +63,12 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
         d._blend_type     = EJoint::MAX;
         d._ctrl_id        = Blending_env::new_ctrl_instance();
         d._bulge_strength = 0.7f;
-
-        impl->_controllers[i] = IBL::Shape::caml();
         _joints[i]._joint_data = d;
-        Blending_env::update_controller(d._ctrl_id, impl->_controllers[i]);
 
-        impl->_h_transfos[i] = Transfo::identity();
+        _joints[i]._controller = IBL::Shape::caml();
+        Blending_env::update_controller(d._ctrl_id, _joints[i]._controller);
+
+        _joints[i]._h_transfo = Transfo::identity();
     }
 
     _root = skel._root;
@@ -123,31 +79,32 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
 
     for(int bid = 0; bid < (int) _joints.size(); bid++)
     {
-        _joints[bid]._children = skel._sons[bid];
-        _joints[bid]._parent = skel._parents[bid];
+        SkeletonJoint &joint = _joints[bid];
+        joint._children = skel._sons[bid];
+        joint._parent = skel._parents[bid];
 
-        int parent_bone_id = _joints[bid]._parent;
+        int parent_bone_id = joint._parent;
         Vec3_cu org = _frames[bid].get_translation();
         Vec3_cu end = Vec3_cu::zero();
-        int nb_sons = _joints[bid]._children.size();
+        int nb_sons = joint._children.size();
         for(int s = 0; s < nb_sons; s++)
         {
-            int sid = _joints[bid]._children[s];
+            int sid = joint._children[s];
             end += _frames[sid].get_translation();
         }
         end /= (float)nb_sons;
 
         if(nb_sons == 0 ){
             // We set a minimal length for the leaves
-            _joints[bid]._bone = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
+            joint._bone = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
         }else{
-            _joints[bid]._bone = Bone_cu(org.to_point(), end.to_point(), 0.f);
+            joint._bone = Bone_cu(org.to_point(), end.to_point(), 0.f);
         }
 
-        _joints[bid]._anim_bone = new Bone_ssd();
-        _joints[bid]._anim_bone->set_length( _joints[bid]._bone._length );
-        _joints[bid]._anim_bone->set_radius(default_bone_radius);
-        _joints[bid]._anim_bone->_bone_id = bid;
+        joint._anim_bone = new Bone_ssd();
+        joint._anim_bone->set_length( joint._bone._length );
+        joint._anim_bone->set_radius(default_bone_radius);
+        joint._anim_bone->_bone_id = bid;
     }
 
     // must be called last
@@ -198,7 +155,7 @@ void Skeleton::set_joint_controller(Blending_env::Ctrl_id i,
     assert( i >= 0);
     assert( i < (int) _joints.size());
 
-    impl->_controllers[i] = shape;
+    _joints[i]._controller = shape;
     Blending_env::update_controller(_joints[i]._joint_data._ctrl_id, shape);
 }
 
@@ -265,7 +222,7 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 {
     assert( i >= 0);
     assert( i < (int) _joints.size());
-    return impl->_controllers[i];
+    return _joints[i]._controller;
 }
 
 // -----------------------------------------------------------------------------
@@ -299,29 +256,16 @@ float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
     return _joints[bone_id]._hrbf_radius;
 }
 
-void SkeletonImpl::transform_hrbf(Skeleton *self, const Cuda_utils::Device::Array<Transfo>& d_global_transfos)
+void Skeleton::transform_precomputed_prim()
 {
-    for (int i = 0; i < self->nb_joints(); ++i)
+    for( int i = 0; i < (int) _joints.size(); i++)
     {
-        const int id = self->get_hrbf_id(i);
-        if( id > -1) HRBF_env::set_transfo(id, _h_transfos[i]);
-    }
-
-    HRBF_env::apply_hrbf_transfos();
-}
-
-// -----------------------------------------------------------------------------
-
-void SkeletonImpl::transform_precomputed_prim(Skeleton *self, const HPLA_tr &global_transfos )
-{
-    for( int i = 0; i < (int) self->_joints.size(); i++)
-    {
-        if(self->bone_type(i) != EBone::PRECOMPUTED)
+        if(bone_type(i) != EBone::PRECOMPUTED)
             continue;
 
-        Bone_precomputed *bone = (Bone_precomputed*) self->_joints[i]._anim_bone;
+        Bone_precomputed *bone = (Bone_precomputed*) _joints[i]._anim_bone;
         Precomputed_prim &prim = bone->get_primitive();
-        Precomputed_env::set_transform(prim.get_id(), global_transfos[i]);
+        Precomputed_env::set_transform(prim.get_id(), _joints[i]._h_transfo);
     }
 
     Precomputed_env::update_device_transformations();
@@ -329,16 +273,18 @@ void SkeletonImpl::transform_precomputed_prim(Skeleton *self, const HPLA_tr &glo
 
 void Skeleton::set_transforms(const std::vector<Transfo> &transfos)
 {
-    impl->_h_transfos.copy_from(transfos);
+    assert(transfos.size() == _joints.size());
+    for(int i = 0; i < (int) _joints.size(); ++i)
+        _joints[i]._h_transfo = transfos[i];
     update_bones_pose();
 }
 
 void Skeleton::update_bones_pose()
 {
-    // Put _anim_bones in the position specified by _h_transfos.
+    // Put _anim_bones in the position specified by _h_transfo.
     for(unsigned i = 0; i < _joints.size(); i++)
     {
-        const Transfo tr = impl->_h_transfos[i];
+        const Transfo tr = _joints[i]._h_transfo;
         Bone_cu b = _joints[i]._bone;
         _joints[i]._anim_bone->set_length( b.length() );
 
@@ -351,10 +297,24 @@ void Skeleton::update_bones_pose()
     }
 
     // Update joint positions in texture.
-    impl->_d_transfos.copy_from( impl->_h_transfos );
+    std::vector<Transfo> transfos(_joints.size());
+    for( int i = 0; i < (int) _joints.size(); i++)
+        transfos[i] = _joints[i]._h_transfo;
+    Cuda_utils::Device::Array<Transfo> d_transfos;
+    d_transfos.malloc(_joints.size());
+    d_transfos.copy_from(transfos);
 
-    impl->transform_hrbf( this, impl->_d_transfos );
-    impl->transform_precomputed_prim( this, impl->_h_transfos );
+    // Transform HRBF bones:
+    for (int i = 0; i < (int) _joints.size(); ++i)
+    {
+        const int id = get_hrbf_id(i);
+        if( id > -1) HRBF_env::set_transfo(id, _joints[i]._h_transfo);
+    }
+
+    HRBF_env::apply_hrbf_transfos();
+
+    // Transform precomputed bones:
+    transform_precomputed_prim();
 
     // In order to this call to take effect correctly it MUST be done after
     // transform_hrbf() and transform_precomputed_prim() otherwise bones
@@ -397,5 +357,5 @@ Skeleton_env::DBone_id Skeleton::get_bone_didx(Bone::Id i) const {
 const Transfo&  Skeleton::get_transfo(Bone::Id bone_id) const {
     assert(bone_id >= 0);
     assert(bone_id < (int) _joints.size());
-    return impl->_h_transfos[bone_id];
+    return _joints[bone_id]._h_transfo;
 }
