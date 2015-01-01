@@ -115,9 +115,6 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
         impl->_h_transfos[i] = Transfo::identity();
     }
 
-    _scale = 1.f;
-    _offset = Vec3_cu::zero();
-
     _root = skel._root;
 
     std::vector<Transfo> _frames(skel._bones.size());

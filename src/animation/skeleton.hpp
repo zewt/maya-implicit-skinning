@@ -256,12 +256,6 @@ private:
   /// Id root joint
   Bone::Id _root;
 
-  /// Skeleton offset
-  Vec3_cu _offset;
-
-  /// Skeleton scale
-  float _scale;
-
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
   // TODO: to be deleted
   //std::vector<int> _hrbf_id_to_bone_id;
