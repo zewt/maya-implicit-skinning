@@ -221,7 +221,7 @@ private:
 
   /// Once '_frames' and '_children' are filled, this compute '_bones' and
   /// '_anim_bones' according to the frames positions.
-  void fill_bones();
+  void fill_bones(const std::vector<Transfo> &frames);
 
   void rec_to_string(int id, int depth, std::string& str);
 
@@ -237,9 +237,6 @@ private:
   std::vector< std::vector<Bone::Id> > _children;
   /// Map each bone to its parent : parents[bone_ID] = parent_bone_ID
   std::vector<Bone::Id> _parents;
-
-  /// Joints frames in rest position
-  std::vector<Transfo> _frames;
 
   int _nb_joints;
   /// Id root joint

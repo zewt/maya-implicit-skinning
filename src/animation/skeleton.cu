@@ -87,7 +87,6 @@ void Skeleton::init(int nb_joints)
     _nb_joints = nb_joints;
     _children.resize(nb_joints);
     _parents.resize(nb_joints);
-    _frames.resize(nb_joints);
     _joints_data.resize(nb_joints);
     _anim_bones.resize(nb_joints);
     _bones.resize(nb_joints);
@@ -132,6 +131,8 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
 {
     init( skel._bones.size() );
 
+    std::vector<Transfo> _frames(skel._bones.size());
+
     for(unsigned i = 0; i < skel._bones.size(); i++ )
     {
         _frames    [i] = skel._bones[i]._frame;
@@ -142,7 +143,7 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
     }
     _children = skel._sons;
 
-    fill_bones();
+    fill_bones(_frames);
     // must be called last
     init_skel_env();
 }
@@ -365,7 +366,7 @@ void Skeleton::update_hrbf_id_to_bone_id()
 }
 */
 
-void Skeleton::fill_bones()
+void Skeleton::fill_bones(const std::vector<Transfo> &_frames)
 {
     for(int bid = 0; bid < _nb_joints; bid++)
     {
