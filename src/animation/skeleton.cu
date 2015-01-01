@@ -131,19 +131,41 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel):
 {
     init( skel._bones.size() );
 
-    std::vector<Transfo> _frames(skel._bones.size());
-
-    for(unsigned i = 0; i < skel._bones.size(); i++ )
-    {
-        _frames    [i] = skel._bones[i]._frame;
-        _parents   [i] = skel._parents[i];
-
-        _anim_bones[i]->set_length( skel._bones[i]._length );
-
-    }
     _children = skel._sons;
 
-    fill_bones(_frames);
+    std::vector<Transfo> _frames(skel._bones.size());
+
+    for(int bid = 0; bid < _nb_joints; bid++ )
+    {
+        _frames    [bid] = skel._bones[bid]._frame;
+        _parents   [bid] = skel._parents[bid];
+
+        _anim_bones[bid]->set_length( skel._bones[bid]._length );
+    }
+
+    for(int bid = 0; bid < _nb_joints; bid++)
+    {
+        Vec3_cu org = _frames[bid].get_translation();
+        Vec3_cu end = Vec3_cu::zero();
+        int nb_sons = _children[bid].size();
+        for(int s = 0; s < nb_sons; s++)
+        {
+            int sid = _children[bid][s];
+            end += _frames[sid].get_translation();
+        }
+        end /= (float)nb_sons;
+
+        if(nb_sons == 0 ){
+            // We set a minimal length for the leaves
+            _bones[bid] = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
+            _anim_bones[bid]->set_length( 0.01f );
+        }else{
+            _bones[bid] = Bone_cu(org.to_point(), end.to_point(), 0.f);
+            _anim_bones[bid]->set_length( (org-end).norm() );
+        }
+
+    }
+
     // must be called last
     init_skel_env();
 }
@@ -327,6 +349,12 @@ void Skeleton::update_bones_pose()
         const Transfo tr = impl->_h_transfos[i];
         Bone_cu b = _bones[i];
         _anim_bones[i]->set_length( b.length() );
+
+        // Check that we don't have a zero orientation.  It's an invalid value that will
+        // trickle down through a bunch of other data as IND/INFs and eventually cause other
+        // assertion failures, so flag it here to make it easier to debug.
+        assert(b.dir().norm_squared() > 0);
+
         _anim_bones[i]->set_orientation(tr * b.org(), tr * b.dir());
     }
 
@@ -365,34 +393,6 @@ void Skeleton::update_hrbf_id_to_bone_id()
     }
 }
 */
-
-void Skeleton::fill_bones(const std::vector<Transfo> &_frames)
-{
-    for(int bid = 0; bid < _nb_joints; bid++)
-    {
-        Vec3_cu org = _frames[bid].get_translation();
-        Vec3_cu end = Vec3_cu::zero();
-        int nb_sons = _children[bid].size();
-        for(int s = 0; s < nb_sons; s++)
-        {
-            int sid = _children[bid][s];
-            end += _frames[sid].get_translation();
-        }
-        end /= (float)nb_sons;
-
-        if(nb_sons == 0 ){
-            // We set a minimal length for the leaves
-            _bones[bid] = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
-            _anim_bones[bid]->set_length( 0.01f );
-        }else{
-            _bones[bid] = Bone_cu(org.to_point(), end.to_point(), 0.f);
-            _anim_bones[bid]->set_length( (org-end).norm() );
-        }
-
-    }
-}
-
-// -----------------------------------------------------------------------------
 
 Skeleton_env::DBone_id Skeleton::get_bone_didx(Bone::Id i) const {
     return Skeleton_env::bone_hidx_to_didx(_skel_id, i);

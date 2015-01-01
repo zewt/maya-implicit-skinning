@@ -219,10 +219,6 @@ private:
   // TODO: to be deleted
 //  void update_hrbf_id_to_bone_id();
 
-  /// Once '_frames' and '_children' are filled, this compute '_bones' and
-  /// '_anim_bones' according to the frames positions.
-  void fill_bones(const std::vector<Transfo> &frames);
-
   void rec_to_string(int id, int depth, std::string& str);
 
   //----------------------------------------------------------------------------
