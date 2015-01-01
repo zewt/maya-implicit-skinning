@@ -292,7 +292,7 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
     _size_unpacked_vert_array = off;
     _normals    = new float [_size_unpacked_vert_array * 3];
 
-    // Copy triangles index, normals and texture coordinates
+    // Copy triangle normals.
     _has_normals    = false;
     for( int i = 0; i < _nb_tri; i++)
     {
@@ -309,11 +309,12 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
 
             // Fill normal as there index match the unpacked vertex array
             if( n_idx != -1 )
+            {
+                _has_normals = true;
                 *((Loader::Normal*)(_normals+v_unpacked*3)) = mesh._normals[n_idx];
+            }
             else
                 *((Loader::Normal*)(_normals+v_unpacked*3)) = Loader::Normal();
-
-            _has_normals    = _has_normals    || (n_idx != -1);
         }
     }
 
