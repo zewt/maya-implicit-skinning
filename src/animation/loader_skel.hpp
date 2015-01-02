@@ -28,7 +28,6 @@ namespace Loader {
 
 /// @brief intermediate representation of a bone for file loading
 struct Abs_bone {
-    float       _length; ///< The bone length
     Transfo     _frame;  ///< The bone position and orientation
 };
 
@@ -36,12 +35,6 @@ struct Abs_bone {
 
 /// @brief intermediate representation of a skeleton for file loading
 struct Abs_skeleton {
-    /// Compute the bone lengths of every bones.
-    /// The hierachy of the skeleton and bones positions must be correctly filled.
-    /// The bone length equal the mean length between the joint and its sons.
-    /// Leaves are of length zero
-    void compute_bone_lengths();
-
     /// List of bones
     std::vector<Abs_bone> _bones;
     /// _sons[bone_id] == vec_sons

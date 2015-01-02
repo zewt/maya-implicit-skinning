@@ -460,8 +460,7 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
 
         MMatrix jointObjectMat = jointWorldMat * worldToObjectSpaceMat;
 
-        // Fill in the bone.  We don't need to calculate _length, since compute_bone_lengths will
-        // do it below.
+        // Fill in the bone.
         Loader::Abs_bone bone;
         bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
         skeleton._bones.push_back(bone);
@@ -481,7 +480,6 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
             skeleton._sons[parentIdx].push_back(boneIdx);
     }
 
-    skeleton.compute_bone_lengths();
     return MStatus::kSuccess;
 }
 
