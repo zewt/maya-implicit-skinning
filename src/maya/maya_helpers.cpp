@@ -146,8 +146,15 @@ namespace DagHelpers
 
         // Convert to a vector.
         out.clear();
-        for(unsigned i = 0; i < paths.length(); ++i) 
-            out.push_back(paths[i]);
+        for(unsigned i = 0; i < paths.length(); ++i) {
+            int logicalIndex = skinCluster.indexForInfluenceObject(paths[i], &status);
+            if(status != MS::kSuccess) return status;
+
+            // Make space for the item, if needed.
+            if(out.size() <= logicalIndex)
+                out.resize(logicalIndex+1);
+            out[logicalIndex] = paths[i];
+        }
 
         // Sort the influence objects by the length of their full path.  Since the name of
         // an object is prefixed by its parents, eg. "parent1|parent2|object", this guarantees

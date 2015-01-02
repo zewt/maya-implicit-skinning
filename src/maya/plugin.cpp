@@ -950,7 +950,8 @@ MStatus ImplicitCommand::init(MString nodeName)
             item = jointPlug.child(ImplicitSkinDeformer::parentJointAttr, &status);
             if(status != MS::kSuccess) return status;
 
-            status = item.setValue(parentIndexes[i]);
+            int parentId = elementLogicalIndex < parentIndexes.size()? parentIndexes[elementLogicalIndex]:-1;
+            status = item.setValue(parentId);
             if(status != MS::kSuccess) return status;
         }
     }
