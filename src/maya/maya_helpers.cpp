@@ -156,11 +156,6 @@ namespace DagHelpers
             out[logicalIndex] = paths[i];
         }
 
-        // Sort the influence objects by the length of their full path.  Since the name of
-        // an object is prefixed by its parents, eg. "parent1|parent2|object", this guarantees
-        // that a parent is before all of its children.
-        sort(out.begin(), out.end(), compare_length);
-
         return MStatus::kSuccess;
     }
 
