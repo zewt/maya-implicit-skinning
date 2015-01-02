@@ -90,6 +90,8 @@ struct Abs_skeleton;
  */
 struct SkeletonJoint
 {
+    SkeletonJoint() { _anim_bone = NULL; _parent = -1; _hrbf_radius = 0; }
+
     Bone *_anim_bone;
 
     /// Bone in rest position.
