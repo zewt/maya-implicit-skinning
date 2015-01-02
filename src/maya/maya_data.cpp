@@ -92,20 +92,12 @@ MStatus MayaData::loadSkeletonHierarchyFromSkinCluster(MObject skinClusterNode, 
     status = DagHelpers::getMDagPathsFromSkinCluster(skinClusterNode, joints);
     if(status != MS::kSuccess) return status;
 
-    // Create a root bone.
-    parentIndexes.push_back(-1);
-
     // Create the bones.
     for(int i = 0; i < joints.size(); ++i)
     {
         // Find this bone's closest ancestor to be its parent.  If it has no ancestors, use the root.
         const MDagPath &dagPath = joints[i];
         int parentIdx = DagHelpers::findClosestAncestor(joints, dagPath);
-        if(parentIdx == -1)
-            parentIdx = 0;
-        else
-            parentIdx++; // skip the root bone added above
-
         parentIndexes.push_back(parentIdx);
     }
 
