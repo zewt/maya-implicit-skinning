@@ -307,8 +307,8 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
-    // If we don't have a mesh to work with yet, stop.
-    if(cudaCtrl._mesh == NULL)
+    // If we don't have a mesh or skeleton to work with yet, stop.
+    if(cudaCtrl._mesh == NULL || !cudaCtrl._skeleton.is_loaded())
         return MStatus::kSuccess;
 
     // Get the geomMatrixAttr attribute.
