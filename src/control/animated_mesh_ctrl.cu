@@ -90,18 +90,6 @@ void Animated_mesh_ctrl::deform_mesh()
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::write_bone_types(std::ofstream& file)
-{
-    file << "[BONE_TYPES]" << std::endl;
-    file << "nb_bone "     << _animesh->get_skel()->nb_joints() << std::endl;
-
-    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++ )
-    {
-        file << "bone_id "   << i                         << std::endl;
-        file << "bone_type " << _animesh->get_skel()->bone_type( i ) << std::endl;
-    }
-}
-
 void Animated_mesh_ctrl::write_hrbf_caps_env(std::ofstream& file, bool jcap)
 {
     if( jcap ) file << "[HRBF_JCAPS_ENV]" << std::endl;
@@ -144,32 +132,14 @@ void Animated_mesh_ctrl::save_ism(const char* filename)
         exit(1);
     }
 
-    _samples.write_hrbf_env( file );
     write_hrbf_caps_env( file, true  /*write joint caps*/);
     write_hrbf_caps_env( file, false /*write parent caps*/);
-    write_bone_types( file );
     write_hrbf_radius( file );
 
     file.close();
 }
 
 // -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::read_bone_types(std::ifstream& file,
-                                         std::vector<int>& bones_type)
-{
-    std::string nil;
-    int nb_bones = -1;
-
-    file >> nil /*'nb_bone'*/ >> nb_bones;
-
-    for(int i = 0; i < nb_bones; i++)
-    {
-        int bone_id = -1;
-        file >> nil /*'bone_id'*/    >> bone_id;
-        file >> nil /*'bone_type '*/ >> bones_type[bone_id];
-    }
-}
 
 void Animated_mesh_ctrl::read_weights(std::ifstream& file,
                                       std::vector<float4>& weights )
@@ -259,7 +229,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         return;
     }
 
-    std::vector<int>   bones_type (_animesh->get_skel()->nb_joints(), EBone::SSD);
     std::vector<float> radius_hrbf(_animesh->get_skel()->nb_joints(), -1.f      );
 
     std::vector<std::vector<float4> > bone_weights(_animesh->get_skel()->nb_joints());
@@ -269,11 +238,9 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         string section;
         file >> section;
 
-        if(section == "[HRBF_ENV]")              _samples.read_hrbf_env( file );
-        else if(section == "[HRBF_ENV_WEIGHTS]") read_hrbf_env_weights(file, bone_weights);
+        if(section == "[HRBF_ENV_WEIGHTS]") read_hrbf_env_weights(file, bone_weights);
         else if(section == "[HRBF_JCAPS_ENV]")   read_hrbf_caps_env( file, true  );
         else if(section == "[HRBF_PCAPS_ENV]")   read_hrbf_caps_env( file, false );
-        else if(section == "[BONE_TYPES]")       read_bone_types( file, bones_type );
         else if(section == "[HRBF_RADIUS]")      read_hrbf_radius( file, radius_hrbf);
         else
         {
@@ -285,27 +252,10 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
 
     for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
     {
-        const EBone::Bone_t t = (EBone::Bone_t)bones_type[i];
-
         if( radius_hrbf[i] > 0.f)
             _animesh->get_skel()->set_bone_hrbf_radius(i, radius_hrbf[i]);
 
         _samples.update_caps(*_animesh->get_skel(), i, true, true);
-
-        if(t == EBone::HRBF || t == EBone::PRECOMPUTED)
-        {
-            // Check if weights are here and don't update if not necessary
-            //...
-
-            // This call will compute hrbf weights and convert to precomputed
-            // if _auto_precompute == true
-            update_bone_samples(i);
-
-            if( !_auto_precompute && t == EBone::PRECOMPUTED)
-                _animesh->set_bone_type( i, EBone::PRECOMPUTED);
-        }
-        else
-            _animesh->set_bone_type(i, t);
     }
 
     _animesh->update_base_potential();

@@ -24,45 +24,6 @@
 
 #include <sstream>
 
-void SampleSet::SampleSet::read_samples(std::ifstream& file,
-                                      std::vector<Vec3_cu>& nodes,
-                                      std::vector<Vec3_cu>& n_nodes )
-{
-    assert(nodes.size() == n_nodes.size());
-
-    std::string nil;
-    int nb_samples = -1;
-    file >> nil /*'nb_points'*/ >> nb_samples;
-    nodes.  resize( nb_samples );
-    n_nodes.resize( nb_samples );
-
-    for(int j = 0; j < nb_samples; ++j)
-    {
-        Vec3_cu pt, n;
-        file >> pt.x >> pt.y >> pt.z;
-        file >> n.x  >> n.y  >> n.z;
-
-//        Transfo tr = Transfo::rotate(Vec3_cu::unit_x(), M_PI) * Transfo::rotate(Vec3_cu::unit_z(), M_PI);// DEBUG---
-        nodes  [j] = /*tr */ pt;
-        n_nodes[j] = /*tr */ n;
-    }
-}
-
-void SampleSet::SampleSet::read_hrbf_env(std::ifstream& file)
-{
-    std::string nil;
-    int bone_id  = -1;
-    int nb_bones_file = 0;
-
-    file >> nil/*'nb_bone'*/ >> nb_bones_file;
-
-    for(int i = 0; i<nb_bones_file; i++ )
-    {
-        file >> nil/*'bone_id'*/ >> bone_id;
-        read_samples(file, _samples[bone_id]._sample_list.nodes, _samples[bone_id]._sample_list.n_nodes);
-    }
-}
-
 void SampleSet::SampleSet::choose_hrbf_samples_ad_hoc(const Animesh &animesh,
                                                     int bone_id,
                                                     float jmax,
@@ -235,36 +196,6 @@ void SampleSet::InputSample::add_samples(const std::vector<Vec3_cu>& p, const st
 
     _sample_list.nodes.insert(_sample_list.nodes.end(), p.begin(), p.end());
     _sample_list.n_nodes.insert(_sample_list.n_nodes.end(), n.begin(), n.end());
-}
-
-void SampleSet::SampleSet::write_hrbf_env(std::ofstream& file) const
-{
-    file << "[HRBF_ENV]" << std::endl;
-    file << "nb_bone "   << _samples.size() << std::endl;
-
-    for(unsigned i = 0; i < _samples.size(); i++ )
-    {
-        file << "bone_id " << i << std::endl;
-
-        write_samples(file, _samples[i]._sample_list.nodes, _samples[i]._sample_list.n_nodes);
-    }
-}
-
-void SampleSet::SampleSet::write_samples(std::ofstream& file,
-                                       const std::vector<Vec3_cu>& nodes,
-                                       const std::vector<Vec3_cu>& n_nodes ) const
-{
-    assert(nodes.size() == n_nodes.size());
-
-    file << "nb_points " << nodes.size() << std::endl;
-
-    for(unsigned j = 0; j < nodes.size(); ++j)
-    {
-        const Vec3_cu pt = nodes  [j];
-        const Vec3_cu n  = n_nodes[j];
-        file << pt.x << " " << pt.y << " " << pt.z << std::endl;
-        file << n.x  << " " << n.y  << " " << n.z  << std::endl;
-    }
 }
 
 void SampleSet::SampleSet::transform_samples(const std::vector<Transfo> &transfos, const std::vector<int>& bone_ids)

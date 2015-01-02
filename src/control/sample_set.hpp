@@ -111,20 +111,6 @@ struct SampleSet
 
     int get_all_bone_samples(const Skeleton &skel, int bone_id, HSample_list &out) const;
 
-    /// Write the section related to the hrbf samples in '.ism' files
-    void write_hrbf_env(std::ofstream& file) const;
-
-    void write_samples(std::ofstream& file,
-                       const std::vector<Vec3_cu>& nodes,
-                       const std::vector<Vec3_cu>& n_nodes) const;
-
-    /// Read the section related to the hrbf samples in '.ism' files
-    void read_hrbf_env(std::ifstream& file);
-
-    void read_samples(std::ifstream& file,
-                      std::vector<Vec3_cu>& nodes,
-                      std::vector<Vec3_cu>& n_nodes );
-
 private:
     void transform_caps(int bone_id, const Transfo& tr);
 

@@ -137,9 +137,6 @@ private:
     /// @name Tools file export
     //--------------------------------------------------------------------------
 #if !defined(NO_CUDA) // XXX: remove this stuff
-    /// Write the list of bone types (SSD HRBF etc.)
-    void write_bone_types(std::ofstream& file);
-
     /// Write the section related to the hrbf caps in '.ism' files
     /// @param wether we write the joint cap list or parent cap list
     void write_hrbf_caps_env(std::ofstream& file, bool jcap);
@@ -154,10 +151,6 @@ private:
 
     void read_hrbf_env_weights( std::ifstream& file,
                                 std::vector<std::vector<float4> >& bone_weights);
-
-    /// Read the list of bone types (SSD HRBF etc.)
-    void read_bone_types(std::ifstream& file,
-                         std::vector<int>& bones_type);
 
     void read_weights(std::ifstream& file,
                       std::vector<float4>& weights );
