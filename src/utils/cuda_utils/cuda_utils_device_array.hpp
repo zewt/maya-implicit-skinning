@@ -267,9 +267,7 @@ struct CuArray : Cuda_utils::Common::Array<T>{
     /// @name Allocation (always erase data)
     // -------------------------------------------------------------------------
     /// @{
-    inline void malloc(int dimx);
-    inline void malloc(int dimx, int dimy);
-    inline void malloc(int dimx, int dimy, int dimz);
+    inline void malloc(int dimx, int dimy=0, int dimz=0);
     /// @}
 
     /// Free device memory
@@ -914,109 +912,28 @@ erase()
     }
 }
 
-// -----------------------------------------------------------------------------
-
 template <class T>
-inline void Cuda_utils::Device::CuArray<T>::
-
-malloc(int dimx)
+inline void Cuda_utils::Device::CuArray<T>::malloc(int dimx, int dimy, int dimz)
 {
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    cudaExtent new_extent = make_cudaExtent(dimx,0,0);
+    array_extent = make_cudaExtent(dimx, dimy, dimz);
+
     int nb_elt = dimx;
+    if(dimy != 0)
+        nb_elt *= dimy;
+    if(dimz != 0)
+        nb_elt *= dimz;
 
     assert(nb_elt >= 0);
 
-    if(!(state & CCA::IS_ALLOCATED)){
-        array_extent = new_extent;
-        CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-        state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
-        CCA::nb_elt = nb_elt;
-    } else {
-        if(state & CCA::IS_COPY){
-            array_extent = new_extent;
-            CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-            state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
-            CCA::nb_elt = nb_elt;
-        } else {
-            CUDA_SAFE_CALL(cudaFreeArray(data));
-            data = 0;
-            array_extent = new_extent;
-            CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-            state = (state | CCA::IS_ALLOCATED);
-            CCA::nb_elt = nb_elt;
-        }
+    if((state & CCA::IS_ALLOCATED) && !(state & CCA::IS_COPY)){
+        CUDA_SAFE_CALL(cudaFreeArray(data));
+        data = NULL;
     }
-}
+    state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
 
-// -----------------------------------------------------------------------------
-
-template <class T>
-inline void Cuda_utils::Device::CuArray<T>::
-
-malloc(int dimx, int dimy)
-{
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    cudaExtent new_extent = make_cudaExtent(dimx, dimy,0);
-    int nb_elt = dimx * dimy;
-
-    assert(nb_elt >= 0);
-
-    if(!(state & CCA::IS_ALLOCATED)){
-        array_extent = new_extent;
-        CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-        state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
-        CCA::nb_elt = nb_elt;
-    } else {
-        if(state & CCA::IS_COPY){
-            array_extent = new_extent;
-            CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-            state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
-            CCA::nb_elt = nb_elt;
-        } else {
-            CUDA_SAFE_CALL(cudaFreeArray(data));
-            data = 0;
-            array_extent = new_extent;
-            CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-            state = (state | CCA::IS_ALLOCATED);
-            CCA::nb_elt = nb_elt;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-template <class T>
-inline void Cuda_utils::Device::CuArray<T>::
-
-malloc(int dimx, int dimy, int dimz)
-{
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    cudaExtent new_extent = make_cudaExtent(dimx, dimy, dimz);
-    int nb_elt = dimx * dimy * dimz;
-
-    assert(nb_elt >= 0);
-
-    if(!(state & CCA::IS_ALLOCATED)){
-        array_extent = new_extent;
-        CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-        state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
-        CCA::nb_elt = nb_elt;
-    } else {
-        if(state & CCA::IS_COPY){
-            array_extent = new_extent;
-            CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-            state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
-            CCA::nb_elt = nb_elt;
-        } else {
-            CUDA_SAFE_CALL(cudaFreeArray(data));
-            data = 0;
-            array_extent = new_extent;
-            CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
-            state = (state | CCA::IS_ALLOCATED);
-            CCA::nb_elt = nb_elt;
-        }
-    }
+    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
+    CCA::nb_elt = nb_elt;
 }
 
 // -----------------------------------------------------------------------------
