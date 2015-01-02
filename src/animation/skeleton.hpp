@@ -174,15 +174,9 @@ struct Skeleton {
 
   // Return true if the joint represents a bone.
   //
-  // The root joint doesn't create a bone (this is just a dummy to give everything
-  // a parent), and the first real joint after the root also doesn't create a bone.
+  // Root joints don't create bones.
   bool is_bone(int i) const {
-      int parent_bone_id = parent(i);
-      if(parent_bone_id == -1)
-          return false;
-
-      int grandparent_bone_id = parent(parent_bone_id);
-      return grandparent_bone_id != -1;
+      return parent(i) != -1;
   }
 
   // If this joint represents a bone, return the transform used for the bone.  Otherwise,

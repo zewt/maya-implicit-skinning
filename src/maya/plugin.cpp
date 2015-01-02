@@ -324,9 +324,6 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     // Update the skeleton.
     vector<Transfo> bone_transforms;
 
-    // The root joint is a dummy, and doesn't correspond with a Maya transform.
-    bone_transforms.push_back(Transfo::identity());
-    
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
         status = influenceJointsHandle.jumpToElement(i);
@@ -436,24 +433,6 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
 
     MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
 
-    // Create a root bone.
-    {
-        // The root bone na
-        Loader::Abs_bone bone;
-        bone._name = "";
-
-        // Create this joint at the origin in world space, and transform it to object space like the
-        // ones we create below.  (Multiplying by identity doesn't do anything; it's only written this
-        // way for clarity.)
-        MMatrix jointObjectMat = MMatrix::identity * worldToObjectSpaceMat;
-        bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
-
-        skeleton._bones.push_back(bone);
-        skeleton._sons.push_back(std::vector<int>());
-        skeleton._parents.push_back(-1);
-        skeleton._root = 0;
-    }
-
     // Create the bones.
     MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
@@ -487,17 +466,12 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
         bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
         skeleton._bones.push_back(bone);
 
-
         // Read this joint's parent joint index.
         MDataHandle parentJointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::parentJointAttr);
         if(status != MS::kSuccess) return status;
 
         int parentIdx = DagHelpers::readHandle<int>(parentJointHandle, &status);
         if(status != MS::kSuccess) return status;
-
-        // parentIndexes don't include the root joint 0, so add 1.  A parentIndex of -1
-        // means the root joint, so we can just add 1 in that case too to get 0.
-        parentIdx++;
 
         skeleton._parents.push_back(parentIdx);
 
@@ -518,11 +492,11 @@ MStatus ImplicitSkinDeformer::save_sampleset(const SampleSet::SampleSet &samples
     MPlug jointArrayPlug(thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
     
     // Skip the dummy root joint.
-    for(int i = 1; i < (int) samples._samples.size(); ++i)
+    for(int i = 0; i < (int) samples._samples.size(); ++i)
     {
         const SampleSet::InputSample &inputSample = samples._samples[i];
 
-        MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i-1, &status);
+        MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i, &status);
         if(status != MS::kSuccess) return status;
 
         // Save the junction radius.
@@ -582,7 +556,7 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     // Create a new SampleSet, and load its values from the node.
     SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
 
-    if(cudaCtrl._anim_mesh->get_skel()->nb_joints() != influenceJointsHandle.elementCount()+1)
+    if(cudaCtrl._anim_mesh->get_skel()->nb_joints() != influenceJointsHandle.elementCount())
     {
         // We don't have the same number of joints loaded as we have .joints elements.  XXX: This happened
         // after creating a bad connection between skinCluster.outputGeom and unskinnedGeom
@@ -591,10 +565,9 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
         assert(0);
     }
 
-    // Skip the dummy root joint.
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
-        SampleSet::InputSample &inputSample = samples._samples[i+1];
+        SampleSet::InputSample &inputSample = samples._samples[i];
 
         status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;

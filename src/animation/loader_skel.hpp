@@ -43,8 +43,6 @@ struct Abs_skeleton {
     /// Leaves are of length zero
     void compute_bone_lengths();
 
-    int _root; ///< index of the root bone in _bones
-
     /// List of bones
     std::vector<Abs_bone> _bones;
     /// _sons[bone_id] == vec_sons
