@@ -117,13 +117,19 @@ void SampleSet::SampleSet::choose_hrbf_samples_poisson(const Animesh &animesh,
 
 void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, int bone_id, HSample_list &out) const
 {
+    if(skel.is_leaf(bone_id))
+        return;
+
     const Bone* b = skel.get_bone(bone_id);
 
+    // Get the average _junction_radius of the joint's children.
     float jrad = 0.f;// joint radius mean radius
-    int nb_sons = (int) skel.get_sons(bone_id).size();
+    const std::vector<int> &children = skel.get_sons(bone_id);
+    int nb_sons = (int) children.size();
     for (int i = 0; i < nb_sons; ++i)
-        jrad += _samples[ skel.get_sons(bone_id)[i] ]._junction_radius;
+        jrad += _samples[ children[i] ]._junction_radius;
 
+    // Note that there should never actually be zero children, because our caller checks.
     jrad /= nb_sons > 0 ? (float)nb_sons : 1.f;
 
     Point_cu p = b->end() + b->dir().normalized() * jrad;
@@ -163,7 +169,7 @@ void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, int bone_id,
 
 void SampleSet::SampleSet::update_caps(const Skeleton &skel, int bone_id, bool jcap, bool pcap)
 {
-    if(jcap && !skel.is_leaf(bone_id))
+    if(jcap)
     {
         _samples[bone_id].jcap.samples.clear();
         compute_jcaps(skel, bone_id, _samples[bone_id].jcap.samples);
@@ -341,7 +347,7 @@ int SampleSet::SampleSet::get_all_bone_samples(const Skeleton &skel, int bone_id
     // concat joint caps
     for( unsigned i = 0; i < sons.size(); i++) {
         int bid = sons[i];
-        if(!_samples[bid].jcap.enable || skel.is_leaf(bid))
+        if(!_samples[bid].jcap.enable)
             continue;
 
         out.append(_samples[bid].jcap.samples);
