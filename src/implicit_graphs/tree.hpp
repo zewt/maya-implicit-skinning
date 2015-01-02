@@ -30,8 +30,7 @@ namespace Skeleton_env {
 /// CPU representation of the tree
 struct Tree {
 
-    Tree(int root,
-         const std::vector<const Bone*>& bones,
+    Tree(const std::vector<const Bone*>& bones,
          const std::vector<int>& parents);
 
     /// Compute the axis aligned bounding box of the tree
@@ -46,8 +45,6 @@ struct Tree {
     void set_joints_data(const std::vector<Joint_data>& datas){ _datas = datas; }
 
     bool is_leaf(Bone::Id bid) const { return _sons[bid].size() == 0; }
-
-    Bone::Id root() const { return _root; }
 
           std::vector<Bone::Id>& sons(Bone::Id hid)       { return _sons[hid]; }
     const std::vector<Bone::Id>& sons(Bone::Id hid) const { return _sons[hid]; }
@@ -65,7 +62,6 @@ struct Tree {
     // -------------------------------------------------------------------------
 
 private:
-    Bone::Id _root;
     std::vector< std::vector<Bone::Id> > _sons;
     std::vector<Joint_data> _datas;
     std::vector<const Bone*> _bones;

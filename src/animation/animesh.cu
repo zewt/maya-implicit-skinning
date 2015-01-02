@@ -349,7 +349,7 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
     for(int i = 0; i < n ; i++)
     {
         float d0  = std::numeric_limits<float>::infinity();
-        int   nd0 = _skel->root();
+        int   nd0 = 0;
 
         const Point_cu current_vertex = _mesh->get_vertex(i).to_point();
         for(int j = 0; j < _skel->nb_joints(); j++)

@@ -60,9 +60,6 @@ public:
     /// @name Getters
     // -------------------------------------------------------------------------
 
-    /// @return identifier of the root bone
-    int root();
-
     // Set the current joint transforms.
     void set_transforms(const std::vector<Transfo> &transfos);
 

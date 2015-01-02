@@ -22,10 +22,7 @@
 namespace Skeleton_env {
 // =============================================================================
 
-Tree::Tree(int root,
-           const std::vector<const Bone*>& bones,
-           const std::vector<int>& parents) :
-    _root( root ),
+Tree::Tree(const std::vector<const Bone*>& bones, const std::vector<int>& parents) :
     _bones( bones.begin(), bones.end() ),
     _parents( parents )
 {

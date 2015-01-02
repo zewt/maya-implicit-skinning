@@ -35,11 +35,6 @@ Skeleton_ctrl::~Skeleton_ctrl()
     skel = NULL;
 }
 
-int Skeleton_ctrl::root()
-{
-    return skel->root();
-}
-
 void Skeleton_ctrl::load(const Loader::Abs_skeleton& abs_skel)
 {
     delete skel;

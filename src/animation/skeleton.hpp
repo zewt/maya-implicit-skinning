@@ -131,9 +131,6 @@ struct Skeleton {
 
   ~Skeleton();
 
-  /// get skeleton hierachy with bone types in string
-  std::string to_string();
-
   //----------------------------------------------------------------------------
   /// @name Setters
   //----------------------------------------------------------------------------
@@ -165,9 +162,6 @@ struct Skeleton {
   /// used to compute skinning can be different from the bone frame.
   //----------------------------------------------------------------------------
 
-  /// Get the "root" joint, i.e. the highest joint in the hierarchy
-  int root() const { return _root; }
-
   /// Get the number of joints in the skeleton
   int nb_joints() const { return (int) _joints.size(); }
 
@@ -184,7 +178,11 @@ struct Skeleton {
   // a parent), and the first real joint after the root also doesn't create a bone.
   bool is_bone(int i) const {
       int parent_bone_id = parent(i);
-      return i != _root && parent_bone_id != _root;
+      if(parent_bone_id == -1)
+          return false;
+
+      int grandparent_bone_id = parent(parent_bone_id);
+      return grandparent_bone_id != -1;
   }
 
   // If this joint represents a bone, return the transform used for the bone.  Otherwise,
@@ -273,8 +271,6 @@ private:
 
   std::vector<Skeleton_env::Joint_data> get_joints_data() const;
 
-  void rec_to_string(int id, int depth, std::string& str);
-
   //----------------------------------------------------------------------------
   /// @name Attributes
   //----------------------------------------------------------------------------
@@ -283,9 +279,6 @@ private:
   Skeleton_env::Skel_id _skel_id;
 
   std::vector<SkeletonJoint> _joints;
-
-  /// Id root joint
-  Bone::Id _root;
 
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
   // TODO: to be deleted

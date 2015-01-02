@@ -94,8 +94,7 @@ void init_env();
 void set_grid_res(Skel_id id, int res);
 
 /// Create a new skeleton instance
-Skel_id new_skel_instance(Bone::Id root_idx,
-                          const std::vector<const Bone*>& bones,
+Skel_id new_skel_instance(const std::vector<const Bone*>& bones,
                           const std::vector<int>& parents);
 
 void delete_skel_instance(Skel_id i);

@@ -47,7 +47,7 @@ void Skeleton::init_skel_env()
         bones[i] = _joints[i]._anim_bone;
     }
 
-    _skel_id = Skeleton_env::new_skel_instance(_root, bones, parents);
+    _skel_id = Skeleton_env::new_skel_instance(bones, parents);
     update_bones_pose();
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
     Skeleton_env::update_bones_data (_skel_id, bones);
@@ -70,8 +70,6 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
 
         _joints[i]._h_transfo = Transfo::identity();
     }
-
-    _root = skel._root;
 
     std::vector<Transfo> _frames(skel._bones.size());
     for(int bid = 0; bid < (int) _joints.size(); bid++ )
@@ -140,29 +138,6 @@ Skeleton::~Skeleton()
 
     Skeleton_env::delete_skel_instance( _skel_id );
 }
-
-void Skeleton::rec_to_string(int id, int depth, std::string& str)
-{
-    for (int i = 0; i < depth; ++i)
-        str += "    ";
-
-    str += "Bone: " + Std_utils::to_string(id) + " ";
-    str += EBone::type_to_string( bone_type(id) ) + "\n";
-
-    for(unsigned i = 0; i < _joints[id]._children.size(); ++i)
-        rec_to_string( _joints[id]._children[i], depth+1, str);
-}
-
-// -----------------------------------------------------------------------------
-
-std::string Skeleton::to_string()
-{
-    std::string str;
-    rec_to_string(root(), 0, str);
-    return str;
-}
-
-// -----------------------------------------------------------------------------
 
 void Skeleton::set_joint_controller(Blending_env::Ctrl_id i,
                                     const IBL::Ctrl_setup& shape)
