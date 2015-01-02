@@ -37,8 +37,6 @@ struct Abs_bone {
 struct Abs_skeleton {
     /// List of bones
     std::vector<Abs_bone> _bones;
-    /// _sons[bone_id] == vec_sons
-    std::vector< std::vector<int> > _sons;
     /// _parents[bone_id] == parent_bone_id
     std::vector<int> _parents;
 };

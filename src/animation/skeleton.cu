@@ -78,8 +78,10 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
     for(int bid = 0; bid < (int) _joints.size(); bid++)
     {
         SkeletonJoint &joint = _joints[bid];
-        joint._children = skel._sons[bid];
+
         joint._parent = skel._parents[bid];
+        if(joint._parent != -1)
+            _joints[joint._parent]._children.push_back(bid);
 
         int parent_bone_id = joint._parent;
         Vec3_cu org = Transfo::identity().get_translation();

@@ -473,11 +473,6 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
         if(status != MS::kSuccess) return status;
 
         skeleton._parents.push_back(parentIdx);
-
-        // Add this bone as a child of its parent.
-        skeleton._sons.push_back(std::vector<int>());
-        if(parentIdx != -1)
-            skeleton._sons[parentIdx].push_back(boneIdx);
     }
 
     return MStatus::kSuccess;
