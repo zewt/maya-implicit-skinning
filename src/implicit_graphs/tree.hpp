@@ -55,7 +55,7 @@ struct Tree {
 
     int bone_size() const { return (int)_bones.size(); }
 
-    Bone::Id parent(Bone::Id hid){ return _parents[hid]; }
+    Bone::Id parent(Bone::Id hid) const { return _parents[hid]; }
 
     // -------------------------------------------------------------------------
     /// @name Attributes

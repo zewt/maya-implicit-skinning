@@ -95,7 +95,8 @@ void Grid::add_tree()
 {
     for(int i = 0; i < _tree->bone_size(); ++i) //FIXME: add from root bone to leaf with rec lookup
     {
-        if( _tree->is_leaf(i) ) continue;
+        // Ignore root joints.
+        if( _tree->parent(i) == -1 ) continue;
         add_bone( _tree->bone(i)->get_bone_id() );
     }
 }
