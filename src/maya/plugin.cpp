@@ -329,6 +329,9 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;
 
+        int logicalIndex = influenceJointsHandle.elementIndex(&status);
+        if(status != MS::kSuccess) return status;
+
         // The world transform the joint has now:
         MDataHandle matrixHandle = influenceJointsHandle.inputValue(&status).child(influenceMatrixAttr);
         if(status != MS::kSuccess) return status;
@@ -352,7 +355,9 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         MMatrix currentTransformObjectSpace = jointTransformWorldSpace * worldToObjectSpaceMat; // current object space transform
         MMatrix changeToTransform = bindMatrixObjectSpaceInv * currentTransformObjectSpace; // joint transform relative to bind pose in object space
         
-        bone_transforms.push_back(DagHelpers::MMatrixToTransfo(changeToTransform));
+        if(bone_transforms.size() <= logicalIndex)
+            bone_transforms.resize(logicalIndex+1);
+        bone_transforms[logicalIndex] = DagHelpers::MMatrixToTransfo(changeToTransform);
     }
 
     // If we've been given fewer transformations than there are bones, set the missing ones to identity.
@@ -442,7 +447,8 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
         status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;
 
-        int boneIdx = (int) skeleton._bones.size(); 
+        int logicalIndex = influenceJointsHandle.elementIndex(&status);
+        if(status != MS::kSuccess) return status;
 
         // Get bind positions from the bindPreMatrix.
         MMatrix jointWorldMat;
@@ -460,8 +466,14 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
 
         MMatrix jointObjectMat = jointWorldMat * worldToObjectSpaceMat;
 
+        // Make space for the item, if needed.
+        if(skeleton._parents.size() <= logicalIndex)
+            skeleton._parents.resize(logicalIndex+1);
+        if(skeleton._bones.size() <= logicalIndex)
+            skeleton._bones.resize(logicalIndex+1);
+
         // Add the bone.
-        skeleton._bones.push_back(DagHelpers::MMatrixToTransfo(jointObjectMat));
+        skeleton._bones[logicalIndex] = DagHelpers::MMatrixToTransfo(jointObjectMat);
 
         // Read this joint's parent joint index.
         MDataHandle parentJointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::parentJointAttr);
@@ -470,7 +482,9 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
         int parentIdx = DagHelpers::readHandle<int>(parentJointHandle, &status);
         if(status != MS::kSuccess) return status;
 
-        skeleton._parents.push_back(parentIdx);
+        skeleton._parents[logicalIndex] = parentIdx;
+
+        printf("Idx #%i, logical %i, parent %i\n", i, logicalIndex, parentIdx);
     }
 
     return MStatus::kSuccess;
