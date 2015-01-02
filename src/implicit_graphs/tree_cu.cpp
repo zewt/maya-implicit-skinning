@@ -34,16 +34,25 @@ Tree_cu::Tree_cu(Tree* tree) :
     _bone_to_cluster.resize ( tree->bone_size() );
     _parents_aranged.resize ( tree->bone_size() );
 
-    int nb_bones = compute_clusters(tree->root(),
-                                    DBone_id( 0 ),
-                                    _bone_aranged,
-                                    _clusters,
-                                    _bone_to_cluster,
-                                    _hidx_to_didx,
-                                    _didx_to_hidx).id();
+    int nb_bones = 0;
+    int expected_clusters = 0;
+    for(int i = 0; i < tree->bone_size(); ++i)
+    {
+        if(tree->parent(i) != -1)
+            continue;
+
+        nb_bones += compute_clusters(i,
+                                        DBone_id(nb_bones),
+                                        _bone_aranged,
+                                        _clusters,
+                                        _bone_to_cluster,
+                                        _hidx_to_didx,
+                                        _didx_to_hidx).id();
+        expected_clusters += compute_nb_cluster(i);
+    }
 
     assert((unsigned)nb_bones == tree->bone_size());
-    assert((unsigned)compute_nb_cluster(tree->root()) == _clusters.size());
+    assert(expected_clusters == (int) _clusters.size());
 
     // Build adjency for the new bone layout in '_bone_aranged'
     for(int i = 0; i < nb_bones; ++i)
@@ -78,11 +87,11 @@ DBone_id Tree_cu::compute_clusters(Bone::Id bid,
                                    std::map<DBone_id, Bone::Id>& didx_to_hidx)
 {
     int nb_psons = -1;
-    const Bone::Id root_pson[] = { _tree->root() };
+    const Bone::Id root_pson[] = { bid };
     const Bone::Id* psons = 0;
 
     int pt = _tree->parent( bid );
-    if( bid == _tree->root() ) {
+    if(pt == -1) {
         psons = root_pson;
         nb_psons = 1;
     } else if(_tree->sons( pt ).size() > 0) {

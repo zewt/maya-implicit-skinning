@@ -260,9 +260,9 @@ int SampleSet::SampleSet::compute_nb_samples() const
 int SampleSet::SampleSet::get_all_bone_samples(const Skeleton &skel, int bone_id, HSample_list &out) const
 {
     std::vector<int> sons;
-    if( _factor_bones && bone_id != skel.root() )
+    int parent = skel.parent(bone_id);
+    if(_factor_bones && parent != -1)
     {
-        int parent = skel.parent( bone_id );
         sons = skel.get_sons( parent );
         assert(sons.size() > 0);
         bone_id = sons[0];
