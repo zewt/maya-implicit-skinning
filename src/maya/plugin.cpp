@@ -410,9 +410,6 @@ MStatus ImplicitSkinDeformer::load_skeleton(MDataBlock &dataBlock)
     MStatus status = MStatus::kSuccess;
 
     // Load the skeleton from the node.
-    // Note that we're still assuming that the current position of the
-    // object is the same as bind time.  XXX: Is there anything we can do about that?
-    // XXX Use skinCluster.geomMatrix (gm), and mirror it
     Loader::Abs_skeleton skeleton;
     status = createSkeleton(dataBlock, skeleton);
     if(status != MS::kSuccess) return status;
@@ -584,6 +581,15 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
 
     // Create a new SampleSet, and load its values from the node.
     SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
+
+    if(cudaCtrl._anim_mesh->get_skel()->nb_joints() != influenceJointsHandle.elementCount()+1)
+    {
+        // We don't have the same number of joints loaded as we have .joints elements.  XXX: This happened
+        // after creating a bad connection between skinCluster.outputGeom and unskinnedGeom
+        int a = cudaCtrl._anim_mesh->get_skel()->nb_joints();
+        int b = influenceJointsHandle.elementCount();
+        assert(0);
+    }
 
     // Skip the dummy root joint.
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
@@ -866,28 +872,6 @@ MStatus ImplicitCommand::init(MString nodeName)
     ImplicitSkinDeformer *deformer = getDeformerByName(nodeName, &status);
     if(status != MS::kSuccess) return status;
 
-    // Create an MFnGeometryFilter on the ImplicitSkinDeformer.
-    MFnGeometryFilter implicitGeometryFilter(deformer->thisMObject(), &status);
-    if(status != MS::kSuccess) return status;
-
-    // Ask the MFnGeometryFilter for the MDagPath of the output, and pop to get to the transform
-    // node.
-    MDagPath implicitGeometryOutputDagPath;
-    implicitGeometryFilter.getPathAtIndex(0, implicitGeometryOutputDagPath);
-    implicitGeometryOutputDagPath.pop();
-
-    {
-        // Get the inverse transformation, which is the transformation to go from world space to
-        // object space.
-        MFnTransform transformNode(implicitGeometryOutputDagPath.node());
-        MMatrix objectToWorldSpaceMat = transformNode.transformationMatrix(&status);
-        MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
-
-        // Store objectToWorldSpaceMat on geomMatrixAttr.
-        status = DagHelpers::setMatrixPlug(deformer->thisMObject(), ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
-        if(status != MS::kSuccess) return status;
-    }
-
     // Find the skinCluster deformer node above the deformer.
     MObject skinClusterNode;
     status = DagHelpers::findAncestorDeformer(deformer->thisMObject(), MFn::kSkinClusterFilter, skinClusterNode);
@@ -897,16 +881,36 @@ MStatus ImplicitCommand::init(MString nodeName)
         return status;
     }
 
+    MFnDependencyNode skinClusterDep(skinClusterNode, &status);
+    if(status != MS::kSuccess) return status;
+
+    // Copy the skinCluster's geomMatrix value to our geomMatrix.  This records the transform that was
+    // already applied to the unskinned geometry at bind time, which isn't applied by the joints.  This
+    // is used to convert from the unskinned geometry's object space to the skinned geometry's object
+    // space.
+    {
+        MPlug geomMatrixPlug = skinClusterDep.findPlug("geomMatrix", &status);
+
+        MObject obj;
+        status = geomMatrixPlug.getValue(obj);
+        if(status != MS::kSuccess) return status;
+
+        MFnMatrixData fnMat(obj);
+        MMatrix objectToWorldSpaceMat = fnMat.matrix(&status);
+        if(status != MS::kSuccess) return status;
+
+        status = DagHelpers::setMatrixPlug(deformer->thisMObject(), ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
+        if(status != MS::kSuccess) return status;
+    }
+
     // For each influence going into the skinCluster's .matrix array, connect it to our .matrix array
     // as well.
     MPlug jointArrayPlug(deformer->thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
 
     {
-        MFnDependencyNode skinClusterDep(skinClusterNode);
-        const MObject skinClusterMatrixObject = skinClusterDep.attribute("matrix", &status);
+        MPlug skinClusterMatrixArray = skinClusterDep.findPlug("matrix", &status);
         if(status != MS::kSuccess) return status;
 
-        MPlug skinClusterMatrixArray(skinClusterNode, skinClusterMatrixObject);
         skinClusterMatrixArray.evaluateNumElements(&status);
         if(status != MS::kSuccess) return status;
 
@@ -953,11 +957,9 @@ MStatus ImplicitCommand::init(MString nodeName)
 
         // Copy bindPreMatrix from the skinCluster to influenceBindMatrix.  This stores the transform for
         // each influence at the time setup was done.
-        MFnDependencyNode skinClusterDep(skinClusterNode);
-        const MObject bindPreMatrixObject = skinClusterDep.attribute("bindPreMatrix", &status);
+        MPlug bindPreMatrixArray = skinClusterDep.findPlug("bindPreMatrix", &status);
         if(status != MS::kSuccess) return status;
 
-        MPlug bindPreMatrixArray(skinClusterNode, bindPreMatrixObject);
         bindPreMatrixArray.evaluateNumElements(&status);
         if(status != MS::kSuccess) return status;
 
