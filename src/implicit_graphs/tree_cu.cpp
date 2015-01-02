@@ -41,7 +41,7 @@ Tree_cu::Tree_cu(Tree* tree) :
         if(tree->parent(i) != -1)
             continue;
 
-        nb_bones += compute_clusters(i,
+        nb_bones = compute_clusters(i,
                                         DBone_id(nb_bones),
                                         _bone_aranged,
                                         _clusters,
