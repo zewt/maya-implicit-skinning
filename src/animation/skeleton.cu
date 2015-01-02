@@ -73,7 +73,7 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
 
     std::vector<Transfo> _frames(skel._bones.size());
     for(int bid = 0; bid < (int) _joints.size(); bid++ )
-        _frames[bid] = skel._bones[bid]._frame;
+        _frames[bid] = skel._bones[bid];
 
     for(int bid = 0; bid < (int) _joints.size(); bid++)
     {

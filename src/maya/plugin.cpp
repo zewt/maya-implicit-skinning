@@ -460,10 +460,8 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
 
         MMatrix jointObjectMat = jointWorldMat * worldToObjectSpaceMat;
 
-        // Fill in the bone.
-        Loader::Abs_bone bone;
-        bone._frame = DagHelpers::MMatrixToTransfo(jointObjectMat);
-        skeleton._bones.push_back(bone);
+        // Add the bone.
+        skeleton._bones.push_back(DagHelpers::MMatrixToTransfo(jointObjectMat));
 
         // Read this joint's parent joint index.
         MDataHandle parentJointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::parentJointAttr);

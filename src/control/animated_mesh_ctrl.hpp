@@ -34,7 +34,6 @@
 // Forward definitions ---------------------------------------------------------
 struct Animesh;
 struct Skeleton;
-namespace Loader { struct Abs_skeleton; }
 // END Forward definitions -----------------------------------------------------
 
 

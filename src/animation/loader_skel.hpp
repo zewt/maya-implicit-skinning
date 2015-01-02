@@ -26,17 +26,10 @@
 // =============================================================================
 namespace Loader {
 
-/// @brief intermediate representation of a bone for file loading
-struct Abs_bone {
-    Transfo     _frame;  ///< The bone position and orientation
-};
-
-//------------------------------------------------------------------------------
-
 /// @brief intermediate representation of a skeleton for file loading
 struct Abs_skeleton {
     /// List of bones
-    std::vector<Abs_bone> _bones;
+    std::vector<Transfo> _bones;
     /// _parents[bone_id] == parent_bone_id
     std::vector<int> _parents;
 };
