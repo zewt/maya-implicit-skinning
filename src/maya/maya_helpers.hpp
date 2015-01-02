@@ -41,7 +41,7 @@ namespace DagHelpers
     MStatus getInputGeometryForSkinClusterPlug(MObject skinClusterNode, MPlug &outPlug);
     MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix);
     MStatus getMatrixPlug(MObject node, MObject attr, MMatrix &matrix);
-
+    MStatus setPlug(MPlug &plug, MMatrix value);
 
     template<class T>
     T readHandle(MDataHandle handle, MStatus *status);

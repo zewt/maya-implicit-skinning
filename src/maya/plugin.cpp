@@ -748,8 +748,8 @@ public:
 //    MStatus redoIt();
 //    MStatus undoIt();
 
-    MStatus setup(MString nodeName); // sets up graph; will be moved to python
-    MStatus setup2(MString nodeName); // runs all sampling
+    MStatus init(MString nodeName);
+    MStatus sampleAll(MString nodeName); // runs all sampling
 
     ImplicitSkinDeformer *getDeformerByName(MString nodeName, MStatus *status);
 
@@ -860,7 +860,7 @@ ImplicitSkinDeformer *ImplicitCommand::getDeformerByName(MString nodeName, MStat
     return deformer;
 }
 
-MStatus ImplicitCommand::setup(MString nodeName)
+MStatus ImplicitCommand::init(MString nodeName)
 {
     MStatus status;
     ImplicitSkinDeformer *deformer = getDeformerByName(nodeName, &status);
@@ -966,17 +966,6 @@ MStatus ImplicitCommand::setup(MString nodeName)
             MPlug bindPreMatrix = bindPreMatrixArray.elementByPhysicalIndex(i, &status);
             if(status != MS::kSuccess) return status;
 
-            MMatrix bindPreMatrixWorldSpace = DagHelpers::getMatrixFromPlug(bindPreMatrix, &status);
-            if(status != MS::kSuccess) return status;
-
-            // Create a MFnMatrixData holding the matrix.
-            MFnMatrixData fnMat;
-            MObject matObj = fnMat.create(&status);
-            if(status != MS::kSuccess) return status;
-
-            // Set the geomMatrixAttr attribute.
-            fnMat.set(bindPreMatrixWorldSpace);
-
             int elementLogicalIndex = bindPreMatrix.logicalIndex(&status);
             if(status != MS::kSuccess) return status;
 
@@ -986,11 +975,11 @@ MStatus ImplicitCommand::setup(MString nodeName)
             MPlug item = jointPlug.child(ImplicitSkinDeformer::influenceBindMatrixAttr, &status);
             if(status != MS::kSuccess) return status;
 
-            status = item.setValue(matObj);
+            MMatrix bindPreMatrixWorldSpace = DagHelpers::getMatrixFromPlug(bindPreMatrix, &status);
             if(status != MS::kSuccess) return status;
 
-
-
+            status = DagHelpers::setPlug(item, bindPreMatrixWorldSpace);
+            if(status != MS::kSuccess) return status;
 
             item = jointPlug.child(ImplicitSkinDeformer::parentJointAttr, &status);
             if(status != MS::kSuccess) return status;
@@ -1024,7 +1013,7 @@ MStatus ImplicitCommand::setup(MString nodeName)
     return MStatus::kSuccess;
 }
 
-MStatus ImplicitCommand::setup2(MString nodeName)
+MStatus ImplicitCommand::sampleAll(MString nodeName)
 {
     MStatus status;
     ImplicitSkinDeformer *deformer = getDeformerByName(nodeName, &status);
@@ -1038,26 +1027,26 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
     MStatus status;
     for(int i = 0; i < (int) args.length(); ++i)
     {
-        if(args.asString(i, &status) == MString("-setup") && MS::kSuccess == status)
+        if(args.asString(i, &status) == MString("-init") && MS::kSuccess == status)
         {
             ++i;
             MString nodeName = args.asString(i, &status);
             if(status != MS::kSuccess) return status;
 
-            status = setup(nodeName);
+            status = init(nodeName);
 
             if(status != MS::kSuccess) {
                 displayError(status.errorString());
                 return status;
             }
         }
-        else if(args.asString(i, &status) == MString("-setup2") && MS::kSuccess == status)
+        else if(args.asString(i, &status) == MString("-sampleAll") && MS::kSuccess == status)
         {
             ++i;
             MString nodeName = args.asString(i, &status);
             if(status != MS::kSuccess) return status;
 
-            status = setup2(nodeName);
+            status = sampleAll(nodeName);
 
             if(status != MS::kSuccess) {
                 displayError(status.errorString());

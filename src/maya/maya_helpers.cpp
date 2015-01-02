@@ -224,6 +224,25 @@ namespace DagHelpers
         return status;
     }
 
+    MStatus setPlug(MPlug &plug, MMatrix value)
+    {
+        MStatus status = MStatus::kSuccess;
+
+        // Create a MFnMatrixData holding the matrix.
+        MFnMatrixData fnMat;
+        MObject matObj = fnMat.create(&status);
+        if(status != MS::kSuccess) return status;
+
+        // Set the value.
+        fnMat.set(value);
+
+        status = plug.setValue(matObj);
+        if(status != MS::kSuccess) return status;
+
+        return MStatus::kSuccess;
+    }
+
+
     MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix)
     {
         MStatus status;
