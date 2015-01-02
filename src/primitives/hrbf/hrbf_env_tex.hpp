@@ -42,13 +42,13 @@
 namespace HRBF_env{
 // =============================================================================
 
-texture<float4, 1, cudaReadModeElementType> tex_points;
+extern texture<float4, 1, cudaReadModeElementType> tex_points;
 /// First three floats represents the beta vector, last float is the alpha scalar
-texture<float4, 1, cudaReadModeElementType> tex_alphas_betas;
+extern texture<float4, 1, cudaReadModeElementType> tex_alphas_betas;
 /// tex_offset.x the offset and tex_offset.y the instance size
-texture<int2, 1, cudaReadModeElementType> tex_offset;
+extern texture<int2, 1, cudaReadModeElementType> tex_offset;
 
-texture<float, 1, cudaReadModeElementType> tex_radius;
+extern texture<float, 1, cudaReadModeElementType> tex_radius;
 
 // -----------------------------------------------------------------------------
 

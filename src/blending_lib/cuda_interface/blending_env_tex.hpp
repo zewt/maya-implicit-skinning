@@ -47,39 +47,39 @@
 namespace Blending_env{
 // =============================================================================
     //texture storing precomputed inverse of the hyperbola
-    texture<float, 1, cudaReadModeElementType>  profile_hyperbola_tex;
-    texture<float2, 1, cudaReadModeElementType> profile_hyperbola_normals_tex;
+    extern texture<float, 1, cudaReadModeElementType>  profile_hyperbola_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profile_hyperbola_normals_tex;
 
-    texture<float, 1, cudaReadModeElementType>  profile_bulge_tex;
-    texture<float2, 1, cudaReadModeElementType> profile_bulge_normals_tex;
+    extern texture<float, 1, cudaReadModeElementType>  profile_bulge_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profile_bulge_normals_tex;
 
     /// List of profile for the bulge of different strength
     //@{
-    texture<float, 1, cudaReadModeElementType>  profiles_bulge_4D_tex;
-    texture<float2, 1, cudaReadModeElementType> profiles_bulge_4D_normals_tex;
+    extern texture<float, 1, cudaReadModeElementType>  profiles_bulge_4D_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profiles_bulge_4D_normals_tex;
     //@}
 
     /// List of profile for the ricci of different N
     //@{
-    texture<float, 1, cudaReadModeElementType>  profiles_ricci_4D_tex;
-    texture<float2, 1, cudaReadModeElementType> profiles_ricci_4D_normals_tex;
+    extern texture<float, 1, cudaReadModeElementType>  profiles_ricci_4D_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profiles_ricci_4D_normals_tex;
     //@}
 
-    texture<float, 1, cudaReadModeElementType>  opening_hyperbola_tex;
+    extern texture<float, 1, cudaReadModeElementType>  opening_hyperbola_tex;
 
     // 4D stuff ----------------------------------------------------------------
-    texture<float, 1, cudaReadModeElementType>  magnitude_3D_bulge_tex;
-    texture<float, 3, cudaReadModeElementType>  openable_bulge_4D_tex;
-    texture<float2, 3, cudaReadModeElementType> openable_bulge_4D_gradient_tex;
+    extern texture<float, 1, cudaReadModeElementType>  magnitude_3D_bulge_tex;
+    extern texture<float, 3, cudaReadModeElementType>  openable_bulge_4D_tex;
+    extern texture<float2, 3, cudaReadModeElementType> openable_bulge_4D_gradient_tex;
 
-    texture<float, 1, cudaReadModeElementType>  n_3D_ricci_tex;
-    texture<float, 3, cudaReadModeElementType>  openable_ricci_4D_tex;
-    texture<float2, 3, cudaReadModeElementType> openable_ricci_4D_gradient_tex;
+    extern texture<float, 1, cudaReadModeElementType>  n_3D_ricci_tex;
+    extern texture<float, 3, cudaReadModeElementType>  openable_ricci_4D_tex;
+    extern texture<float2, 3, cudaReadModeElementType> openable_ricci_4D_gradient_tex;
     // -------------------------------------------------------------------------
 
-    texture<float2, 1, cudaReadModeElementType> global_controller_tex;
+    extern texture<float2, 1, cudaReadModeElementType> global_controller_tex;
 
-    texture<float2, 2, cudaReadModeElementType> tex_controllers;
+    extern texture<float2, 2, cudaReadModeElementType> tex_controllers;
 
     /// bind textures to the arrays into the '.cu' this header is included in
     static inline void bind_local();
@@ -184,10 +184,10 @@ namespace Blending_env{
     // WARNING : keep 4d ops & profiles & openings & other env stuff
     // =========================================================================
 
-    texture<int4  , 1, cudaReadModeElementType> tex_pred_operators_idx_offsets;
-    texture<int   , 1, cudaReadModeElementType> tex_pred_operators_id;
-    texture<float , 3, cudaReadModeElementType> tex_operators_values;
-    texture<float2, 3, cudaReadModeElementType> tex_operators_grads;
+    extern texture<int4  , 1, cudaReadModeElementType> tex_pred_operators_idx_offsets;
+    extern texture<int   , 1, cudaReadModeElementType> tex_pred_operators_id;
+    extern texture<float , 3, cudaReadModeElementType> tex_operators_values;
+    extern texture<float2, 3, cudaReadModeElementType> tex_operators_grads;
 
     __device__
     static Idx3_cu operator_idx_offset_fetch(Op_id op_id);

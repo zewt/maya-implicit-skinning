@@ -79,6 +79,11 @@ HA_int4 h_offset;
 
 int nb_instances = 0;
 
+texture<float4, 3, cudaReadModeElementType> tex_grids;
+texture<float4, 1, cudaReadModeElementType> tex_transform;
+texture<float4, 1, cudaReadModeElementType> tex_transform_grad;
+texture<int4  , 1, cudaReadModeElementType> tex_offset_;
+
 // -----------------------------------------------------------------------------
 
 extern void unbind();

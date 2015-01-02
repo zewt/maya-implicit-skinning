@@ -130,6 +130,28 @@ extern bool binded;
 float* pan_hyperbola = 0;
 cudaArray* d_pan_hyperbola = 0;
 
+texture<float, 1, cudaReadModeElementType>  profile_hyperbola_tex;
+texture<float2, 1, cudaReadModeElementType> profile_hyperbola_normals_tex;
+texture<float, 1, cudaReadModeElementType>  profile_bulge_tex;
+texture<float2, 1, cudaReadModeElementType> profile_bulge_normals_tex;
+texture<float, 1, cudaReadModeElementType>  profiles_bulge_4D_tex;
+texture<float2, 1, cudaReadModeElementType> profiles_bulge_4D_normals_tex;
+texture<float, 1, cudaReadModeElementType>  profiles_ricci_4D_tex;
+texture<float2, 1, cudaReadModeElementType> profiles_ricci_4D_normals_tex;
+texture<float, 1, cudaReadModeElementType>  opening_hyperbola_tex;
+texture<float, 1, cudaReadModeElementType>  magnitude_3D_bulge_tex;
+texture<float, 3, cudaReadModeElementType>  openable_bulge_4D_tex;
+texture<float2, 3, cudaReadModeElementType> openable_bulge_4D_gradient_tex;
+texture<float, 1, cudaReadModeElementType>  n_3D_ricci_tex;
+texture<float, 3, cudaReadModeElementType>  openable_ricci_4D_tex;
+texture<float2, 3, cudaReadModeElementType> openable_ricci_4D_gradient_tex;
+texture<float2, 1, cudaReadModeElementType> global_controller_tex;
+texture<float2, 2, cudaReadModeElementType> tex_controllers;
+texture<int4  , 1, cudaReadModeElementType> tex_pred_operators_idx_offsets;
+texture<int   , 1, cudaReadModeElementType> tex_pred_operators_id;
+texture<float , 3, cudaReadModeElementType> tex_operators_values;
+texture<float2, 3, cudaReadModeElementType> tex_operators_grads;
+
 //------------------------------------------------------------------------------
 
 /// @param src_vals host array to be copied. 3D values are stored linearly

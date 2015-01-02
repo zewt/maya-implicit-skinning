@@ -30,6 +30,8 @@ const int nb_constants = NB_CONST;
 float h_constants[nb_constants];
 bool binded = false;
 
+texture<float, 1,  cudaReadModeElementType> constants_tex;
+
 // -----------------------------------------------------------------------------
 
 void allocate(){

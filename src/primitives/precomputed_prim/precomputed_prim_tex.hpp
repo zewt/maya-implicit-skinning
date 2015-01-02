@@ -49,10 +49,10 @@ namespace Precomputed_env{
 // =============================================================================
 
 /// First float is the potential last three floats the gradient
-texture<float4, 3, cudaReadModeElementType> tex_grids;
-texture<float4, 1, cudaReadModeElementType> tex_transform;
-texture<float4, 1, cudaReadModeElementType> tex_transform_grad;
-texture<int4  , 1, cudaReadModeElementType> tex_offset_;
+extern texture<float4, 3, cudaReadModeElementType> tex_grids;
+extern texture<float4, 1, cudaReadModeElementType> tex_transform;
+extern texture<float4, 1, cudaReadModeElementType> tex_transform_grad;
+extern texture<int4  , 1, cudaReadModeElementType> tex_offset_;
 
 // -----------------------------------------------------------------------------
 

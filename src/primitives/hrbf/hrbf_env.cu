@@ -64,6 +64,11 @@ int nb_hrbf_instance = 0;
 /// Are textures currently binded with arrays
 extern bool binded;
 
+texture<float4, 1, cudaReadModeElementType> tex_points;
+texture<float4, 1, cudaReadModeElementType> tex_alphas_betas;
+texture<int2, 1, cudaReadModeElementType> tex_offset;
+texture<float, 1, cudaReadModeElementType> tex_radius;
+
 // -----------------------------------------------------------------------------
 
 void clean_env()

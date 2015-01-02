@@ -30,7 +30,7 @@ namespace Constants {
 // =============================================================================
 
 /// Texture to the list of float constants
-texture<float, 1,  cudaReadModeElementType> constants_tex;
+extern texture<float, 1,  cudaReadModeElementType> constants_tex;
 
 
 /// Bind the constants to a texture

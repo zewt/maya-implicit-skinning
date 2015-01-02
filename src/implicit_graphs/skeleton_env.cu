@@ -48,6 +48,17 @@ Cuda_utils::HD_Array<Cluster_cu> hd_blending_list;
 
 Cuda_utils::HD_Array<Cluster_data> hd_cluster_data;
 
+texture<int4, 1, cudaReadModeElementType> tex_blending_list;
+texture<int4, 1, cudaReadModeElementType> tex_grid_list;
+texture<int, 1, cudaReadModeElementType> tex_grid;
+texture<float4, 1, cudaReadModeElementType> tex_grid_bbox;
+texture<int2, 1, cudaReadModeElementType> tex_offset;
+texture<float, 1, cudaReadModeElementType> tex_bulge_strength;
+texture<int, 1, cudaReadModeElementType> tex_bone_type;
+texture<float4, 1, cudaReadModeElementType> tex_bone;
+texture<int   , 1, cudaReadModeElementType> tex_bone_hrbf;
+texture<int   , 1, cudaReadModeElementType> tex_bone_precomputed;
+
 /// Concatenated blendind list for every skeletons in each grid cell not empty.
 /// Each cell store a single blending list.
 /**

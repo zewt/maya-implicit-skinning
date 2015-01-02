@@ -43,22 +43,22 @@ namespace Skeleton_env {
 /// @remarks Its more convenient to use 'struct Skeleton_env::Cluster_cu'
 /// than the int4.
 /// @see Skeleton_env::Cluster_cu
-texture<int4, 1, cudaReadModeElementType> tex_blending_list;
+extern texture<int4, 1, cudaReadModeElementType> tex_blending_list;
 
 /// Grid cells concatenated blending list
 /// Cluster_cu (as describded with 'tex_blending_list')
 /// @see Skeleton_env::Cluster_cu tex_blending_list
-texture<int4, 1, cudaReadModeElementType> tex_grid_list;
+extern texture<int4, 1, cudaReadModeElementType> tex_grid_list;
 
 /// Concatenated grid cells stored linearly
-texture<int, 1, cudaReadModeElementType> tex_grid;
+extern texture<int, 1, cudaReadModeElementType> tex_grid;
 
 /// every grids bbox and resolution.
 /// (bbox.pmin.x, bbox.pmin.y, bbox.pmin.z) == tex_grid_bbox[id_skel*2+0]{x,y,z}
 /// res == (int)tex_grid_bbox[id_skel*2+0]{w}
 /// (bbox.pmax.x, bbox.pmax.y, bbox.pmax.z) == tex_grid_bbox[id_skel*2+1]{x,y,z}
 /// dummy float == tex_grid_bbox[id_skel*2+1]{w}
-texture<float4, 1, cudaReadModeElementType> tex_grid_bbox;
+extern texture<float4, 1, cudaReadModeElementType> tex_grid_bbox;
 
 // TODO: store nb_pairs and singletons in offset
 /// Offset to access the blending list or grid according to the skeleton
@@ -68,23 +68,23 @@ texture<float4, 1, cudaReadModeElementType> tex_grid_bbox;
 /// @remarks Its more convenient to use 'struct Skeleton_env::Offset'
 /// than the int4.
 /// @see Skeleton_env::Offset
-texture<int2, 1, cudaReadModeElementType> tex_offset;
+extern texture<int2, 1, cudaReadModeElementType> tex_offset;
 
 /// At each element of 'tex_blending_list' corresponds a bulge strength in
 /// tex_bulge_strength
-texture<float, 1, cudaReadModeElementType> tex_bulge_strength;
+extern texture<float, 1, cudaReadModeElementType> tex_bulge_strength;
 
 // -----------------------------------------------------------------------------
 /// @name Per bones data
 // -----------------------------------------------------------------------------
 
 /// Bone's types indicates which bone texture has to be fetched
-texture<int, 1, cudaReadModeElementType> tex_bone_type;
+extern texture<int, 1, cudaReadModeElementType> tex_bone_type;
 
 /// Bones of same cluster are stored consecutively
-texture<float4, 1, cudaReadModeElementType> tex_bone;
-texture<int   , 1, cudaReadModeElementType> tex_bone_hrbf;
-texture<int   , 1, cudaReadModeElementType> tex_bone_precomputed;
+extern texture<float4, 1, cudaReadModeElementType> tex_bone;
+extern texture<int   , 1, cudaReadModeElementType> tex_bone_hrbf;
+extern texture<int   , 1, cudaReadModeElementType> tex_bone_precomputed;
 
 // -----------------------------------------------------------------------------
 
