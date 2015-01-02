@@ -139,12 +139,12 @@ void copy_grids_to_cuarray_block()
     int3 block_size = {0, 0, 0};
     for(int i = 0; i < h_offset.size(); i++)
     {
-        if(h_offset[i].x >= 0)
-        {
-            block_size.x = max(h_offset[i].x*GRID_RES + GRID_RES, block_size.x);
-            block_size.y = max(h_offset[i].y*GRID_RES + GRID_RES, block_size.y);
-            block_size.z = max(h_offset[i].z*GRID_RES + GRID_RES, block_size.z);
-        }
+        if(h_offset[i].x < 0)
+            continue;
+
+        block_size.x = max(h_offset[i].x*GRID_RES + GRID_RES, block_size.x);
+        block_size.y = max(h_offset[i].y*GRID_RES + GRID_RES, block_size.y);
+        block_size.z = max(h_offset[i].z*GRID_RES + GRID_RES, block_size.z);
     }
 
     DA_float4 block_temp(block_size.x*block_size.y*block_size.z);
@@ -152,21 +152,21 @@ void copy_grids_to_cuarray_block()
     // Looping through all grid's instances
     for(int i = 0; i < h_offset.size(); i++)
     {
-        if(h_offset[i].x >= 0)
-        {
-            // (x, y, z) indices in the block :
-            int4 off = h_offset[i];
-            // Grid's origin (x, y, z) coordinates in the block
-            int3 org = {off.x * GRID_RES, off.y * GRID_RES, off.z * GRID_RES };
+        // (x, y, z) indices in the block :
+        int4 off = h_offset[i];
+        if(off.x < 0)
+            continue;
 
-            int ker_b_size = 64;
-            int ker_g_size = ((*d_grids[i]).size() + ker_b_size - 1) / ker_b_size;
+        printf("copy_grids_to_cuarray_block %i, %i, size %i\n", i, h_offset[i].x, d_grids[i]->size());
+        fflush(stdout);
+        // Grid's origin (x, y, z) coordinates in the block
+        int3 org = {off.x * GRID_RES, off.y * GRID_RES, off.z * GRID_RES };
 
-            // Filling all grid's element of instance 'i'
-            fill_block<<<ker_g_size, ker_b_size >>>
-                ((*d_grids[i]), org, block_size, block_temp);
+        int ker_b_size = 64;
+        int ker_g_size = ((*d_grids[i]).size() + ker_b_size - 1) / ker_b_size;
 
-        }
+        // Filling all grid's element of instance 'i'
+        fill_block<<<ker_g_size, ker_b_size >>>(*d_grids[i], org, block_size, block_temp);
     }
 
     d_block.malloc(block_size.x, block_size.y, block_size.z);
