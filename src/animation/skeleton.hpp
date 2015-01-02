@@ -176,6 +176,27 @@ struct Skeleton {
 
   int parent(int i) const { return _joints[i]._parent; }
 
+  // Return true if the joint represents a bone.
+  //
+  // The root joint doesn't create a bone (this is just a dummy to give everything
+  // a parent), and the first real joint after the root also doesn't create a bone.
+  bool is_bone(int i) const {
+      int parent_bone_id = parent(i);
+      return i != _root && parent_bone_id != _root;
+  }
+
+  // If this joint represents a bone, return the transform used for the bone.  Otherwise,
+  // return identity.
+  //
+  // This is the parent joint's transform.
+  Transfo get_bone_transform(int i) const {
+      if(!is_bone(i))
+          return Transfo::identity();
+
+      const SkeletonJoint &joint = _joints[i];
+      return joint._parent == -1? Transfo::identity():_joints[joint._parent]._h_transfo;
+  }
+
   bool is_leaf(int i) const { return _joints[i]._children.size() == 0; }
 
   /// Get the animated bones of the skeleton

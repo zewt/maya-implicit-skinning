@@ -70,7 +70,7 @@ void SampleSet::SampleSet::choose_hrbf_samples_ad_hoc(const Animesh &animesh,
                                                     float minDist,
                                                     float fold)
 {
-    if(animesh.get_skel()->is_leaf(bone_id))
+    if(!animesh.get_skel()->is_bone(bone_id))
         return;
 
     Animesh::Adhoc_sampling heur(animesh);
@@ -96,7 +96,7 @@ void SampleSet::SampleSet::choose_hrbf_samples_poisson(const Animesh &animesh,
                                                      int nb_samples,
                                                      float fold)
 {
-    if(animesh.get_skel()->is_leaf(bone_id))
+    if(!animesh.get_skel()->is_bone(bone_id))
         return;
 
     Animesh::Poisson_disk_sampling heur(animesh);

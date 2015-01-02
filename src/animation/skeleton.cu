@@ -84,29 +84,44 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
         joint._parent = skel._parents[bid];
 
         int parent_bone_id = joint._parent;
-        Vec3_cu org = _frames[bid].get_translation();
-        Vec3_cu end = Vec3_cu::zero();
-        int nb_sons = joint._children.size();
-        for(int s = 0; s < nb_sons; s++)
-        {
-            int sid = joint._children[s];
-            end += _frames[sid].get_translation();
-        }
-        end /= (float)nb_sons;
+        Vec3_cu org = Transfo::identity().get_translation();
+        if(parent_bone_id != -1)
+            org = _frames[parent_bone_id].get_translation();
 
-        if(nb_sons == 0 ){
-            // We set a minimal length for the leaves
-            joint._bone = Bone_cu(org.to_point(), _frames[bid].x(), 0.01f, 0.f);
-        }else{
-            joint._bone = Bone_cu(org.to_point(), end.to_point(), 0.f);
-        }
+        Vec3_cu end = _frames[bid].get_translation();
 
+        Vec3_cu dir = end.to_point() - org.to_point();
+        float length = dir.norm();
+
+        joint._bone = Bone_cu(org.to_point(), dir, length, 0.f);
+        // joint._bone = Bone_cu(org.to_point(), end.to_point(), 0.f);
+
+    }
+
+    // If any bones lie on the same position as their parent, they'll have a zero length and
+    // an undefined orientation.  Set them to a small length, and the same orientation as their
+    // parent.
+    for(int bid = 0; bid < (int) _joints.size(); bid++)
+    {
+        SkeletonJoint &joint = _joints[bid];
+        if(joint._bone._length >= 0.000001f)
+            continue;
+        joint._bone._length = 0.000001f;
+
+        if(joint._parent != -1)
+            joint._bone._dir = _joints[joint._parent]._bone._dir;
+        else
+            joint._bone._dir = Vec3_cu(1,0,0);
+    }
+
+    for(int bid = 0; bid < (int) _joints.size(); bid++)
+    {
+        SkeletonJoint &joint = _joints[bid];
         joint._anim_bone = new Bone_ssd();
         joint._anim_bone->set_length( joint._bone._length );
         joint._anim_bone->set_radius(default_bone_radius);
         joint._anim_bone->_bone_id = bid;
     }
-
     // must be called last
     init_skel_env();
 }
@@ -265,7 +280,8 @@ void Skeleton::transform_precomputed_prim()
 
         Bone_precomputed *bone = (Bone_precomputed*) _joints[i]._anim_bone;
         Precomputed_prim &prim = bone->get_primitive();
-        Precomputed_env::set_transform(prim.get_id(), _joints[i]._h_transfo);
+
+        Precomputed_env::set_transform(prim.get_id(), get_bone_transform(i));
     }
 
     Precomputed_env::update_device_transformations();
@@ -284,31 +300,24 @@ void Skeleton::update_bones_pose()
     // Put _anim_bones in the position specified by _h_transfo.
     for(unsigned i = 0; i < _joints.size(); i++)
     {
-        const Transfo tr = _joints[i]._h_transfo;
-        Bone_cu b = _joints[i]._bone;
-        _joints[i]._anim_bone->set_length( b.length() );
+        SkeletonJoint &joint = _joints[i];
 
         // Check that we don't have a zero orientation.  It's an invalid value that will
         // trickle down through a bunch of other data as IND/INFs and eventually cause other
         // assertion failures, so flag it here to make it easier to debug.
+        Bone_cu b = _joints[i]._bone;
         assert(b.dir().norm_squared() > 0);
 
-        _joints[i]._anim_bone->set_orientation(tr * b.org(), tr * b.dir());
+        const Transfo bone_transform = get_bone_transform(i);
+        _joints[i]._anim_bone->set_length( b.length() );
+        _joints[i]._anim_bone->set_orientation(bone_transform * b.org(), bone_transform * b.dir());
     }
-
-    // Update joint positions in texture.
-    std::vector<Transfo> transfos(_joints.size());
-    for( int i = 0; i < (int) _joints.size(); i++)
-        transfos[i] = _joints[i]._h_transfo;
-    Cuda_utils::Device::Array<Transfo> d_transfos;
-    d_transfos.malloc(_joints.size());
-    d_transfos.copy_from(transfos);
 
     // Transform HRBF bones:
     for (int i = 0; i < (int) _joints.size(); ++i)
     {
         const int id = get_hrbf_id(i);
-        if( id > -1) HRBF_env::set_transfo(id, _joints[i]._h_transfo);
+        if( id > -1) HRBF_env::set_transfo(id, get_bone_transform(i));
     }
 
     HRBF_env::apply_hrbf_transfos();
