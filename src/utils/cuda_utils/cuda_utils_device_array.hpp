@@ -240,6 +240,7 @@ struct CuArray : Cuda_utils::Common::Array<T>{
         CCA(),
         data(0),
         state(0),
+        cuda_flags(0),
         array_extent(make_cudaExtent(0,0,0))
     { }
 
@@ -248,6 +249,7 @@ struct CuArray : Cuda_utils::Common::Array<T>{
         CCA(ca.nb_elt),
         data(ca.data),
         state(ca.state | CCA::IS_COPY),
+        cuda_flags(ca.cuda_flags),
         array_extent(make_cudaExtent(0,0,0))
     { }
 
@@ -289,6 +291,15 @@ struct CuArray : Cuda_utils::Common::Array<T>{
     template <class B>
     inline int copy_from(B* d_a, int size);
 
+    inline cudaExtent get_extent() const { return array_extent; }
+    inline int size() const { return array_extent.width * array_extent.height * array_extent.depth; }
+
+    inline void set_cuda_flags(int flags) {
+        // Do this before allocating.
+        assert(state == 0);
+        cuda_flags = flags;
+    }
+
     // -------------------------------------------------------------------------
     /// @name Methods
     // -------------------------------------------------------------------------
@@ -313,6 +324,7 @@ private:
 
     cudaArray* data;
     int state;
+    int cuda_flags;
     cudaExtent array_extent;
     typedef Cuda_utils::Common::Array<T> CCA;
 };
@@ -833,7 +845,7 @@ CuArray(const Cuda_utils::Device::Array<T>& d_a):
     array_extent(make_cudaExtent(d_a.size(),0,0))
 {
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
+    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent, cuda_flags));
     cudaMemcpy3DParms copyParams = {0};
     copyParams.srcPtr  = make_cudaPitchedPtr(reinterpret_cast<void*>(d_a.ptr()),
                                              array_extent.width*sizeof(T),
@@ -855,7 +867,7 @@ CuArray(int dimx):
     array_extent(make_cudaExtent(dimx, 0, 0))
 {
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
+    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent, cuda_flags));
 }
 
 // -----------------------------------------------------------------------------
@@ -869,7 +881,7 @@ CuArray(int dimx, int dimy):
     array_extent(make_cudaExtent(dimx, dimy, 0))
 {
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
+    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent, cuda_flags));
 }
 
 // -----------------------------------------------------------------------------
@@ -883,7 +895,7 @@ CuArray(int dimx, int dimy, int dimz):
     array_extent(make_cudaExtent(dimx, dimy, dimz))
 {
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<T>();
-    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
+    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent, cuda_flags));
 }
 
 // -----------------------------------------------------------------------------
@@ -935,7 +947,7 @@ inline void Cuda_utils::Device::CuArray<T>::malloc(int dimx, int dimy, int dimz)
     }
     state = (state | CCA::IS_ALLOCATED) & (~CCA::IS_COPY);
 
-    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent));
+    CUDA_SAFE_CALL(cudaMalloc3DArray(&data, &channelDesc, array_extent, cuda_flags));
     CCA::nb_elt = nb_elt;
 }
 
