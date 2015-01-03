@@ -25,7 +25,7 @@
 #include "skeleton.hpp"
 
 // -----------------------------------------------------------------------------
-
+namespace { __device__ void fix_debug() { } }
 
 Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel) :
     _auto_precompute(true),

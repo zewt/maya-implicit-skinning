@@ -21,6 +21,8 @@
 #include "ray_cu.hpp"
 #include "precomputed_prim_env.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 // Bone CLASS ==================================================================
 
 OBBox_cu Bone::get_obbox() const { return OBBox_cu(); }

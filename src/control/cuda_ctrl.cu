@@ -33,6 +33,8 @@
 #include "precomputed_prim_env.hpp"
 #include "hrbf_env.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 // =============================================================================
 namespace Cuda_ctrl {
 // =============================================================================

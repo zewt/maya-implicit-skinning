@@ -33,6 +33,8 @@
 
 #include "grid3_cu.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 // From globals.hpp
 extern std::string g_cache_dir;
 

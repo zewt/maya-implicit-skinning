@@ -1,6 +1,7 @@
 #include "hermiteRBF.hpp"
 #include "hrbf_env.hpp"
 
+namespace { __device__ void fix_debug() { } }
 
 void HermiteRBF::initialize()
 {

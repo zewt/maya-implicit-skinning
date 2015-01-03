@@ -18,6 +18,8 @@
  */
 #include "cuda_main_kernels.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 /// @name Cuda textures importation
 /// @{
 #include "blending_env_tex.hpp"

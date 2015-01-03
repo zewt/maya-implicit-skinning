@@ -36,6 +36,8 @@
 
 using namespace Cuda_utils;
 
+namespace { __device__ void fix_debug() { } }
+
 // -----------------------------------------------------------------------------
 
 float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2);

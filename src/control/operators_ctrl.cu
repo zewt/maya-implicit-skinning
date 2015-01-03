@@ -26,7 +26,7 @@
 #include "n_ary.hpp"
 #include "n_ary_constant_interface.hpp"
 
-
+namespace { __device__ void fix_debug() { } }
 
 // -----------------------------------------------------------------------------
 

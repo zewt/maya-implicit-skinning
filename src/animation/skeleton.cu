@@ -34,6 +34,8 @@
 #include "globals.hpp"
 #include "cuda_utils.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 using namespace Cuda_utils;
 
 const float default_bone_radius = 1.f;

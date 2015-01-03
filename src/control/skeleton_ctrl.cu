@@ -24,6 +24,8 @@
 #include "conversions.hpp"
 #include "skeleton.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 Skeleton_ctrl::Skeleton_ctrl()
 {
     skel = NULL;

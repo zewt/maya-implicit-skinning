@@ -20,6 +20,8 @@
 
 #include "cuda_utils_common.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 // -----------------------------------------------------------------------------
 
 CUdevice get_cu_device()

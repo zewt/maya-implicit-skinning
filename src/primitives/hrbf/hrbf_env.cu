@@ -28,6 +28,8 @@
 #include "hrbf_wrapper.hpp"
 #include "hrbf_kernels.hpp"
 
+namespace { __device__ void fix_debug() { } }
+
 // -----------------------------------------------------------------------------
 
 #ifndef M_PI

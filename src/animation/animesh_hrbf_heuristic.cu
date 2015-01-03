@@ -28,6 +28,7 @@
 #include "hrbf_env.hpp"
 
 // -----------------------------------------------------------------------------
+namespace { __device__ void fix_debug() { } }
 
 #include <iostream>
 #include <limits>
