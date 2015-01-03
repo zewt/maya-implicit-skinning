@@ -40,6 +40,8 @@ namespace Cuda_utils{
 namespace Device{
 template <class T>
 struct Array;
+template <class T>
+struct CuArray;
 }
 
 // =============================================================================
@@ -137,6 +139,9 @@ struct ArrayTemplate : Cuda_utils::Common::Array<T>{
 
     template <class B>
     inline void copy_from(const Cuda_utils::Device::Array<B>& d_a);
+
+    template <class B>
+    inline int copy_from(const Cuda_utils::Device::CuArray<B>& d_a);
     //@}
 
     inline       T* ptr()       { return data; }
@@ -677,6 +682,28 @@ copy_from( const Cuda_utils::Device::Array<B>& d_a )
 
 }
 
+
+template <class T, bool page_locked>
+template <class B>
+inline int Cuda_utils::Host::ArrayTemplate<T,page_locked>::
+copy_from(const Cuda_utils::Device::CuArray<B>& d_a)
+{
+    assert(CCA::nb_elt * sizeof(T) == d_a.size() * sizeof(B));
+    if((state & CCA::IS_ALLOCATED) && d_a.size() > 0)
+    {
+        cudaMemcpy3DParms copyParams = {0};
+        copyParams.srcArray= const_cast<cudaArray *>(d_a.getCudaArray());
+        copyParams.dstPtr  = make_cudaPitchedPtr(data,
+                                                 d_a.get_extent().width*sizeof(T),
+                                                 d_a.get_extent().width,
+                                                 d_a.get_extent().height);
+        copyParams.extent  = d_a.get_extent();
+        copyParams.kind    = cudaMemcpyDeviceToHost;
+        CUDA_SAFE_CALL(cudaMemcpy3D(&copyParams));
+        return 0;
+    }
+    return 1;
+}
 // -----------------------------------------------------------------------------
 
 template <class T, bool page_locked>
