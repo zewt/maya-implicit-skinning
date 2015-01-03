@@ -30,7 +30,7 @@
 #include "cuda_main_kernels.hpp"
 #include "skeleton_env.hpp"
 #include "blending_env.hpp"
-#include "precomputed_prim_env.hpp"
+#include "precomputed_prim.hpp"
 #include "hrbf_env.hpp"
 
 namespace { __device__ void fix_debug() { } }
@@ -150,7 +150,6 @@ void cleanup()
 
     Blending_env::clean_env();
     HRBF_env::clean_env();
-    Precomputed_env::clean_env();
     Skeleton_env::clean_env();
 
     CUDA_CHECK_ERRORS();

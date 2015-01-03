@@ -24,7 +24,7 @@
 #include "std_utils.hpp"
 #include "blending_env.hpp"
 #include "skeleton_env.hpp"
-#include "precomputed_prim_env.hpp"
+#include "precomputed_prim.hpp"
 #include "hrbf_kernels.hpp"
 #include "hrbf_env.hpp"
 #include "conversions.hpp"
@@ -260,10 +260,10 @@ void Skeleton::transform_precomputed_prim()
         Bone_precomputed *bone = (Bone_precomputed*) _joints[i]._anim_bone;
         Precomputed_prim &prim = bone->get_primitive();
 
-        Precomputed_env::set_transform(prim.get_id(), get_bone_transform(i));
+        prim.set_transform(get_bone_transform(i));
     }
 
-    Precomputed_env::update_device_transformations();
+    Precomputed_prim::update_device_transformations();
 }
 
 void Skeleton::set_transforms(const std::vector<Transfo> &transfos)

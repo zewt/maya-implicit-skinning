@@ -8,8 +8,6 @@
 #include "point_cu.hpp"
 #include "skeleton_env_type.hpp"
 
-// XXX: cleanup
-
 #include "hrbf_env_tex.hpp"
 
 /// These header needs HRBF_Env to be included first
@@ -22,43 +20,46 @@
 
 /// This include needs blending_env_tex.hpp but we will not bind it and use it
 #include "skeleton_env_tex.hpp"
+#include "skeleton_env.hpp"
 
 #include <deque>
 #include <iostream>
 
-
-
 namespace { __device__ void fix_debug() { } }
-
-// Forward def skeleton_env.hpp
-#include "skeleton_env_type.hpp"
-namespace Skeleton_env{
-    extern DBone_id bone_hidx_to_didx(Skel_id skel_id, Bone::Id bone_hidx);
-}
-
 
 
 using namespace Cuda_utils;
 
+// All info for the object is stored here, instead of in the class itself, so the object
+// remains just a single ID.  This is needed because other parts of the code expect to be
+// able to store a Precomputed_prim in a texture, and it allows accessing the same data
+// from device memory.
 struct PrecomputedInfo
 {
-    PrecomputedInfo():
+    __host__ PrecomputedInfo():
         id(-1),
-        allocated(false),
-        tex_grids(0),
-        tex_transform(0),
-        tex_transform_grad(0),
-        tex_offset(0)
+        tex_grid(0),
+        d_grid(NULL)
     {
     }
     int id;
 
-    bool allocated;
     /// First float is the potential last three floats the gradient
-    cudaTextureObject_t tex_grids;
-    cudaTextureObject_t tex_transform;
-    cudaTextureObject_t tex_transform_grad;
-    cudaTextureObject_t tex_offset;
+    cudaTextureObject_t tex_grid;
+
+    // Transformation associated to a grid in initial position.
+    // point_in_grid_space = h_grid_transform[i] * point_in_world_space;
+    Transfo grid_transform;
+
+    /// Transformation set by the user for every grid.
+    Transfo user_transform;
+
+    /// Temporary buffer used to transfer 'grid_transform' rapidly to 'anim_transform'
+    /// The buffer is filled with set_transform()
+    /// grid_transfo_buffer = grid_transform * user_transform
+    Transfo grid_transfo_buffer;
+
+    Device::CuArray<float4> *d_grid;
 };
 
 std::vector<PrecomputedInfo> h_precomputed_info;
@@ -70,162 +71,6 @@ __device__ __managed__ const PrecomputedInfo *dp_precomputed_info;
 
 namespace Precomputed_env{
 using namespace Cuda_utils;
-
-
-// XXX: This copies all precomputed grids into a single big texture.  We should probably have a
-// separate d_block for each skeleton.
-
-
-/// This array is updated by update_device_transformations()
-/// Transformation of a 3d point to the texture coordinates of 'tex_grids'.
-/// d_anim_transform[inst_id] = tex_grid_transfo
-Device::Array<Transfo> d_anim_transform;
-Device::Array<Transfo> d_grad_transform;
-
-/// Temporary buffer used to transfer 'h_grid_transform' rapidly to 'd_anim_transform'
-/// The buffer is filled with set_transform()
-/// h_grid_transfo_buffer[i] = h_grid_transform[i] * h_user_transform[i]
-Host::PL_Array<Transfo> h_grid_transfo_buffer;
-
-/// Transformation associated to a grid in initial position.
-/// point_in_grid_space = h_grid_transform[i] * point_in_world_space;
-Host::Array<Transfo> h_grid_transform;
-
-/// Transformation set by the user for every grid.
-Host::Array<Transfo> h_user_transform;
-
-/// In Cuda textures has a limited size of 2048^3 (considering a GPU with
-/// compute capability 2.0). so for one texture we stack on the x, y and z axis
-/// multiples grids. 'd_block' is a block made of multiples grids.
-Device::CuArray<float4> d_block;
-
-/// Array of grids : d_grids[inst_id][grid_element]
-std::deque< DA_float4* > d_grids;
-
-/// This array is used to look up the 'd_block' array in order to find the grid
-/// attached to an instance identifier. d_offset[id].x/y/z coordinates represent
-/// the indices inside the block 'd_block' for the grid of identifier 'id'.
-/// @code
-/// int x = d_offset[id].x * GRID_RES;
-/// int y = d_offset[id].y * GRID_RES;
-/// int z = d_offset[id].z * GRID_RES;
-/// int i = x + y * MAX_TEX_LENGTH + z * MAX_TEX_LENGTH * MAX_TEX_LENGTH
-/// d_block[i] // first element of the grid of indentifier 'id'
-/// @endcode
-/// GRID_SIZE defines the x, y and z length of the grid
-/// @see Precomputed_Env::tex_grids
-DA_int4 d_offset;
-HA_int4 h_offset;
-
-int nb_instances = 0;
-
-void update_all_info()
-{
-    // XXX only need to do this if something has been reallocated, and only for that item
-    for(int i = 0; i < (int) h_precomputed_info.size(); ++i)
-    {
-        Precomputed_prim::update_info(i);
-    }
-}
-
-void clean_env()
-{
-    d_anim_transform.erase();
-    d_grad_transform.erase();
-    h_grid_transfo_buffer.erase();
-    h_grid_transform.erase();
-    h_user_transform.erase();
-    d_block.erase();
-    d_grids.clear();
-    d_offset.erase();
-    h_offset.erase();
-    nb_instances = 0;
-}
-
-// -----------------------------------------------------------------------------
-
-/// Fills the 'out_block' array with the grid 'in_grid'
-__global__
-void fill_block(DA_float4 in_grid, int3 org, int3 block_size, DA_float4 out_block)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx < in_grid.size())
-    {
-        // Local (x, y, z) coordinates in the grid
-        int3 grid = { idx % GRID_RES,
-                     (idx / GRID_RES) % GRID_RES,
-                      idx / (GRID_RES * GRID_RES) };
-
-        // Coordinates in the block
-        int3 block = {org.x + grid.x, org.y + grid.y, org.z + grid.z};
-        // Convert 'block' to the linear indice in the array
-        int idx_block =
-                block.x +
-                block.y * block_size.x +
-                block.z * block_size.x * block_size.y;
-
-        out_block[idx_block] = in_grid[idx];
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void copy_grids_to_cuarray_block()
-{
-    if(h_offset.size() == 0)
-        return;
-
-    int3 block_size = {0, 0, 0};
-    for(int i = 0; i < h_offset.size(); i++)
-    {
-        if(h_offset[i].x < 0)
-            continue;
-
-        block_size.x = max(h_offset[i].x*GRID_RES + GRID_RES, block_size.x);
-        block_size.y = max(h_offset[i].y*GRID_RES + GRID_RES, block_size.y);
-        block_size.z = max(h_offset[i].z*GRID_RES + GRID_RES, block_size.z);
-    }
-
-    DA_float4 block_temp(block_size.x*block_size.y*block_size.z);
-
-    // Looping through all grid's instances
-    for(int i = 0; i < h_offset.size(); i++)
-    {
-        // (x, y, z) indices in the block :
-        int4 off = h_offset[i];
-        if(off.x < 0)
-            continue;
-
-        printf("copy_grids_to_cuarray_block %i, %i, size %i\n", i, h_offset[i].x, d_grids[i]->size());
-        fflush(stdout);
-        // Grid's origin (x, y, z) coordinates in the block
-        int3 org = {off.x * GRID_RES, off.y * GRID_RES, off.z * GRID_RES };
-
-        int ker_b_size = 64;
-        int ker_g_size = ((*d_grids[i]).size() + ker_b_size - 1) / ker_b_size;
-
-        // Filling all grid's element of instance 'i'
-        fill_block<<<ker_g_size, ker_b_size >>>(*d_grids[i], org, block_size, block_temp);
-    }
-
-    d_block.malloc(block_size.x, block_size.y, block_size.z);
-    d_block.copy_from(block_temp.ptr(), block_temp.size());
-}
-
-// -----------------------------------------------------------------------------
-
-static void update_offset(int idx)
-{
-    const int block_length = MAX_TEX_LENGTH / GRID_RES;
-
-    int4 grid_index = { idx % block_length,
-                       (idx / block_length) % block_length,
-                        idx / (block_length * block_length),
-                        0 };
-
-    h_offset[idx] = grid_index;
-    d_offset.copy_from(h_offset);
-}
 
 /// Give the transformation from world coordinates to the grid defined
 /// by the bouding box 'bb' of resolution 'res'
@@ -245,21 +90,21 @@ static Transfo world_coord_to_grid(const OBBox_cu& obbox, int res)
 }
 
 
-// -----------------------------------------------------------------------------
-
+// We only ever need one of these at a time, so use a surface instead of a surface object.
+surface<void, cudaSurfaceType3D> fill_surface;
 
 /// @warning bone_id in device mem ! not the same as Skeleton class
 /// @see Skeleton_Env::get_idx_device_bone()
 __global__ static
-void fill_grid_kernel(Skeleton_env::DBone_id bone_id,
+void fill_grid_kernel(int grid_size,
+                      Skeleton_env::DBone_id bone_id,
                       float3 steps,
                       int grid_res,
                       Point_cu org,
-                      Transfo transfo,
-                      Cuda_utils::DA_float4 d_out_grid)
+                      Transfo transfo)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx < d_out_grid.size())
+    if(idx < grid_size)
     {
         int x = idx % grid_res;
         int y = (idx / grid_res) % grid_res;
@@ -274,7 +119,8 @@ void fill_grid_kernel(Skeleton_env::DBone_id bone_id,
         float pot = hrbf.fngf(gf, transfo * p);
         pot = pot < 0.00001f ? 0.f  : pot;
 
-        d_out_grid[idx] = make_float4(pot, gf.x, gf.y, gf.z);
+        float4 element = make_float4(gf.x, gf.y, gf.z, pot);
+        surf3Dwrite(element, fill_surface, x*sizeof(float4), y, z, cudaBoundaryModeTrap);
     }
 }
 
@@ -291,41 +137,46 @@ void fill_grid_kernel(Skeleton_env::DBone_id bone_id,
 /// @warning bone_id is the id in device memory ! It is not the same as the one
 /// in Skeleton class use Skeleton_Env::get_idx_device_bone()
 /// @see Skeleton_Env::get_idx_device_bone()
-void fill_grid_with_fngf(Skeleton_env::DBone_id device_bone_id,
+void fill_grid_with_fngf(PrecomputedInfo &info,
+                         Skeleton_env::DBone_id device_bone_id,
                          float3 steps,
                          int grid_res,
                          Point_cu org,
                          Transfo transfo,
                          int grids,
-                         int blocks,
-                         Cuda_utils::DA_float4 d_out_grid)
+                         int blocks)
 {
     Skeleton_env::bind_local();
     HRBF_env::bind_local();
 
-    fill_grid_kernel<<<grids, blocks >>>
-    (device_bone_id, steps, grid_res, org, transfo, d_out_grid);
+    cudaBindSurfaceToArray(fill_surface, info.d_grid->getCudaArray());
+    CUDA_CHECK_ERRORS();
+
+    fill_grid_kernel<<<grids, blocks>>>
+    (info.d_grid->size(), device_bone_id, steps, grid_res, org, transfo);
+    CUDA_CHECK_ERRORS();
 
     Skeleton_env::unbind_local();
     HRBF_env::unbind_local();
 }
 
-static void fill_grid(Bone::Id bone_id,
+static void fill_grid(PrecomputedInfo &info,
+                      Bone::Id bone_id,
                       Skeleton_env::Skel_id skel_id,
                       const OBBox_cu& obbox,
-                      int res,
-                      DA_float4& d_grid)
+                      int res)
 {
-    assert(GRID_RES_3 == d_grid.size());
+    assert(GRID_RES_3 == info.d_grid->size());
 
     Vec3_cu lengths = obbox._bb.lengths();
     float3  steps = {lengths.x / (float)res,
                      lengths.y / (float)res,
                      lengths.z / (float)res};
 
+    
     const int ker_block_size = 64;
     const int ker_grid_size  =
-            (d_grid.size() + ker_block_size - 1) / ker_block_size;
+            (info.d_grid->size() + ker_block_size - 1) / ker_block_size;
 
 
     if(ker_grid_size > 65535){
@@ -333,132 +184,28 @@ static void fill_grid(Bone::Id bone_id,
         assert(false);
     }
 
-    using namespace Skeleton_env;
+    Skeleton_env::DBone_id device_bone_id = Skeleton_env::bone_hidx_to_didx(skel_id, bone_id);
 
-    DBone_id device_bone_id = bone_hidx_to_didx(skel_id, bone_id);
-
-    fill_grid_with_fngf(device_bone_id,
+    fill_grid_with_fngf(info,
+                        device_bone_id,
                         steps,
                         res,
                         obbox._bb.pmin,
                         obbox._tr,
                         ker_grid_size,
-                        ker_block_size,
-                        d_grid);
+                        ker_block_size);
 
     CUDA_CHECK_ERRORS();
-}
-
-// -----------------------------------------------------------------------------
-
-const Transfo& get_user_transform(int inst_id)
-{
-    return h_user_transform[inst_id];
-}
-
-// -----------------------------------------------------------------------------
-
-void set_transform(int inst_id, const Transfo& transfo)
-{
-    h_grid_transfo_buffer[inst_id] = h_grid_transform[inst_id] * transfo.fast_invert();
-    h_user_transform[inst_id] = transfo;
-    d_grad_transform.set(inst_id, transfo);
-}
-
-// -----------------------------------------------------------------------------
-
-void update_device_transformations()
-{
-    if(h_grid_transfo_buffer.size() > 0)
-        d_anim_transform.copy_from(h_grid_transfo_buffer);
-    Precomputed_env::update_all_info();
-}
-
-__device__
-Transfo fetch_transform(const PrecomputedInfo &info)
-{
-    struct{
-        float4 a;
-        float4 b;
-        float4 c;
-        float4 d;
-    } s;
-
-    s.a = tex1Dfetch<float4>(info.tex_transform, info.id*4 + 0);
-    s.b = tex1Dfetch<float4>(info.tex_transform, info.id*4 + 1);
-    s.c = tex1Dfetch<float4>(info.tex_transform, info.id*4 + 2);
-    s.d = tex1Dfetch<float4>(info.tex_transform, info.id*4 + 3);
-
-    return *reinterpret_cast<Transfo*>(&s);
-}
-
-// -----------------------------------------------------------------------------
-
-__device__
-Transfo fetch_transform_grad(const PrecomputedInfo &info)
-{
-    struct{
-        float4 a;
-        float4 b;
-        float4 c;
-        float4 d;
-    } s;
-
-    s.a = tex1Dfetch<float4>(info.tex_transform_grad, info.id*4 + 0);
-    s.b = tex1Dfetch<float4>(info.tex_transform_grad, info.id*4 + 1);
-    s.c = tex1Dfetch<float4>(info.tex_transform_grad, info.id*4 + 2);
-    s.d = tex1Dfetch<float4>(info.tex_transform_grad, info.id*4 + 3);
-
-    return *reinterpret_cast<Transfo*>(&s);
-}
-
-// -----------------------------------------------------------------------------
-
-__device__
-Vec3_cu fetch_offset(const PrecomputedInfo &info){
-    int4 off = tex1Dfetch<int4>(info.tex_offset, info.id);
-    return Vec3_cu(off.x*GRID_RES, off.y*GRID_RES, off.z*GRID_RES);
-}
-
-// -----------------------------------------------------------------------------
-
-__device__
-bool is_in_grid(const Point_cu& pt, Vec3_cu off)
-{
-    const float res = (float)GRID_RES;
-    off = off + 0.5f;
-
-    //plus/minus one are hacks because I forgot to pad
-    return ((pt.x >= off.x + 1.f        ) & (pt.y >= off.y + 1.f        ) & (pt.z >= off.z + 1.f       ) &
-            (pt.x <  (off.x + res - 1.f)) & (pt.y <  (off.y + res - 1.f)) & (pt.z <  (off.z + res - 1.f)));
-}
-
-// -----------------------------------------------------------------------------
-
-/// @param p    the 3d texture coordinate of tex_grid
-/// @param grad the gradient at point p
-/// @return the potential at point p
-__device__
-float fetch_grid(const PrecomputedInfo &info, const Point_cu& p, Vec3_cu& grad)
-{
-    float4 res = tex3D<float4>(info.tex_grids, p.x, p.y, p.z);
-    grad.x = res.y;
-    grad.y = res.z;
-    grad.z = res.w;
-    return res.x;
 }
 
 __device__
 float fetch_potential(const PrecomputedInfo &info, const Point_cu& p)
 {
-    Point_cu  r = fetch_transform(info) * p;
-    Vec3_cu off = fetch_offset(info);
+    Point_cu  r = info.grid_transfo_buffer * p;
 
-    r = r + off;
-
-//    if( is_in_grid( r, off ) )
+//    if( is_in_grid(r) )
 //    {
-//        float4 res = tex3D(tex_grids, r.x, r.y, r.z);
+//        float4 res = tex3D(tex_grid, r.x, r.y, r.z);
 //        return res.x;
 //    }
 
@@ -470,14 +217,11 @@ float fetch_potential(const PrecomputedInfo &info, const Point_cu& p)
 __device__
 Vec3_cu fetch_gradient(const PrecomputedInfo &info, const Point_cu& p)
 {
-    Point_cu  r = fetch_transform(info) * p;
-    Vec3_cu off = fetch_offset(info);
+    Point_cu  r = info.grid_transfo_buffer * p;
 
-    r = r + off;
-
-//    if( is_in_grid( r, off ) )
+//    if( is_in_grid(r) )
 //    {
-//        float4 res = tex3D(tex_grids, r.x, r.y, r.z);
+//        float4 res = tex3D(tex_grid, r.x, r.y, r.z);
 //        return Vec3_cu(res.y, res.z, res.w);
 //    }
 
@@ -486,177 +230,128 @@ Vec3_cu fetch_gradient(const PrecomputedInfo &info, const Point_cu& p)
 
 }
 
+const Transfo& Precomputed_prim::get_user_transform() const
+{
+    return get_info().user_transform;
+}
+
+void Precomputed_prim::set_transform(const Transfo& transfo)
+{
+    PrecomputedInfo &info = get_info();
+    info.user_transform = transfo;
+    info.grid_transfo_buffer = info.grid_transform * info.user_transform.fast_invert();
+}
+
+void Precomputed_prim::update_device_transformations()
+{
+    for(int i = 0; i < (int) h_precomputed_info.size(); ++i)
+        update_device(i);
+}
+
 void Precomputed_prim::initialize()
 {
     using namespace Precomputed_env;
-    assert(_id < 0);
+    assert(_id == -1);
 
     // find the first free element (which is represented by negative offsets)
     int idx = 0;
-    for(; idx<h_offset.size(); idx++)
-        if( h_offset[idx].x < 0) break;
-
-    // Add the instance
-    if(idx == h_offset.size())
-    {
-        const int size = h_offset.size() + 1;
-        h_offset.realloc( size );
-        d_grids.push_back(new DA_float4(GRID_RES_3));
-        d_offset.realloc( size );
-        h_grid_transform.realloc(size);
-        h_user_transform.realloc(size);
-        h_grid_transfo_buffer.realloc(size);
-        d_anim_transform.realloc(size);
-        d_grad_transform.realloc(size);
-    }
-    else
-        d_grids[idx] = new DA_float4(GRID_RES_3);
-
-    update_offset(idx);
-
-    nb_instances++;
-
+    for(; idx<h_precomputed_info.size(); idx++)
+        if(h_precomputed_info[idx].id == -1) break;
     _id = idx;
 
-    update_info(_id);
-}
-
-void Precomputed_prim::dealloc(int _id) {
-    if(_id >= h_precomputed_info.size())
-        return;
-
-    PrecomputedInfo &info = h_precomputed_info[_id];
-    if(!info.allocated)
-        return;
-
-    if(info.tex_transform != 0)
-        cudaDestroyTextureObject(info.tex_transform);
-    info.tex_transform = 0;
-    if(info.tex_transform_grad != 0)
-        cudaDestroyTextureObject(info.tex_transform_grad);
-    info.tex_transform_grad = 0;
-    if(info.tex_offset != 0)
-        cudaDestroyTextureObject(info.tex_offset);
-    info.tex_offset = 0;
-    if(info.tex_grids != 0)
-    {
-        printf("dealloc texture object %i\n", info.tex_grids);
-        cudaDestroyTextureObject(info.tex_grids);
-    }
-    info.tex_grids = 0;
-    info.allocated = false;
-
-    // Update the buffer in device memory.
-    d_precomputed_info.copy_from(h_precomputed_info);
-}
-
-void Precomputed_prim::update_info(int _id) {
     h_precomputed_info.resize(max((int) h_precomputed_info.size(), _id+1));
-    d_precomputed_info.realloc(h_precomputed_info.size());
-    dp_precomputed_info = d_precomputed_info.ptr();
-
     PrecomputedInfo &info = h_precomputed_info[_id];
+
     info.id = _id;
+    info.d_grid = new Device::CuArray<float4>();
+    info.d_grid->set_cuda_flags(cudaArraySurfaceLoadStore);
+    info.d_grid->malloc(GRID_RES, GRID_RES, GRID_RES);
 
-    dealloc(_id);
-
-    // XXX this is still global, not per prim
-    if(Precomputed_env::d_anim_transform.ptr() != NULL)
-    {
-        cudaResourceDesc resDesc;
-        memset(&resDesc, 0, sizeof(resDesc));
-        resDesc.resType = cudaResourceTypeLinear;
-        resDesc.res.linear.devPtr = Precomputed_env::d_anim_transform.ptr();
-        resDesc.res.linear.desc = cudaCreateChannelDesc<float4>();
-        resDesc.res.linear.sizeInBytes = Precomputed_env::d_anim_transform.size()*sizeof(Transfo);
-
-        cudaTextureDesc tex;
-        memset(&tex, 0, sizeof(tex));
-
-        cudaCreateTextureObject(&info.tex_transform, &resDesc, &tex, NULL);
-        CUDA_CHECK_ERRORS();
-    }
-
-    if(Precomputed_env::d_grad_transform.ptr() != NULL)
-    {
-        cudaResourceDesc resDesc;
-        memset(&resDesc, 0, sizeof(resDesc));
-        resDesc.resType = cudaResourceTypeLinear;
-        resDesc.res.linear.devPtr = Precomputed_env::d_grad_transform.ptr();
-        resDesc.res.linear.desc = cudaCreateChannelDesc<float4>();
-        resDesc.res.linear.sizeInBytes = Precomputed_env::d_grad_transform.size()*sizeof(Transfo);
-
-        cudaTextureDesc tex;
-        memset(&tex, 0, sizeof(tex));
-
-        cudaCreateTextureObject(&info.tex_transform_grad, &resDesc, &tex, NULL);
-        CUDA_CHECK_ERRORS();
-    }
-
-    if(Precomputed_env::d_offset.ptr() != NULL)
-    {
-        cudaResourceDesc resDesc;
-        memset(&resDesc, 0, sizeof(resDesc));
-        resDesc.resType = cudaResourceTypeLinear;
-        resDesc.res.linear.devPtr = Precomputed_env::d_offset.ptr();
-        resDesc.res.linear.desc = cudaCreateChannelDesc<float4>();
-        resDesc.res.linear.sizeInBytes = Precomputed_env::d_offset.size()*sizeof(int4);
-
-        cudaTextureDesc tex;
-        memset(&tex, 0, sizeof(tex));
-
-        cudaCreateTextureObject(&info.tex_offset, &resDesc, &tex, NULL);
-        CUDA_CHECK_ERRORS();
-    }
-
-    if(Precomputed_env::d_block.getCudaArray() != NULL)
     {
         cudaResourceDesc resDesc;
         memset(&resDesc, 0, sizeof(resDesc));
         resDesc.resType = cudaResourceTypeArray;
-        resDesc.res.array.array = Precomputed_env::d_block.getCudaArray();
+        resDesc.res.array.array = info.d_grid->getCudaArray();
 
         cudaTextureDesc tex;
         memset(&tex, 0, sizeof(tex));
         tex.normalizedCoords = false;
         tex.filterMode = cudaFilterModeLinear;
-        tex.addressMode[0] = cudaAddressModeClamp;
-        tex.addressMode[1] = cudaAddressModeClamp;
-        tex.addressMode[2] = cudaAddressModeClamp;
+        tex.addressMode[0] = cudaAddressModeBorder;
+        tex.addressMode[1] = cudaAddressModeBorder;
+        tex.addressMode[2] = cudaAddressModeBorder;
 
-        cudaCreateTextureObject(&info.tex_grids, &resDesc, &tex, NULL);
+        cudaCreateTextureObject(&info.tex_grid, &resDesc, &tex, NULL);
         CUDA_CHECK_ERRORS();
+    }
 
-        printf("created texture object %i\n", info.tex_grids);
-    }
-    else
+    update_device(_id);
+}
+
+void Precomputed_prim::update_device(int _id) {
+    // If every entry in h_precomputed_info is unused, erase it and d_precomputed_info.
+    // If we don't do this then we'll never deallocate d_precomputed_info, which will cause
+    // a hang if we're released after CUDA is deinitialized.
+    bool any_in_use = false;
+    for(int i = 0; i < (int) h_precomputed_info.size(); ++i)
+        if(h_precomputed_info[i].id != -1)
+            any_in_use = true;
+    if(!any_in_use)
     {
-        printf("no grid texture object\n");
+        h_precomputed_info.clear();
+        d_precomputed_info.erase();
+        dp_precomputed_info = NULL;
+        return;
     }
-    info.allocated = true;
+
+    d_precomputed_info.realloc((int) h_precomputed_info.size());
+    dp_precomputed_info = d_precomputed_info.ptr();
 
     // Update the buffer in device memory.
+    PrecomputedInfo &info = h_precomputed_info[_id];
     d_precomputed_info.copy_from(h_precomputed_info);
 }
 
-void Precomputed_prim::clear(){
-    using namespace Precomputed_env;
+const PrecomputedInfo &Precomputed_prim::get_info() const {
     assert(_id >= 0);
-    assert(_id < h_offset.size());
-    assert(h_offset[_id].x >= 0);
-    assert(nb_instances > 0);
 
-    delete d_grids[_id];
-    d_grids[_id] = NULL;
+#ifdef __CUDA_ARCH__
+    const PrecomputedInfo &info = dp_precomputed_info[_id];
+#else
+    assert(_id < h_precomputed_info.size());
+    const PrecomputedInfo &info = h_precomputed_info[_id];
+#endif
 
-    // Deleted hrbf instances are tag with negative offsets in order to
-    // re-use the element for a new instance
-    h_offset[_id] = make_int4(-1, -1, -1, -1);
-    d_offset.copy_from(h_offset);
+    assert(info.id != -1);
 
-    nb_instances--;
+    return info;
+}
 
-    Precomputed_prim::dealloc(_id);
+PrecomputedInfo &Precomputed_prim::get_info() {
+    return const_cast<PrecomputedInfo &>(const_cast<const Precomputed_prim *>(this)->get_info());
+}
+
+void Precomputed_prim::clear() {
+    using namespace Precomputed_env;
+
+    PrecomputedInfo &info = get_info();
+    if(info.tex_grid != 0)
+    {
+        cudaDestroyTextureObject(info.tex_grid);
+        CUDA_CHECK_ERRORS();
+    }
+    info.tex_grid = 0;
+
+    delete info.d_grid;
+    info.d_grid = NULL;
+
+    info.id = -1;
+    int old_id = _id;
+    _id = -1;
+
+    // This isn't really necessary.  It avoids having stale info in device memory on entries
+    // that should never be accessed, but it can help in debugging.
+    update_device(old_id);
 }
 
 __host__
@@ -664,29 +359,18 @@ void Precomputed_prim::fill_grid_with(Skeleton_env::Skel_id skel_id, const Bone*
 {
     using namespace Precomputed_env;
 
-    assert(_id < h_offset.size());
-    assert(_id >= 0);
-    assert(h_offset[_id].x >= 0); // means the instance was deleted
-    assert(nb_instances > 0);
-
+    PrecomputedInfo &info = get_info();
     Bone::Id bone_id = bone->get_bone_id();
     OBBox_cu obbox = bone->get_obbox();
 
     // Compute the primive's grid
-    fill_grid(bone_id, skel_id, obbox, GRID_RES, (*d_grids[_id]));
+    fill_grid(info, bone_id, skel_id, obbox, GRID_RES);
 
     // Adding the transformation to evaluate the grid
-    Transfo t = world_coord_to_grid(obbox, GRID_RES);
-    d_anim_transform.set(_id, t);
-    d_grad_transform.set(_id, Transfo::identity());
-    h_grid_transform[_id] = t;
-    h_user_transform[_id] = Transfo::identity();
+    info.grid_transform = world_coord_to_grid(obbox, GRID_RES);
+    info.user_transform = Transfo::identity();
 
-    // OK maybe its a bit slow to do it each time.
-    // The best would be to do it once when all grids are loadeds
-    copy_grids_to_cuarray_block();
-
-    Precomputed_env::update_all_info();
+    update_device(_id);
 }
 
 __device__
@@ -694,7 +378,7 @@ float Precomputed_prim::f(const Point_cu& x) const
 {
     using namespace Precomputed_env;
 
-    const PrecomputedInfo &info = dp_precomputed_info[_id];
+    const PrecomputedInfo &info = get_info();
     return fetch_potential(info, x);
 }
 
@@ -705,29 +389,42 @@ Vec3_cu Precomputed_prim::gf(const Point_cu& x) const
 {
     using namespace Precomputed_env;
 
-    const PrecomputedInfo &info = dp_precomputed_info[_id];
+    const PrecomputedInfo &info = get_info();
     return fetch_gradient(info, x);
 }
 
 // -----------------------------------------------------------------------------
+__device__
+bool is_in_grid(const Point_cu& pt)
+{
+    const float res = (float)GRID_RES;
+
+    //plus/minus one are hacks because I forgot to pad
+    return pt.x >= 1.5        && pt.y >= 1.5f       && pt.z >= 1.5f &&
+           pt.x <  res - 0.5f && pt.y <  res - 0.5f && pt.z <  res - 0.5f;
+}
 
 __device__
 float Precomputed_prim::fngf(Vec3_cu& grad, const Point_cu& p) const
 {
     using namespace Precomputed_env;
 
-    const PrecomputedInfo &info = dp_precomputed_info[_id];
-    Point_cu  r = fetch_transform(info) * p;
-    Vec3_cu off = fetch_offset(info);
+    const PrecomputedInfo &info = get_info();
+    Point_cu  r = info.grid_transfo_buffer * p;
 
-    r = r + off;
-    if( is_in_grid( r, off ) )
+    // XXX: Can we avoid needing to check this using texture borders, since each grid is now in
+    // a separate texture?
+    if( !is_in_grid( r ) )
     {
-        float pot = fetch_grid(info, r, grad);
-        grad = fetch_transform_grad(info) * grad;
-        return pot;
+        grad = Vec3_cu(0.f, 0.f, 0.f);
+        return 0.f;
     }
 
-    grad = Vec3_cu(0.f, 0.f, 0.f);
-    return 0.f;
+    float4 res = tex3D<float4>(info.tex_grid, r.x, r.y, r.z);
+    grad.x = res.x;
+    grad.y = res.y;
+    grad.z = res.z;
+
+    grad = info.user_transform * grad;
+    return res.w;
 }

@@ -19,7 +19,7 @@
 #include "bone.hpp"
 #include "precomputed_prim_constants.hpp"
 #include "ray_cu.hpp"
-#include "precomputed_prim_env.hpp"
+#include "precomputed_prim.hpp"
 
 namespace { __device__ void fix_debug() { } }
 
@@ -287,7 +287,7 @@ OBBox_cu Bone_precomputed::get_obbox() const
 {
     OBBox_cu tmp = _obbox;
 
-    tmp._tr = Precomputed_env::get_user_transform( _primitive.get_id() ) * tmp._tr;
+    tmp._tr = _primitive.get_user_transform() * tmp._tr;
 
     return  tmp;
 }
