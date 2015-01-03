@@ -387,8 +387,8 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         if(status != MS::kSuccess) return status;
     }
 
-    // Run the algorithm.  XXX: If we're being applied to a set, can we reduce the work we're doing to
-    // just those vertices?
+    // Run the algorithm.  XXX: If we're being applied to a set, use init_vert_to_fit to only
+    // process the vertices we need to.
     cudaCtrl._anim_mesh->set_do_smoothing(true);
     cudaCtrl._anim_mesh->deform_mesh();
 
