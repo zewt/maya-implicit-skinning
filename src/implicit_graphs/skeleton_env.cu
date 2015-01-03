@@ -353,6 +353,7 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
             hd_cluster_data [off_blist + i]._bulge_strength = c.datas._bulge_strength;
         }
         // We store nb_pairs and nb_singletons in the first element of the list
+        assert(tree_cu->_blending_list._list.size() > 0); // unless we have no elements
         hd_blending_list[off_blist].nb_pairs      = tree_cu->_blending_list._nb_pairs;
         hd_blending_list[off_blist].nb_singletons = tree_cu->_blending_list._nb_singletons;
 
