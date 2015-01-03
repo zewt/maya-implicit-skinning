@@ -23,10 +23,70 @@
 #include "vec3_cu.hpp"
 #include "point_cu.hpp"
 
+
+
 namespace Skeleton_env {
     typedef int Skel_id;
 }
 class Bone;
+
+
+#include "cuda_utils.hpp"
+#include "transfo.hpp"
+
+class Bone;
+namespace Skeleton_env {
+    typedef int Skel_id;
+}
+
+// FIXME: we should pad the 3d grid to avoid the lerp artifacts at borders
+// TODO: we should be able to store any kind of implicit prim (template or class polyphormism)
+/** @namespace Precomputed_env
+    @brief Environment storing 3D grids representing implicit primitives
+
+    Precomputed_Env provides a way to store in Cuda textures 3d grids and
+    fetch them with trilinear interpolation
+
+    How to upload one primitive and transform it:
+    @code
+    int id = new_instance();
+    // init the 3d grid potential and gradient with a implicit bone
+    init_instance(id, bone);
+    // Apply a global transformation to the 3d grid
+    set_transform(id, tr);
+    set_transform(id, tr);
+    // To take into account the transformations
+    update_device_transformations();
+    @endcode
+*/
+// =============================================================================
+namespace Precomputed_env{
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+
+void clean_env();
+
+/// get the transformation t set by 'set_transform()'
+const Transfo& get_user_transform(int inst_id);
+
+/// In order to animate the precomputed primitives one as to set the
+/// transformations applied to each primitive.
+/// @warning One must call update_device_transformations() setting all the
+/// instances transformation
+/// @see update_device_transformations()
+void set_transform(int inst_id, const Transfo& transfo);
+
+/// Copy the host transformations set by set_transform() to texture
+/// @see set_transform()
+void update_device_transformations();
+
+}// END PRECOMPUTED_ENV NAMESPACE ==============================================
+
+
+
+
+
 
 /**
  @class Precomputed_prim
@@ -60,10 +120,10 @@ struct Precomputed_prim {
     __host__ inline int get_id() const { return _id; }
 
 private:
-
-    /*-----------*
-    | Attributes |
-    *-----------*/
+    
+public: // XXX
+    static void dealloc(int _id);
+    static void update_info(int _id);
 
     int _id;
 };

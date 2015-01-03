@@ -299,6 +299,9 @@ struct CuArray : Cuda_utils::Common::Array<T>{
     inline void bind_tex(texture<T, dim, cudaReadModeElementType>& texref) const {
         if(CCA::nb_elt > 0) CUDA_SAFE_CALL(cudaBindTextureToArray(texref, data));
     }
+
+    cudaArray *getCudaArray() { return data; }
+    const cudaArray *getCudaArray() const { return data; }
     #endif
 
 private:

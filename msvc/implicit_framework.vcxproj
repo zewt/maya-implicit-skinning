@@ -92,6 +92,7 @@
       </AdditionalCompilerOptions>
       <AdditionalOptions>-Xcompiler "/wd 4819" %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
     </CudaCompile>
     <CudaLink />
     <Link>
@@ -99,6 +100,9 @@
       <AdditionalOptions> /debug /export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <ImportLibrary />
     </Link>
+    <CudaLink>
+      <GPUDebugInfo>true</GPUDebugInfo>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -130,6 +134,7 @@
       </AdditionalCompilerOptions>
       <AdditionalOptions>-Xcompiler "/wd 4819" %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
     </CudaCompile>
     <Link>
       <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -166,6 +171,7 @@
       </AdditionalCompilerOptions>
       <AdditionalOptions>-Xcompiler "/wd 4819" %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
     </CudaCompile>
     <Link>
       <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -283,10 +289,6 @@
     <ClInclude Include="..\src\primitives\plane.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env.hpp" />
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env_binding.hpp" />
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.hpp" />
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.hpp" />
     <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp" />
     <ClInclude Include="..\src\utils\assert_utils.hpp" />
     <ClInclude Include="..\src\utils\class_saver.hpp" />
@@ -347,12 +349,6 @@
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_utils.cu">
       <FileType>Document</FileType>
     </CudaCompile>
-    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_env.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
     <CudaCompile Include="..\src\primitives\hrbf\hrbf_env.cu">
       <FileType>Document</FileType>
     </CudaCompile>
@@ -376,8 +372,6 @@
     <None Include="..\src\primitives\distance_field.inl" />
     <None Include="..\src\primitives\hermiteRBF.inl" />
     <None Include="..\src\primitives\plane.inl" />
-    <None Include="..\src\primitives\precomputed_prim.inl" />
-    <None Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.inl" />
     <None Include="..\src\utils\cuda_utils\memory_debug.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

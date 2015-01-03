@@ -303,19 +303,7 @@
     <ClInclude Include="..\src\primitives\hrbf\hrbf_kernels.hpp">
       <Filter>primitives\hrbf</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env_binding.hpp">
-      <Filter>primitives\precomputed_prim</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.hpp">
-      <Filter>primitives\precomputed_prim</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.hpp">
-      <Filter>primitives\precomputed_prim</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp">
-      <Filter>primitives\precomputed_prim</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_env.hpp">
       <Filter>primitives\precomputed_prim</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils\conversions.hpp">
@@ -493,12 +481,6 @@
     <CudaCompile Include="..\src\primitives\hrbf\hrbf_kernels.cu">
       <Filter>primitives\hrbf</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_env.cu">
-      <Filter>primitives\precomputed_prim</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\src\primitives\precomputed_prim\precomputed_prim_kernels.cu">
-      <Filter>primitives\precomputed_prim</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu">
       <Filter>utils\cuda_utils</Filter>
     </CudaCompile>
@@ -539,12 +521,6 @@
     </None>
     <None Include="..\src\primitives\plane.inl">
       <Filter>primitives</Filter>
-    </None>
-    <None Include="..\src\primitives\precomputed_prim.inl">
-      <Filter>primitives</Filter>
-    </None>
-    <None Include="..\src\primitives\precomputed_prim\precomputed_prim_tex.inl">
-      <Filter>primitives\precomputed_prim</Filter>
     </None>
     <None Include="..\src\utils\cuda_utils\memory_debug.inl">
       <Filter>utils\cuda_utils</Filter>

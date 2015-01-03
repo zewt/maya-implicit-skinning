@@ -26,9 +26,6 @@
 #include "hrbf_env_tex.hpp"
 #include "hrbf_env_tex_binding.hpp"
 
-#include "precomputed_prim_tex.hpp"
-#include "precomputed_prim_env_binding.hpp"
-
 #include "skeleton_env_tex.hpp"
 #include "skeleton_env_tex_binding.hpp"
 
@@ -38,7 +35,6 @@
 /// @name Class implementation using the previous textures
 /// @{
 #include "hermiteRBF.inl"
-#include "precomputed_prim.inl"
 /// @}
 
 /// @name Main cuda kernels

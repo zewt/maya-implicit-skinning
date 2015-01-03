@@ -49,6 +49,8 @@ void Animesh::update_base_potential()
 
     CUDA_CHECK_ERRORS();
 
+
+    std::vector<float> v_base_potential = d_base_potential.to_host_vector();
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
 }
 
@@ -59,6 +61,11 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
                                   const std::vector<Vec3_cu>& n_nodes)
 {
     const float rad_hrbf = _skel->get_hrbf_radius( bone_id );
+
+    // XXX: This creates a new bone and replaces the one we had before.  However, it
+    // never sets any of its properties (_length, etc).  We apparently don't use any
+    // of that from here on out and only use _frames.  That's a bit confusing, could we
+    // avoid keeping Bone data around entirely that we aren't using?
 
     // We update nodes in bones
     Bone_hrbf*  hrbf_bone = new Bone_hrbf(rad_hrbf);
@@ -288,13 +295,15 @@ void Animesh::transform_vertices()
     d_output_vertices.copy_from(d_input_vertices);
 
     d_smooth_factors_laplacian.copy_from( d_input_smooth_factors );
+    // d_vert_to_fit_base: a list of vertices that fit_mesh should be applied to;
+    // doesn't depend on the results of skinning
     d_vert_to_fit.copy_from(d_vert_to_fit_base);
     int nb_vert_to_fit = d_vert_to_fit.size();
     const int nb_steps = Cuda_ctrl::_debug._nb_step;
 
     Cuda_utils::DA_int* curr = &d_vert_to_fit;
 
-    if(do_smooth_mesh)
+    if(do_smooth_mesh && false)
     {
         Cuda_utils::DA_int* prev = &d_vert_to_fit_buff;
         // Interleaved fittig
@@ -324,7 +333,7 @@ void Animesh::transform_vertices()
         }
     }
 
-#if 1
+#if 0
     // Smooth the initial guess
     if(_debug._smooth_mesh)
     {
