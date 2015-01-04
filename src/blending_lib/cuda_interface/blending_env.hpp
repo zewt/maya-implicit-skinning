@@ -36,6 +36,7 @@
 
 #include <cstdio>
 #include "cuda_utils.hpp"
+#include "idx3_cu.hpp"
 
 // forward defs ----------------------------------------------------------------
 #include "blending_env_type.hpp"
@@ -170,8 +171,13 @@ IBL::Ctrl_setup get_global_ctrl_shape();
 
 float eval_global_ctrl(float dot);
 
+void set_global_ctrl_shape(const IBL::Ctrl_setup& shape);
+void set_bulge_magnitude(float mag);
+void set_ricci_n(float N);
+
 // -----------------------------------------------------------------------------
 
+extern bool binded;
 void unbind();
 void bind();
 
@@ -276,6 +282,173 @@ void make_cache_env(const std::string &filename);
 bool init_env_from_cache(const std::string &filename);
 
 
+
+
+
+
+
+
+
+
+
+    extern texture<float, 1, cudaReadModeElementType>  profile_hyperbola_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profile_hyperbola_normals_tex;
+
+    extern texture<float, 1, cudaReadModeElementType>  profile_bulge_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profile_bulge_normals_tex;
+
+    /// List of profile for the bulge of different strength
+    //@{
+    extern texture<float, 1, cudaReadModeElementType>  profiles_bulge_4D_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profiles_bulge_4D_normals_tex;
+    //@}
+
+    /// List of profile for the ricci of different N
+    //@{
+    extern texture<float, 1, cudaReadModeElementType>  profiles_ricci_4D_tex;
+    extern texture<float2, 1, cudaReadModeElementType> profiles_ricci_4D_normals_tex;
+    //@}
+
+    extern texture<float, 1, cudaReadModeElementType>  opening_hyperbola_tex;
+
+    // 4D stuff ----------------------------------------------------------------
+    extern texture<float, 1, cudaReadModeElementType>  magnitude_3D_bulge_tex;
+    extern texture<float, 3, cudaReadModeElementType>  openable_bulge_4D_tex;
+    extern texture<float2, 3, cudaReadModeElementType> openable_bulge_4D_gradient_tex;
+
+    extern texture<float, 1, cudaReadModeElementType>  n_3D_ricci_tex;
+    extern texture<float, 3, cudaReadModeElementType>  openable_ricci_4D_tex;
+    extern texture<float2, 3, cudaReadModeElementType> openable_ricci_4D_gradient_tex;
+    // -------------------------------------------------------------------------
+
+    extern texture<float2, 1, cudaReadModeElementType> global_controller_tex;
+
+    extern texture<float2, 2, cudaReadModeElementType> tex_controllers;
+
+    /// bind textures to the arrays into the '.cu' this header is included in
+    static inline void bind_local();
+
+    /// unbind textures to the arrays into the '.cu' this header is included in
+    static inline void unbind_local();
+
+    // boundary functions fetch ------------------------------------------------
+    __device__
+    static float pan_hyperbola_fetch(float t);
+    // -------------------------------------------------------------------------
+
+    // profile functions fetch -------------------------------------------------
+    __device__
+    static float hyperbola_fetch(float tan_t);
+
+    __device__
+    static float2 hyperbola_normal_fetch(float tan_t);
+
+    __device__
+    static float skin_fetch(float tan_t);
+
+    __device__
+    static float2 skin_normal_fetch(float tan_t);
+
+    __device__
+    static float profile_bulge_4D_fetch(float tan_t, float strength);
+
+    __device__
+    static float2 profile_bulge_4D_normal_fetch(float tan_t, float strength);
+
+    __device__
+    static float profile_ricci_4D_fetch(float tan_t, float N);
+
+    __device__
+    static float2 profile_ricci_4D_normal_fetch(float tan_t, float N);
+    // -------------------------------------------------------------------------
+
+    // operator fetch for OH ---------------------------------------------------
+    // used for U_OH
+    __device__
+    static float openable_clean_union_fetch(float f1, float f2, float tan_alpha);
+
+    __device__
+    static float2 openable_clean_union_gradient_fetch(float f1, float f2, float tan_alpha);
+
+    // used for B_OH
+    __device__
+    static float openable_clean_skin_fetch(float f1, float f2, float tan_alpha);
+
+    __device__
+    static float2 openable_clean_skin_gradient_fetch(float f1, float f2, float tan_alpha);
+    // -------------------------------------------------------------------------
+
+    // 4D operators stuff ------------------------------------------------------
+    // TODO: 4D fetch that fetch both potential and gradient.
+    // B_OH_4D
+    __device__
+    static float magnitude_3D_bulge_fetch();
+
+    __device__
+    static float openable_bulge_4D_fetch(float f1, float f2, float tan_alpha, float strength);
+
+    __device__
+    static float2 openable_bulge_4D_gradient_fetch(float f1, float f2, float tan_alpha, float strength);
+
+    // R_OH_4D
+    __device__
+    static float n_3D_ricci_fetch();
+
+    __device__
+    static float openable_ricci_4D_fetch(float f1, float f2, float tan_alpha, float N);
+
+    __device__
+    static float2 openable_ricci_4D_gradient_fetch(float f1, float f2, float tan_alpha, float N);
+    // -------------------------------------------------------------------------
+
+    /// @param dot Is the angle between two gradient given by the dot product
+    /// i.e cos(teta)
+    __device__
+    static float2 global_controller_fetch(float dot);
+
+    /// @param dot Is the angle between two gradient given by the dot product
+    /// i.e cos(teta)
+    __device__
+    static float2 controller_fetch(int inst_id, float dot);
+
+    // =========================================================================
+    // ======================  TEST with new env archi  ========================
+    // =========================================================================
+    // USE : Taking op_id as the operator-to-be-fetched's id
+    //      // get operator's Idx3_cu for value and gradient fetch
+    //      Idx3_cu idx = operator_idx_offset_fetch(op_id);
+    //      // get operator's value when applied on f1 and f2 with an opening
+    //      // value of tan_alpha
+    //      float f = operator_fetch(idx, f1, f2, tan_alpha);
+    //      // get operator's gradient when applied on f1 and f2 (whose
+    //      // gradients are gf1 and gf2) with an opening value of tan_alpha
+    //      float2 dg = operator_grad_fetch(idx, f1, f2, tan_alpha);
+    //      Vec3_cu gf = dg*gf1 + dg*gf2;
+    //
+    // WARNING : keep 4d ops & profiles & openings & other env stuff
+    // =========================================================================
+
+    extern texture<int4  , 1, cudaReadModeElementType> tex_pred_operators_idx_offsets;
+    extern texture<int   , 1, cudaReadModeElementType> tex_pred_operators_id;
+    extern texture<float , 3, cudaReadModeElementType> tex_operators_values;
+    extern texture<float2, 3, cudaReadModeElementType> tex_operators_grads;
+
+    __device__
+    static Idx3_cu operator_idx_offset_fetch(Op_id op_id);
+    __device__
+    static float operator_fetch(Idx3_cu tex_idx, float f1, float f2 ,float tan_alpha);
+    __device__
+    static float2 operator_grad_fetch(Idx3_cu tex_idx, float f1, float f2, float tan_alpha);
+
+    /// @returns the identifier attached to the op_t predefined operator
+    __device__
+    static Op_id predefined_op_id_fetch( Op_t op_t );
+    // -----------------------------------------------------------------------------
+
+
 }// END BLENDING_ENV NAMESPACE =================================================
+
+// Implementation of inline functions above:
+#include "blending_env.inl"
 
 #endif // BLENDING_ENV_HPP__

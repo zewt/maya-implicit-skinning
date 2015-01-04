@@ -16,7 +16,7 @@
 #include "hermiteRBF.inl"
 /// @}
 
-#include "blending_env_tex.hpp"
+#include "blending_env.hpp"
 
 /// This include needs blending_env_tex.hpp but we will not bind it and use it
 #include "skeleton_env_tex.hpp"

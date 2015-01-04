@@ -22,7 +22,6 @@
 #include <string>
 
 #include "constants.hpp"
-#include "blending_env_tex_interface.hpp"
 
 #include "animated_mesh_ctrl.hpp"
 #include "operators_ctrl.hpp"

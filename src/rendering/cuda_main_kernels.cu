@@ -22,8 +22,7 @@ namespace { __device__ void fix_debug() { } }
 
 /// @name Cuda textures importation
 /// @{
-#include "blending_env_tex.hpp"
-#include "blending_env_tex_binding.hpp"
+#include "blending_env.hpp"
 
 #include "hrbf_env_tex.hpp"
 #include "hrbf_env_tex_binding.hpp"

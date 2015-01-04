@@ -22,7 +22,7 @@
 #include "cuda_compiler_interop.hpp"
 #include "idx3_cu.hpp"
 #include "vec3_cu.hpp"
-#include "blending_env_tex.hpp"
+#include "blending_env.hpp"
 
 /** @class Operator3D_cu
     @brief 3D CSG operators representation class

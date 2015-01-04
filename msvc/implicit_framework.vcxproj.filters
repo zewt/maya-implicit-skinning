@@ -129,15 +129,6 @@
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env.hpp">
       <Filter>blending_lib\cuda_interface</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex.hpp">
-      <Filter>blending_lib\cuda_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex_binding.hpp">
-      <Filter>blending_lib\cuda_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex_interface.hpp">
-      <Filter>blending_lib\cuda_interface</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_type.hpp">
       <Filter>blending_lib\cuda_interface</Filter>
     </ClInclude>
@@ -501,9 +492,6 @@
     <None Include="..\src\blending_lib\splines.inl">
       <Filter>blending_lib</Filter>
     </None>
-    <None Include="..\src\blending_lib\cuda_interface\blending_env_tex.inl">
-      <Filter>blending_lib\cuda_interface</Filter>
-    </None>
     <None Include="..\src\blending_lib\cuda_interface\constants_tex.inl">
       <Filter>blending_lib\cuda_interface</Filter>
     </None>
@@ -524,6 +512,9 @@
     </None>
     <None Include="..\src\utils\cuda_utils\memory_debug.inl">
       <Filter>utils\cuda_utils</Filter>
+    </None>
+    <None Include="..\src\blending_lib\cuda_interface\blending_env.inl">
+      <Filter>blending_lib\cuda_interface</Filter>
     </None>
   </ItemGroup>
 </Project>

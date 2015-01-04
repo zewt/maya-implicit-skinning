@@ -25,8 +25,8 @@
  * before being used
  * @see Blending_env
  */
-#if !defined(BLENDING_ENV_TEX_HPP__)
-#error "You must include blending_env_tex.hpp before the inclusion of 'ultimate.hpp'"
+#if !defined(BLENDING_ENV_HPP__)
+#error "You must include blending_env.hpp before the inclusion of 'ultimate.hpp'"
 #endif
 
 #include "vec3_cu.hpp"

@@ -219,9 +219,6 @@
     <ClInclude Include="..\src\animation\loader_skel.hpp" />
     <ClInclude Include="..\src\animation\skeleton.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env.hpp" />
-    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex.hpp" />
-    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex_binding.hpp" />
-    <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_tex_interface.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_type.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_functions.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\constants.hpp" />
@@ -363,7 +360,7 @@
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\blending_lib\cuda_interface\blending_env_tex.inl" />
+    <None Include="..\src\blending_lib\cuda_interface\blending_env.inl" />
     <None Include="..\src\blending_lib\cuda_interface\constants_tex.inl" />
     <None Include="..\src\blending_lib\opening.inl" />
     <None Include="..\src\blending_lib\splines.inl" />

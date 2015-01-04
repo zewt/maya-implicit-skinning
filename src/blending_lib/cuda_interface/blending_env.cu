@@ -51,6 +51,8 @@ namespace Blending_env{
 
 using namespace Cuda_utils;
 
+bool binded;
+
 /// @name List of controllers instances
 /// @{
 cudaArray*           d_controllers = 0;
@@ -192,6 +194,196 @@ void allocate_and_copy_1D_array(int size, T* h_src_vals, cudaArray*& d_dst_value
     cudaChannelFormatDesc cfd = cudaCreateChannelDesc<T>();
     CUDA_SAFE_CALL(cudaMallocArray(&d_dst_values, &cfd, size, 1));
     CUDA_SAFE_CALL(cudaMemcpyToArray(d_dst_values, 0, 0, h_src_vals, data_size, cudaMemcpyHostToDevice));
+}
+
+
+void bind()
+{
+    binded = true;
+    if(allocated){
+
+        // Openings ---------------
+        opening_hyperbola_tex.normalized = false;
+        opening_hyperbola_tex.addressMode[0] = cudaAddressModeClamp;
+        opening_hyperbola_tex.addressMode[1] = cudaAddressModeClamp;
+        opening_hyperbola_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(opening_hyperbola_tex, d_pan_hyperbola));
+        // END Openings -----------
+
+        // Profiles ---------------
+        profile_hyperbola_tex.normalized = false;
+        profile_hyperbola_tex.addressMode[0] = cudaAddressModeClamp;
+        profile_hyperbola_tex.addressMode[1] = cudaAddressModeClamp;
+        profile_hyperbola_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(profile_hyperbola_tex, d_hyperbola_profile));
+
+        profile_hyperbola_normals_tex.normalized = false;
+        profile_hyperbola_normals_tex.addressMode[0] = cudaAddressModeClamp;
+        profile_hyperbola_normals_tex.addressMode[1] = cudaAddressModeClamp;
+        profile_hyperbola_normals_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(profile_hyperbola_normals_tex, d_hyperbola_normals_profile));
+
+        profile_bulge_tex.normalized = false;
+        profile_bulge_tex.addressMode[0] = cudaAddressModeClamp;
+        profile_bulge_tex.addressMode[1] = cudaAddressModeClamp;
+        profile_bulge_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(profile_bulge_tex, d_bulge_profile));
+
+        profile_bulge_normals_tex.normalized = false;
+        profile_bulge_normals_tex.addressMode[0] = cudaAddressModeClamp;
+        profile_bulge_normals_tex.addressMode[1] = cudaAddressModeClamp;
+        profile_bulge_normals_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(profile_bulge_normals_tex, d_bulge_profile_normals));
+
+        // 4D BULGE --------------
+        if(d_magnitude_3D_bulge)
+        {
+            magnitude_3D_bulge_tex.normalized = false;
+            magnitude_3D_bulge_tex.addressMode[0] = cudaAddressModeWrap;
+            magnitude_3D_bulge_tex.addressMode[1] = cudaAddressModeWrap;
+            magnitude_3D_bulge_tex.filterMode = cudaFilterModePoint;
+            CUDA_SAFE_CALL(cudaBindTexture(0, magnitude_3D_bulge_tex, d_magnitude_3D_bulge, sizeof(float)));
+        }
+
+        if(d_bulge_4D_profiles)
+        {
+            profiles_bulge_4D_tex.normalized = false;
+            profiles_bulge_4D_tex.addressMode[0] = cudaAddressModeClamp;
+            profiles_bulge_4D_tex.addressMode[1] = cudaAddressModeClamp;
+            profiles_bulge_4D_tex.filterMode = cudaFilterModeLinear;
+            CUDA_SAFE_CALL(cudaBindTextureToArray(profiles_bulge_4D_tex, d_bulge_4D_profiles));
+        }
+
+        if(d_bulge_4D_profiles_normals)
+        {
+            profiles_bulge_4D_normals_tex.normalized = false;
+            profiles_bulge_4D_normals_tex.addressMode[0] = cudaAddressModeClamp;
+            profiles_bulge_4D_normals_tex.addressMode[1] = cudaAddressModeClamp;
+            profiles_bulge_4D_normals_tex.filterMode = cudaFilterModeLinear;
+            CUDA_SAFE_CALL(cudaBindTextureToArray(profiles_bulge_4D_normals_tex, d_bulge_4D_profiles_normals));
+        }
+
+        openable_bulge_4D_tex.normalized = false;
+        openable_bulge_4D_tex.addressMode[0] = cudaAddressModeClamp;
+        openable_bulge_4D_tex.addressMode[1] = cudaAddressModeClamp;
+        openable_bulge_4D_tex.filterMode = cudaFilterModeLinear;
+        d_block_3D_bulge.bind_tex(openable_bulge_4D_tex);
+
+        openable_bulge_4D_gradient_tex.normalized = false;
+        openable_bulge_4D_gradient_tex.addressMode[0] = cudaAddressModeClamp;
+        openable_bulge_4D_gradient_tex.addressMode[1] = cudaAddressModeClamp;
+        openable_bulge_4D_gradient_tex.filterMode = cudaFilterModeLinear;
+        d_block_3D_bulge_gradient.bind_tex(openable_bulge_4D_gradient_tex);
+        // END 4D BULGE --------------
+
+        // 4D RICCI --------------
+        if(d_n_3D_ricci)
+        {
+            n_3D_ricci_tex.normalized = false;
+            n_3D_ricci_tex.addressMode[0] = cudaAddressModeWrap;
+            n_3D_ricci_tex.addressMode[1] = cudaAddressModeWrap;
+            n_3D_ricci_tex.filterMode = cudaFilterModePoint;
+            CUDA_SAFE_CALL(cudaBindTexture(0, n_3D_ricci_tex, d_n_3D_ricci, sizeof(float)));
+        }
+
+        profiles_ricci_4D_tex.normalized = false;
+        profiles_ricci_4D_tex.addressMode[0] = cudaAddressModeClamp;
+        profiles_ricci_4D_tex.addressMode[1] = cudaAddressModeClamp;
+        profiles_ricci_4D_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(profiles_ricci_4D_tex, d_ricci_4D_profiles));
+
+        profiles_ricci_4D_normals_tex.normalized = false;
+        profiles_ricci_4D_normals_tex.addressMode[0] = cudaAddressModeClamp;
+        profiles_ricci_4D_normals_tex.addressMode[1] = cudaAddressModeClamp;
+        profiles_ricci_4D_normals_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(profiles_ricci_4D_normals_tex, d_ricci_4D_profiles_normals));
+
+        openable_ricci_4D_tex.normalized = false;
+        openable_ricci_4D_tex.addressMode[0] = cudaAddressModeClamp;
+        openable_ricci_4D_tex.addressMode[1] = cudaAddressModeClamp;
+        openable_ricci_4D_tex.filterMode = cudaFilterModeLinear;
+        d_block_3D_ricci.bind_tex(openable_ricci_4D_tex);
+
+        openable_ricci_4D_gradient_tex.normalized = false;
+        openable_ricci_4D_gradient_tex.addressMode[0] = cudaAddressModeClamp;
+        openable_ricci_4D_gradient_tex.addressMode[1] = cudaAddressModeClamp;
+        openable_ricci_4D_gradient_tex.filterMode = cudaFilterModeLinear;
+        d_block_3D_ricci_gradient.bind_tex(openable_ricci_4D_gradient_tex);
+        // END 4D RICCI --------------
+        // END Profiles --------------
+
+        // Controllers ---------------
+        global_controller_tex.normalized = true;
+        global_controller_tex.addressMode[0] = cudaAddressModeClamp;
+        global_controller_tex.addressMode[1] = cudaAddressModeClamp;
+        global_controller_tex.filterMode = cudaFilterModeLinear;
+        CUDA_SAFE_CALL(cudaBindTextureToArray(global_controller_tex, d_global_controller));
+
+        if( d_controllers != 0)
+        {
+            tex_controllers.normalized = false;
+            tex_controllers.addressMode[0] = cudaAddressModeClamp;
+            tex_controllers.addressMode[1] = cudaAddressModeClamp;
+            tex_controllers.filterMode = cudaFilterModeLinear;
+            CUDA_SAFE_CALL(cudaBindTextureToArray(tex_controllers, d_controllers));
+        }
+        // End Controllers -----------
+
+
+        // Binary 3D operators -------
+        d_operators_idx_offsets.bind_tex(tex_pred_operators_idx_offsets);
+        d_operators_id.bind_tex(tex_pred_operators_id);
+
+        tex_operators_values.normalized = false;
+        tex_operators_values.addressMode[0] = cudaAddressModeClamp;
+        tex_operators_values.addressMode[1] = cudaAddressModeClamp;
+        tex_operators_values.filterMode = cudaFilterModeLinear;
+        if (d_operators_values)
+            CUDA_SAFE_CALL(cudaBindTextureToArray(tex_operators_values, d_operators_values));
+
+        tex_operators_grads.normalized = false;
+        tex_operators_grads.addressMode[0] = cudaAddressModeClamp;
+        tex_operators_grads.addressMode[1] = cudaAddressModeClamp;
+        tex_operators_grads.filterMode = cudaFilterModeLinear;
+        if (d_operators_grads)
+            CUDA_SAFE_CALL(cudaBindTextureToArray(tex_operators_grads, d_operators_grads));
+        // End Binary 3D operators ---
+    }
+}
+
+// -----------------------------------------------------------------------------
+
+void unbind()
+{
+    binded = false;
+    if(!allocated)
+        return;
+    CUDA_SAFE_CALL( cudaUnbindTexture(profile_hyperbola_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(opening_hyperbola_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profile_hyperbola_normals_tex)     );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profile_bulge_tex)                 );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profile_bulge_normals_tex)         );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profiles_bulge_4D_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profiles_bulge_4D_normals_tex)     );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profiles_ricci_4D_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(profiles_ricci_4D_normals_tex)     );
+    CUDA_SAFE_CALL( cudaUnbindTexture(magnitude_3D_bulge_tex)            );
+    CUDA_SAFE_CALL( cudaUnbindTexture(n_3D_ricci_tex)                    );
+    CUDA_SAFE_CALL( cudaUnbindTexture(openable_bulge_4D_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(openable_bulge_4D_gradient_tex)    );
+    CUDA_SAFE_CALL( cudaUnbindTexture(openable_ricci_4D_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(openable_ricci_4D_gradient_tex)    );
+    CUDA_SAFE_CALL( cudaUnbindTexture(global_controller_tex)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(tex_controllers)                   );
+
+    // =========================================================================
+    // ======================  TEST with new env archi  ========================
+    // =========================================================================
+    CUDA_SAFE_CALL(cudaUnbindTexture(tex_pred_operators_idx_offsets));
+    CUDA_SAFE_CALL(cudaUnbindTexture(tex_pred_operators_id));
+    CUDA_SAFE_CALL(cudaUnbindTexture(tex_operators_values));
+    CUDA_SAFE_CALL(cudaUnbindTexture(tex_operators_grads));
+    // -----------------------------------------------------------------------------
 }
 
 // -----------------------------------------------------------------------------
@@ -1867,5 +2059,54 @@ bool init_env_from_cache(const std::string &filename)
     return true;
 }
 
+
+
+void set_global_ctrl_shape(const IBL::Ctrl_setup& shape)
+{
+    CUDA_SAFE_CALL(cudaUnbindTexture(global_controller_tex));
+
+    IBL::float2* controller = 0;
+    globale_ctrl_shape = shape;
+    IBL::gen_controller(NB_SAMPLES, globale_ctrl_shape, controller);
+
+    int data_size = NB_SAMPLES * sizeof(float2);
+    CUDA_SAFE_CALL(cudaMemcpyToArray(d_global_controller, 0, 0, (float2*)controller, data_size, cudaMemcpyHostToDevice));
+
+    delete[] controller;
+
+    CUDA_SAFE_CALL(cudaBindTextureToArray(global_controller_tex, d_global_controller));
+}
+
+// -----------------------------------------------------------------------------
+
+/// Magnitude of the bulge in contact :
+/// Value is to be between [0.0, 0.9] outside the operator doesn't
+/// behave well.
+/// @warning the operator must be updated to take into acount the new value
+/// with update_3D_bulge()
+void set_bulge_magnitude(float mag)
+{
+    CUDA_SAFE_CALL(cudaUnbindTexture(magnitude_3D_bulge_tex));
+
+    h_magnitude_3D_bulge = mag;
+    Cuda_utils::mem_cpy_htd(d_magnitude_3D_bulge, &h_magnitude_3D_bulge, 1);
+
+    CUDA_SAFE_CALL(cudaBindTexture(0, magnitude_3D_bulge_tex, d_magnitude_3D_bulge, sizeof(float)));
+}
+
+// -----------------------------------------------------------------------------
+
+/// N of the ricci operator.
+/// @warning the operator must be updated to take into acount the new value
+/// with update_3D_ricci()
+void set_ricci_n(float N)
+{
+    CUDA_SAFE_CALL(cudaUnbindTexture(n_3D_ricci_tex));
+
+    h_n_3D_ricci = N;
+    Cuda_utils::mem_cpy_htd(d_n_3D_ricci, &h_n_3D_ricci, 1);
+
+    CUDA_SAFE_CALL(cudaBindTexture(0, n_3D_ricci_tex, d_n_3D_ricci, sizeof(float)));
+}
 
 }// END PRECOMPUTED FUNCTIONS ==================================================
