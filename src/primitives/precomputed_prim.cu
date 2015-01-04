@@ -399,8 +399,7 @@ bool is_in_grid(const Point_cu& pt)
 {
     const float res = (float)GRID_RES;
 
-    //plus/minus one are hacks because I forgot to pad
-    return pt.x >= 1.5        && pt.y >= 1.5f       && pt.z >= 1.5f &&
+    return pt.x >= 0.5        && pt.y >= 0.5f       && pt.z >= 0.5f &&
            pt.x <  res - 0.5f && pt.y <  res - 0.5f && pt.z <  res - 0.5f;
 }
 
