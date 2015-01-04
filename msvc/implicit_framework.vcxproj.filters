@@ -204,12 +204,6 @@
     <ClInclude Include="..\src\implicit_graphs\skeleton_env_evaluator.hpp">
       <Filter>implicit_graphs</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\implicit_graphs\skeleton_env_tex.hpp">
-      <Filter>implicit_graphs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\implicit_graphs\skeleton_env_tex_binding.hpp">
-      <Filter>implicit_graphs</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\implicit_graphs\skeleton_env_type.hpp">
       <Filter>implicit_graphs</Filter>
     </ClInclude>
@@ -498,9 +492,6 @@
     <None Include="..\src\containers\grid3_cu.inl">
       <Filter>containers</Filter>
     </None>
-    <None Include="..\src\implicit_graphs\skeleton_env_tex.inl">
-      <Filter>implicit_graphs</Filter>
-    </None>
     <None Include="..\src\primitives\distance_field.inl">
       <Filter>primitives</Filter>
     </None>
@@ -515,6 +506,9 @@
     </None>
     <None Include="..\src\blending_lib\cuda_interface\blending_env.inl">
       <Filter>blending_lib\cuda_interface</Filter>
+    </None>
+    <None Include="..\src\implicit_graphs\skeleton_env.inl">
+      <Filter>implicit_graphs</Filter>
     </None>
   </ItemGroup>
 </Project>

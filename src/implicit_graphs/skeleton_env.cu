@@ -35,9 +35,7 @@ namespace Skeleton_env {
 // =============================================================================
 
 bool allocated = false;
-
-// from file skeleton_env_tex_binded.hpp
-extern bool binded;
+bool binded;
 
 // -----------------------------------------------------------------------------
 /// @name GPU friendly datas
@@ -127,6 +125,48 @@ SkeletonEnv::~SkeletonEnv()
     delete h_grid;
 }
 
+
+void bind()
+{
+    using namespace Cuda_utils;
+    
+    binded = true;
+    // Initialize texture and bind them to the arrays
+    if(hd_bone_arrays != 0)
+    {
+        hd_bone_arrays->hd_bone.            device_array().bind_tex(tex_bone            );
+        hd_bone_arrays->hd_bone_hrbf.       device_array().bind_tex(tex_bone_hrbf       );
+        hd_bone_arrays->hd_bone_precomputed.device_array().bind_tex(tex_bone_precomputed);
+        hd_bone_arrays->hd_bone_types.      device_array().bind_tex(tex_bone_type       );
+    }
+
+    hd_cluster_data      .device_array().bind_tex( tex_bulge_strength  );
+    hd_offset            .device_array().bind_tex( tex_offset          );
+    hd_blending_list     .device_array().bind_tex( tex_blending_list   );
+    hd_grid              .device_array().bind_tex( tex_grid            );
+    hd_grid_blending_list.device_array().bind_tex( tex_grid_list       );
+    hd_grid_bbox         .device_array().bind_tex( tex_grid_bbox       );
+}
+
+// -----------------------------------------------------------------------------
+
+void unbind()
+{
+    binded = false;
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_hrbf)        );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_precomputed) );
+
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_blending_list)    );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_type)        );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bulge_strength)   );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_offset)           );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_grid)             );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_grid_list)        );
+    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_grid_bbox)        );
+}
+
+// -----------------------------------------------------------------------------
 
 // =============================================================================
 

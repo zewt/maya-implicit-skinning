@@ -25,8 +25,8 @@
 /// @file skeleton_env_evaluator.hpp
 /// @brief Holds methods to evaluate the implicit skeleton in the environment
 
-#if !defined(SKELETON_ENV_TEX_HPP__)
-#error "You must include skeleton_env_tex.hpp before the inclusion of 'skeleton_env_evaluator.hpp'"
+#if !defined(SKELETON_ENV_HPP__)
+#error "You must include skeleton_env.hpp before the inclusion of 'skeleton_env_evaluator.hpp'"
 #endif
 
 // =============================================================================

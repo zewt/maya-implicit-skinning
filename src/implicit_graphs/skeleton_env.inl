@@ -16,9 +16,9 @@
  You should have received a copy of the GNU General Public License
  along with this program. If not, see <http://www.gnu.org/licenses/>
  */
-#include "skeleton_env_tex.hpp"
 #include "joint_type.hpp"
 #include "bone.hpp"
+#include "blending_env.hpp"
 #include "blending_functions.hpp"
 #include "idx3_cu.hpp"
 
@@ -27,45 +27,6 @@
 // =============================================================================
 namespace Skeleton_env {
 // =============================================================================
-
-static void bind_local()
-{
-    using namespace Cuda_utils;
-    // Initialize texture and bind them to the arrays
-    if(hd_bone_arrays != 0)
-    {
-        hd_bone_arrays->hd_bone.            device_array().bind_tex(tex_bone            );
-        hd_bone_arrays->hd_bone_hrbf.       device_array().bind_tex(tex_bone_hrbf       );
-        hd_bone_arrays->hd_bone_precomputed.device_array().bind_tex(tex_bone_precomputed);
-        hd_bone_arrays->hd_bone_types.      device_array().bind_tex(tex_bone_type       );
-    }
-
-    hd_cluster_data      .device_array().bind_tex( tex_bulge_strength  );
-    hd_offset            .device_array().bind_tex( tex_offset          );
-    hd_blending_list     .device_array().bind_tex( tex_blending_list   );
-    hd_grid              .device_array().bind_tex( tex_grid            );
-    hd_grid_blending_list.device_array().bind_tex( tex_grid_list       );
-    hd_grid_bbox         .device_array().bind_tex( tex_grid_bbox       );
-}
-
-// -----------------------------------------------------------------------------
-
-static void unbind_local()
-{
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone)             );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_hrbf)        );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_precomputed) );
-
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_blending_list)    );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_type)        );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bulge_strength)   );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_offset)           );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_grid)             );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_grid_list)        );
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_grid_bbox)        );
-}
-
-// -----------------------------------------------------------------------------
 
 IF_CUDA_DEVICE_HOST static inline
 BBox_cu fetch_grid_bbox_and_res(Skel_id id, Vec3i_cu& res)

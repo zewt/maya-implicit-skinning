@@ -17,9 +17,6 @@
 /// @}
 
 #include "blending_env.hpp"
-
-/// This include needs blending_env_tex.hpp but we will not bind it and use it
-#include "skeleton_env_tex.hpp"
 #include "skeleton_env.hpp"
 
 #include <deque>
@@ -146,7 +143,7 @@ void fill_grid_with_fngf(PrecomputedInfo &info,
                          int grids,
                          int blocks)
 {
-    Skeleton_env::bind_local();
+    Skeleton_env::bind();
     HRBF_env::bind_local();
 
     cudaBindSurfaceToArray(fill_surface, info.d_grid->getCudaArray());
@@ -156,7 +153,7 @@ void fill_grid_with_fngf(PrecomputedInfo &info,
     (info.d_grid->size(), device_bone_id, steps, grid_res, org, transfo);
     CUDA_CHECK_ERRORS();
 
-    Skeleton_env::unbind_local();
+    Skeleton_env::unbind();
     HRBF_env::unbind_local();
 }
 

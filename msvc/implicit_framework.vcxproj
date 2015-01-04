@@ -248,8 +248,6 @@
     <ClInclude Include="..\src\implicit_graphs\grid.hpp" />
     <ClInclude Include="..\src\implicit_graphs\skeleton_env.hpp" />
     <ClInclude Include="..\src\implicit_graphs\skeleton_env_evaluator.hpp" />
-    <ClInclude Include="..\src\implicit_graphs\skeleton_env_tex.hpp" />
-    <ClInclude Include="..\src\implicit_graphs\skeleton_env_tex_binding.hpp" />
     <ClInclude Include="..\src\implicit_graphs\skeleton_env_type.hpp" />
     <ClInclude Include="..\src\implicit_graphs\tree.hpp" />
     <ClInclude Include="..\src\implicit_graphs\tree_cu.hpp" />
@@ -365,7 +363,7 @@
     <None Include="..\src\blending_lib\opening.inl" />
     <None Include="..\src\blending_lib\splines.inl" />
     <None Include="..\src\containers\grid3_cu.inl" />
-    <None Include="..\src\implicit_graphs\skeleton_env_tex.inl" />
+    <None Include="..\src\implicit_graphs\skeleton_env.inl" />
     <None Include="..\src\primitives\distance_field.inl" />
     <None Include="..\src\primitives\hermiteRBF.inl" />
     <None Include="..\src\primitives\plane.inl" />
