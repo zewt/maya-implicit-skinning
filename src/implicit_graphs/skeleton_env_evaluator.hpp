@@ -64,19 +64,6 @@ typedef BulgeFreeBlending Cluster;
 
 }// END BlendingFunc ===========================================================
 
-/// @brief Evaluate a single bone potential
-/// usually to be used as template parameter of compute_potential()
-class Std_bone_eval{
-public:
-    __device__
-    static float f(DBone_id id_bone, Vec3_cu& grad, const Point_cu& pt){
-        return fetch_and_eval_bone(id_bone, grad, pt);
-    }
-};
-
-// -----------------------------------------------------------------------------
-
-template<class Eval_bone>
 __device__
 float eval_cluster(Vec3_cu& gf_clus, const Point_cu& p, int size, DBone_id first_bone)
 {
@@ -88,7 +75,7 @@ float eval_cluster(Vec3_cu& gf_clus, const Point_cu& p, int size, DBone_id first
     float f_clus = 0.f;
     Vec3_cu gf;
     for(int i = 0; i < size; i++){
-        f = Eval_bone::f(first_bone+i, gf, p);
+        f = fetch_and_eval_bone(first_bone+i, gf, p);
         f_clus = Blend_func::Cluster::fngf(gf_clus, f_clus, f, gf_clus, gf);
     }
     return f_clus;
@@ -99,9 +86,7 @@ float eval_cluster(Vec3_cu& gf_clus, const Point_cu& p, int size, DBone_id first
 #define USE_GRID_ // Not compatible with had_hoc hand !
 
 /// @brief compute the potential of the whole skeleton
-/// @tparam Eval_bone : evaluator of a single bone potential
 /// @see Std_bone_eval
-template<class Eval_bone>
 __device__
 float compute_potential(Skel_id skel_id, const Point_cu& p, Vec3_cu& gf)
 {
@@ -140,7 +125,7 @@ float compute_potential(Skel_id skel_id, const Point_cu& p, Vec3_cu& gf)
             #else
             clus = fetch_grid_blending_list( off_cid + i*2 + j );
             #endif
-            fn[j] = eval_cluster<Eval_bone>(gfn[j], p, clus.nb_bone, clus.first_bone);
+            fn[j] = eval_cluster(gfn[j], p, clus.nb_bone, clus.first_bone);
         }
         // Blend the pair
         fn[0] = fetch_binop_and_blend(gfn[0],
@@ -161,7 +146,7 @@ float compute_potential(Skel_id skel_id, const Point_cu& p, Vec3_cu& gf)
         clus = fetch_grid_blending_list( off_cid + i);
         #endif
 
-        fn[0] = eval_cluster<Eval_bone>(gfn[0], p, clus.nb_bone, clus.first_bone);
+        fn[0] = eval_cluster(gfn[0], p, clus.nb_bone, clus.first_bone);
         #ifndef ENABLE_ADHOC_HAND
         f =  Blend_func::Pairs::fngf(gf, f, fn[0], gf, gfn[0]);
         #else

@@ -51,13 +51,11 @@
 namespace Animesh_kers {
 // =============================================================================
 
-typedef Skeleton_env::Std_bone_eval Std_eval;
-
 /// Evaluate skeleton potential
 __device__
 float eval_potential(Skeleton_env::Skel_id skel_id, const Point_cu& p, Vec3_cu& grad)
 {
-    return Skeleton_env::compute_potential<Std_eval>(skel_id, p, grad);
+    return Skeleton_env::compute_potential(skel_id, p, grad);
 }
 
 // -----------------------------------------------------------------------------
