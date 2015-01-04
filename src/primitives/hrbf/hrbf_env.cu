@@ -71,7 +71,55 @@ texture<float4, 1, cudaReadModeElementType> tex_alphas_betas;
 texture<int2, 1, cudaReadModeElementType> tex_offset;
 texture<float, 1, cudaReadModeElementType> tex_radius;
 
+bool binded = false;
+
+
+static void setup_tex()
+{
+    // tex_points setup
+    tex_points.addressMode[0] = cudaAddressModeWrap;
+    tex_points.addressMode[1] = cudaAddressModeWrap;
+    tex_points.filterMode = cudaFilterModePoint;
+    tex_points.normalized = false;
+    // tex_alphas_betas setup
+    tex_alphas_betas.addressMode[0] = cudaAddressModeWrap;
+    tex_alphas_betas.addressMode[1] = cudaAddressModeWrap;
+    tex_alphas_betas.filterMode = cudaFilterModePoint;
+    tex_alphas_betas.normalized = false;
+    // tex_offset setup
+    tex_offset.addressMode[0] = cudaAddressModeWrap;
+    tex_offset.addressMode[1] = cudaAddressModeWrap;
+    tex_offset.filterMode = cudaFilterModePoint;
+    tex_offset.normalized = false;
+    // tex_radius setup
+    tex_radius.addressMode[0] = cudaAddressModeWrap;
+    tex_radius.addressMode[1] = cudaAddressModeWrap;
+    tex_radius.filterMode = cudaFilterModePoint;
+    tex_radius.normalized = false;
+}
+
+/// Bind hermite array data.
+void bind()
+{
+    binded = true;
+    
+    setup_tex();
+    d_offset.bind_tex( tex_offset );
+    hd_alphas_betas.device_array().bind_tex( tex_alphas_betas );
+    hd_points.      device_array().bind_tex( tex_points       );
+    hd_radius.      device_array().bind_tex( tex_radius       );
+}
+
 // -----------------------------------------------------------------------------
+
+void unbind()
+{
+    binded = false;
+    CUDA_SAFE_CALL( cudaUnbindTexture(tex_points)       );
+    CUDA_SAFE_CALL( cudaUnbindTexture(tex_alphas_betas) );
+    CUDA_SAFE_CALL( cudaUnbindTexture(tex_offset)       );
+    CUDA_SAFE_CALL( cudaUnbindTexture(tex_radius)       );
+}
 
 void clean_env()
 {

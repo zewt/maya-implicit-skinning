@@ -19,10 +19,7 @@
 #pragma once
 #include "hermiteRBF.hpp"
 #include "distance_field.hpp"
-
-#if !defined(HRBF_ENV_TEX_HPP__)
-#error "You must include hrbf_env_tex.hpp before the inclusion of 'hermiteRBF.inl'"
-#endif
+#include "hrbf_env.hpp"
 
 IF_CUDA_DEVICE_HOST inline
 float HermiteRBF::fngf_global(Vec3_cu& grad, const Point_cu& x) const

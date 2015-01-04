@@ -195,7 +195,9 @@
     <ClCompile Include="..\src\maya\maya_helpers.cpp" />
     <ClCompile Include="..\src\maya\plugin.cpp" />
     <ClCompile Include="..\src\meshes\loader_mesh.cpp" />
-    <ClCompile Include="..\src\primitives\hermiteRBF.cu" />
+    <CudaCompile Include="..\src\primitives\hermiteRBF.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
@@ -274,9 +276,6 @@
     <ClInclude Include="..\src\primitives\hrbf\hrbf_core.hpp" />
     <ClInclude Include="..\src\primitives\hrbf\hrbf_data.hpp" />
     <ClInclude Include="..\src\primitives\hrbf\hrbf_env.hpp" />
-    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_interface.hpp" />
-    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex.hpp" />
-    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex_binding.hpp" />
     <ClInclude Include="..\src\primitives\hrbf\hrbf_kernels.hpp" />
     <ClInclude Include="..\src\primitives\hrbf\hrbf_phi_funcs.hpp" />
     <ClInclude Include="..\src\primitives\hrbf\hrbf_setup.hpp" />
@@ -337,6 +336,7 @@
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\implicit_graphs\skeleton_env.cu" />
+    <CudaCompile Include="..\src\implicit_graphs\skeleton_env_evaluator.cu" />
     <CudaCompile Include="..\src\primitives\precomputed_prim.cu" />
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_current_device.cu">
       <FileType>Document</FileType>
@@ -366,6 +366,7 @@
     <None Include="..\src\implicit_graphs\skeleton_env.inl" />
     <None Include="..\src\primitives\distance_field.inl" />
     <None Include="..\src\primitives\hermiteRBF.inl" />
+    <None Include="..\src\primitives\hrbf\hrbf_env.inl" />
     <None Include="..\src\primitives\plane.inl" />
     <None Include="..\src\utils\cuda_utils\memory_debug.inl" />
   </ItemGroup>

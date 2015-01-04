@@ -37,7 +37,7 @@ BBox_cu Bone::get_bbox() const { return BBox_cu(); }
 // (white points are dichotomic steps, colored points are newton iterations)
 //#define GL_DEBUG_BBOX
 
-#include "hrbf_env_tex.hpp"
+#include "hrbf_env.hpp"
 #include "hermiteRBF.hpp"
 #include "hermiteRBF.inl"
 

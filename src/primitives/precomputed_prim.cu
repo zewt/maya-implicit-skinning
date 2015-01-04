@@ -8,7 +8,7 @@
 #include "point_cu.hpp"
 #include "skeleton_env_type.hpp"
 
-#include "hrbf_env_tex.hpp"
+#include "hrbf_env.hpp"
 
 /// These header needs HRBF_Env to be included first
 /// @{
@@ -144,7 +144,7 @@ void fill_grid_with_fngf(PrecomputedInfo &info,
                          int blocks)
 {
     Skeleton_env::bind();
-    HRBF_env::bind_local();
+    HRBF_env::bind();
 
     cudaBindSurfaceToArray(fill_surface, info.d_grid->getCudaArray());
     CUDA_CHECK_ERRORS();
@@ -154,7 +154,7 @@ void fill_grid_with_fngf(PrecomputedInfo &info,
     CUDA_CHECK_ERRORS();
 
     Skeleton_env::unbind();
-    HRBF_env::unbind_local();
+    HRBF_env::unbind();
 }
 
 static void fill_grid(PrecomputedInfo &info,

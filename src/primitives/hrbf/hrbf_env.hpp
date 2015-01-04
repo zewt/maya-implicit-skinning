@@ -65,6 +65,7 @@ namespace HRBF_env{
 /// Animated points and weights.
 /// These arrays represents the mesh when animated
 /// There are computed by the function rbf_transform()
+#if !defined(NO_CUDA)
 extern Cuda_utils::HDA_float4 hd_points;
 /// First three floats represents the beta vector, last float is the alpha scalar
 extern Cuda_utils::HDA_float4 hd_alphas_betas;
@@ -89,6 +90,7 @@ extern Cuda_utils::HA_Vec3_cu h_normals;
 
 /// Radius of the hrbfs to transform from global to compact support.
 extern Cuda_utils::HDA_float hd_radius;
+#endif
 
 // -----------------------------------------------------------------------------
 
@@ -139,10 +141,12 @@ void delete_sample(int hrbf_id, int sample_idx);
 /// @return the index of the first sample
 /// @warning this operation could take a while as hrbf weights has to be
 /// computed
+#if !defined(NO_CUDA)
 int add_samples(int hrbf_id,
                 const std::vector<Vec3_cu>& points,
                 const std::vector<Vec3_cu>& normals,
                 const std::vector<float4>& weights = std::vector<float4>(0));
+#endif
 
 /// Function shortcut to add a single sample
 /// @return the index of the sample
@@ -200,7 +204,9 @@ void get_anim_samples(int hrbf_id, std::vector<Point_cu>& samp_list);
 /// Get the list of weights that belongs to the instance hrbf_id.
 /// 'weights_list' will be resized to match get_instance_size(hrbf_id) and
 /// filled with the animated weights. Note: (x, y ,z) = beta_weight w = alpha_weight
+#if !defined(NO_CUDA)
 void get_anim_weights(int hrbf_id, std::vector<float4>& weights_list);
+#endif
 
 /// Get the list of samples that belongs to the instance hrbf_id.
 /// 'samp_list' will be resized to match get_instance_size(hrbf_id) and
@@ -210,7 +216,9 @@ void get_samples(int hrbf_id, std::vector<Vec3_cu>& samp_list);
 /// Get the list of weights that belongs to the instance hrbf_id.
 /// 'weights_list' will be resized to match get_instance_size(hrbf_id) and
 /// filled with the initial weights. Note: (x, y ,z) = beta_weight w = alpha_weight
+#if !defined(NO_CUDA)
 void get_weights(int hrbf_id, std::vector<float4>& weights_list);
+#endif
 
 /// get normal in initial postion
 Vec3_cu get_normal(int hrbf_id, int sample_idx);
@@ -229,8 +237,10 @@ void get_normals(int hrbf_id, std::vector<Vec3_cu>& normal_list);
 /// We use get_normals() normals and apply the inverse transpose.
 void get_anim_normals(int hrbf_id, std::vector<Vec3_cu>& normal_list);
 
+#if !defined(NO_CUDA)
 /// get weights
 float4 get_weights(int hrbf_id, int sample_idx);
+#endif
 
 /// Get the radius of the hrbf instance. (radius to go from global support to
 /// compact)
@@ -239,6 +249,26 @@ float get_inst_radius(int hrbf_id);
 /// Get transformations of the ith instance
 Transfo get_transfo(int hrbf_id);
 
+
+/// @return the instance radius to transform from global to compact support
+IF_CUDA_DEVICE_HOST static inline
+float fetch_radius(int id_instance);
+
+/// @return the instance offset in x and size in y
+IF_CUDA_DEVICE_HOST static inline
+int2 fetch_inst_size_and_offset(int id_instance);
+
+/// fetch at the same time points and weights (more efficient than functions below)
+/// @param raw_idx The raw index to fetch directly from the texture.
+/// raw_idx equals the offset plus the indice of the fetched sample
+/// @return the alpha weight
+IF_CUDA_DEVICE_HOST inline static
+float fetch_weights_point(Vec3_cu& beta,
+                          Point_cu& point,
+                          int raw_idx);
+
 }// END HRBF_ENV NAMESPACE =====================================================
+
+#include "hrbf_env.inl"
 
 #endif // HRBF_ENV_HPP__

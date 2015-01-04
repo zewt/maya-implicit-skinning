@@ -24,8 +24,7 @@ namespace { __device__ void fix_debug() { } }
 /// @{
 #include "blending_env.hpp"
 
-#include "hrbf_env_tex.hpp"
-#include "hrbf_env_tex_binding.hpp"
+#include "hrbf_env.hpp"
 
 #include "skeleton_env.hpp"
 

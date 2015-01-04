@@ -67,9 +67,6 @@
     <ClCompile Include="..\src\control\sample_set.cpp">
       <Filter>control</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\primitives\hermiteRBF.cu">
-      <Filter>primitives</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -264,12 +261,6 @@
     <ClInclude Include="..\src\primitives\hrbf\hrbf_env.hpp">
       <Filter>primitives\hrbf</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_interface.hpp">
-      <Filter>primitives\hrbf</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex.hpp">
-      <Filter>primitives\hrbf</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\primitives\hrbf\hrbf_data.hpp">
       <Filter>primitives\hrbf</Filter>
     </ClInclude>
@@ -280,9 +271,6 @@
       <Filter>primitives\hrbf</Filter>
     </ClInclude>
     <ClInclude Include="..\src\primitives\hrbf\hrbf_wrapper.hpp">
-      <Filter>primitives\hrbf</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\primitives\hrbf\hrbf_env_tex_binding.hpp">
       <Filter>primitives\hrbf</Filter>
     </ClInclude>
     <ClInclude Include="..\src\primitives\hrbf\hrbf_kernels.hpp">
@@ -478,6 +466,12 @@
     <CudaCompile Include="..\src\primitives\precomputed_prim.cu">
       <Filter>primitives</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\implicit_graphs\skeleton_env_evaluator.cu">
+      <Filter>implicit_graphs</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\primitives\hermiteRBF.cu">
+      <Filter>primitives</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\blending_lib\opening.inl">
@@ -509,6 +503,9 @@
     </None>
     <None Include="..\src\implicit_graphs\skeleton_env.inl">
       <Filter>implicit_graphs</Filter>
+    </None>
+    <None Include="..\src\primitives\hrbf\hrbf_env.inl">
+      <Filter>primitives\hrbf</Filter>
     </None>
   </ItemGroup>
 </Project>

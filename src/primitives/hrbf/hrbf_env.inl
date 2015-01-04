@@ -42,6 +42,7 @@
 namespace HRBF_env{
 // =============================================================================
 
+#if defined(__CUDACC__)
 extern texture<float4, 1, cudaReadModeElementType> tex_points;
 /// First three floats represents the beta vector, last float is the alpha scalar
 extern texture<float4, 1, cudaReadModeElementType> tex_alphas_betas;
@@ -49,58 +50,10 @@ extern texture<float4, 1, cudaReadModeElementType> tex_alphas_betas;
 extern texture<int2, 1, cudaReadModeElementType> tex_offset;
 
 extern texture<float, 1, cudaReadModeElementType> tex_radius;
+#endif
 
 // -----------------------------------------------------------------------------
 
-static void setup_tex()
-{
-    // tex_points setup
-    tex_points.addressMode[0] = cudaAddressModeWrap;
-    tex_points.addressMode[1] = cudaAddressModeWrap;
-    tex_points.filterMode = cudaFilterModePoint;
-    tex_points.normalized = false;
-    // tex_alphas_betas setup
-    tex_alphas_betas.addressMode[0] = cudaAddressModeWrap;
-    tex_alphas_betas.addressMode[1] = cudaAddressModeWrap;
-    tex_alphas_betas.filterMode = cudaFilterModePoint;
-    tex_alphas_betas.normalized = false;
-    // tex_offset setup
-    tex_offset.addressMode[0] = cudaAddressModeWrap;
-    tex_offset.addressMode[1] = cudaAddressModeWrap;
-    tex_offset.filterMode = cudaFilterModePoint;
-    tex_offset.normalized = false;
-    // tex_radius setup
-    tex_radius.addressMode[0] = cudaAddressModeWrap;
-    tex_radius.addressMode[1] = cudaAddressModeWrap;
-    tex_radius.filterMode = cudaFilterModePoint;
-    tex_radius.normalized = false;
-}
-
-// -----------------------------------------------------------------------------
-
-/// Bind hermite array data.
-static void bind_local()
-{
-    setup_tex();
-    d_offset.bind_tex( tex_offset );
-    hd_alphas_betas.device_array().bind_tex( tex_alphas_betas );
-    hd_points.      device_array().bind_tex( tex_points       );
-    hd_radius.      device_array().bind_tex( tex_radius       );
-}
-
-// -----------------------------------------------------------------------------
-
-static void unbind_local()
-{
-    CUDA_SAFE_CALL( cudaUnbindTexture(tex_points)       );
-    CUDA_SAFE_CALL( cudaUnbindTexture(tex_alphas_betas) );
-    CUDA_SAFE_CALL( cudaUnbindTexture(tex_offset)       );
-    CUDA_SAFE_CALL( cudaUnbindTexture(tex_radius)       );
-}
-
-// -----------------------------------------------------------------------------
-
-/// @return the instance radius to transform from global to compact support
 IF_CUDA_DEVICE_HOST static inline
 float fetch_radius(int id_instance)
 {
@@ -111,9 +64,6 @@ float fetch_radius(int id_instance)
     #endif
 }
 
-// -----------------------------------------------------------------------------
-
-/// @return the instance offset in x and size in y
 IF_CUDA_DEVICE_HOST static inline
 int2 fetch_inst_size_and_offset(int id_instance)
 {
@@ -124,12 +74,6 @@ int2 fetch_inst_size_and_offset(int id_instance)
     #endif
 }
 
-// -----------------------------------------------------------------------------
-
-/// fetch at the same time points and weights (more efficient than functions below)
-/// @param raw_idx The raw index to fetch directly from the texture.
-/// raw_idx equals the offset plus the indice of the fetched sample
-/// @return the alpha weight
 IF_CUDA_DEVICE_HOST inline static
 float fetch_weights_point(Vec3_cu& beta,
                           Point_cu& point,
