@@ -214,7 +214,6 @@
     <ClInclude Include="..\src\animation\animesh.hpp" />
     <ClInclude Include="..\src\animation\animesh_enum.hpp" />
     <ClInclude Include="..\src\animation\animesh_kers.hpp" />
-    <ClInclude Include="..\src\animation\animesh_potential.hpp" />
     <ClInclude Include="..\src\animation\bone.hpp" />
     <ClInclude Include="..\src\animation\bone_type.hpp" />
     <ClInclude Include="..\src\animation\joint_type.hpp" />

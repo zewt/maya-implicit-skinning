@@ -20,32 +20,12 @@
 
 namespace { __device__ void fix_debug() { } }
 
-/// @name Cuda textures importation
-/// @{
 #include "blending_env.hpp"
-
 #include "hrbf_env.hpp"
-
 #include "skeleton_env.hpp"
-
 #include "constants_tex.hpp"
-/// @}
-
-/// @name Class implementation using the previous textures
-/// @{
-#include "hermiteRBF.inl"
-/// @}
-
-/// @name Main cuda kernels
-/// @{
-#include "animesh_potential.hpp"
-/// @}
-
 
 #include "cuda_current_device.hpp"
-
-#include "globals.hpp"
-
 
 // -----------------------------------------------------------------------------
 #include "timer.hpp"
