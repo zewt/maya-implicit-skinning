@@ -95,26 +95,14 @@ struct HermiteRBF
     // =========================================================================
     /// @name Evaluation of the potential and gradient (compact support)
     // =========================================================================
-    /// @{
-    IF_CUDA_DEVICE_HOST
-    float f(const Point_cu& p) const;
-    IF_CUDA_DEVICE_HOST
-    Vec3_cu gf(const Point_cu& p) const;
     IF_CUDA_DEVICE_HOST
     float fngf(Vec3_cu& gf, const Point_cu& p) const;
-    /// @}
 
     // =========================================================================
     /// @name Evaluation of the potential and gradient (global support)
     // =========================================================================
-    /// @{
-    IF_CUDA_DEVICE_HOST
-    float f_global(const Point_cu& p) const;
-    IF_CUDA_DEVICE_HOST
-    Vec3_cu gf_global(const Point_cu& p) const;
     IF_CUDA_DEVICE_HOST
     float fngf_global(Vec3_cu& gf, const Point_cu& p) const;
-    /// @}
 
     /// @return id of the hrbf in HRBF_env namespace @see HRBF_env
     inline int get_id() const { return _id; }
