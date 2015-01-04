@@ -27,11 +27,12 @@
 #include "globals.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
-#include "cuda_main_kernels.hpp"
 #include "skeleton_env.hpp"
 #include "blending_env.hpp"
-#include "precomputed_prim.hpp"
 #include "hrbf_env.hpp"
+#include "cuda_current_device.hpp"
+#include "constants_tex.hpp"
+#include "timer.hpp"
 
 namespace { __device__ void fix_debug() { } }
 
@@ -132,7 +133,56 @@ void cuda_start(const std::vector<Blending_env::Op_t>& op)
     std::cout << "WARNING: you're still in debug mode" << std::endl;
 #endif
     init_host();
-    init_cuda( op );
+
+    // We choose the most efficient GPU and use it :
+    int device_id = Cuda_utils::get_max_gflops_device_id();
+
+    //CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+    //CUDA_SAFE_CALL( cudaDeviceReset() );
+
+    // these two functions are said to be mutually exclusive
+    //{
+    /// MUST be called after OpenGL/Glew context are init and before any cuda calls that create context like malloc
+    //CUDA_SAFE_CALL(cudaGLSetGLDevice(device_id) );
+    CUDA_SAFE_CALL(cudaSetDevice(device_id) );
+    //}
+
+    //CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+    //Cuda_utils::print_device_attribs(get_cu_device() );
+
+
+    // Compute on host implicit blending operators
+    // and allocate them on device memory
+    std::cout << "\nInitialize blending operators" << std::endl;
+
+    std::cout << "GPU memory usage: \n";
+    double free, total;
+    Cuda_utils::get_device_memory_usage(free, total);
+    std::cout << "free: " << free << " Mo\ntotal: " << total << " Mo" << std::endl;
+
+    for(unsigned int i = 0; i < op.size(); ++i)
+        Blending_env::enable_predefined_operator( op[i], true );
+
+    Timer t; t.start();
+    if (!Blending_env::init_env_from_cache("ENV_CACHE")){
+        t.stop();
+        Blending_env::init_env();
+        Blending_env::make_cache_env("ENV_CACHE");
+    }
+
+    std::cout << "Operators loaded in: " << t.stop() << "s" << std::endl;
+
+    Blending_env::bind();
+    HRBF_env::bind();
+
+    std::cout << "allocate float constants in device memory\n";
+    Constants::allocate();
+    std::cout << "Done\n";
+
+    Skeleton_env::init_env();
+
+    std::cout << "\n--- END CUDA CONTEXT SETUP ---" << std::endl;
+
 
     set_default_controller_parameters();
 

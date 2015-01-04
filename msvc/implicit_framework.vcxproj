@@ -282,7 +282,6 @@
     <ClInclude Include="..\src\primitives\plane.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
-    <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp" />
     <ClInclude Include="..\src\utils\assert_utils.hpp" />
     <ClInclude Include="..\src\utils\class_saver.hpp" />
     <ClInclude Include="..\src\utils\conversions.hpp" />
@@ -350,9 +349,6 @@
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\primitives\distance_field.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-    <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu">
       <FileType>Document</FileType>
     </CudaCompile>
   </ItemGroup>

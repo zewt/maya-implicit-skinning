@@ -321,9 +321,6 @@
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils.hpp">
       <Filter>utils\cuda_utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\rendering\cuda_main_kernels.hpp">
-      <Filter>rendering</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\blending_lib\funcs.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
@@ -395,9 +392,6 @@
     <Filter Include="utils\cuda_utils">
       <UniqueIdentifier>{f854cb69-3e0c-44a7-9dec-dd2b9632ebd3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="rendering">
-      <UniqueIdentifier>{db5dcd05-30bb-4c33-80bb-07bdeadb7a0d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="maya">
       <UniqueIdentifier>{2a994f5b-9149-40e6-9670-c4d09f393ae9}</UniqueIdentifier>
     </Filter>
@@ -456,9 +450,6 @@
     </CudaCompile>
     <CudaCompile Include="..\src\utils\cuda_utils\cuda_utils.cu">
       <Filter>utils\cuda_utils</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\src\rendering\cuda_main_kernels.cu">
-      <Filter>rendering</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\primitives\precomputed_prim.cu">
       <Filter>primitives</Filter>
