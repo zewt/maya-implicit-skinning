@@ -287,8 +287,6 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
 
 void Animesh::transform_vertices()
 {
-    using namespace Cuda_ctrl;
-
     const int nb_vert    = d_input_vertices.size();
 
     Vec3_cu* out_normals  = (Vec3_cu*)d_output_normals.ptr();
@@ -331,7 +329,7 @@ void Animesh::transform_vertices()
         if(nb_vert_to_fit > 0)
         {
             d_vert_to_fit.copy_from(d_vert_to_fit_base);
-            fit_mesh(nb_vert_to_fit, curr->ptr(), true/*final pass*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth1_force);
+            fit_mesh(nb_vert_to_fit, curr->ptr(), true/*final pass*/, false/*smooth from iso*/, out_verts, nb_steps, Cuda_ctrl::_debug._smooth1_force);
         }
     }
 

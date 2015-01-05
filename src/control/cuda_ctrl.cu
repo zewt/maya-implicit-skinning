@@ -32,6 +32,7 @@
 #include "hrbf_env.hpp"
 #include "cuda_current_device.hpp"
 #include "constants_tex.hpp"
+#include "skeleton_ctrl.hpp"
 #include "timer.hpp"
 
 namespace { __device__ void fix_debug() { } }
@@ -42,60 +43,6 @@ namespace Cuda_ctrl {
 
 Debug_ctrl           _debug;
 Operators_ctrl       _operators;
-
-CudaCtrl::CudaCtrl()
-{
-    _anim_mesh = NULL;
-    _mesh = NULL;
-}
-
-CudaCtrl::~CudaCtrl()
-{
-    delete _anim_mesh;
-    delete _mesh;
-}
-
-void CudaCtrl::load_mesh( Mesh* mesh )
-{
-    delete _anim_mesh;
-    _anim_mesh = 0;
-
-    delete _mesh;
-    _mesh = mesh;
-    _mesh->check_integrity();
-
-    std::cout << "mesh loaded" << std::endl;
-}
-
-bool CudaCtrl::is_animesh_loaded() const
-{
-    return _anim_mesh != 0;
-}
-
-bool CudaCtrl::is_skeleton_loaded() const { return _skeleton.is_loaded(); }
-
-void CudaCtrl::load_animesh()
-{
-    delete _anim_mesh;
-    _anim_mesh = new Animated_mesh_ctrl(_mesh, _skeleton.skel);
-}
-
-void get_mem_usage(double& total, double& free)
-{
-    Cuda_utils::get_device_memory_usage(free, total);
-}
-
-// -----------------------------------------------------------------------------
-
-void init_host()
-{
-    std::cout << "Initialize constants\n";
-    Constants::init();
-
-    std::cout << "Done\n";
-}
-
-// -----------------------------------------------------------------------------
 
 void set_default_controller_parameters()
 {
@@ -132,7 +79,9 @@ void cuda_start(const std::vector<Blending_env::Op_t>& op)
 #ifndef NDEBUG
     std::cout << "WARNING: you're still in debug mode" << std::endl;
 #endif
-    init_host();
+    std::cout << "Initialize constants\n";
+    Constants::init();
+    std::cout << "Done\n";
 
     // We choose the most efficient GPU and use it :
     int device_id = Cuda_utils::get_max_gflops_device_id();

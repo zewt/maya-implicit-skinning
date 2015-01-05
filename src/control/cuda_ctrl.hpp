@@ -21,11 +21,8 @@
 
 #include <string>
 
-#include "constants.hpp"
-
-#include "animated_mesh_ctrl.hpp"
 #include "operators_ctrl.hpp"
-#include "skeleton_ctrl.hpp"
+#include "blending_env_type.hpp"
 #include "debug_ctrl.hpp"
 
 class Mesh;
@@ -47,30 +44,6 @@ namespace Cuda_ctrl{
 extern Debug_ctrl         _debug;
 /// Control for blending operators (bulge in contact, clean union etc.)
 extern Operators_ctrl    _operators;
-
-// -----------------------------------------------------------------------------
-
-class CudaCtrl {
-public:
-    CudaCtrl();
-    ~CudaCtrl();
-
-    void load_mesh( Mesh* mesh );
-    bool is_animesh_loaded() const;
-    void load_animesh();
-    bool is_skeleton_loaded() const;
-
-    Mesh *_mesh;
-
-    /// Control for the skeleton
-    Skeleton_ctrl _skeleton;
-
-    /// Control for the current animated mesh (mesh color, smoothing, anim etc.)
-    Animated_mesh_ctrl *_anim_mesh;
-};
-
-/// device memory usage in megabytes
-void get_mem_usage(double& total, double& free);
 
 /// Initialization of the cuda implicit skinning library
 /// init glew, opengl, cuda context and pre-compute some heavy stuff

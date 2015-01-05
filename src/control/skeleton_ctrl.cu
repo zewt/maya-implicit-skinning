@@ -20,7 +20,6 @@
 
 #include "animesh.hpp"
 #include "globals.hpp"
-#include "cuda_ctrl.hpp"
 #include "conversions.hpp"
 #include "skeleton.hpp"
 

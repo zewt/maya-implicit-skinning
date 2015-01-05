@@ -57,6 +57,7 @@
 #include "sample_set.hpp"
 #include "animated_mesh_ctrl.hpp"
 #include "cuda_ctrl.hpp"
+#include "skeleton_ctrl.hpp"
 
 // #include "animesh.hpp"
 
@@ -111,7 +112,14 @@ public:
     static MObject sampleNormalAttr;
 
 private:
-    Cuda_ctrl::CudaCtrl cudaCtrl;
+    // The loaded mesh.  We own this object.
+    auto_ptr<Mesh> mesh;
+
+    // The loaded skeleton (if any), and its wrapper helper class.
+    Skeleton_ctrl skeleton;
+
+    // The wrapper class around both the mesh and the skeleton.
+    auto_ptr<Animated_mesh_ctrl> animMesh;
 
     // The *UpdateAttr attributes are for tracking when we need to update an internal data structure to reflect
     // a change made to the Maya attributes.  These aren't saved to disk or shown to the user.  For example, when
@@ -124,10 +132,10 @@ private:
     // Evaluated when we need to update a SampleSet and load it:
     static MObject sampleSetUpdateAttr;
 
-    // Represents cudaCtrl._skeleton being up to date:
+    // Represents this->skeleton being up to date:
     static MObject skeletonUpdateAttr;
 
-    // Represents cudaCtrl._anim_mesh being up to date with the skinned geometry.
+    // Represents animMesh being up to date with the skinned geometry.
     static MObject meshUpdateAttr;
     
     // Represents the base potential being up to date for the current SampleSet and unskinned mesh.
@@ -308,7 +316,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     if(status != MS::kSuccess) return status;
 
     // If we don't have a mesh or skeleton to work with yet, stop.
-    if(cudaCtrl._mesh == NULL || !cudaCtrl._skeleton.is_loaded())
+    if(mesh.get() == NULL || !skeleton.is_loaded())
         return MStatus::kSuccess;
 
     // Get the geomMatrixAttr attribute.
@@ -361,12 +369,12 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     }
 
     // If we've been given fewer transformations than there are bones, set the missing ones to identity.
-    if(cudaCtrl._skeleton.get_nb_joints() > bone_transforms.size())
+    if(skeleton.get_nb_joints() > bone_transforms.size())
         return MStatus::kFailure;
-    bone_transforms.insert(bone_transforms.end(), cudaCtrl._skeleton.get_nb_joints() - bone_transforms.size(), Transfo::identity());
+    bone_transforms.insert(bone_transforms.end(), skeleton.get_nb_joints() - bone_transforms.size(), Transfo::identity());
 
     // Update the skeleton transforms.
-    cudaCtrl._skeleton.set_transforms(bone_transforms);
+    skeleton.set_transforms(bone_transforms);
 
     // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
     // applied to, so the algorithm can see the whole mesh.
@@ -382,18 +390,18 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         // Get input[multiIndex].inputGeometry.
         MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
 
-        // Load the vertex positions into cudaCtrl._anim_mesh.
+        // Load the vertex positions into animMesh.
         status = setGeometry(inputGeomDataHandle);
         if(status != MS::kSuccess) return status;
     }
 
     // Run the algorithm.  XXX: If we're being applied to a set, use init_vert_to_fit to only
     // process the vertices we need to.
-    cudaCtrl._anim_mesh->set_do_smoothing(true);
-    cudaCtrl._anim_mesh->deform_mesh();
+    animMesh->set_do_smoothing(true);
+    animMesh->deform_mesh();
 
     vector<Point_cu> result_verts;
-    cudaCtrl._anim_mesh->get_anim_vertices_aifo(result_verts);
+    animMesh->get_anim_vertices_aifo(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
     for ( ; !geomIter.isDone(); geomIter.next()) {
@@ -412,14 +420,14 @@ MStatus ImplicitSkinDeformer::load_skeleton(MDataBlock &dataBlock)
     MStatus status = MStatus::kSuccess;
 
     // Load the skeleton from the node.
-    Loader::Abs_skeleton skeleton;
-    status = createSkeleton(dataBlock, skeleton);
+    Loader::Abs_skeleton newSkeleton;
+    status = createSkeleton(dataBlock, newSkeleton);
     if(status != MS::kSuccess) return status;
 
-    // Load the skeleton into cudaCtrl.
-    cudaCtrl._skeleton.load(skeleton);
-    if(cudaCtrl._mesh != NULL && cudaCtrl.is_skeleton_loaded())
-        cudaCtrl.load_animesh();
+    // Load the skeleton.
+    skeleton.load(newSkeleton);
+    if(mesh.get() != NULL && skeleton.is_loaded())
+        animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel));
 
     return MStatus::kSuccess;
 }
@@ -552,20 +560,20 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     MStatus status = MStatus::kSuccess;
 
     // If the mesh isn't loaded yet, don't do anything.
-    if(cudaCtrl._anim_mesh == NULL)
+    if(animMesh.get() == NULL)
         return MStatus::kSuccess;
 
     MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
 
     // Create a new SampleSet, and load its values from the node.
-    SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
+    SampleSet::SampleSet samples(animMesh->get_skel()->nb_joints());
 
-    if(cudaCtrl._anim_mesh->get_skel()->nb_joints() != influenceJointsHandle.elementCount())
+    if(animMesh->get_skel()->nb_joints() != influenceJointsHandle.elementCount())
     {
         // We don't have the same number of joints loaded as we have .joints elements.  XXX: This happened
         // after creating a bad connection between skinCluster.outputGeom and unskinnedGeom
-        int a = cudaCtrl._anim_mesh->get_skel()->nb_joints();
+        int a = animMesh->get_skel()->nb_joints();
         int b = influenceJointsHandle.elementCount();
         assert(0);
     }
@@ -614,7 +622,7 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     }
 
     // Load the SampleSet into _anim_mesh.
-    cudaCtrl._anim_mesh->set_sampleset(samples);
+    animMesh->set_sampleset(samples);
 
     return MStatus::kSuccess;
 }
@@ -639,14 +647,18 @@ MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
-    Mesh *mesh = new Mesh(loaderMesh);
+    Mesh *newMesh = new Mesh(loaderMesh);
+    newMesh->check_integrity();
 
-    // Hand the Mesh to Cuda_ctrl.
-    cudaCtrl.load_mesh(mesh);
+    // If we have a Animated_mesh_ctrl, delete it.
+    animMesh.release();
+
+    // Store the mesh.
+    mesh.reset(newMesh);
 
     // XXX: This will wipe out the loaded bones and require a skeleton/sampleset reload
-    if(cudaCtrl._mesh != NULL && cudaCtrl.is_skeleton_loaded())
-        cudaCtrl.load_animesh();
+    if(skeleton.is_loaded())
+        animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel));
 
     return MStatus::kSuccess;
 }
@@ -664,7 +676,7 @@ MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle)
     // XXX: Is there a way we can tell the user about this?
     // XXX: Will the algorithm allow us to support this, if we give it a whole new mesh with similar
     // topology and call update_base_potential?
-    if(points.length() != cudaCtrl._anim_mesh->get_nb_vertices())
+    if(points.length() != animMesh->get_nb_vertices())
         return MStatus::kSuccess;
 
     // Set the deformed vertex data.
@@ -673,7 +685,7 @@ MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle)
     for(int i = 0; i < (int) points.length(); ++i)
         input_verts.push_back(Vec3_cu((float) points[i].x, (float) points[i].y, (float) points[i].z));
         
-    cudaCtrl._anim_mesh->copy_vertices(input_verts);
+    animMesh->copy_vertices(input_verts);
 
     return MStatus::kSuccess;
 }
@@ -684,8 +696,8 @@ MStatus ImplicitSkinDeformer::set_bind_pose()
 
     // Reset the relative joint transformations to identity, eg. no change after setup.  deform() will reload the
     // current transforms the next time it needs them.
-    vector<Transfo> bone_transforms(cudaCtrl._skeleton.get_nb_joints(), Transfo::identity());
-    cudaCtrl._skeleton.set_transforms(bone_transforms);
+    vector<Transfo> bone_transforms(skeleton.get_nb_joints(), Transfo::identity());
+    skeleton.set_transforms(bone_transforms);
 
     // Load the unskinned geometry, which matches with the identity transforms.
     MPlug unskinnedGeomPlug(thisMObject(), unskinnedGeomAttr);
@@ -713,13 +725,13 @@ MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // If we don't have a mesh yet, don't do anything.
-    if(cudaCtrl._anim_mesh == NULL)
+    if(animMesh.get() == NULL)
         return MStatus::kSuccess;
 
     set_bind_pose();
 
     // Update base potential while in bind pose.
-    cudaCtrl._anim_mesh->update_base_potential();
+    animMesh->update_base_potential();
 
     return MStatus::kSuccess;
 }
@@ -773,26 +785,26 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     if(status != MS::kSuccess) return status;
 
     // If we don't have a mesh yet, don't do anything.
-    if(cudaCtrl._anim_mesh == NULL)
+    if(animMesh.get() == NULL)
         return MStatus::kSuccess;
 
     set_bind_pose();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
-    SampleSet::SampleSet samples(cudaCtrl._anim_mesh->get_skel()->nb_joints());
+    SampleSet::SampleSet samples(animMesh->get_skel()->nb_joints());
 
     // Get the default junction radius.
     vector<float> junction_radius;
-    cudaCtrl._anim_mesh->get_default_junction_radius(junction_radius);
+    animMesh->get_default_junction_radius(junction_radius);
 
-    for(int bone_id = 1; bone_id < cudaCtrl._anim_mesh->get_skel()->nb_joints(); ++bone_id)
+    for(int bone_id = 1; bone_id < animMesh->get_skel()->nb_joints(); ++bone_id)
     {
         samples._samples[bone_id]._junction_radius = junction_radius[bone_id];
         
         if(true)
         {
             samples.choose_hrbf_samples_poisson
-                    (*cudaCtrl._anim_mesh->_animesh,
+                    (*animMesh->_animesh,
                      bone_id,
                      // Set a distance threshold from sample to the joints to choose them.
                      -0.02f, // dSpinB_max_dist_joint->value(),
@@ -805,7 +817,7 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
                      0); // dSpinB_max_fold->value()
         } else {
             samples.choose_hrbf_samples_ad_hoc
-                    (*cudaCtrl._anim_mesh->_animesh,
+                    (*animMesh->_animesh,
                      bone_id,
                      -0.02f, // dSpinB_max_dist_joint->value(),
                      -0.02f, // dSpinB_max_dist_parent->value(),
