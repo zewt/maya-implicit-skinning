@@ -345,6 +345,9 @@
     <ClInclude Include="..\src\control\sample_set.hpp">
       <Filter>control</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\maya\plugin.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="animation">

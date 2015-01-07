@@ -266,6 +266,7 @@
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
     <ClInclude Include="..\src\maya\maya_data.hpp" />
     <ClInclude Include="..\src\maya\maya_helpers.hpp" />
+    <ClInclude Include="..\src\maya\plugin.hpp" />
     <ClInclude Include="..\src\meshes\loader_mesh.hpp" />
     <ClInclude Include="..\src\meshes\mesh.hpp" />
     <ClInclude Include="..\src\meshes\vcg_lib\utils_sampling.hpp" />
