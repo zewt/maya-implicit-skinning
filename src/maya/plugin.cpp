@@ -28,6 +28,7 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnGeometryFilter.h>
 #include <maya/MFnPluginData.h>
+#include <maya/MFnMeshData.h>
 
 #include <maya/MArgList.h>
 #include <maya/MTypeId.h> 
@@ -59,6 +60,7 @@
 #include "animated_mesh_ctrl.hpp"
 #include "cuda_ctrl.hpp"
 #include "skeleton_ctrl.hpp"
+#include "marching_cubes/marching_cubes.hpp"
 
 // #include "animesh.hpp"
 
@@ -84,6 +86,8 @@ MObject ImplicitSkinDeformer::meshUpdateAttr;
 MObject ImplicitSkinDeformer::basePotentialUpdateAttr;
 MObject ImplicitSkinDeformer::samplePointAttr;
 MObject ImplicitSkinDeformer::sampleNormalAttr;
+MObject ImplicitSkinDeformer::visualizationGeomUpdateAttr;
+MObject ImplicitSkinDeformer::visualizationGeomAttr;
 
 static void loadDependency(MObject obj, MObject attr, MStatus *status)
 {
@@ -94,6 +98,24 @@ static void loadDependency(MObject obj, MObject attr, MStatus *status)
 
     bool unused;
     *status = updatePlug.getValue(unused);
+}
+
+MStatus ImplicitSkinDeformer::test()
+{
+    Skeleton *skel = skeleton.skel;
+    vector<Bone *> bones = skel->get_bones();
+    if(bones.size() < 1)
+        return MStatus::kSuccess;
+    Bone *bone = bones[1];
+    if(bone->get_type() != EBone::Bone_t::HRBF)
+        return MStatus::kSuccess;
+
+    Bone_hrbf *b = (Bone_hrbf *) bone;
+    HermiteRBF &hrbf = b->get_hrbf();
+    vector<Vec3_cu> samples;
+    hrbf.get_samples(samples);
+
+    return MStatus::kSuccess;
 }
 
 MStatus ImplicitSkinDeformer::initialize()
@@ -189,6 +211,16 @@ MStatus ImplicitSkinDeformer::initialize()
     dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::basePotentialUpdateAttr, ImplicitSkinDeformer::outputGeom);
 
+    visualizationGeomUpdateAttr = numAttr.create("visualizationGeomUpdate", "visualizationGeomUpdate", MFnNumericData::Type::kInt, 0, &status);
+    addAttribute(visualizationGeomUpdateAttr);
+    numAttr.setHidden(true);
+    numAttr.setStorable(false);
+    dep.add(ImplicitSkinDeformer::sampleSetUpdateAttr, ImplicitSkinDeformer::visualizationGeomUpdateAttr);
+
+    visualizationGeomAttr = typeAttr.create("visualizationGeom", "visualizationGeom", MFnData::Type::kMesh, MObject::kNullObj, &status);
+    addAttribute(visualizationGeomAttr);
+    dep.add(visualizationGeomUpdateAttr, visualizationGeomAttr);
+
     status = dep.apply();
     if(status != MS::kSuccess) return status;
 
@@ -207,6 +239,10 @@ MStatus ImplicitSkinDeformer::compute(const MPlug& plug, MDataBlock& dataBlock)
     else if(plug.attribute() == skeletonUpdateAttr) return load_skeleton(dataBlock);
     else if(plug.attribute() == meshUpdateAttr) return load_mesh(dataBlock);
     else if(plug.attribute() == basePotentialUpdateAttr) return load_base_potential(dataBlock);
+
+    else if(plug.attribute() == visualizationGeomUpdateAttr) return load_visualization_geom_data(dataBlock);
+    else if(plug.attribute() == visualizationGeomAttr) return load_visualization_geom(dataBlock);
+    
     else return MStatus::kUnknownParameter;
 }
 
@@ -635,6 +671,50 @@ MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
     return MStatus::kSuccess;
 }
 
+MStatus ImplicitSkinDeformer::load_visualization_geom_data(MDataBlock &dataBlock)
+{
+    MStatus status;
+
+    previewMeshGeometry.vertices.clear();
+    previewMeshGeometry.indices.clear();
+
+    // Load dependencies:
+    dataBlock.inputValue(ImplicitSkinDeformer::sampleSetUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    Skeleton *skel = skeleton.skel;
+    vector<Bone *> bones = skel->get_bones();
+    for(int i = 0; i < bones.size(); ++i)
+    {
+        Bone *bone = bones[i];
+        if(bone->get_type() != EBone::Bone_t::HRBF)
+            continue;
+        Bone_hrbf *b = (Bone_hrbf *) bone;
+        MarchingCubes::compute_surface(previewMeshGeometry, b);
+    }
+
+    return MStatus::kSuccess;
+}
+
+
+
+MStatus ImplicitSkinDeformer::load_visualization_geom(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+
+    dataBlock.inputValue(visualizationGeomUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+        
+    MDataHandle fnMeshHandle = dataBlock.outputValue(visualizationGeomAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    MObject mesh = MarchingCubes::create_visualization_geom(previewMeshGeometry, &status);
+    if(status != MS::kSuccess) return status;
+    fnMeshHandle.set(mesh);
+
+    return MStatus::kSuccess;
+}
+
 class ImplicitCommand : public MPxCommand
 {
 public:
@@ -650,6 +730,7 @@ public:
 
     bool isUndoable() const { return false; }
     static void *creator() { return new ImplicitCommand(); }
+    MStatus test(MString nodeName);
 
 private:
     MStatus getOnePlugByName(MString nodeName, MPlug &plug);
@@ -705,14 +786,9 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     return save_sampleset(samples);
 }
 
-ImplicitSkinDeformer *ImplicitCommand::getDeformerByName(MString nodeName, MStatus *status)
+ImplicitSkinDeformer *ImplicitSkinDeformer::deformerFromPlug(MObject node, MStatus *status)
 {
-    // Get the MPlug for the selected node.
-    MPlug implicitPlug;
-    *status = getOnePlugByName(nodeName, implicitPlug);
-    if(*status != MS::kSuccess) return NULL;
-
-    MFnDependencyNode plugDep(implicitPlug.node(), status);
+    MFnDependencyNode plugDep(node, status);
     if(*status != MS::kSuccess) return NULL;
 
     // Verify that this is one of our nodes.
@@ -721,14 +797,24 @@ ImplicitSkinDeformer *ImplicitCommand::getDeformerByName(MString nodeName, MStat
 
     if(type != ImplicitSkinDeformer::id)
     {
-        displayError("Node not an implicitDeformer: " + nodeName);
-        *status = MStatus::kFailure;;
+        *status = MStatus::kFailure;
+        status->perror("Node not an implicitDeformer");
         return NULL;
     }
 
     ImplicitSkinDeformer *deformer = (ImplicitSkinDeformer *) plugDep.userNode(status);
     if(*status != MS::kSuccess) return NULL;
     return deformer;
+}
+
+ImplicitSkinDeformer *ImplicitCommand::getDeformerByName(MString nodeName, MStatus *status)
+{
+    // Get the MPlug for the selected node.
+    MPlug implicitPlug;
+    *status = getOnePlugByName(nodeName, implicitPlug);
+    if(*status != MS::kSuccess) return NULL;
+
+    return ImplicitSkinDeformer::deformerFromPlug(implicitPlug.node(), status);
 }
 
 MStatus ImplicitCommand::init(MString nodeName)
@@ -890,6 +976,17 @@ MStatus ImplicitCommand::sampleAll(MString nodeName)
     return deformer->sample_all_joints();
 }
 
+MStatus ImplicitCommand::test(MString nodeName)
+{
+    MStatus status;
+    ImplicitSkinDeformer *deformer = getDeformerByName(nodeName, &status);
+    if(status != MS::kSuccess) return status;
+
+    deformer->test();
+
+    return MS::kSuccess;
+}
+
 MStatus ImplicitCommand::doIt(const MArgList &args)
 {
     MStatus status;
@@ -921,11 +1018,22 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
                 return status;
             }
         }
+        else if(args.asString(i, &status) == MString("-test") && MS::kSuccess == status)
+        {
+            ++i;
+            MString nodeName = args.asString(i, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = test(nodeName);
+
+            if(status != MS::kSuccess) {
+                displayError(status.errorString());
+                return status;
+            }
+        }
     }
     return MS::kSuccess;
 }
-
-
 
 MStatus initializePlugin(MObject obj)
 {

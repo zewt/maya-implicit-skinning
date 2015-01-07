@@ -108,6 +108,9 @@ private:
 
     MStatus createSkeleton(MDataBlock &dataBlock, Loader::Abs_skeleton &skeleton);
     MStatus setGeometry(MDataHandle &inputGeomDataHandle);
+
+    MObject create_visualization_geom(const MeshGeom &srcGeom, MStatus *status);
+    MeshGeom previewMeshGeometry;
 };
 
 #endif
