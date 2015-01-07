@@ -127,9 +127,6 @@ const int nb_samples = NB_SAMPLES;
 
 bool allocated = false;
 
-// export from blending_env_tex_binding.hpp
-extern bool binded;
-
 // Precomputed opening function
 float* pan_hyperbola = 0;
 cudaArray* d_pan_hyperbola = 0;
