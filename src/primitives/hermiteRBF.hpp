@@ -117,8 +117,4 @@ private:
     int _id;
 };
 
-#if !defined(NO_CUDA)
-#include "hermiteRBF.inl"
-#endif
-
 #endif // HERMITE_RBF_HPP__
