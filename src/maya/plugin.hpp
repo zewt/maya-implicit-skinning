@@ -67,7 +67,6 @@ public:
 
     // The world matrix of each influence.  This is usually linked to the worldMatrix attribute of the joint.
     static MObject influenceMatrixAttr;
-    static MObject junctionRadiusAttr;
     static MObject samplePointAttr;
     static MObject sampleNormalAttr;
 

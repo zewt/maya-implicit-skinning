@@ -89,24 +89,6 @@ void Animated_mesh_ctrl::deform_mesh()
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::write_hrbf_caps_env(std::ofstream& file, bool jcap)
-{
-    if( jcap ) file << "[HRBF_JCAPS_ENV]" << std::endl;
-    else       file << "[HRBF_PCAPS_ENV]" << std::endl;
-
-    file << "nb_bone " << _samples._samples.size() << std::endl;
-
-    for(unsigned i = 0; i < _samples._samples.size(); i++ )
-    {
-        const SampleSet::Cap&  cap_list = jcap ? _samples._samples[i].jcap : _samples._samples[i].pcap;
-        const float rad      = _samples._samples[i]._junction_radius;
-
-        file << "bone_id "       << i               << std::endl;
-        file << "is_cap_enable " << cap_list.enable << std::endl;
-        file << "cap_radius "    << rad             << std::endl;
-    }
-}
-
 void Animated_mesh_ctrl::write_hrbf_radius( std::ofstream& file )
 {
     file << "[HRBF_RADIUS]" << std::endl;
@@ -131,8 +113,6 @@ void Animated_mesh_ctrl::save_ism(const char* filename)
         exit(1);
     }
 
-    write_hrbf_caps_env( file, true  /*write joint caps*/);
-    write_hrbf_caps_env( file, false /*write parent caps*/);
     write_hrbf_radius( file );
 
     file.close();
@@ -156,28 +136,6 @@ void Animated_mesh_ctrl::read_weights(std::ifstream& file,
         file >> alpha;
 
         weights[j] = make_float4(beta.x, beta.y, beta.z, alpha);
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::read_hrbf_caps_env(std::ifstream& file, bool jcap)
-{
-    std::string nil;
-    int nb_bones = -1;
-
-    file >> nil /*'nb_bone'*/ >> nb_bones;
-
-    for(int i = 0; i < nb_bones; i++ )
-    {
-        float rad;
-        int bone_id = -1;
-        file >> nil /*'bone_id'*/ >> bone_id;
-
-        SampleSet::Cap& cap_list = jcap ? _samples._samples[bone_id].jcap : _samples._samples[bone_id].pcap;
-        file >> nil /*'is_cap_enable'*/ >> cap_list.enable;
-        file >> nil /*'cap_radius'*/    >> rad;
-        _samples._samples[bone_id]._junction_radius = rad;
     }
 }
 
@@ -238,8 +196,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         file >> section;
 
         if(section == "[HRBF_ENV_WEIGHTS]") read_hrbf_env_weights(file, bone_weights);
-        else if(section == "[HRBF_JCAPS_ENV]")   read_hrbf_caps_env( file, true  );
-        else if(section == "[HRBF_PCAPS_ENV]")   read_hrbf_caps_env( file, false );
         else if(section == "[HRBF_RADIUS]")      read_hrbf_radius( file, radius_hrbf);
         else
         {
@@ -253,8 +209,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
     {
         if( radius_hrbf[i] > 0.f)
             _animesh->get_skel()->set_bone_hrbf_radius(i, radius_hrbf[i]);
-
-        _samples.update_caps(*_animesh->get_skel(), i, true, true);
     }
 
     _animesh->update_base_potential();
@@ -330,7 +284,7 @@ const Skeleton *Animated_mesh_ctrl::get_skel() const { return _animesh->get_skel
 // Combine the samples in _samples, and send them to the Animesh.
 void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 {
-    SampleSet::HSample_list sample_list;
+    SampleSet::InputSample sample_list;
     bone_id = _samples.get_all_bone_samples(*_animesh->get_skel(), bone_id, sample_list);
     _animesh->update_bone_samples(bone_id, sample_list.nodes, sample_list.n_nodes);
     if(_auto_precompute) precompute_all_bones();
@@ -361,40 +315,5 @@ void Animated_mesh_ctrl::set_sampleset(const SampleSet::SampleSet &sample_set)
 {
     _samples = sample_set;
     for(int bone_id = 0; bone_id < _animesh->get_skel()->nb_joints(); ++bone_id)
-    {
-        _samples.update_caps(*_animesh->get_skel(), bone_id, true, true); // FIXME: dunno why it's here
         update_bone_samples(bone_id);
-    }
-}
-
-void Animated_mesh_ctrl::incr_junction_rad(int bone_id, float incr)
-{
-    _samples._samples[bone_id]._junction_radius += incr;
-
-    // Recompute caps position
-    _samples.update_caps(*_animesh->get_skel(), bone_id,
-                false,
-                _samples._samples[bone_id].pcap.enable);
-
-    int pt = _animesh->get_skel()->parent( bone_id );
-    if( pt > -1)
-    {
-        _samples.update_caps(*_animesh->get_skel(), pt,
-                    _samples._samples[pt].jcap.enable,
-                    false);
-
-        /*
-        const std::vector<int>& c = _animesh->get_skel()->get_sons(pt);
-        for(unsigned i = 0; i < c.size(); i++)
-        {
-            const int cbone = c[i];
-            // Recompute caps position
-            update_caps(cbone,
-                        _samples._samples[cbone].jcap.enable,
-                        false);
-        }
-        */
-    }
-
-    update_bone_samples(bone_id);
 }

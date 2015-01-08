@@ -78,7 +78,6 @@ MObject ImplicitSkinDeformer::influenceJointsAttr;
 MObject ImplicitSkinDeformer::parentJointAttr;
 MObject ImplicitSkinDeformer::influenceBindMatrixAttr;
 MObject ImplicitSkinDeformer::influenceMatrixAttr;
-MObject ImplicitSkinDeformer::junctionRadiusAttr;
 MObject ImplicitSkinDeformer::sampleSetUpdateAttr;
 MObject ImplicitSkinDeformer::skeletonUpdateAttr;
 MObject ImplicitSkinDeformer::meshUpdateAttr;
@@ -128,9 +127,6 @@ MStatus ImplicitSkinDeformer::initialize()
     addAttribute(influenceMatrixAttr);
 
     // SampleSet:
-    junctionRadiusAttr = numAttr.create("junctionRadius", "jr", MFnNumericData::Type::kFloat, 0, &status);
-    addAttribute(junctionRadiusAttr);
-
     samplePointAttr = numAttr.create("point", "p", MFnNumericData::Type::k3Float, 0, &status);
     numAttr.setArray(true);
     addAttribute(samplePointAttr);
@@ -145,7 +141,6 @@ MStatus ImplicitSkinDeformer::initialize()
     cmpAttr.addChild(influenceBindMatrixAttr);
     cmpAttr.addChild(parentJointAttr);
     cmpAttr.addChild(influenceMatrixAttr);
-    cmpAttr.addChild(junctionRadiusAttr);
     cmpAttr.addChild(samplePointAttr);
     cmpAttr.addChild(sampleNormalAttr);
     addAttribute(influenceJointsAttr);
@@ -155,7 +150,6 @@ MStatus ImplicitSkinDeformer::initialize()
     numAttr.setHidden(true);
     addAttribute(sampleSetUpdateAttr);
 
-    dep.add(ImplicitSkinDeformer::junctionRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
     dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
     dep.add(ImplicitSkinDeformer::samplePointAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
     dep.add(ImplicitSkinDeformer::sampleNormalAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
@@ -432,15 +426,6 @@ MStatus ImplicitSkinDeformer::save_sampleset(const SampleSet::SampleSet &samples
         MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i, &status);
         if(status != MS::kSuccess) return status;
 
-        // Save the junction radius.
-        {
-            MPlug junctionRadiusPlug = jointPlug.child(ImplicitSkinDeformer::junctionRadiusAttr, &status);
-            if(status != MS::kSuccess) return status;
-
-            status = junctionRadiusPlug.setValue(inputSample._junction_radius);
-            if(status != MS::kSuccess) return status;
-        }
-
         // XXX caps, jcap/pcap flags (only one or the other?  if caps are editable, should they
         // be changed to regular samples?)
 
@@ -450,24 +435,24 @@ MStatus ImplicitSkinDeformer::save_sampleset(const SampleSet::SampleSet &samples
 
         MPlug sampleNormalPlug = jointPlug.child(ImplicitSkinDeformer::sampleNormalAttr, &status);
         if(status != MS::kSuccess) return status;
-        for(int sampleIdx = 0; sampleIdx < inputSample._sample_list.nodes.size(); ++sampleIdx)
+        for(int sampleIdx = 0; sampleIdx < inputSample.nodes.size(); ++sampleIdx)
         {
             MPlug samplePlug = samplePointPlug.elementByLogicalIndex(sampleIdx, &status);
             if(status != MS::kSuccess) return status;
 
             status = DagHelpers::setPlugValue(samplePlug,
-                inputSample._sample_list.nodes[sampleIdx].x,
-                inputSample._sample_list.nodes[sampleIdx].y,
-                inputSample._sample_list.nodes[sampleIdx].z);
+                inputSample.nodes[sampleIdx].x,
+                inputSample.nodes[sampleIdx].y,
+                inputSample.nodes[sampleIdx].z);
             if(status != MStatus::kSuccess) return status;
 
             MPlug normalPlug = sampleNormalPlug.elementByLogicalIndex(sampleIdx, &status);
             if(status != MS::kSuccess) return status;
 
             status = DagHelpers::setPlugValue(normalPlug,
-                inputSample._sample_list.n_nodes[sampleIdx].x,
-                inputSample._sample_list.n_nodes[sampleIdx].y,
-                inputSample._sample_list.n_nodes[sampleIdx].z);
+                inputSample.n_nodes[sampleIdx].x,
+                inputSample.n_nodes[sampleIdx].y,
+                inputSample.n_nodes[sampleIdx].z);
             if(status != MStatus::kSuccess) return status;
         }
     }
@@ -505,12 +490,6 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
         status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;
 
-        MDataHandle junctionRadiusHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::junctionRadiusAttr);
-        if(status != MS::kSuccess) return status;
-
-        inputSample._junction_radius = DagHelpers::readHandle<float>(junctionRadiusHandle, &status);
-        if(status != MS::kSuccess) return status;
-
         // Load the samples.
         MArrayDataHandle samplePointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::samplePointAttr);
         if(status != MS::kSuccess) return status;
@@ -535,9 +514,9 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
             DagHelpers::simpleFloat3 sampleNormal = DagHelpers::readArrayHandle<DagHelpers::simpleFloat3>(sampleNormalHandle, &status);
             if(status != MS::kSuccess) return status;
 
-            inputSample._sample_list.nodes.push_back(Vec3_cu(samplePoint.x, samplePoint.y, samplePoint.z));
+            inputSample.nodes.push_back(Vec3_cu(samplePoint.x, samplePoint.y, samplePoint.z));
 
-            inputSample._sample_list.n_nodes.push_back(Vec3_cu(sampleNormal.x, sampleNormal.y, sampleNormal.z));
+            inputSample.n_nodes.push_back(Vec3_cu(sampleNormal.x, sampleNormal.y, sampleNormal.z));
         }
     }
 
@@ -714,37 +693,13 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     SampleSet::SampleSet samples(animMesh->get_skel()->nb_joints());
 
     // Get the default junction radius.
-    vector<float> junction_radius;
-    animMesh->get_default_junction_radius(junction_radius);
 
+    SampleSet::SampleSetSettings sampleSettings;
+    animMesh->get_default_junction_radius(sampleSettings.junction_radius);
+
+    // XXX 1->0?
     for(int bone_id = 1; bone_id < animMesh->get_skel()->nb_joints(); ++bone_id)
-    {
-        samples._samples[bone_id]._junction_radius = junction_radius[bone_id];
-        
-        if(true)
-        {
-            samples.choose_hrbf_samples_poisson
-                    (*animMesh->_animesh,
-                     bone_id,
-                     // Set a distance threshold from sample to the joints to choose them.
-                     -0.02f, // dSpinB_max_dist_joint->value(),
-                     -0.02f, // dSpinB_max_dist_parent->value(),
-                     0, // dSpinB_min_dist_samples->value(),
-                     // Minimal number of samples.  (this value is used only whe the value min dist is zero)
-                     50, // spinB_nb_samples_psd->value(), 20-1000
-
-                     // We choose a sample if: max fold > (vertex orthogonal dir to the bone) dot (vertex normal)
-                     0); // dSpinB_max_fold->value()
-        } else {
-            samples.choose_hrbf_samples_ad_hoc
-                    (*animMesh->_animesh,
-                     bone_id,
-                     -0.02f, // dSpinB_max_dist_joint->value(),
-                     -0.02f, // dSpinB_max_dist_parent->value(),
-                     0, // dSpinB_min_dist_samples->value(), Minimal distance between two HRBF sample
-                     0); // dSpinB_max_fold->value()
-        }
-    }
+        samples.choose_hrbf_samples(*animMesh->_animesh, sampleSettings, bone_id);
 
     // Save the new SampleSet.
     return save_sampleset(samples);

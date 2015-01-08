@@ -121,8 +121,6 @@ public:
     /// Change the radius used to convert hrbf from global to compact
     void set_hrbf_radius(int bone_id, float rad);
 
-    void incr_junction_rad(int bone_id, float incr);
-
 private:
     /// Append the current caps and samples and update the 'bone_id' with them
     /// also allocates the '_anim_samples_list' for nodes and n_nodes
@@ -136,10 +134,6 @@ private:
     /// @name Tools file export
     //--------------------------------------------------------------------------
 #if !defined(NO_CUDA) // XXX: remove this stuff
-    /// Write the section related to the hrbf caps in '.ism' files
-    /// @param wether we write the joint cap list or parent cap list
-    void write_hrbf_caps_env(std::ofstream& file, bool jcap);
-
     /// write section storing HRBF implicite primitives radius of the compact
     /// support
     void write_hrbf_radius( std::ofstream& file );
@@ -153,10 +147,6 @@ private:
 
     void read_weights(std::ifstream& file,
                       std::vector<float4>& weights );
-
-    /// read the section related to the hrbf caps in '.ism' files
-    /// @param wether we read the joint cap list or parent cap list
-    void read_hrbf_caps_env(std::ifstream& file, bool jcap);
 
     void read_hrbf_radius(std::ifstream& file,
                           std::vector<float>& radius_hrbf);
