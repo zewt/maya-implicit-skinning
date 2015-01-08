@@ -21,7 +21,6 @@
 // -----------------------------------------------------------------------------
 
 #include "timer.hpp"
-#include "quick_sort.hpp"
 #include "conversions.hpp"
 #include "utils_sampling.hpp"
 #include "skeleton.hpp"

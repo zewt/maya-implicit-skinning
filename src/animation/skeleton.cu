@@ -29,7 +29,6 @@
 #include "hrbf_env.hpp"
 #include "conversions.hpp"
 #include "std_utils.hpp"
-#include "class_saver.hpp"
 #include "loader_skel.hpp"
 #include "globals.hpp"
 #include "cuda_utils.hpp"

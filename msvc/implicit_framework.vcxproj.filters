@@ -13,9 +13,6 @@
     <ClCompile Include="..\src\blending_lib\opening.cpp">
       <Filter>blending_lib</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\blending_lib\operators.cpp">
-      <Filter>blending_lib</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\blending_lib\structs.cpp">
       <Filter>blending_lib</Filter>
     </ClCompile>
@@ -99,9 +96,6 @@
     <ClInclude Include="..\include\blending_lib\opening.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\blending_lib\operators.hpp">
-      <Filter>blending_lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\blending_lib\structs.hpp">
       <Filter>blending_lib</Filter>
     </ClInclude>
@@ -140,9 +134,6 @@
     </ClInclude>
     <ClInclude Include="..\src\blending_lib\cuda_interface\n_ary.hpp">
       <Filter>blending_lib\cuda_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\containers\identifier.hpp">
-      <Filter>containers</Filter>
     </ClInclude>
     <ClInclude Include="..\src\containers\idx3_cu.hpp">
       <Filter>containers</Filter>
@@ -279,16 +270,10 @@
     <ClInclude Include="..\src\utils\conversions.hpp">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utils\quick_sort.hpp">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\utils\std_utils.hpp">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils\timer.hpp">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\utils\assert_utils.hpp">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils\class_saver.hpp">
@@ -320,9 +305,6 @@
     </ClInclude>
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils.hpp">
       <Filter>utils\cuda_utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\blending_lib\funcs.hpp">
-      <Filter>blending_lib</Filter>
     </ClInclude>
     <ClInclude Include="..\src\blending_lib\splines.hpp">
       <Filter>blending_lib</Filter>

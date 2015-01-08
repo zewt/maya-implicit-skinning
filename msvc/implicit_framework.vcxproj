@@ -182,9 +182,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\blending_lib\controller.hpp" />
     <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
-    <ClInclude Include="..\include\blending_lib\funcs.hpp" />
     <ClInclude Include="..\include\blending_lib\opening.hpp" />
-    <ClInclude Include="..\include\blending_lib\operators.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
     <ClCompile Include="..\src\animation\loader_skel.cpp" />
     <ClCompile Include="..\src\control\sample_set.cpp" />
@@ -205,7 +203,6 @@
     <ClCompile Include="..\src\blending_lib\controller_tools.cpp" />
     <ClCompile Include="..\src\blending_lib\generator.cpp" />
     <ClCompile Include="..\src\blending_lib\opening.cpp" />
-    <ClCompile Include="..\src\blending_lib\operators.cpp" />
     <ClCompile Include="..\src\blending_lib\structs.cpp" />
     <ClCompile Include="..\src\global_datas\globals.cpp" />
     <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp" />
@@ -234,7 +231,6 @@
     <ClInclude Include="..\src\blending_lib\generator.hpp" />
     <ClInclude Include="..\src\blending_lib\splines.hpp" />
     <ClInclude Include="..\src\containers\grid3_cu.hpp" />
-    <ClInclude Include="..\src\containers\identifier.hpp" />
     <ClInclude Include="..\src\containers\idx3_cu.hpp" />
     <ClInclude Include="..\src\control\animated_mesh_ctrl.hpp" />
     <ClInclude Include="..\src\control\cuda_ctrl.hpp" />
@@ -283,7 +279,6 @@
     <ClInclude Include="..\src\primitives\plane.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
-    <ClInclude Include="..\src\utils\assert_utils.hpp" />
     <ClInclude Include="..\src\utils\class_saver.hpp" />
     <ClInclude Include="..\src\utils\conversions.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_compiler_interop.hpp" />
@@ -295,7 +290,6 @@
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_host_array.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_thrust.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\memory_debug.hpp" />
-    <ClInclude Include="..\src\utils\quick_sort.hpp" />
     <ClInclude Include="..\src\utils\std_utils.hpp" />
     <ClInclude Include="..\src\utils\timer.hpp" />
     <CudaCompile Include="..\src\animation\animesh.cu">
