@@ -181,25 +181,6 @@ void Skeleton::set_joint_bulge_mag(int i, float m)
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton::set_bone(int i, Bone* b)
-{
-    assert(i < (int) _joints.size());
-    assert(i >= 0);
-
-    b->_bone_id = i;
-
-    delete _joints[i]._anim_bone;
-    _joints[i]._anim_bone = b;
-
-    // Update _anim_bones (and HRBF/precomputed equivalents) for the new bone.
-    // XXX: We're updating all bones, which means we're updating n^2 bones when we
-    // convert all bones to precomputed.  Check if this is a performance issue.
-    update_bones_pose();
-//    // TODO: to be deleted update_hrbf_id_to_bone_id();
-}
-
 IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 {
     assert( i >= 0);

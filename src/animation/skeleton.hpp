@@ -141,9 +141,6 @@ struct Skeleton {
   /// @param m magnitude for the ith joint. range: [0 1]
   void set_joint_bulge_mag(int i, float m);
 
-  /// Replace and delete the ith bone with the user allocated bone 'b'
-  void set_bone(int i, Bone* b);
-
   //----------------------------------------------------------------------------
   /// @name Getter
   /// The difference between a joint and a bone must be clear in this section.
@@ -190,16 +187,7 @@ struct Skeleton {
       return bones;
   }
 
-  /// @note A bone is a part of the skeleton, as such you cannot change its
-  /// properties outside the skeleton class. Changes are to be made with the
-  /// dedicated setter 'set_bone()' by creating a new bone. The setter will
-  /// ensure that the skeleton updates its state according to the bone properties.
-  /// Do not even think about using the dreadfull const_cast<>(). <b> You've been
-  /// warned. <\b>
   const Bone* get_bone(Bone::Id i) const{ return _joints[i]._anim_bone;  }
-
-  // Actually, set_bone doesn't do anything special, it just stores the new bone.  We do
-  // need a non-const getter now to toggle precomputation.
   Bone *get_bone(Bone::Id i) { return _joints[i]._anim_bone;  }
 
   Blending_env::Ctrl_id get_ctrl(int joint) const {
