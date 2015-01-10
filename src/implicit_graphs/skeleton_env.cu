@@ -203,7 +203,7 @@ void cell_to_blending_list(Skel_id sid,
     // HACK: this should be done outside this function when convberting cluster
     // to cluster_cu
     if(blending_list._list.size() > 0){
-        blending_list._list.begin()->datas._blend_type = (EJoint::Joint_t)blending_list._nb_pairs;
+        blending_list._list.begin()->datas._blend_type = (EJoint::Joint_t)(blending_list._list.size()/2);
     }
 
     blist.swap( blending_list._list );
@@ -394,7 +394,7 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         }
         // We store nb_pairs in the first element of the list
         assert(tree_cu->_blending_list._list.size() > 0); // unless we have no elements
-        hd_blending_list[off_blist].nb_pairs      = tree_cu->_blending_list._nb_pairs;
+        hd_blending_list[off_blist].nb_pairs      = tree_cu->_blending_list._list.size()/2;
 
         hd_offset[t].list_data = off_blist;
 

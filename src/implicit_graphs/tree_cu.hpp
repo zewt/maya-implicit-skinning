@@ -64,8 +64,7 @@ public:
     struct BList {
 
         BList(const Tree_cu& tree_cu) :
-            _tree_cu( tree_cu ),
-            _nb_pairs(0)
+            _tree_cu( tree_cu )
         { }
 
         /// Add a cluster to the blending list.
@@ -85,9 +84,6 @@ public:
         /// max( pair_0, ..., pair_n, singleton_0, ..., singleton_n )
         /// _h_blending_list.size() == nb_pairs*2 + nb_singletons
         std::list<Cluster> _list;
-
-        /// number of cluster pairs in _blending_list[]
-        int _nb_pairs;
     };
 
     /// Tree we're building the GPU representation from

@@ -136,7 +136,6 @@ void Tree_cu::compute_blending_list()
 
 void Tree_cu::BList::clear()
 {
-    _nb_pairs = 0;
     _list.clear();
 }
 
@@ -160,8 +159,6 @@ void Tree_cu::BList::  add_cluster(Cluster_id cid)
         Cluster empty;
         empty.nb_bone = 0;
         _list.push_back( empty );
-
-        _nb_pairs++;
     }
     else
     {
@@ -173,7 +170,6 @@ void Tree_cu::BList::  add_cluster(Cluster_id cid)
         c1.datas = _tree_cu._tree->data(h_parent);
         _list.push_front( c0 );
         _list.push_front( c1 );
-        _nb_pairs++;
     }
 }
 
