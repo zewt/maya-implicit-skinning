@@ -82,7 +82,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_rot_axis(_mesh->get_nb_vertices()),
     h_vertices_nearest_bones(_mesh->get_nb_vertices()),
     nb_vertices_by_bones(_skel->get_bones().size()),
-    d_nearest_bone_in_device_mem(_mesh->get_nb_vertices()),
     h_nearest_bone_dist(_mesh->get_nb_vertices()),
     vmap_old_new(_mesh->get_nb_vertices()),
     vmap_new_old(_mesh->get_nb_vertices()),
@@ -384,22 +383,7 @@ void Animesh::clusterize(int n_voxels)
     clusterize_euclidean(h_vertices_nearest_bones, nb_vertices_by_bones);
 
     init_verts_per_bone();
-    update_nearest_bone_joint_in_device_mem();
 }
-
-// -----------------------------------------------------------------------------
-
-void Animesh::update_nearest_bone_joint_in_device_mem()
-{
-    int n = _mesh->get_nb_vertices();
-    // Convert host ids to device ids for the nearest joints
-    std::vector<DBone_id> tmp (n);
-    for(int i = 0; i < n; i++)
-        tmp [i] = _skel->get_bone_didx( h_vertices_nearest_bones[i] );
-    d_nearest_bone_in_device_mem. copy_from(tmp);
-}
-
-// -----------------------------------------------------------------------------
 
 void Animesh::get_default_junction_radius(std::vector<float> &nearest_rad) const
 {

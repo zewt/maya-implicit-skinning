@@ -167,10 +167,6 @@ private:
     void clusterize_euclidean(Cuda_utils::HA_int& h_nearest_bones,
                               Cuda_utils::HA_int& nb_vert_by_bone);
 
-    /// Update the attributes 'd_nearest_bone_in_device_mem' and
-    /// 'd_nearest_joint_in_device_mem'
-    void update_nearest_bone_joint_in_device_mem();
-
     /// Compute a radius for each bone, given the distance of each vertex to
     /// their closest bone
     void set_default_bones_radius();
@@ -391,7 +387,6 @@ public: // XXX
     /// Mapping of mesh points with there nearest bone
     /// (i.e tab[vert_idx]=bone_idx)
     Cuda_utils::Host::  Array<Bone::Id>  h_vertices_nearest_bones;
-    Cuda_utils::Device::Array<DBone_id>  d_nearest_bone_in_device_mem;
 
     /// Initial vertices in their "resting" position. sorted by nearest bone.
     /// h_input_vertices[nearest][ith_vert] = vert_coord
