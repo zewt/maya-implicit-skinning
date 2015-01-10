@@ -508,13 +508,13 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // Create a new SampleSet, and load its values from the node.
-    SampleSet::SampleSet samples(animMesh->get_skel()->nb_joints());
+    SampleSet::SampleSet samples(skeleton.skel->nb_joints());
 
-    if(animMesh->get_skel()->nb_joints() != influenceJointsHandle.elementCount())
+    if(skeleton.skel->nb_joints() != influenceJointsHandle.elementCount())
     {
         // We don't have the same number of joints loaded as we have .joints elements.  XXX: This happened
         // after creating a bad connection between skinCluster.outputGeom and unskinnedGeom
-        int a = animMesh->get_skel()->nb_joints();
+        int a = skeleton.skel->nb_joints();
         int b = influenceJointsHandle.elementCount();
         assert(0);
     }
@@ -771,7 +771,7 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     set_bind_pose();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
-    SampleSet::SampleSet samples(animMesh->get_skel()->nb_joints());
+    SampleSet::SampleSet samples(skeleton.skel->nb_joints());
 
     // Get the default junction radius.
 
@@ -779,8 +779,8 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     animMesh->get_default_junction_radius(sampleSettings.junction_radius);
 
     // XXX 1->0?
-    for(int bone_id = 1; bone_id < animMesh->get_skel()->nb_joints(); ++bone_id)
-        samples.choose_hrbf_samples(*animMesh->_animesh, sampleSettings, bone_id);
+    for(int bone_id = 1; bone_id < skeleton.skel->nb_joints(); ++bone_id)
+        samples.choose_hrbf_samples(mesh.get(), skeleton.skel, sampleSettings, bone_id);
 
     // Save the new SampleSet.
     return save_sampleset(samples);

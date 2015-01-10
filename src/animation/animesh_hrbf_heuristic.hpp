@@ -21,17 +21,16 @@
 #define ANIMESH_HRBF_HEURISTIC_HPP
 
 struct Animesh;
+class Mesh;
+struct Skeleton;
+#include "vert_to_bone_info.hpp"
 #include "vec3_cu.hpp"
 #include <vector>
 
 /// @brief base class to find HRBF samples on the mesh given a bone
 class HRBF_sampling {
 public:
-    HRBF_sampling( const Animesh &am ) :
-        _bone_id(-1),
-        _factor_siblings(false),
-        _am(am)
-    { }
+    HRBF_sampling(const Mesh *mesh, const Skeleton *skel);
 
     virtual ~HRBF_sampling(){ }
 
@@ -66,7 +65,10 @@ public:
     float _pmax; ///< percentage max dist from joint parent (range [-1 1])
     float _fold; ///< threshold scalar product dir projection/mesh normal
 
-    const Animesh &_am;
+protected:
+    const Mesh *mesh;
+    const Skeleton *skel;
+    const VertToBoneInfo vertToBoneInfo;
 };
 
 // -------------------------------------------------------------------------
@@ -76,8 +78,8 @@ public:
 class Adhoc_sampling : public HRBF_sampling {
 public:
 
-    Adhoc_sampling( const Animesh &am ) :
-        HRBF_sampling(am),
+    Adhoc_sampling(const Mesh *mesh, const Skeleton *skel):
+        HRBF_sampling(mesh, skel),
         _mind(0.f)
     {}
 
@@ -91,8 +93,8 @@ public:
 class Poisson_disk_sampling : public HRBF_sampling {
 public:
 
-    Poisson_disk_sampling( const Animesh &am ) :
-        HRBF_sampling(am),
+    Poisson_disk_sampling(const Mesh *mesh, const Skeleton *skel) :
+        HRBF_sampling(mesh, skel),
         _mind(0.f),
         _nb_samples(0)
     {}

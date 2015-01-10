@@ -27,8 +27,8 @@
 #include "vec3_cu.hpp"
 #include "transfo.hpp"
 
-struct Animesh;
 struct Skeleton;
+class Mesh;
 
 namespace SampleSet
 {
@@ -102,7 +102,7 @@ struct SampleSet
     void transform_samples(const std::vector<Transfo> &transfos, const std::vector<int>& bone_ids = std::vector<int>());
 
     // Automatically choose samples for the given bone.
-    void choose_hrbf_samples(const Animesh &animesh, const SampleSetSettings &settings, int bone_id);
+    void choose_hrbf_samples(const Mesh *mesh, const Skeleton *skel, const SampleSetSettings &settings, int bone_id);
 
     int get_all_bone_samples(const Skeleton &skel, int bone_id, InputSample &out) const;
 

@@ -18,21 +18,20 @@
  */
 
 #include "sample_set.hpp"
-#include "animesh.hpp"
 #include "conversions.hpp"
 #include "skeleton.hpp"
 #include "animesh_hrbf_heuristic.hpp"
 
 #include <sstream>
 
-void SampleSet::SampleSet::choose_hrbf_samples(const Animesh &animesh, const SampleSetSettings &settings, int bone_id)
+void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton *skel, const SampleSetSettings &settings, int bone_id)
 {
-    if(!animesh.get_skel()->is_bone(bone_id))
+    if(!skel->is_bone(bone_id))
         return;
 
     if(settings.mode == SampleSetSettings::Poisson)
     {
-        Adhoc_sampling heur(animesh);
+        Adhoc_sampling heur(mesh, skel);
         heur._bone_id = bone_id;
         heur._jmax = settings.jmax;
         heur._pmax = settings.pmax;
@@ -48,7 +47,7 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Animesh &animesh, const Sam
     }
     else
     {
-        Poisson_disk_sampling heur(animesh);
+        Poisson_disk_sampling heur(mesh, skel);
         heur._bone_id = bone_id;
         heur._jmax = settings.jmax;
         heur._pmax = settings.pmax;
@@ -64,13 +63,13 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Animesh &animesh, const Sam
     }
 
     if(settings.jcap)
-        compute_jcaps(*animesh.get_skel(), settings, bone_id, _samples[bone_id]);
+        compute_jcaps(*skel, settings, bone_id, _samples[bone_id]);
 
     if(settings.pcap)
     {
-        int parent = animesh.get_skel()->parent( bone_id );
+        int parent = skel->parent( bone_id );
         bool use_parent_dir = false;
-        compute_pcaps(*animesh.get_skel(), settings, bone_id, use_parent_dir, _samples[bone_id]);
+        compute_pcaps(*skel, settings, bone_id, use_parent_dir, _samples[bone_id]);
     }
 }
 
