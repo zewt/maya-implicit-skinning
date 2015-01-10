@@ -158,8 +158,7 @@ private:
 
     /// Compute the nearest cluster of bones for each vertex. We use euclidean
     /// distance to determine the nearest bone
-    void clusterize_euclidean(Cuda_utils::HA_int& h_nearest_bones,
-                              Cuda_utils::HA_int& nb_vert_by_bone);
+    void clusterize_euclidean(Cuda_utils::HA_int& h_nearest_bones);
 
     /// Compute a radius for each bone, given the distance of each vertex to
     /// their closest bone
@@ -389,9 +388,6 @@ public: // XXX
 
     /// h_input_vertices[nearest][ith_vert] = vert_id_in_mesh
     std::vector< std::vector<int> > h_verts_id_per_bone;
-
-    /// nb_vertices_by_bones[bone_idx] = nb_vertices
-    Cuda_utils::Host::Array<int>    nb_vertices_by_bones;
 
     // END CLUSTER -------------------------------------------------------------
 

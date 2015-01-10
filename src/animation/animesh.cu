@@ -81,7 +81,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
     h_vertices_nearest_bones(_mesh->get_nb_vertices()),
-    nb_vertices_by_bones(_skel->get_bones().size()),
     vmap_old_new(_mesh->get_nb_vertices()),
     vmap_new_old(_mesh->get_nb_vertices()),
     d_rear_verts(_mesh->get_nb_vertices()),
@@ -336,13 +335,10 @@ void Animesh::compute_mvc()
     d_edge_mvc.    copy_from( edge_mvc     );
 }
 
-void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
-                                   HA_int& nb_vert_by_bone)
+void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones)
 {
     const int nb_bones = _skel->get_bones().size();
-    assert(nb_vert_by_bone.size() == nb_bones);
-    for(int i = 0; i<nb_bones; i++)
-        nb_vert_by_bone[i] = 0;
+    std::vector<int> nb_vert_by_bone(nb_bones);
 
     int n = _mesh->get_nb_vertices();
     for(int i = 0; i < n ; i++)
@@ -378,7 +374,7 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
 
 void Animesh::clusterize()
 {
-    clusterize_euclidean(h_vertices_nearest_bones, nb_vertices_by_bones);
+    clusterize_euclidean(h_vertices_nearest_bones);
 
     init_verts_per_bone();
 }
