@@ -44,7 +44,7 @@ float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2);
 
 // -----------------------------------------------------------------------------
 
-Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
+Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
     _mesh(m_), _skel(s_),
     mesh_smoothing(EAnimesh::LAPLACIAN),
     do_smooth_mesh(false),

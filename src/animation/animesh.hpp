@@ -61,7 +61,7 @@ public:
     /// @warning The input mesh 'm_' vertices memory layout might be changed
     /// for optimization. Yet we garantee the layout is same in Animesh as
     /// in Mesh
-    Animesh(const Mesh *m_, Skeleton* s_);
+    Animesh(const Mesh *m_, const Skeleton *s_);
 
     ~Animesh();
 
@@ -116,8 +116,6 @@ public:
 
     const Mesh*     get_mesh() const { return _mesh; }
     const Skeleton* get_skel() const { return _skel; }
-
-    Skeleton* get_skel(){ return _skel; }
 
 private:
     // -------------------------------------------------------------------------
@@ -222,7 +220,7 @@ private:
     /// d_input_vertices. The mesh buffer objects attributes defines the animated
     /// mesh
     const Mesh *_mesh;
-    Skeleton*  _skel;
+    const Skeleton *_skel;
 
     EAnimesh::Smooth_type mesh_smoothing;
 
