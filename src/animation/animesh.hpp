@@ -122,10 +122,6 @@ private:
     /// @name Tools
     // -------------------------------------------------------------------------
 
-    /// Compute a radius for each bone, given the distance of each vertex to
-    /// their closest bone
-    void set_default_bones_radius();
-
     /// Tangential smoothing on GPU
     /// @param d_vertices vertices to be processed in place
     /// @param d_vertices_prealloc allocated buffer of vertices as so the method

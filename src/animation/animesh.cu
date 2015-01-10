@@ -38,12 +38,6 @@ using namespace Cuda_utils;
 
 namespace { __device__ void fix_debug() { } }
 
-// -----------------------------------------------------------------------------
-
-float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2);
-
-// -----------------------------------------------------------------------------
-
 Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
     _mesh(m_), _skel(s_),
     mesh_smoothing(EAnimesh::LAPLACIAN),
@@ -160,12 +154,7 @@ void Animesh::copy_vertices(const std::vector<Vec3_cu> &vertices)
     Host::Array<Point_cu > input_vertices(nb_vert);
 
     for(int i = 0; i < nb_vert; i++)
-    {
-        Point_cu  pos = Convs::to_point(vertices[i]);
-
-        input_vertices[i] = pos;
-//        flip_prop     [i] = false; // XXX ?
-    }
+        input_vertices[i] = Convs::to_point(vertices[i]);
 
     d_input_vertices.copy_from(input_vertices);
 }
@@ -287,56 +276,6 @@ void Animesh::compute_mvc()
     }
     d_edge_lengths.copy_from( edge_lengths );
     d_edge_mvc.    copy_from( edge_mvc     );
-}
-
-void Animesh::set_default_bones_radius()
-{
-}
-
-// -----------------------------------------------------------------------------
-
-float distsqToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2)
-{
-    Vec3_cu dir   = p2 - p1;
-    Vec3_cu difp2 = p2 - v;
-
-    if(difp2.dot(dir) < 0.f) return difp2.norm_squared();
-
-    Vec3_cu difp1 = v - p1;
-    float dot = difp1.dot(dir);
-
-    if(dot <= 0.f) return difp1.norm_squared();
-
-    return fmax(0.f, difp1.norm_squared() - dot*dot / dir.norm_squared());
-}
-
-// -----------------------------------------------------------------------------
-
-
-Point_cu projToSeg(const Point_cu& v, const Point_cu& p1, const Point_cu& p2)
-{
-
-  Vec3_cu dir = p2 - p1;
-
-  if( (p2 - v).dot(dir) < 0.f) return p2;
-
-  float dot = (v - p1).dot(dir);
-
-  if(dot <= 0.f) return p1;
-
-  return p1 + dir * (dot / dir.norm_squared());
-}
-
-// -----------------------------------------------------------------------------
-
-bool vectorInCone(const Vec3_cu& v, const std::vector<Vec3_cu>& ns)
-{
-    int i;
-    Vec3_cu avg = Vec3_cu(0.f, 0.f, 0.f);
-    for(i = 0; i < (int)ns.size(); ++i)
-        avg += ns[i];
-
-    return v.normalized().dot(avg.normalized()) > 0.5f;
 }
 
 void Animesh::init_smooth_factors(Cuda_utils::DA_float& d_smooth_factors)
