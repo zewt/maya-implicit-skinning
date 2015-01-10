@@ -24,7 +24,7 @@
 namespace Skeleton_env {
 // =============================================================================
 
-Tree_cu::Tree_cu(Tree* tree) :
+Tree_cu::Tree_cu(const Tree *tree) :
     _tree( tree ),
     _blending_list(*this)
 {

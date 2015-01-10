@@ -50,6 +50,7 @@ struct Tree {
     const std::vector<Bone::Id>& sons(Bone::Id hid) const { return _sons[hid]; }
 
     Joint_data& data(Bone::Id hid){ return _datas[hid]; }
+    const Joint_data& data(Bone::Id hid) const { return _datas[hid]; }
 
     const Bone* bone(Bone::Id hid) const { return _bones[hid]; }
 

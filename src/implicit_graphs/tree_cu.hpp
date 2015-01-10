@@ -32,7 +32,7 @@ namespace Skeleton_env {
 
 /// GPU representation of the tree
 struct Tree_cu {
-    Tree_cu(Tree* tree);
+    Tree_cu(const Tree *tree);
 
     Cluster_id bone_to_cluster( DBone_id id) const {
         return _bone_to_cluster[id.id()];
@@ -94,7 +94,7 @@ public:
     };
 
     /// Tree we're building the GPU representation from
-    Tree* _tree; // TODO: <- should be const no ?
+    const Tree *_tree;
 
     BList _blending_list;
 
