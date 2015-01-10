@@ -72,8 +72,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_input_tri(_mesh->get_nb_tri()*3),
     d_edge_list(_mesh->get_nb_edges()),
     d_edge_list_offsets(2 * _mesh->get_nb_vertices()),
-    d_joints(),
-    d_jpv(2 * _mesh->get_nb_vertices()),
     d_base_potential(_mesh->get_nb_vertices()),
     d_base_gradient(_mesh->get_nb_vertices()),
     d_piv(_mesh->get_nb_faces()),
@@ -122,7 +120,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     set_default_bones_radius();
 
     init_smooth_factors(d_input_smooth_factors);
-    init_rigid_ssd_weights();
     init_vert_to_fit();
 
     compute_mvc();
@@ -411,27 +408,6 @@ bool vectorInCone(const Vec3_cu& v, const std::vector<Vec3_cu>& ns)
 
     return v.normalized().dot(avg.normalized()) > 0.5f;
 }
-
-void Animesh::init_rigid_ssd_weights()
-{
-    int nb_vert = _mesh->get_nb_vertices();
-
-    std::vector<int>   joints (nb_vert);
-    Host::Array<int>   jpv    (2u*nb_vert);
-
-    for(int i = 0; i < nb_vert; ++i)
-    {
-        joints [i] = vertToBoneInfo.h_vertices_nearest_bones[i];
-
-        jpv[i*2    ] = i; // starting index
-        jpv[i*2 + 1] = 1; // number of bones influencing the vertex
-    }
-
-    d_jpv.copy_from(jpv);
-    d_joints.malloc(nb_vert);
-    d_joints.copy_from(joints);
-}
-
 
 void Animesh::init_smooth_factors(Cuda_utils::DA_float& d_smooth_factors)
 {

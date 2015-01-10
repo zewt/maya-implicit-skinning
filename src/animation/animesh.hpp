@@ -87,15 +87,6 @@ public:
                              const std::vector<Vec3_cu>& n_nodes);
 
     // -------------------------------------------------------------------------
-    /// @name SSD Related
-    // -------------------------------------------------------------------------
-
-    /// Set the weight of the ith vertex associated to the if joint,
-    /// the value is clamped between [0, 1], and the value associated to the
-    /// other joints are normalized.
-    void init_rigid_ssd_weights();
-
-    // -------------------------------------------------------------------------
     /// @name Getter & Setters
     // -------------------------------------------------------------------------
 
@@ -344,11 +335,6 @@ private:
     // -------------------------------------------------------------------------
     /// @name SSD Weights
     // -------------------------------------------------------------------------
-
-    /// List of joint numbers associated to a vertex. You must use d_jpv to
-    /// access the list of joints associated to the ith vertex
-    /// @see d_jpv
-    Cuda_utils::Device::Array<int> d_joints;
 
     /// Table of indirection which associates for the ith vertex its list of
     /// weights and joint IDs.
