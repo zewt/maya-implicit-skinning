@@ -173,20 +173,6 @@ MStatus ImplicitSkinDeformer::initialize()
     cmpAttr.addChild(hrbfRadiusAttr);
     addAttribute(influenceJointsAttr);
 
-    sampleSetUpdateAttr = numAttr.create("sampleSetUpdate", "sampleSetUpdate", MFnNumericData::Type::kInt, 0, &status);
-    numAttr.setStorable(false);
-    numAttr.setHidden(true);
-    addAttribute(sampleSetUpdateAttr);
-
-    dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-    dep.add(ImplicitSkinDeformer::samplePointAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-    dep.add(ImplicitSkinDeformer::sampleNormalAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-    dep.add(ImplicitSkinDeformer::hrbfRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-
-    // Reloading the mesh recreates animesh, which resets bones, so if we reload the whole mesh we need to
-    // reload the SampleSet as well.
-    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-
     meshUpdateAttr = numAttr.create("meshUpdate", "meshUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
     numAttr.setHidden(true);
@@ -201,6 +187,21 @@ MStatus ImplicitSkinDeformer::initialize()
 
     dep.add(ImplicitSkinDeformer::parentJointAttr, ImplicitSkinDeformer::skeletonUpdateAttr);
     dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::skeletonUpdateAttr);
+
+    sampleSetUpdateAttr = numAttr.create("sampleSetUpdate", "sampleSetUpdate", MFnNumericData::Type::kInt, 0, &status);
+    numAttr.setStorable(false);
+    numAttr.setHidden(true);
+    addAttribute(sampleSetUpdateAttr);
+
+    dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::samplePointAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::sampleNormalAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::hrbfRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+
+    // Reloading the mesh recreates animesh, which resets bones, so if we reload the whole mesh we need to
+    // reload the SampleSet as well.
+    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
 
     basePotentialUpdateAttr = numAttr.create("basePotentialUpdate", "basePotentialUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
