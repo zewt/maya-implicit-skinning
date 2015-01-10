@@ -23,8 +23,7 @@ namespace Skeleton_env {
 // =============================================================================
 
 Tree_cu::Tree_cu(const Tree *tree) :
-    _tree( tree ),
-    _blending_list(*this)
+    _tree( tree )
 {
 
     _clusters.       reserve( tree->bone_size() );
@@ -131,45 +130,45 @@ void Tree_cu::compute_blending_list()
 {
     _blending_list.clear();
     for(int cid = 0; cid < (int)_clusters.size(); ++cid)
-        _blending_list.add_cluster( Cluster_id(0) + cid );
+        add_cluster(Cluster_id(cid), _blending_list);
 }
 
-void Tree_cu::BList::clear()
+void Tree_cu::clear_blending_list()
 {
-    _list.clear();
+    _blending_list.clear();
 }
 
 // -----------------------------------------------------------------------------
 
-void Tree_cu::BList::  add_cluster(Cluster_id cid)
+void Tree_cu::add_cluster(Cluster_id cid, std::vector<Cluster> &out) const
 {
-    Cluster cl = _tree_cu._clusters[cid.id()];
+    Cluster cl = _clusters[cid.id()];
     DBone_id d_bone_id = cl.first_bone;
-    Bone::Id h_bone_id = _tree_cu._bone_aranged[d_bone_id.id()]->get_bone_id();
-    Bone::Id h_parent  = _tree_cu._tree->parent( h_bone_id );
+    Bone::Id h_bone_id = _bone_aranged[d_bone_id.id()]->get_bone_id();
+    Bone::Id h_parent  = _tree->parent( h_bone_id );
 
     //////////////////////
     // Blend with pairs //
     //////////////////////
-    if( h_parent < 0 || _tree_cu._tree->data( h_parent )._blend_type == EJoint::MAX)
+    if( h_parent < 0 || _tree->data( h_parent )._blend_type == EJoint::MAX)
     {
-        cl.datas = _tree_cu._tree->data(h_parent < 0 ? h_bone_id : h_parent);
-        _list.push_back( cl );
+        cl.datas = _tree->data(h_parent < 0 ? h_bone_id : h_parent);
+        out.push_back( cl );
 
         Cluster empty;
         empty.nb_bone = 0;
-        _list.push_back( empty );
+        out.push_back( empty );
     }
     else
     {
-        DBone_id d_parent = _tree_cu._parents_aranged[ d_bone_id.id() ];
-        Cluster_id cid_parent = _tree_cu._bone_to_cluster[ d_parent.id() ];
-        Cluster c0 = _tree_cu._clusters[ cid.id()        ];
-        Cluster c1 = _tree_cu._clusters[ cid_parent.id() ];
-        c0.datas = _tree_cu._tree->data(h_parent);
-        c1.datas = _tree_cu._tree->data(h_parent);
-        _list.push_front( c0 );
-        _list.push_front( c1 );
+        DBone_id d_parent = _parents_aranged[ d_bone_id.id() ];
+        Cluster_id cid_parent = _bone_to_cluster[ d_parent.id() ];
+        Cluster c0 = _clusters[ cid.id()        ];
+        Cluster c1 = _clusters[ cid_parent.id() ];
+        c0.datas = _tree->data(h_parent);
+        c1.datas = _tree->data(h_parent);
+        out.push_back( c0 );
+        out.push_back( c1 );
     }
 }
 

@@ -60,36 +60,23 @@ public:
         return _bone_aranged[ idx_bone_aranged ]->get_bone_id();
     }
 
+    /// Add a cluster to the blending list.
+    void add_cluster(Cluster_id cid, std::vector<Cluster> &out) const;
 
-    struct BList {
+    /// Erase every elements from the blending list
+    void clear_blending_list();
 
-        BList(const Tree_cu& tree_cu) :
-            _tree_cu( tree_cu )
-        { }
-
-        /// Add a cluster to the blending list.
-        void add_cluster(Cluster_id cid);
-
-        /// Erase every elements from the blending list
-        void clear();
-
-        const Tree_cu& _tree_cu;
-
-        /// list of Clusters to blend (GPU friendly memory layout)
-        /// First part of the list is composed of pairs of cluster to be blended
-        /// with a specific blending operator (there is 'nb_pairs' pairs)
-        /// Last part of the list is composed with 'nb_singletons' singletons.
-        /// Pairs and singletons are to be blended altogether with the max
-        /// operator:
-        /// max( pair_0, ..., pair_n, singleton_0, ..., singleton_n )
-        /// _h_blending_list.size() == nb_pairs*2 + nb_singletons
-        std::list<Cluster> _list;
-    };
+    /// list of Clusters to blend (GPU friendly memory layout)
+    /// First part of the list is composed of pairs of cluster to be blended
+    /// with a specific blending operator (there is 'nb_pairs' pairs)
+    /// Last part of the list is composed with 'nb_singletons' singletons.
+    /// Pairs and singletons are to be blended altogether with the max
+    /// operator:
+    /// max( pair_0, ..., pair_n )
+    std::vector<Cluster> _blending_list;
 
     /// Tree we're building the GPU representation from
     const Tree *_tree;
-
-    BList _blending_list;
 
     /// list of clusters _h_clusters[Cluster_id] = Cluster
     /// A cluster of bone can be blended with the operator of your choice

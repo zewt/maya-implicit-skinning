@@ -176,7 +176,7 @@ void unbind()
 /// @param blist : described the sub-skeleton in the
 void cell_to_blending_list(Skel_id sid,
                            int cell_id,
-                           std::list<Cluster>& blist)
+                           std::vector<Cluster>& blist)
 {
     // Note: if in each cell the list of bones is order from root to leaf
     // then blending list will be also ordered root to leaf
@@ -185,8 +185,7 @@ void cell_to_blending_list(Skel_id sid,
     const std::list<Bone::Id> &bones_in_cell = g->_grid_cells[cell_id];
 
     std::vector<bool> cluster_done(tree->_clusters.size(), false);
-    Tree_cu::BList blending_list( *(h_envs[sid]->h_tree_cu_instance) );
-    
+
     for(std::list<Bone::Id>::const_iterator bones_it = bones_in_cell.begin();
         bones_it != bones_in_cell.end(); ++bones_it)
     {
@@ -195,18 +194,15 @@ void cell_to_blending_list(Skel_id sid,
         Cluster_id clus_id = tree->bone_to_cluster( dbone );
         if( cluster_done[clus_id.id()] ) continue;
 
-        blending_list.add_cluster( clus_id );
+        tree->add_cluster( clus_id, blist );
 
         cluster_done[clus_id.id()] = true;
     }
 
     // HACK: this should be done outside this function when convberting cluster
     // to cluster_cu
-    if(blending_list._list.size() > 0){
-        blending_list._list.begin()->datas._blend_type = (EJoint::Joint_t)(blending_list._list.size()/2);
-    }
-
-    blist.swap( blending_list._list );
+    if(blist.size() > 0)
+        blist[0].datas._blend_type = (EJoint::Joint_t)(tree->_blending_list.size()/2);
 }
 
 // -----------------------------------------------------------------------------
@@ -238,7 +234,8 @@ static void update_device_grid()
         {
             int cell_idx = *it;
 
-            std::list<Cluster> blist;
+            // XXX: test why we hang in update_base_potential if blist is empty
+            std::vector<Cluster> blist;
             cell_to_blending_list(grid_id, cell_idx, blist );
 
             hd_grid[grid_offset + cell_idx] = offset;
@@ -250,7 +247,7 @@ static void update_device_grid()
                 hd_grid_data.realloc(offset + blist.size());
             }
 
-            std::list<Cluster>::const_iterator it = blist.begin();
+            std::vector<Cluster>::const_iterator it = blist.begin();
             for(unsigned l = 0; it != blist.end(); ++it, ++l)
             {
                 // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
@@ -345,7 +342,7 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         delete h_envs[i]->h_tree_cu_instance;
         h_envs[i]->h_tree_cu_instance = new Tree_cu( h_envs[i]->h_tree );
         nb_bones_all += h_envs[i]->h_tree->bone_size();
-        s_blend_list += h_envs[i]->h_tree_cu_instance->_blending_list._list.size();
+        s_blend_list += h_envs[i]->h_tree_cu_instance->_blending_list.size();
     }
 
     // Now we can allocate memory
@@ -382,8 +379,8 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         }
 
         // Concatenate blending list and update bone index accordingly
-        std::list<Cluster>::const_iterator it = tree_cu->_blending_list._list.begin();
-        for(int i = 0; it != tree_cu->_blending_list._list.end(); ++it, ++i)
+        std::vector<Cluster>::const_iterator it = tree_cu->_blending_list.begin();
+        for(int i = 0; it != tree_cu->_blending_list.end(); ++it, ++i)
         {
             Cluster c = *it;
             c.first_bone += off_bone;
@@ -393,12 +390,12 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
             hd_cluster_data [off_blist + i]._bulge_strength = c.datas._bulge_strength;
         }
         // We store nb_pairs in the first element of the list
-        assert(tree_cu->_blending_list._list.size() > 0); // unless we have no elements
-        hd_blending_list[off_blist].nb_pairs      = tree_cu->_blending_list._list.size()/2;
+        assert(tree_cu->_blending_list.size() > 0); // unless we have no elements
+        hd_blending_list[off_blist].nb_pairs      = tree_cu->_blending_list.size()/2;
 
         hd_offset[t].list_data = off_blist;
 
-        off_blist += tree_cu->_blending_list._list.size();
+        off_blist += tree_cu->_blending_list.size();
         off_bone  += tree_cu->_bone_aranged.size();
     }
 
