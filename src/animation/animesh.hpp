@@ -365,15 +365,6 @@ private:
     /// Vertices behind a joint when it flex
     Cuda_utils::Device::Array<bool> d_rear_verts;
 
-    /// (joint idx in host mem)
-    Cuda_utils::HA_Vec3_cu h_half_angles;
-    Cuda_utils::DA_Vec3_cu d_half_angles;
-
-    /// orthogonal vector at each joint considering the adjacents bones
-    /// (joint idx in host mem)
-    Cuda_utils::HA_Vec3_cu h_orthos;
-    Cuda_utils::DA_Vec3_cu d_orthos;
-
     // -------------------------------------------------------------------------
     /// @name Pre allocated arrays to store intermediate results of the mesh
     // -------------------------------------------------------------------------

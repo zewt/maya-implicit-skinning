@@ -96,9 +96,6 @@ public:
     // same number of vertices.
     int get_nb_vertices() const;
 
-    Skeleton *get_skel();
-    const Skeleton *get_skel() const;
-
     //--------------------------------------------------------------------------
     /// @name File import/export
     //--------------------------------------------------------------------------

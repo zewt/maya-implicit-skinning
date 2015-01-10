@@ -264,9 +264,6 @@ int Animated_mesh_ctrl::get_nb_vertices() const
     return _animesh->get_nb_vertices();
 }
 
-Skeleton *Animated_mesh_ctrl::get_skel() { return _animesh->get_skel(); }
-const Skeleton *Animated_mesh_ctrl::get_skel() const { return _animesh->get_skel(); }
-
 // -----------------------------------------------------------------------------
 
 // Combine the samples in _samples, and send them to the Animesh.
