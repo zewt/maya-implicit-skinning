@@ -281,16 +281,10 @@ private:
     /// Colors associated to the enum field EAnimesh::Vert_state
     Cuda_utils::Device::Array<float4> d_vertices_states_color;
 
-    /// Initial normals
-//    Cuda_utils::Device::Array<Vec3_cu> d_input_normals;
-
     /// Animated vertices in their final position.
     Cuda_utils::Device::Array<Point_cu>  d_output_vertices;
     /// final normals
     Cuda_utils::Device::Array<Vec3_cu> d_output_normals;
-
-    /// Points of the mesh animated by ssd
-    Cuda_utils::Device::Array<Point_cu>  d_ssd_vertices;
 
     /// Gradient of the implicit surface at each vertices when animated
     Cuda_utils::Device::Array<Vec3_cu> d_gradient;
