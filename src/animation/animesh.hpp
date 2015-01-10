@@ -89,9 +89,7 @@ public:
     /// @param type : choose between to clusterisation algorithm either with
     /// a fast euclidean distance or a (slow) geodesic inside the volume of
     /// the mesh
-    /// @param n_voxels : if using geodesic distance this specify the number
-    /// of voxels used for the larger side of the mesh's bb
-    void clusterize(int n_voxels = 25);
+    void clusterize();
 
     // -------------------------------------------------------------------------
     /// @name SSD Related

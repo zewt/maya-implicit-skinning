@@ -56,8 +56,6 @@ public:
     void set_auto_precompute(bool s){ _auto_precompute = s; }
     void update_base_potential();
 
-    void update_clusters(int nb_voxels = 25);
-
     int get_nearest_bone(int vert_idx);
 
     //--------------------------------------------------------------------------

@@ -75,13 +75,6 @@ void Animated_mesh_ctrl::update_base_potential()
 
 // -----------------------------------------------------------------------------
 
-void Animated_mesh_ctrl::update_clusters(int nb_voxels)
-{
-    _animesh->clusterize(nb_voxels);
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::deform_mesh()
 {
     _animesh->transform_vertices();

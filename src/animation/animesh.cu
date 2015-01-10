@@ -378,7 +378,7 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
 
 // -----------------------------------------------------------------------------
 
-void Animesh::clusterize(int n_voxels)
+void Animesh::clusterize()
 {
     clusterize_euclidean(h_vertices_nearest_bones, nb_vertices_by_bones);
 
