@@ -47,6 +47,7 @@ public:
     MStatus load_visualization_geom(MDataBlock &dataBlock);
 
     MStatus sample_all_joints();
+    MStatus get_default_hrbf_radius(std::vector<float> &hrbf_radius);
 
     static ImplicitSkinDeformer *deformerFromPlug(MObject node, MStatus *status);
 
@@ -67,6 +68,7 @@ public:
 
     // The world matrix of each influence.  This is usually linked to the worldMatrix attribute of the joint.
     static MObject influenceMatrixAttr;
+    static MObject hrbfRadiusAttr;
     static MObject samplePointAttr;
     static MObject sampleNormalAttr;
 

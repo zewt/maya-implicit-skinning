@@ -110,8 +110,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     // Fill the attributes in device memory
     copy_mesh_data(*_mesh);
 
-    set_default_bones_radius();
-
     init_smooth_factors(d_input_smooth_factors);
     init_vert_to_fit();
 
@@ -294,28 +292,6 @@ void Animesh::compute_mvc()
 
 void Animesh::set_default_bones_radius()
 {
-    // XXX: This should be set on the skeleton before we receive it.
-    VertToBoneInfo vertToBoneInfo(_skel, _mesh);
-
-    const int nb_verts  = _mesh->get_nb_vertices();
-    const int nb_joints = _skel->nb_joints();
-
-    std::vector<float> farthest_rad(nb_joints, 0);
-    for(int i = 0; i < nb_verts; i++)
-    {
-        const int bone_id = vertToBoneInfo.h_vertices_nearest_bones[i];
-        const Point_cu vert = _mesh -> get_vertex(i).to_point();
-        float dist = _skel->get_bone(bone_id)->dist_to( vert );
-
-        farthest_rad[bone_id] = std::max(farthest_rad[bone_id], dist);
-    }
-
-    for(int i = 0; i < nb_joints; i++)
-    {
-        // HRBF compact support radius is farthest vertex distance
-        const float radius = farthest_rad[i] == 0.f ? 1.f : farthest_rad[i];
-        _skel->get_bone(i)->set_hrbf_radius(radius);
-    }
 }
 
 // -----------------------------------------------------------------------------

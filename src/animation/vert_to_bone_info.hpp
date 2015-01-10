@@ -45,6 +45,8 @@ struct VertToBoneInfo
     // in SampleSet.
     void get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &nearest_rad) const;
 
+    void get_default_hrbf_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &out) const;
+
 private:
     static void clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, std::vector<int> &vertices_nearest_bones);
 };

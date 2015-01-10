@@ -112,3 +112,24 @@ void VertToBoneInfo::get_default_junction_radius(const Skeleton *skel, const Mes
             nearest_rad[i] = 1.f;
     }
 }
+
+void VertToBoneInfo::get_default_hrbf_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &out) const
+{
+    const int nb_verts  = mesh->get_nb_vertices();
+    const int nb_joints = skel->nb_joints();
+    out.resize(nb_joints, 0);
+
+    std::vector<float> farthest_rad(nb_joints, 0);
+    for(int i = 0; i < nb_verts; i++)
+    {
+        const int bone_id = h_vertices_nearest_bones[i];
+        const Point_cu vert = mesh -> get_vertex(i).to_point();
+        float dist = skel->get_bone(bone_id)->dist_to( vert );
+
+        farthest_rad[bone_id] = std::max(farthest_rad[bone_id], dist);
+    }
+
+    // HRBF compact support radius is farthest vertex distance
+    for(int i = 0; i < nb_joints; i++)
+        out[i] = farthest_rad[i] == 0.f ? 1.f : farthest_rad[i];
+}

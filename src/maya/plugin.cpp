@@ -85,6 +85,7 @@ MObject ImplicitSkinDeformer::sampleSetUpdateAttr;
 MObject ImplicitSkinDeformer::skeletonUpdateAttr;
 MObject ImplicitSkinDeformer::meshUpdateAttr;
 MObject ImplicitSkinDeformer::basePotentialUpdateAttr;
+MObject ImplicitSkinDeformer::hrbfRadiusAttr;
 MObject ImplicitSkinDeformer::samplePointAttr;
 MObject ImplicitSkinDeformer::sampleNormalAttr;
 MObject ImplicitSkinDeformer::visualizationGeomUpdateAttr;
@@ -158,6 +159,9 @@ MStatus ImplicitSkinDeformer::initialize()
     numAttr.setArray(true);
     addAttribute(sampleNormalAttr);
 
+    hrbfRadiusAttr = numAttr.create("hrbfRadius", "hrbfRadius", MFnNumericData::Type::kFloat, 0, &status);
+    addAttribute(hrbfRadiusAttr);
+    
     // The main joint array:
     influenceJointsAttr = cmpAttr.create("joints", "jt", &status);
     cmpAttr.setArray(true);
@@ -166,6 +170,7 @@ MStatus ImplicitSkinDeformer::initialize()
     cmpAttr.addChild(influenceMatrixAttr);
     cmpAttr.addChild(samplePointAttr);
     cmpAttr.addChild(sampleNormalAttr);
+    cmpAttr.addChild(hrbfRadiusAttr);
     addAttribute(influenceJointsAttr);
 
     sampleSetUpdateAttr = numAttr.create("sampleSetUpdate", "sampleSetUpdate", MFnNumericData::Type::kInt, 0, &status);
@@ -176,6 +181,7 @@ MStatus ImplicitSkinDeformer::initialize()
     dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
     dep.add(ImplicitSkinDeformer::samplePointAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
     dep.add(ImplicitSkinDeformer::sampleNormalAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
+    dep.add(ImplicitSkinDeformer::hrbfRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
 
     // Reloading the mesh recreates animesh, which resets bones, so if we reload the whole mesh we need to
     // reload the SampleSet as well.
@@ -505,6 +511,10 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     if(animMesh.get() == NULL)
         return MStatus::kSuccess;
 
+    // Update Skeleton.
+    dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
     MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
 
@@ -533,6 +543,15 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
 
         MArrayDataHandle sampleNormalHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::sampleNormalAttr);
         if(status != MS::kSuccess) return status;
+
+        // Load the HRBF radius.  This isn't really part of the sample set.
+        {
+            MDataHandle hrbfRadiusHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::hrbfRadiusAttr);
+            if(status != MS::kSuccess) return status;
+            float hrbfRadius = hrbfRadiusHandle.asFloat();
+            Bone *bone = skeleton.skel->get_bone(i);
+            bone->set_hrbf_radius(hrbfRadius);
+        }
 
         if(samplePointHandle.elementCount() != sampleNormalHandle.elementCount())
             return MStatus::kFailure;
@@ -713,6 +732,23 @@ MStatus ImplicitSkinDeformer::load_visualization_geom(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
     fnMeshHandle.set(mesh);
 
+    return MStatus::kSuccess;
+}
+
+MStatus ImplicitSkinDeformer::get_default_hrbf_radius(std::vector<float> &hrbf_radius)
+{
+    MStatus status = MStatus::kSuccess;
+
+    // If the mesh or skeleton aren't up to date, update them.
+    MDataBlock dataBlock = forceCache();
+    dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    VertToBoneInfo vertToBoneInfo(skeleton.skel, mesh.get());
+    vertToBoneInfo.get_default_hrbf_radius(skeleton.skel, mesh.get(), hrbf_radius);
     return MStatus::kSuccess;
 }
 
@@ -964,6 +1000,25 @@ MStatus ImplicitCommand::init(MString nodeName)
         status = dgModifier.connect(skinInputGeometryPlug, unskinnedGeomPlug);
         if(status != MS::kSuccess) return status;
         dgModifier.doIt();
+    }
+
+    // Store the default HRBF radius for the bones we set up.
+    {
+        std::vector<float> hrbf_radius;
+        status = deformer->get_default_hrbf_radius(hrbf_radius);
+        if(status != MS::kSuccess) return status;
+
+        for(int i = 0; i < (int) hrbf_radius.size(); ++i)
+        {
+            MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i, &status);
+            if(status != MS::kSuccess) return status;
+
+            MPlug item = jointPlug.child(ImplicitSkinDeformer::hrbfRadiusAttr, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = item.setValue(hrbf_radius[i]);
+            if(status != MS::kSuccess) return status;
+        }
     }
 
     return MStatus::kSuccess;
