@@ -143,18 +143,12 @@ void fill_grid_with_fngf(PrecomputedInfo &info,
                          int grids,
                          int blocks)
 {
-    Skeleton_env::bind();
-    HRBF_env::bind();
-
     cudaBindSurfaceToArray(fill_surface, info.d_grid->getCudaArray());
     CUDA_CHECK_ERRORS();
 
     fill_grid_kernel<<<grids, blocks>>>
     (info.d_grid->size(), device_bone_id, steps, grid_res, org, transfo);
     CUDA_CHECK_ERRORS();
-
-    Skeleton_env::unbind();
-    HRBF_env::unbind();
 }
 
 static void fill_grid(PrecomputedInfo &info,
