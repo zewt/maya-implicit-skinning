@@ -30,6 +30,7 @@
 #include "transfo.hpp"
 #include "bone_type.hpp"
 #include "sample_set.hpp"
+#include "bone.hpp"
 
 // Forward definitions ---------------------------------------------------------
 struct Animesh;

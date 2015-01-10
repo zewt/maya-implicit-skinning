@@ -22,6 +22,7 @@
 #include "globals.hpp"
 #include "std_utils.hpp"
 #include "skeleton.hpp"
+#include "timer.hpp"
 
 // -----------------------------------------------------------------------------
 namespace { __device__ void fix_debug() { } }
@@ -313,7 +314,20 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 {
     SampleSet::InputSample sample_list;
     bone_id = _samples.get_all_bone_samples(*_animesh->get_skel(), bone_id, sample_list);
-    _animesh->update_bone_samples(bone_id, sample_list.nodes, sample_list.n_nodes);
+
+    // Solve/compute compute HRBF weights
+    Timer t;
+    t.start();
+    Skeleton *skel = _animesh->get_skel();
+    Bone *bone = skel->get_bone(bone_id);
+
+    bone->set_enabled(true);
+    bone->discard_precompute();
+    bone->get_hrbf().init_coeffs(sample_list.nodes, sample_list.n_nodes);
+    printf("update_bone_samples: Solved %i nodes in %f seconds\n", sample_list.nodes.size(), t.stop());
+
+    skel->update_bones_pose();
+
     if(_auto_precompute) precompute_all_bones();
 }
 

@@ -76,16 +76,6 @@ public:
     void transform_vertices();
 
     // -------------------------------------------------------------------------
-    /// @name HRBF
-    // -------------------------------------------------------------------------
-
-    /// replace the ith bone samples with the samples in 'nodes' and 'n_nodes'
-    /// This converts the bone to an Hrbf_bone
-    void update_bone_samples(Bone::Id id_bone,
-                             const std::vector<Vec3_cu>& nodes,
-                             const std::vector<Vec3_cu>& n_nodes);
-
-    // -------------------------------------------------------------------------
     /// @name Getter & Setters
     // -------------------------------------------------------------------------
 

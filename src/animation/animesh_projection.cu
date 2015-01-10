@@ -56,25 +56,6 @@ void Animesh::update_base_potential()
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
 }
 
-// -----------------------------------------------------------------------------
-
-void Animesh::update_bone_samples(Bone::Id bone_id,
-                                  const std::vector<Vec3_cu>& nodes,
-                                  const std::vector<Vec3_cu>& n_nodes)
-{
-    // Solve/compute compute HRBF weights
-    Timer t;
-    t.start();
-    Bone *bone = _skel->get_bone(bone_id);
-
-    bone->set_enabled(true);
-    bone->discard_precompute();
-    bone->get_hrbf().init_coeffs(nodes, n_nodes);
-    printf("update_bone_samples: Solved %i nodes in %f seconds\n", nodes.size(), t.stop());
-
-    _skel->update_bones_pose();
-}
-
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)
 {
     if(_mesh->get_nb_faces() == 0)
