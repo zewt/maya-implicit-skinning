@@ -245,10 +245,6 @@ void Animated_mesh_ctrl::set_smoothing_weights_diffusion_iter(int nb_iter){
     _animesh->set_smoothing_weights_diffusion_iter(nb_iter);
 }
 
-int Animated_mesh_ctrl::get_nearest_bone(int vert_idx){
-    return _animesh->get_nearest_bone(vert_idx);
-}
-
 void Animated_mesh_ctrl::get_anim_vertices_aifo(std::vector<Point_cu>& out) const
 {
     _animesh->get_anim_vertices_aifo(out);

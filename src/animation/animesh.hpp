@@ -146,10 +146,6 @@ public:
     inline const Cuda_utils::DA_Vec3_cu& get_gradient() const { return d_gradient; }
 #endif
 
-    inline int get_nearest_bone(int vert_idx){
-        return h_vertices_nearest_bones[vert_idx];
-    }
-
     const Mesh*     get_mesh() const { return _mesh; }
     const Skeleton* get_skel() const { return _skel; }
 
