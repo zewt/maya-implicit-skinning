@@ -208,7 +208,7 @@ public:
         _dir    = Vec3_cu(0.f, 0.f, 0.f);
         _org    = Point_cu(0.f, 0.f, 0.f);
 
-        _enabled = true;
+        _enabled = false;
         _precomputed = false;
         _hrbf.initialize();
         _hrbf.set_radius(rad);

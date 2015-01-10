@@ -64,25 +64,19 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
 {
     const float rad_hrbf = _skel->get_hrbf_radius( bone_id );
 
-    // XXX: This creates a new bone and replaces the one we had before.  However, it
-    // never sets any of its properties (_length, etc).  We apparently don't use any
-    // of that from here on out and only use _frames.  That's a bit confusing, could we
-    // avoid keeping Bone data around entirely that we aren't using?
-
-    // We update nodes in bones
-    Bone *hrbf_bone = new Bone(rad_hrbf);
-
-//    for(int i = 0; i < nodes.size(); ++i)
-//        printf("%i: %f %f %f\n", i, nodes[i].x, nodes[i].y, nodes[i].z);
-
     // Solve/compute compute HRBF weights
     Timer t;
     t.start();
-    hrbf_bone->get_hrbf().init_coeffs(nodes, n_nodes);
+    Bone *bone = _skel->get_bone(bone_id);
+
+    // XXX: Set this when the bone is created, to get rid of this extra step.
+    bone->set_hrbf_radius(rad_hrbf);
+    bone->set_enabled(true);
+    bone->discard_precompute();
+    bone->get_hrbf().init_coeffs(nodes, n_nodes);
     printf("update_bone_samples: Solved %i nodes in %f seconds\n", nodes.size(), t.stop());
 
-    hrbf_bone->set_radius( _skel->get_bone( bone_id)->radius() );
-    _skel->set_bone(bone_id, hrbf_bone);
+    _skel->update_bones_pose();
 }
 
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)
