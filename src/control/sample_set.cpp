@@ -21,6 +21,7 @@
 #include "animesh.hpp"
 #include "conversions.hpp"
 #include "skeleton.hpp"
+#include "animesh_hrbf_heuristic.hpp"
 
 #include <sstream>
 
@@ -31,7 +32,7 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Animesh &animesh, const Sam
 
     if(settings.mode == SampleSetSettings::Poisson)
     {
-        Animesh::Adhoc_sampling heur(animesh);
+        Adhoc_sampling heur(animesh);
         heur._bone_id = bone_id;
         heur._jmax = settings.jmax;
         heur._pmax = settings.pmax;
@@ -47,7 +48,7 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Animesh &animesh, const Sam
     }
     else
     {
-        Animesh::Poisson_disk_sampling heur(animesh);
+        Poisson_disk_sampling heur(animesh);
         heur._bone_id = bone_id;
         heur._jmax = settings.jmax;
         heur._pmax = settings.pmax;

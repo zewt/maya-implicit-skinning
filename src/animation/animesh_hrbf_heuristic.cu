@@ -16,6 +16,7 @@
  You should have received a copy of the GNU General Public License
  along with this program. If not, see <http://www.gnu.org/licenses/>
  */
+#include "animesh_hrbf_heuristic.hpp"
 #include "animesh.hpp"
 
 // -----------------------------------------------------------------------------
@@ -36,13 +37,7 @@ namespace { __device__ void fix_debug() { } }
 using namespace Cuda_utils;
 using namespace HRBF_env;
 
-typedef Animesh::HRBF_sampling HRBF_samp;
-typedef Animesh::Adhoc_sampling AdHoc_samp;
-typedef Animesh::Poisson_disk_sampling Poisond_samp;
-
-// -----------------------------------------------------------------------------
-
-void HRBF_samp::factor_samples(std::vector<int>& vert_ids,
+void HRBF_sampling::factor_samples(std::vector<int>& vert_ids,
                                std::vector<Vec3_cu>& vertices,
                                std::vector<Vec3_cu>& normals) const
 {
@@ -50,32 +45,32 @@ void HRBF_samp::factor_samples(std::vector<int>& vert_ids,
     vertices.clear();
     normals. clear();
 
-    int parent = _am._skel->parent( _bone_id );
+    int parent = _am.get_skel()->parent( _bone_id );
     std::vector<int> dummy(1, _bone_id);
-    const std::vector<int>& sons = parent == -1 ? dummy : _am._skel->get_sons(parent);
+    const std::vector<int>& sons = parent == -1 ? dummy : _am.get_skel()->get_sons(parent);
     assert(sons.size() > 0);
 
-    if( sons[0] == _bone_id || _factor_siblings == false)
+    if(_factor_siblings && sons[0] == _bone_id)
+        return;
+
+    for( unsigned i = 0; i < sons.size(); i++)
     {
-        for( unsigned i = 0; i < sons.size(); i++)
-        {
-            const int bone_id = _factor_siblings ? sons[i] : _bone_id;
-            const std::vector<int>&     ids   = _am.h_verts_id_per_bone     [bone_id];
-            const std::vector<Vec3_cu>& nors  = _am.h_input_normals_per_bone[bone_id];
-            const std::vector<Vec3_cu>& verts = _am.h_input_verts_per_bone  [bone_id];
+        const int bone_id = _factor_siblings ? sons[i] : _bone_id;
+        const std::vector<int>&     ids   = _am.h_verts_id_per_bone     [bone_id];
+        const std::vector<Vec3_cu>& nors  = _am.h_input_normals_per_bone[bone_id];
+        const std::vector<Vec3_cu>& verts = _am.h_input_verts_per_bone  [bone_id];
 
-            vert_ids.insert(vert_ids.end(), ids.begin(), ids.end());
-            vertices.insert(vertices.end(), verts.begin(), verts.end());
-            normals.insert(normals.end(), nors.begin(), nors.end());
+        vert_ids.insert(vert_ids.end(), ids.begin(), ids.end());
+        vertices.insert(vertices.end(), verts.begin(), verts.end());
+        normals.insert(normals.end(), nors.begin(), nors.end());
 
-            if( !_factor_siblings ) break;
-        }
+        if( !_factor_siblings ) break;
     }
 }
 
 // -----------------------------------------------------------------------------
 
-void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
+void HRBF_sampling::clamp_samples(std::vector<int>& vert_ids_,
                               std::vector<Vec3_cu>& verts_,
                               std::vector<Vec3_cu>& normals_) const
 {
@@ -90,7 +85,7 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
     for(unsigned id = 0; id < verts_.size(); id++)
     {
         const int nearest_bone = _am.h_vertices_nearest_bones[ vert_ids_[id] ];
-        const Bone* b = _am._skel->get_bone(nearest_bone);
+        const Bone* b = _am.get_skel()->get_bone(nearest_bone);
         const float length = b->length();
 
         const Point_cu vert = Convs::to_point(verts_[id]);
@@ -103,8 +98,8 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
 
         const Vec3_cu normal = normals_[id];
 
-        const std::vector<int>& sons = _am._skel->get_sons(nearest_bone);
-        bool leaf = sons.size() > 0 ? _am._skel->is_leaf(sons[0]) : true;
+        const std::vector<int>& sons = _am.get_skel()->get_sons(nearest_bone);
+        bool leaf = sons.size() > 0 ? _am.get_skel()->is_leaf(sons[0]) : true;
 
         if( (dist_proj >= -plength ) &&
             (dist_proj < (length + jlength) || leaf) &&
@@ -123,7 +118,7 @@ void HRBF_samp::clamp_samples(std::vector<int>& vert_ids_,
 
 // -----------------------------------------------------------------------------
 
-void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
+void Adhoc_sampling::sample(std::vector<Vec3_cu>& out_verts,
                         std::vector<Vec3_cu>& out_normals) const
 {
     std::vector<Vec3_cu> in_verts;
@@ -136,7 +131,7 @@ void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
     for(unsigned id = 0; id < in_verts.size(); id++)
     {
 
-        const Bone* b =_am._skel->get_bone(_bone_id);
+        const Bone* b =_am.get_skel()->get_bone(_bone_id);
         float length = b->length();
 
         Point_cu vert = Convs::to_point(in_verts[id]);
@@ -172,7 +167,7 @@ void AdHoc_samp::sample(std::vector<Vec3_cu>& out_verts,
 
 // -----------------------------------------------------------------------------
 
-void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
+void Poisson_disk_sampling::sample(std::vector<Vec3_cu>& out_verts,
                           std::vector<Vec3_cu>& out_normals) const
 {
     // The goal here is to build from the cluster of vertices bound to a single
@@ -204,13 +199,13 @@ void Poisond_samp::sample(std::vector<Vec3_cu>& out_verts,
     {
         const int idx = in_vert_ids[i];
         // Look up neighboors
-        int nb_neigh = _am._mesh->get_edge_offset(idx*2 + 1);
-        int dep      = _am._mesh->get_edge_offset(idx*2    );
+        int nb_neigh = _am.get_mesh()->get_edge_offset(idx*2 + 1);
+        int dep      = _am.get_mesh()->get_edge_offset(idx*2    );
         int end      = dep + nb_neigh;
         for(int n = dep; n < end; n++)
         {
-            int neigh0 = _am._mesh->get_edge( n );
-            int neigh1 = _am._mesh->get_edge((n+1) >= end ? dep : n+1);
+            int neigh0 = _am.get_mesh()->get_edge( n );
+            int neigh1 = _am.get_mesh()->get_edge((n+1) >= end ? dep : n+1);
 
             std::map<int, int>::iterator it0 = meshToCluster.find( neigh0 );
             std::map<int, int>::iterator it1 = meshToCluster.find( neigh1 );

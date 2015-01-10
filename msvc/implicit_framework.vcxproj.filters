@@ -330,6 +330,9 @@
     <ClInclude Include="..\src\maya\plugin.hpp">
       <Filter>maya</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp">
+      <Filter>animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="animation">

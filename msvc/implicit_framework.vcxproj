@@ -210,6 +210,7 @@
     <ClCompile Include="..\src\meshes\mesh.cpp" />
     <ClInclude Include="..\src\animation\animesh.hpp" />
     <ClInclude Include="..\src\animation\animesh_enum.hpp" />
+    <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp" />
     <ClInclude Include="..\src\animation\animesh_kers.hpp" />
     <ClInclude Include="..\src\animation\bone.hpp" />
     <ClInclude Include="..\src\animation\bone_type.hpp" />
