@@ -27,11 +27,14 @@
 // -----------------------------------------------------------------------------
 namespace { __device__ void fix_debug() { } }
 
-Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel) :
+// This takes ownership of the Mesh (and gives it to Animesh).  It does not take ownership
+// of Skeleton.
+Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel_) :
     _auto_precompute(true),
     _nb_iter(7),
-    _samples(skel->nb_joints()),
-    _animesh(new Animesh(mesh, skel))
+    _samples(skel_->nb_joints()),
+    skel(skel_),
+    _animesh(new Animesh(mesh, skel_))
 {
     int n = skel->nb_joints();
 }
@@ -57,8 +60,6 @@ void Animated_mesh_ctrl::set_bone_type(int id, int bone_type)
     // they're empty (eg. bbox will be slow)
 //    if(bone_type != EBone::SSD && h_verts_id_per_bone[id].size() == 0)
 //        return;
-
-    Skeleton *skel = _animesh->get_skel();
 
     // Make sure that transform_hrbf/transform_precomputed_prim has been
     // called.  XXX: This probably shouldn't be needed here, or at least
@@ -318,7 +319,6 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
     // Solve/compute compute HRBF weights
     Timer t;
     t.start();
-    Skeleton *skel = _animesh->get_skel();
     Bone *bone = skel->get_bone(bone_id);
 
     bone->set_enabled(true);
@@ -333,7 +333,7 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 {
-    Bone *bone = _animesh->get_skel()->get_bone(bone_id);
+    Bone *bone = skel->get_bone(bone_id);
     bool was_precomputed = (bone->get_type() == EBone::PRECOMPUTED);
     bone->discard_precompute();
 

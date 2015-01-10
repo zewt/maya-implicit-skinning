@@ -155,6 +155,7 @@ private:
 
 public:
     Animesh* _animesh;
+    Skeleton *skel;
 };
 
 #endif // ANIMATED_MESH_CTRL_HPP__
