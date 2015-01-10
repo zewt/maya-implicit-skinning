@@ -157,7 +157,6 @@ int Tree_cu::compute_nb_cluster(Bone::Id bid, int acc)
 void Tree_cu::BList::clear()
 {
     _nb_pairs = 0;
-    _nb_singletons = 0;
     _list.clear();
 }
 
@@ -170,7 +169,6 @@ void Tree_cu::BList::  add_cluster(Cluster_id cid)
     Bone::Id h_bone_id = _tree_cu._bone_aranged[d_bone_id.id()]->get_bone_id();
     Bone::Id h_parent  = _tree_cu._tree->parent( h_bone_id );
 
-#ifndef ENABLE_ADHOC_HAND
     //////////////////////
     // Blend with pairs //
     //////////////////////
@@ -178,7 +176,12 @@ void Tree_cu::BList::  add_cluster(Cluster_id cid)
     {
         cl.datas = _tree_cu._tree->data(h_parent < 0 ? h_bone_id : h_parent);
         _list.push_back( cl );
-        _nb_singletons++;
+
+        Cluster empty;
+        empty.nb_bone = 0;
+        _list.push_back( empty );
+
+        _nb_pairs++;
     }
     else
     {
@@ -192,15 +195,6 @@ void Tree_cu::BList::  add_cluster(Cluster_id cid)
         _list.push_front( c1 );
         _nb_pairs++;
     }
-
-#else
-    ///////////////////////////
-    // Blend with singletons //
-    ///////////////////////////
-    cl.datas = _tree_cu._tree->data(h_parent < 0 ? h_bone_id : h_parent);
-    _list.push_back( cl );
-    _nb_singletons++;
-#endif
 }
 
 }// NAMESPACE END Skeleton_env  ================================================

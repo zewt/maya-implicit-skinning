@@ -62,8 +62,6 @@ struct Cluster_cu {
     union {
         /// Controller Id in Blending_env if needed by the operator
         Blending_env::Ctrl_id ctrl_id;
-        /// number of single cluster at the end of the blending list
-        int nb_singletons;
     };
 };
 

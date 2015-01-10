@@ -203,7 +203,6 @@ void cell_to_blending_list(Skel_id sid,
     // HACK: this should be done outside this function when convberting cluster
     // to cluster_cu
     if(blending_list._list.size() > 0){
-        blending_list._list.begin()->datas._ctrl_id    = blending_list._nb_singletons;
         blending_list._list.begin()->datas._blend_type = (EJoint::Joint_t)blending_list._nb_pairs;
     }
 
@@ -393,10 +392,9 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
             hd_blending_list[off_blist + i] = new_c;
             hd_cluster_data [off_blist + i]._bulge_strength = c.datas._bulge_strength;
         }
-        // We store nb_pairs and nb_singletons in the first element of the list
+        // We store nb_pairs in the first element of the list
         assert(tree_cu->_blending_list._list.size() > 0); // unless we have no elements
         hd_blending_list[off_blist].nb_pairs      = tree_cu->_blending_list._nb_pairs;
-        hd_blending_list[off_blist].nb_singletons = tree_cu->_blending_list._nb_singletons;
 
         hd_offset[t].list_data = off_blist;
 
