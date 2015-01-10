@@ -221,16 +221,6 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 
 // -----------------------------------------------------------------------------
 
-void Skeleton::set_bone_hrbf_radius(int i, float radius)
-{
-    _joints[i]._hrbf_radius = radius;
-
-    if(bone_type(i) == EBone::HRBF)
-    {
-        _joints[i]._anim_bone->set_hrbf_radius(radius);
-    }
-}
-
 float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
 {
     return _joints[bone_id]._hrbf_radius;

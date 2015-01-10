@@ -263,6 +263,9 @@ public:
         discard_precompute();
     }
 
+    /// Set the radius of the hrbf.
+    /// The radius is used to transform hrbf from global support to
+    /// compact support
     void set_hrbf_radius(float rad) {
         _hrbf.set_radius(rad);
         discard_precompute();

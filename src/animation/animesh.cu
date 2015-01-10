@@ -359,7 +359,7 @@ void Animesh::set_default_bones_radius()
 
         // HRBF compact support radius is farthest vertex distance
         const float radius = farthest_rad[i] == 0.f ? 1.f : farthest_rad[i];
-        _skel->set_bone_hrbf_radius(i, radius);
+        _skel->get_bone(i)->set_hrbf_radius(radius);
     }
 }
 

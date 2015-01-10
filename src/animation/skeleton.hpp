@@ -135,11 +135,6 @@ struct Skeleton {
   /// @name Setters
   //----------------------------------------------------------------------------
 
-  /// Set the radius of the hrbf of bone i.
-  /// The radius is used to transform hrbf from global support to
-  /// compact support
-  void set_bone_hrbf_radius(int i, float radius);
-
   void set_joint_controller(Blending_env::Ctrl_id i,
                             const IBL::Ctrl_setup& shape);
 

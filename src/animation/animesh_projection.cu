@@ -62,15 +62,11 @@ void Animesh::update_bone_samples(Bone::Id bone_id,
                                   const std::vector<Vec3_cu>& nodes,
                                   const std::vector<Vec3_cu>& n_nodes)
 {
-    const float rad_hrbf = _skel->get_hrbf_radius( bone_id );
-
     // Solve/compute compute HRBF weights
     Timer t;
     t.start();
     Bone *bone = _skel->get_bone(bone_id);
 
-    // XXX: Set this when the bone is created, to get rid of this extra step.
-    bone->set_hrbf_radius(rad_hrbf);
     bone->set_enabled(true);
     bone->discard_precompute();
     bone->get_hrbf().init_coeffs(nodes, n_nodes);

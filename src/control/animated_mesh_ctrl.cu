@@ -90,7 +90,8 @@ void Animated_mesh_ctrl::write_hrbf_radius( std::ofstream& file )
     for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++ )
     {
         file << "bone_id "     << i                         << std::endl;
-        file << "hrbf_radius " << _animesh->get_skel()->get_hrbf_radius(i) << std::endl;
+        const Bone *bone = _animesh->get_skel()->get_bone(i);
+        file << "hrbf_radius " << bone->get_hrbf_radius() << std::endl;
     }
 }
 
@@ -201,7 +202,10 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
     for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
     {
         if( radius_hrbf[i] > 0.f)
-            _animesh->get_skel()->set_bone_hrbf_radius(i, radius_hrbf[i]);
+        {
+            Bone *bone = _animesh->get_skel()->get_bone(i);
+            bone->set_hrbf_radius(radius_hrbf[i]);
+        }
     }
 
     _animesh->update_base_potential();
@@ -282,7 +286,7 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 {
     if(_animesh->get_skel()->bone_type(bone_id) == EBone::HRBF)
-        _animesh->get_skel()->set_bone_hrbf_radius( bone_id, rad);
+        _animesh->get_skel()->get_bone(bone_id)->set_hrbf_radius(rad);
     else if( _animesh->get_skel()->bone_type(bone_id) == EBone::PRECOMPUTED )
     {
         bool tmp = _auto_precompute;
@@ -292,7 +296,7 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
         // XXX: doing this directly with _animesh->set_bone_type, is this still needed?
         _auto_precompute = false;
         _animesh->set_bone_type(bone_id, EBone::HRBF);
-        _animesh->get_skel()->set_bone_hrbf_radius( bone_id, rad);
+        _animesh->get_skel()->get_bone(bone_id)->set_hrbf_radius(rad);
         _animesh->set_bone_type(bone_id, EBone::PRECOMPUTED);
         _auto_precompute = tmp;
     }
