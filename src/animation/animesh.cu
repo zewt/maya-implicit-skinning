@@ -413,8 +413,6 @@ void Animesh::set_bone_type(int id, int bone_type)
 
     }
 
-    init_vert_to_fit();
-
     // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
     // Figure out why for diagnostics.
     _skel->update_bones_pose();
