@@ -124,40 +124,6 @@ void Animated_mesh_ctrl::deform_mesh()
     _animesh->transform_vertices();
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::write_hrbf_radius( std::ofstream& file )
-{
-    file << "[HRBF_RADIUS]" << std::endl;
-    file << "nb_bone "      << _animesh->get_skel()->nb_joints() << std::endl;
-
-    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++ )
-    {
-        file << "bone_id "     << i                         << std::endl;
-        const Bone *bone = _animesh->get_skel()->get_bone(i);
-        file << "hrbf_radius " << bone->get_hrbf_radius() << std::endl;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::save_ism(const char* filename)
-{
-    using namespace std;
-    ofstream file(filename, ios_base::out|ios_base::trunc);
-
-    if(!file.is_open()){
-        cerr << "Error exporting file " << filename << endl;
-        exit(1);
-    }
-
-    write_hrbf_radius( file );
-
-    file.close();
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::read_weights(std::ifstream& file,
                                       std::vector<float4>& weights )
 {
@@ -194,26 +160,6 @@ void Animated_mesh_ctrl::read_hrbf_env_weights(
     }
 }
 
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::read_hrbf_radius(std::ifstream& file,
-                                          std::vector<float>& radius_hrbf)
-{
-    std::string nil;
-    int nb_bones = -1;
-
-    file >> nil /*'nb_bone'*/ >> nb_bones;
-
-    for(int i = 0; i < nb_bones; ++i)
-    {
-        int bone_id = -1;
-        file >> nil /*'bone_id'*/     >> bone_id;
-        file >> nil /*'bone_radius'*/ >> radius_hrbf[bone_id];
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::load_ism(const char* filename)
 {
     using namespace std;
@@ -234,7 +180,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         file >> section;
 
         if(section == "[HRBF_ENV_WEIGHTS]") read_hrbf_env_weights(file, bone_weights);
-        else if(section == "[HRBF_RADIUS]")      read_hrbf_radius( file, radius_hrbf);
         else
         {
             std::cerr << "WARNING ism import: can't read this symbol '";
@@ -242,15 +187,6 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
         }
     }
     file.close();
-
-    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
-    {
-        if( radius_hrbf[i] > 0.f)
-        {
-            Bone *bone = _animesh->get_skel()->get_bone(i);
-            bone->set_hrbf_radius(radius_hrbf[i]);
-        }
-    }
 
     _animesh->update_base_potential();
 }

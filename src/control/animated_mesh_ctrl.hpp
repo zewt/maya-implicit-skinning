@@ -101,7 +101,6 @@ public:
     /// @name File import/export
     //--------------------------------------------------------------------------
 
-    void save_ism(const char* filename);
     void load_ism(const char* filename);
 
     //--------------------------------------------------------------------------
@@ -126,10 +125,6 @@ private:
     /// @name Tools file export
     //--------------------------------------------------------------------------
 #if !defined(NO_CUDA) // XXX: remove this stuff
-    /// write section storing HRBF implicite primitives radius of the compact
-    /// support
-    void write_hrbf_radius( std::ofstream& file );
-
     //--------------------------------------------------------------------------
     /// @name Tools file import
     //--------------------------------------------------------------------------
@@ -139,9 +134,6 @@ private:
 
     void read_weights(std::ifstream& file,
                       std::vector<float4>& weights );
-
-    void read_hrbf_radius(std::ifstream& file,
-                          std::vector<float>& radius_hrbf);
 #endif
     //--------------------------------------------------------------------------
     /// @name Attributes
