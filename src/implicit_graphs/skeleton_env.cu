@@ -55,7 +55,6 @@ texture<float4, 1, cudaReadModeElementType> tex_grid_bbox;
 texture<int2, 1, cudaReadModeElementType> tex_offset;
 texture<float, 1, cudaReadModeElementType> tex_bulge_strength;
 texture<int, 1, cudaReadModeElementType> tex_bone_type;
-texture<float4, 1, cudaReadModeElementType> tex_bone;
 texture<int   , 1, cudaReadModeElementType> tex_bone_hrbf;
 texture<int   , 1, cudaReadModeElementType> tex_bone_precomputed;
 
@@ -134,7 +133,6 @@ void bind()
     // Initialize texture and bind them to the arrays
     if(hd_bone_arrays != 0)
     {
-        hd_bone_arrays->hd_bone.            device_array().bind_tex(tex_bone            );
         hd_bone_arrays->hd_bone_hrbf.       device_array().bind_tex(tex_bone_hrbf       );
         hd_bone_arrays->hd_bone_precomputed.device_array().bind_tex(tex_bone_precomputed);
         hd_bone_arrays->hd_bone_types.      device_array().bind_tex(tex_bone_type       );
@@ -153,7 +151,6 @@ void bind()
 void unbind()
 {
     binded = false;
-    CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone)             );
     CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_hrbf)        );
     CUDA_SAFE_CALL( cudaUnbindTexture(&tex_bone_precomputed) );
 
@@ -286,7 +283,7 @@ static void update_device_grid()
 
 // -----------------------------------------------------------------------------
 
-/// Fill device array : hd_bone_types; hd_bone; hd_bone_hrbf;
+/// Fill device array : hd_bone_types; hd_bone_hrbf;
 /// hd_bone_precomputed; hd_bulge_strength;
 static void fill_separated_bone_types(const std::vector<const Bone*>& generic_bones)
 {
@@ -313,7 +310,6 @@ static void fill_separated_bone_types(const std::vector<const Bone*>& generic_bo
             break;
         }
 
-        hd_bone_arrays->hd_bone      [i] = b->get_bone_cu();
         hd_bone_arrays->hd_bone_types[i] = btype;
     }
     // Upload every arrays to GPU

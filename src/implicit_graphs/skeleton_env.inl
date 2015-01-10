@@ -117,19 +117,6 @@ Cluster_cu fetch_blending_list(Cluster_id cid)
     return *reinterpret_cast<Cluster_cu*>(&s);
 }
 
-// -----------------------------------------------------------------------------
-
-__device__ static inline
-Bone_cu fetch_bone_cu(DBone_id i)
-{
-    struct {float4 a,b;} s;
-    s.a = tex1Dfetch(tex_bone, 2*i.id()  );
-    s.b = tex1Dfetch(tex_bone, 2*i.id()+1);
-    return *reinterpret_cast<Bone_cu*>(&s);
-}
-
-// -----------------------------------------------------------------------------
-
 __device__ static inline
 HermiteRBF fetch_bone_hrbf(DBone_id i)
 {

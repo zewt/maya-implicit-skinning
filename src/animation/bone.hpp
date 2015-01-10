@@ -215,12 +215,6 @@ public:
 
     Id get_bone_id() const { return _bone_id; }
 
-    Bone_cu get_bone_cu() const {
-        assert(_bone_id != -1  );
-        assert(_length  >= 0.f );
-        return Bone_cu(_org, _org+_dir);
-    }
-
     /// Get the bone type
     /// @see Bone_type
     EBone::Bone_t get_type() const {

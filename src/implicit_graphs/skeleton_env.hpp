@@ -158,7 +158,6 @@ extern texture<float, 1, cudaReadModeElementType> tex_bulge_strength;
 extern texture<int, 1, cudaReadModeElementType> tex_bone_type;
 
 /// Bones of same cluster are stored consecutively
-extern texture<float4, 1, cudaReadModeElementType> tex_bone;
 extern texture<int   , 1, cudaReadModeElementType> tex_bone_hrbf;
 extern texture<int   , 1, cudaReadModeElementType> tex_bone_precomputed;
 
@@ -203,13 +202,6 @@ Cluster_cu fetch_blending_list(Cluster_id i);
 // -----------------------------------------------------------------------------
 /// @name Blending list datas (bones and blending operators)
 // -----------------------------------------------------------------------------
-
-/// Read data of bone no. i.
-/// @warning the index i is note the same as the index in the Skeleton class
-/// to get the correspondance use the function get_idx_device_bone()
-/// @see get_idx_device_bone()
-__device__ static inline
-Bone_cu fetch_bone_cu(DBone_id i);
 
 /// Read data of a bone of type hrbf
 /// @warning User must ensure that the bone i is of the right type with
