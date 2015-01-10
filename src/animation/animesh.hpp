@@ -99,9 +99,6 @@ public:
     // Copy the given vertices into the mesh.
     void copy_vertices(const std::vector<Vec3_cu> &vertices);
 
-    /// Set bone type
-    void set_bone_type(int id, int bone_type);
-
     inline void set_smooth_factor(int i, float val){
         d_input_smooth_factors.set(i, val);
     }

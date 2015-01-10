@@ -119,6 +119,8 @@ private:
     /// Already precomputed
     void precompute_all_bones();
 
+    void set_bone_type(int id, int bone_type);
+
     //--------------------------------------------------------------------------
     /// @name Tools file export
     //--------------------------------------------------------------------------

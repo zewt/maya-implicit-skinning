@@ -45,8 +45,50 @@ void Animated_mesh_ctrl::precompute_all_bones()
     for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
     {
         if(_animesh->get_skel()->bone_type(i) == EBone::HRBF)
-            _animesh->set_bone_type( i, EBone::PRECOMPUTED);
+            set_bone_type( i, EBone::PRECOMPUTED);
     }
+}
+
+void Animated_mesh_ctrl::set_bone_type(int id, int bone_type)
+{
+    // Don't waste memory converting joints with no associated vertices.
+    // XXX: but we convert to HRBF elsewhere and we can't leave bones in HRBF, even if
+    // they're empty (eg. bbox will be slow)
+//    if(bone_type != EBone::SSD && h_verts_id_per_bone[id].size() == 0)
+//        return;
+
+    Skeleton *skel = _animesh->get_skel();
+
+    // Make sure that transform_hrbf/transform_precomputed_prim has been
+    // called.  XXX: This probably shouldn't be needed here, or at least
+    // we could only update the correct bone so we don't do n^2 updates.
+    skel->update_bones_pose();
+
+    Bone *bone = skel->get_bone( id );
+    switch(bone_type){
+    case EBone::PRECOMPUTED:
+    {
+        bone->set_enabled(true);
+        bone->precompute(skel->get_skel_id());
+        break;
+    }
+    case EBone::HRBF:
+        bone->set_enabled(true);
+        bone->discard_precompute();
+        break;
+    case EBone::SSD:
+        bone->set_enabled(false);
+        break;
+
+    default: //unknown bone type !
+        assert(false);
+        break;
+
+    }
+
+    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
+    // Figure out why for diagnostics.
+    skel->update_bones_pose();
 }
 
 // -----------------------------------------------------------------------------
@@ -287,9 +329,9 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
         // the radius first
         // XXX: doing this directly with _animesh->set_bone_type, is this still needed?
         _auto_precompute = false;
-        _animesh->set_bone_type(bone_id, EBone::HRBF);
+        set_bone_type(bone_id, EBone::HRBF);
         _animesh->get_skel()->get_bone(bone_id)->set_hrbf_radius(rad);
-        _animesh->set_bone_type(bone_id, EBone::PRECOMPUTED);
+        set_bone_type(bone_id, EBone::PRECOMPUTED);
         _auto_precompute = tmp;
     }
 }

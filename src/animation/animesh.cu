@@ -376,48 +376,6 @@ void Animesh::get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert)
         anim_vert.push_back(h_out_verts[vmap_new_old[i]]);
 }
 
-// -----------------------------------------------------------------------------
-
-void Animesh::set_bone_type(int id, int bone_type)
-{
-    // Don't waste memory converting joints with no associated vertices.
-    // XXX: but we convert to HRBF elsewhere and we can't leave bones in HRBF, even if
-    // they're empty (eg. bbox will be slow)
-//    if(bone_type != EBone::SSD && h_verts_id_per_bone[id].size() == 0)
-//        return;
-
-    // Make sure that transform_hrbf/transform_precomputed_prim has been
-    // called.  XXX: This probably shouldn't be needed here, or at least
-    // we could only update the correct bone so we don't do n^2 updates.
-    _skel->update_bones_pose();
-
-    Bone *bone = _skel->get_bone( id );
-    switch(bone_type){
-    case EBone::PRECOMPUTED:
-    {
-        bone->set_enabled(true);
-        bone->precompute(_skel->get_skel_id());
-        break;
-    }
-    case EBone::HRBF:
-        bone->set_enabled(true);
-        bone->discard_precompute();
-        break;
-    case EBone::SSD:
-        bone->set_enabled(false);
-        break;
-
-    default: //unknown bone type !
-        assert(false);
-        break;
-
-    }
-
-    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
-    // Figure out why for diagnostics.
-    _skel->update_bones_pose();
-}
-
 int Animesh::pack_vert_to_fit(Cuda_utils::Host::Array<int>& in,
                                    Cuda_utils::Host::Array<int>& out,
                                    int size)
