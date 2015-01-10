@@ -394,12 +394,6 @@ public: // XXX
     /// h_input_vertices[nearest][ith_vert] = vert_id_in_mesh
     std::vector< std::vector<int> > h_verts_id_per_bone;
 
-    /// Distance from the nearest bone to the mesh's vertices
-    /// (distance is either euclidean or geodesic depending on the
-    /// clusterisation)
-    /// h_bone_dist[ver_id][bone_id] = dist bone to vert
-    std::vector< double > h_nearest_bone_dist;
-
     /// nb_vertices_by_bones[bone_idx] = nb_vertices
     Cuda_utils::Host::Array<int>    nb_vertices_by_bones;
 

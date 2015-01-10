@@ -82,7 +82,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_rot_axis(_mesh->get_nb_vertices()),
     h_vertices_nearest_bones(_mesh->get_nb_vertices()),
     nb_vertices_by_bones(_skel->get_bones().size()),
-    h_nearest_bone_dist(_mesh->get_nb_vertices()),
     vmap_old_new(_mesh->get_nb_vertices()),
     vmap_new_old(_mesh->get_nb_vertices()),
     d_rear_verts(_mesh->get_nb_vertices()),
@@ -367,7 +366,6 @@ void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones,
                 nd0 = j;
             }
         }
-        h_nearest_bone_dist     [i] = sqrt(d0);
         vertices_nearest_bones  [i] = nd0;
         nb_vert_by_bone[nd0]++;
     }
