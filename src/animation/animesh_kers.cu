@@ -862,7 +862,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
                           Vec3_cu* out_verts,
                           const float* base_potential,
                           Vec3_cu* out_gradient,
-                          const Skeleton_env::DBone_id* nearest_bone,
                           float* smooth_factors_iso,
                           float* smooth_factors,
                           int* vert_to_fit,
@@ -886,7 +885,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         // STOP CASE : Vertex already fitted
         if(p == -1) return;
 
-//        const Skeleton_env::DBone_id nearest = full_eval ? Skeleton_env::DBone_id(-1) : nearest_bone[p];
         const float ptl = base_potential[p];
 
         Point_cu v0 = out_verts[p].to_point();
