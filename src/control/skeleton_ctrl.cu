@@ -51,18 +51,6 @@ void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
 
 bool Skeleton_ctrl::is_loaded() const { return skel != 0; }
 
-int Skeleton_ctrl::get_hrbf_id(int bone_id)
-{
-
-    if( skel->bone_type(bone_id) != EBone::HRBF)
-        return -1;
-
-    const Bone *b = skel->get_bone(bone_id);
-    return b->get_hrbf().get_id();
-}
-
-// -----------------------------------------------------------------------------
-
 int Skeleton_ctrl::get_bone_id(int hrbf_id)
 {
     for (int i = 0; i < skel->nb_joints(); ++i)

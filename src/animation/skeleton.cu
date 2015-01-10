@@ -231,20 +231,6 @@ void Skeleton::set_bone_hrbf_radius(int i, float radius)
     }
 }
 
-// -----------------------------------------------------------------------------
-
-int Skeleton::get_hrbf_id(Bone::Id bone_id) const
-{
-    assert(bone_id >= 0);
-    assert(bone_id < (int) _joints.size());
-    if(bone_type(bone_id) == EBone::HRBF)
-        return _joints[bone_id]._anim_bone->get_hrbf().get_id();
-    else
-        return -1;
-}
-
-// -----------------------------------------------------------------------------
-
 float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
 {
     return _joints[bone_id]._hrbf_radius;
@@ -294,7 +280,11 @@ void Skeleton::update_bones_pose()
     // Transform HRBF bones:
     for (int i = 0; i < (int) _joints.size(); ++i)
     {
-        const int id = get_hrbf_id(i);
+        Bone *bone = _joints[i]._anim_bone;
+        if(bone->get_type() != EBone::HRBF)
+            continue;
+        
+        const int id = bone->get_hrbf().get_id();
         if( id > -1) HRBF_env::set_transfo(id, get_bone_transform(i));
     }
 

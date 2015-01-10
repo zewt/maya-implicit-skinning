@@ -238,10 +238,6 @@ struct Skeleton {
   /// These transformation can be used as is to deformed the mesh
   const Transfo& get_transfo(Bone::Id bone_id) const;
 
-  /// @return the hrbf id associated to the bone or -1
-  /// if the bone is not an HRBF
-  int get_hrbf_id(Bone::Id bone_id) const;
-
   float get_hrbf_radius(Bone::Id bone_id) const;
 
   /// Get the id of the skeleton in the skeleton environment

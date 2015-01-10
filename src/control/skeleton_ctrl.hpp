@@ -63,10 +63,6 @@ public:
     // Set the current joint transforms.
     void set_transforms(const std::vector<Transfo> &transfos);
 
-    /// @return the hrbf indentifier in HRBF_Env or -1 if the designated bone
-    /// is not a hrbf
-    int get_hrbf_id(int bone_id);
-
     /// @return the bone id associated to the hrbf -1 if the hrbf_id does not
     /// exists
     int get_bone_id(int hrbf_id);
