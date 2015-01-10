@@ -333,6 +333,9 @@
     <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp">
       <Filter>animation</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\animation\vert_to_bone_info.hpp">
+      <Filter>animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="animation">
@@ -447,6 +450,9 @@
     </CudaCompile>
     <CudaCompile Include="..\src\primitives\hermiteRBF.cu">
       <Filter>primitives</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\animation\vert_to_bone_info.cu">
+      <Filter>animation</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

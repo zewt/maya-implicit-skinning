@@ -56,9 +56,9 @@ void HRBF_sampling::factor_samples(std::vector<int>& vert_ids,
     for( unsigned i = 0; i < sons.size(); i++)
     {
         const int bone_id = _factor_siblings ? sons[i] : _bone_id;
-        const std::vector<int>&     ids   = _am.h_verts_id_per_bone     [bone_id];
-        const std::vector<Vec3_cu>& nors  = _am.h_input_normals_per_bone[bone_id];
-        const std::vector<Vec3_cu>& verts = _am.h_input_verts_per_bone  [bone_id];
+        const std::vector<int>&     ids   = _am.vertToBoneInfo.h_verts_id_per_bone     [bone_id];
+        const std::vector<Vec3_cu>& nors  = _am.vertToBoneInfo.h_input_normals_per_bone[bone_id];
+        const std::vector<Vec3_cu>& verts = _am.vertToBoneInfo.h_input_verts_per_bone  [bone_id];
 
         vert_ids.insert(vert_ids.end(), ids.begin(), ids.end());
         vertices.insert(vertices.end(), verts.begin(), verts.end());
@@ -84,7 +84,7 @@ void HRBF_sampling::clamp_samples(std::vector<int>& vert_ids_,
 
     for(unsigned id = 0; id < verts_.size(); id++)
     {
-        const int nearest_bone = _am.h_vertices_nearest_bones[ vert_ids_[id] ];
+        const int nearest_bone = _am.vertToBoneInfo.h_vertices_nearest_bones[ vert_ids_[id] ];
         const Bone* b = _am.get_skel()->get_bone(nearest_bone);
         const float length = b->length();
 

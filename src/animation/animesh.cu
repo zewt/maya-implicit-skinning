@@ -80,7 +80,7 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
-    h_vertices_nearest_bones(_mesh->get_nb_vertices()),
+    vertToBoneInfo(s_, m_),
     vmap_old_new(_mesh->get_nb_vertices()),
     vmap_new_old(_mesh->get_nb_vertices()),
     d_rear_verts(_mesh->get_nb_vertices()),
@@ -93,9 +93,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_vert_buffer_2(_mesh->get_nb_vertices()),
     d_vals_buffer(_mesh->get_nb_vertices())
 {
-
-    // Compute nearest bone and nearest joint from each vertices
-    clusterize();
 
     int nb_vert = _mesh->get_nb_vertices();
     Host::Array<EAnimesh::Vert_state> h_vert_state(nb_vert);
@@ -131,36 +128,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     compute_mvc();
 
     update_base_potential();
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::init_verts_per_bone()
-{
-    std::vector< std::vector<Vec3_cu> >& vertices = h_input_verts_per_bone;
-    std::vector< std::vector<Vec3_cu> >& normals  = h_input_normals_per_bone;
-    std::vector< std::vector<int>     >& vert_ids = h_verts_id_per_bone;
-    vertices.clear();
-    normals. clear();
-    vertices.resize(_skel->nb_joints());
-    vert_ids.resize(_skel->nb_joints());
-    normals. resize(_skel->nb_joints());
-
-    for(int i = 0; i < _mesh->get_nb_vertices(); i++)
-    {
-        int nearest = h_vertices_nearest_bones[i];
-
-        if(_mesh->is_disconnect(i))
-            continue;
-
-        const Vec3_cu vert = _mesh->get_vertex(i);
-        const Vec3_cu norm = _mesh->get_normal(i);
-
-        vertices[nearest].push_back( Vec3_cu(vert.x,  vert.y,  vert.z)              );
-        normals [nearest].push_back( Vec3_cu(norm.x,  norm.y,  norm.z).normalized() );
-
-        vert_ids[nearest].push_back( i );
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -335,50 +302,6 @@ void Animesh::compute_mvc()
     d_edge_mvc.    copy_from( edge_mvc     );
 }
 
-void Animesh::clusterize_euclidean(HA_int& vertices_nearest_bones)
-{
-    const int nb_bones = _skel->get_bones().size();
-    std::vector<int> nb_vert_by_bone(nb_bones);
-
-    int n = _mesh->get_nb_vertices();
-    for(int i = 0; i < n ; i++)
-    {
-        float d0  = std::numeric_limits<float>::infinity();
-        int   nd0 = 0;
-
-        const Point_cu current_vertex = _mesh->get_vertex(i).to_point();
-        for(int j = 0; j < _skel->nb_joints(); j++)
-        {
-            if(!_skel->is_bone(j))
-                continue;
-
-            const Bone* b = _skel->get_bone( j );
-
-            // Compute nearest bone
-            float dist2 = b->dist_sq_to(current_vertex);
-
-            if(dist2 <= d0){
-                d0  = dist2;
-                nd0 = j;
-            }
-        }
-        vertices_nearest_bones  [i] = nd0;
-        nb_vert_by_bone[nd0]++;
-    }
-
-    for(int j = 0; j < _skel->nb_joints(); j++)
-        printf("Bone %i has %i clustered vertices\n", j, nb_vert_by_bone[j]);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::clusterize()
-{
-    clusterize_euclidean(h_vertices_nearest_bones);
-
-    init_verts_per_bone();
-}
-
 void Animesh::get_default_junction_radius(std::vector<float> &nearest_rad) const
 {
     const int nb_verts  = _mesh->get_nb_vertices();
@@ -390,7 +313,7 @@ void Animesh::get_default_junction_radius(std::vector<float> &nearest_rad) const
     // Junction radius is nearest vertex distance
     for(int i = 0; i < nb_verts; i++)
     {
-        const int bone_id = h_vertices_nearest_bones[i];
+        const int bone_id = vertToBoneInfo.h_vertices_nearest_bones[i];
         const Point_cu vert = _mesh -> get_vertex(i).to_point();
         float dist = _skel->get_bone(bone_id)->dist_to( vert );
 
@@ -422,7 +345,7 @@ void Animesh::set_default_bones_radius()
 
     for(int i = 0; i < nb_verts; i++)
     {
-        const int bone_id = h_vertices_nearest_bones[i];
+        const int bone_id = vertToBoneInfo.h_vertices_nearest_bones[i];
         const Point_cu vert = _mesh -> get_vertex(i).to_point();
         float dist = _skel->get_bone(bone_id)->dist_to( vert );
 
@@ -498,7 +421,7 @@ void Animesh::init_rigid_ssd_weights()
 
     for(int i = 0; i < nb_vert; ++i)
     {
-        joints [i] = h_vertices_nearest_bones[i];
+        joints [i] = vertToBoneInfo.h_vertices_nearest_bones[i];
 
         jpv[i*2    ] = i; // starting index
         jpv[i*2 + 1] = 1; // number of bones influencing the vertex

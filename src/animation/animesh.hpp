@@ -24,6 +24,7 @@
 #include "animesh_enum.hpp"
 #include "cuda_utils.hpp"
 #include "mesh.hpp"
+#include "vert_to_bone_info.hpp"
 
 // -----------------------------------------------------------------------------
 
@@ -84,12 +85,6 @@ public:
     void update_bone_samples(Bone::Id id_bone,
                              const std::vector<Vec3_cu>& nodes,
                              const std::vector<Vec3_cu>& n_nodes);
-
-    /// Update the mesh clusters according to the skeleton
-    /// @param type : choose between to clusterisation algorithm either with
-    /// a fast euclidean distance or a (slow) geodesic inside the volume of
-    /// the mesh
-    void clusterize();
 
     // -------------------------------------------------------------------------
     /// @name SSD Related
@@ -155,10 +150,6 @@ private:
     // -------------------------------------------------------------------------
     /// @name Tools
     // -------------------------------------------------------------------------
-
-    /// Compute the nearest cluster of bones for each vertex. We use euclidean
-    /// distance to determine the nearest bone
-    void clusterize_euclidean(Cuda_utils::HA_int& h_nearest_bones);
 
     /// Compute a radius for each bone, given the distance of each vertex to
     /// their closest bone
@@ -246,11 +237,6 @@ private:
     /// Allocate and initialize 'd_vert_to_fit' and 'd_vert_to_fit_base'.
     /// For instance lonely vertices are not fitted with the implicit skinning.
     void init_vert_to_fit();
-
-    /// Initialize attributes h_input_verts_per_bone and
-    /// h_input_normals_per_bone which stores vertices and normals by nearest
-    /// bones
-    void init_verts_per_bone();
 
     void init_smooth_factors(Cuda_utils::DA_float& d_smooth_factors);
 
@@ -377,17 +363,7 @@ private:
 
     typedef Skeleton_env::DBone_id DBone_id;
 public: // XXX
-    /// Mapping of mesh points with there nearest bone
-    /// (i.e tab[vert_idx]=bone_idx)
-    Cuda_utils::Host::  Array<Bone::Id>  h_vertices_nearest_bones;
-
-    /// Initial vertices in their "resting" position. sorted by nearest bone.
-    /// h_input_vertices[nearest][ith_vert] = vert_coord
-    std::vector< std::vector<Vec3_cu> > h_input_verts_per_bone;
-    std::vector< std::vector<Vec3_cu> > h_input_normals_per_bone;
-
-    /// h_input_vertices[nearest][ith_vert] = vert_id_in_mesh
-    std::vector< std::vector<int> > h_verts_id_per_bone;
+    VertToBoneInfo vertToBoneInfo;
 
     // END CLUSTER -------------------------------------------------------------
 
