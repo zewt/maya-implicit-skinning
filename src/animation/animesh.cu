@@ -81,7 +81,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
     h_vertices_nearest_bones(_mesh->get_nb_vertices()),
-    d_vertices_nearest_bones(_mesh->get_nb_vertices()),
     nb_vertices_by_bones(_skel->get_bones().size()),
     d_nearest_bone_in_device_mem(_mesh->get_nb_vertices()),
     h_nearest_bone_dist(_mesh->get_nb_vertices()),
@@ -398,8 +397,6 @@ void Animesh::update_nearest_bone_joint_in_device_mem()
     for(int i = 0; i < n; i++)
         tmp [i] = _skel->get_bone_didx( h_vertices_nearest_bones[i] );
     d_nearest_bone_in_device_mem. copy_from(tmp);
-
-    d_vertices_nearest_bones.copy_from(h_vertices_nearest_bones);
 }
 
 // -----------------------------------------------------------------------------
