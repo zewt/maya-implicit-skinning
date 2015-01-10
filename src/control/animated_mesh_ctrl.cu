@@ -319,21 +319,14 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 {
-    if(_animesh->get_skel()->bone_type(bone_id) == EBone::HRBF)
-        _animesh->get_skel()->get_bone(bone_id)->set_hrbf_radius(rad);
-    else if( _animesh->get_skel()->bone_type(bone_id) == EBone::PRECOMPUTED )
-    {
-        bool tmp = _auto_precompute;
-        // disable _auto_precompute. otherwise set_bone_type() will convert
-        // back to precomputed the bone without letting us the chance to change
-        // the radius first
-        // XXX: doing this directly with _animesh->set_bone_type, is this still needed?
-        _auto_precompute = false;
-        set_bone_type(bone_id, EBone::HRBF);
-        _animesh->get_skel()->get_bone(bone_id)->set_hrbf_radius(rad);
-        set_bone_type(bone_id, EBone::PRECOMPUTED);
-        _auto_precompute = tmp;
-    }
+    Bone *bone = _animesh->get_skel()->get_bone(bone_id);
+    bool was_precomputed = (bone->get_type() == EBone::PRECOMPUTED);
+    bone->discard_precompute();
+
+    bone->set_hrbf_radius(rad);
+
+    if(was_precomputed)
+        bone->precompute(skel->get_skel_id());
 }
 
 // -----------------------------------------------------------------------------
