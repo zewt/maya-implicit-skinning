@@ -64,6 +64,15 @@
     <ClCompile Include="..\src\control\sample_set.cpp">
       <Filter>control</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maya\marching_cubes\marching_cubes.cpp">
+      <Filter>maya\marching_cubes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\marching_cubes\vertex_hash.cpp">
+      <Filter>maya\marching_cubes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\marching_cubes\mesh_data.cpp">
+      <Filter>maya\marching_cubes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -330,6 +339,18 @@
     <ClInclude Include="..\src\maya\plugin.hpp">
       <Filter>maya</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\maya\marching_cubes\marching_cubes.hpp">
+      <Filter>maya\marching_cubes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\marching_cubes\tables.h">
+      <Filter>maya\marching_cubes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\marching_cubes\vertex_hash.h">
+      <Filter>maya\marching_cubes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\marching_cubes\mesh_data.h">
+      <Filter>maya\marching_cubes</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp">
       <Filter>animation</Filter>
     </ClInclude>
@@ -385,6 +406,9 @@
     </Filter>
     <Filter Include="maya">
       <UniqueIdentifier>{2a994f5b-9149-40e6-9670-c4d09f393ae9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="maya\marching_cubes">
+      <UniqueIdentifier>{f322788f-9032-4197-8991-7775a87a0934}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
