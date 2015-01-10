@@ -146,7 +146,6 @@ void Animesh::init_vert_to_fit()
     d_vert_to_fit_buff_scan.malloc(acc+1);
     d_vert_to_fit_buff.malloc(acc);
     h_vert_to_fit_buff.malloc(acc);
-    h_vert_to_fit_buff_2.malloc(acc);
 
     d_vert_to_fit_base.copy_from(h_vert_to_fit_base);
     d_vert_to_fit.     copy_from(h_vert_to_fit_base);

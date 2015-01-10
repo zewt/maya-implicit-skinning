@@ -356,7 +356,6 @@ private:
     Cuda_utils::Device::Array<int>      d_vert_to_fit_buff;
 
     Cuda_utils::Host::Array<int>        h_vert_to_fit_buff;
-    Cuda_utils::Host::Array<int>        h_vert_to_fit_buff_2;
     /// @}
 };
 // END ANIMATEDMESH CLASS ======================================================
