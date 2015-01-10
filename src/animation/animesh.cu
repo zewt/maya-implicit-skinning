@@ -66,7 +66,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_vertices_states_color(EAnimesh::NB_CASES),
 //    d_input_normals(m->get_nb_vertices()),
     d_output_vertices(_mesh->get_nb_vertices()),
-    d_output_normals(_mesh->get_nb_vertices()),
     d_gradient(_mesh->get_nb_vertices()),
     d_input_tri(_mesh->get_nb_tri()*3),
     d_edge_list(_mesh->get_nb_edges()),

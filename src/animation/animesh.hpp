@@ -283,8 +283,6 @@ private:
 
     /// Animated vertices in their final position.
     Cuda_utils::Device::Array<Point_cu>  d_output_vertices;
-    /// final normals
-    Cuda_utils::Device::Array<Vec3_cu> d_output_normals;
 
     /// Gradient of the implicit surface at each vertices when animated
     Cuda_utils::Device::Array<Vec3_cu> d_gradient;

@@ -278,8 +278,6 @@ void Animesh::transform_vertices()
 {
     const int nb_vert    = d_input_vertices.size();
 
-    Vec3_cu* out_normals  = (Vec3_cu*)d_output_normals.ptr();
-
     Vec3_cu* out_verts    = (Vec3_cu*)d_output_vertices.ptr();
     d_output_vertices.copy_from(d_input_vertices);
 
@@ -308,8 +306,7 @@ void Animesh::transform_vertices()
 
             // user smoothing
             //smooth_mesh(output_vertices, output_normals, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
-            // XXX: out_normals isn't actually normals; it's just a temporary buffer and clobbers out_normals
-            conservative_smooth(out_verts, out_normals, *curr, nb_vert_to_fit, smoothing_iter);
+            conservative_smooth(out_verts, d_vert_buffer.ptr(), *curr, nb_vert_to_fit, smoothing_iter);
         }
     }
     else
@@ -344,8 +341,6 @@ void Animesh::transform_vertices()
         smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth2_iter);
     }
 #endif
-
-    compute_normals(out_verts, out_normals);
 }
 
 // -----------------------------------------------------------------------------
