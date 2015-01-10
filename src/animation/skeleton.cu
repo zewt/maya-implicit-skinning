@@ -37,8 +37,6 @@ namespace { __device__ void fix_debug() { } }
 
 using namespace Cuda_utils;
 
-const float default_bone_radius = 1.f;
-
 void Skeleton::init_skel_env()
 {
     std::vector<int> parents(_joints.size());
@@ -94,8 +92,8 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
         Vec3_cu dir = end.to_point() - org.to_point();
         float length = dir.norm();
 
-        joint._bone = Bone_cu(org.to_point(), dir, length, 0.f);
-        // joint._bone = Bone_cu(org.to_point(), end.to_point(), 0.f);
+        joint._bone = Bone_cu(org.to_point(), dir, length);
+        // joint._bone = Bone_cu(org.to_point(), end.to_point());
 
     }
 
@@ -121,7 +119,6 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
         joint._anim_bone = new Bone(1);
         joint._anim_bone->set_enabled(false);
         joint._anim_bone->set_length( joint._bone._length );
-        joint._anim_bone->set_radius(default_bone_radius);
         joint._anim_bone->_bone_id = bid;
     }
     // must be called last
@@ -203,15 +200,6 @@ void Skeleton::set_bone(int i, Bone* b)
 //    // TODO: to be deleted update_hrbf_id_to_bone_id();
 }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton::set_bone_radius(int i, float radius)
-{
-    _joints[i]._anim_bone->set_radius(radius);
-}
-
-// -----------------------------------------------------------------------------
-
 IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 {
     assert( i >= 0);
@@ -220,11 +208,6 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
 }
 
 // -----------------------------------------------------------------------------
-
-float Skeleton::get_hrbf_radius(Bone::Id bone_id) const
-{
-    return _joints[bone_id]._hrbf_radius;
-}
 
 void Skeleton::transform_precomputed_prim()
 {

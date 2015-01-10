@@ -90,7 +90,7 @@ struct Abs_skeleton;
  */
 struct SkeletonJoint
 {
-    SkeletonJoint() { _anim_bone = NULL; _parent = -1; _hrbf_radius = 0; }
+    SkeletonJoint() { _anim_bone = NULL; _parent = -1; }
 
     Bone *_anim_bone;
 
@@ -113,9 +113,6 @@ struct SkeletonJoint
     Transfo _h_transfo;
 
     Skeleton_env::Joint_data _joint_data;
-
-    /// hrbf radius to go from global to compact support
-    float _hrbf_radius;
 
     // TODO: this might not be really needed as blending env already stores it
     /// shape of the controller associated to each joint
@@ -146,9 +143,6 @@ struct Skeleton {
 
   /// Replace and delete the ith bone with the user allocated bone 'b'
   void set_bone(int i, Bone* b);
-
-  /// Set the implicit cylinder radius of bone i
-  void set_bone_radius(int i, float radius);
 
   //----------------------------------------------------------------------------
   /// @name Getter
@@ -232,8 +226,6 @@ struct Skeleton {
   /// Get the animated joints global transformations expressed with matrices.
   /// These transformation can be used as is to deformed the mesh
   const Transfo& get_transfo(Bone::Id bone_id) const;
-
-  float get_hrbf_radius(Bone::Id bone_id) const;
 
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }

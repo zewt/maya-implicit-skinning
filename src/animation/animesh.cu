@@ -329,16 +329,11 @@ void Animesh::set_default_bones_radius()
     const int nb_verts  = _mesh->get_nb_vertices();
     const int nb_joints = _skel->nb_joints();
 
-    std::vector<float> avg_rad     (nb_joints);
     std::vector<float> farthest_rad(nb_joints);
-    std::vector<int>   nb_smp      (nb_joints);
 
     const float inf = std::numeric_limits<float>::infinity();
-    for(int i = 0; i < nb_joints; i++) {
+    for(int i = 0; i < nb_joints; i++)
         farthest_rad[i] = 0.f;
-        avg_rad     [i] = 0.f;
-        nb_smp      [i] = 0;
-    }
 
     for(int i = 0; i < nb_verts; i++)
     {
@@ -347,16 +342,10 @@ void Animesh::set_default_bones_radius()
         float dist = _skel->get_bone(bone_id)->dist_to( vert );
 
         farthest_rad[bone_id] = std::max(farthest_rad[bone_id], dist);
-        avg_rad[bone_id] += dist;
-        nb_smp[bone_id]++;
     }
 
     for(int i = 0; i < nb_joints; i++)
     {
-        // Cylinder radius is average vertices distance
-        avg_rad[i] = nb_smp[i] ? avg_rad[i] / nb_smp[i] : 1.f;
-        _skel->set_bone_radius(i, avg_rad[i]);
-
         // HRBF compact support radius is farthest vertex distance
         const float radius = farthest_rad[i] == 0.f ? 1.f : farthest_rad[i];
         _skel->get_bone(i)->set_hrbf_radius(radius);

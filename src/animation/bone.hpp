@@ -56,17 +56,15 @@ public:
     Bone_cu() { }
 
     IF_CUDA_DEVICE_HOST
-    Bone_cu(const Point_cu& p1, const Point_cu& p2, float r):
+    Bone_cu(const Point_cu& p1, const Point_cu& p2):
         _org(p1),
-        _radius(r),
         _dir(p2-p1),
         _length((p2-p1).norm())
     { }
 
     IF_CUDA_DEVICE_HOST
-    Bone_cu(const Point_cu& org, const Vec3_cu& dir, float length, float r):
+    Bone_cu(const Point_cu& org, const Vec3_cu& dir, float length):
         _org(org),
-        _radius(r),
         _dir( dir.normalized() * length),
         _length( length )
     { }
@@ -77,12 +75,9 @@ public:
     IF_CUDA_DEVICE_HOST Point_cu  org()    const{ return _org;        }
     IF_CUDA_DEVICE_HOST Point_cu  end()    const{ return _org + _dir; }
     IF_CUDA_DEVICE_HOST float     length() const{ return _length;     }
-    IF_CUDA_DEVICE_HOST float     radius() const{ return _radius;     }
     IF_CUDA_DEVICE_HOST Vec3_cu   dir()    const{ return _dir;        }
 
     IF_CUDA_DEVICE_HOST void set_length (float  l ){ _length = l;    }
-    IF_CUDA_DEVICE_HOST void set_radius (float  r ){ _radius = r;    }
-    IF_CUDA_DEVICE_HOST void incr_radius(float ext){ _radius += ext; }
 
     // -------------------------------------------------------------------------
     /// @name Setters
@@ -180,7 +175,6 @@ public:
     // -------------------------------------------------------------------------
 // TODO: must be private
     Point_cu _org; ///< Bone origin (first joint position)
-    float _radius; ///< Bone radius
     Vec3_cu _dir;  ///< Bone direction towards its son if any
     float _length; ///< Bone length (o + v.normalized*length = bone_end_point)
 };
@@ -204,7 +198,6 @@ public:
     /// @param rad radius used to convert hrbf from global to compact support
     Bone(float rad) : Bone_cu(), _bone_id(-1) {
         _length = 0.f;
-        _radius = 0.f;
         _dir    = Vec3_cu(0.f, 0.f, 0.f);
         _org    = Point_cu(0.f, 0.f, 0.f);
 
@@ -225,8 +218,7 @@ public:
     Bone_cu get_bone_cu() const {
         assert(_bone_id != -1  );
         assert(_length  >= 0.f );
-        assert(_radius  >= 0.f );
-        return Bone_cu(_org, _org+_dir, _radius);
+        return Bone_cu(_org, _org+_dir);
     }
 
     /// Get the bone type
