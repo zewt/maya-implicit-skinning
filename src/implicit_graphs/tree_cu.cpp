@@ -18,8 +18,6 @@
  */
 #include "tree_cu.hpp"
 
-#include "ad_hoc_hand.hpp"
-
 // =============================================================================
 namespace Skeleton_env {
 // =============================================================================
@@ -35,7 +33,6 @@ Tree_cu::Tree_cu(const Tree *tree) :
     _parents_aranged.resize ( tree->bone_size() );
 
     int nb_bones = 0;
-    int expected_clusters = 0;
     for(int i = 0; i < tree->bone_size(); ++i)
     {
         if(tree->parent(i) != -1)
@@ -48,11 +45,9 @@ Tree_cu::Tree_cu(const Tree *tree) :
                                         _bone_to_cluster,
                                         _hidx_to_didx,
                                         _didx_to_hidx).id();
-        expected_clusters += compute_nb_cluster(i);
     }
 
     assert((unsigned)nb_bones == tree->bone_size());
-    assert(expected_clusters == (int) _clusters.size());
 
     // Build adjency for the new bone layout in '_bone_aranged'
     for(int i = 0; i < nb_bones; ++i)
@@ -138,21 +133,6 @@ void Tree_cu::compute_blending_list()
     for(int cid = 0; cid < (int)_clusters.size(); ++cid)
         _blending_list.add_cluster( Cluster_id(0) + cid );
 }
-
-// -----------------------------------------------------------------------------
-
-int Tree_cu::compute_nb_cluster(Bone::Id bid, int acc)
-{
-    const std::vector<int>& sons = _tree->sons( bid );
-    if(sons.size() == 0) return acc;
-
-    acc++;
-    for(unsigned i = 0; i < sons.size(); ++i)
-        acc = compute_nb_cluster(sons[i], acc);
-    return acc;
-}
-
-// -----------------------------------------------------------------------------
 
 void Tree_cu::BList::clear()
 {

@@ -55,9 +55,6 @@ private:
     /// @return wether its a pair or not
 //    bool add_elt_to_blending_list(Cluster_id cid, const std::list<Cluster>& blending_list);
 
-    /// acc must be equal to 1 for the procedure to be correct
-    int compute_nb_cluster(Bone::Id bid, int acc = 1);
-
 public:
     Bone::Id get_id_bone_aranged(int idx_bone_aranged) const {
         return _bone_aranged[ idx_bone_aranged ]->get_bone_id();
