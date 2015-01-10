@@ -24,14 +24,14 @@
 
 #include <sstream>
 
-void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton *skel, const SampleSetSettings &settings, int bone_id)
+void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton *skel, const VertToBoneInfo &vertToBoneInfo, const SampleSetSettings &settings, int bone_id)
 {
     if(!skel->is_bone(bone_id))
         return;
 
     if(settings.mode == SampleSetSettings::Poisson)
     {
-        Adhoc_sampling heur(mesh, skel);
+        Adhoc_sampling heur(mesh, skel, vertToBoneInfo);
         heur._bone_id = bone_id;
         heur._jmax = settings.jmax;
         heur._pmax = settings.pmax;
@@ -47,7 +47,7 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton 
     }
     else
     {
-        Poisson_disk_sampling heur(mesh, skel);
+        Poisson_disk_sampling heur(mesh, skel, vertToBoneInfo);
         heur._bone_id = bone_id;
         heur._jmax = settings.jmax;
         heur._pmax = settings.pmax;

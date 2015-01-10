@@ -103,10 +103,6 @@ public:
     /// Set bone type
     void set_bone_type(int id, int bone_type);
 
-    // Get the default junction radius for each joint.  This can be used as a default _junction_radius
-    // in SampleSet.
-    void get_default_junction_radius(std::vector<float> &radius_per_joint) const;
-
     inline void set_smooth_factor(int i, float val){
         d_input_smooth_factors.set(i, val);
     }
@@ -348,8 +344,6 @@ private:
     // -------------------------------------------------------------------------
 
     typedef Skeleton_env::DBone_id DBone_id;
-public: // XXX
-    VertToBoneInfo vertToBoneInfo;
 
     // END CLUSTER -------------------------------------------------------------
 

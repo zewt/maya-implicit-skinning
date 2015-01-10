@@ -37,10 +37,10 @@ namespace { __device__ void fix_debug() { } }
 using namespace Cuda_utils;
 using namespace HRBF_env;
 
-HRBF_sampling::HRBF_sampling(const Mesh *mesh_, const Skeleton *skel_):
+HRBF_sampling::HRBF_sampling(const Mesh *mesh_, const Skeleton *skel_, const VertToBoneInfo &vertToBoneInfo_):
     _bone_id(-1),
     _factor_siblings(false),
-    vertToBoneInfo(skel_, mesh_),
+    vertToBoneInfo(vertToBoneInfo_),
     mesh(mesh_),
     skel(skel_)
 { }

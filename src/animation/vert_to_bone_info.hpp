@@ -39,10 +39,14 @@ struct VertToBoneInfo
 
     /// Mapping of mesh points with there nearest bone
     /// (i.e tab[vert_idx]=bone_idx)
-    Cuda_utils::Host::  Array<Bone::Id>  h_vertices_nearest_bones;
+    std::vector<Bone::Id> h_vertices_nearest_bones;
+
+    // Get the default junction radius for each joint.  This can be used as a default _junction_radius
+    // in SampleSet.
+    void get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &nearest_rad) const;
 
 private:
-    static void clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, Cuda_utils::HA_int &vertices_nearest_bones);
+    static void clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, std::vector<int> &vertices_nearest_bones);
 };
 
 #endif

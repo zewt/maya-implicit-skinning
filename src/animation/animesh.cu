@@ -78,7 +78,6 @@ Animesh::Animesh(const Mesh *m_, Skeleton* s_) :
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
-    vertToBoneInfo(s_, m_),
     vmap_old_new(_mesh->get_nb_vertices()),
     vmap_new_old(_mesh->get_nb_vertices()),
     d_rear_verts(_mesh->get_nb_vertices()),
@@ -299,42 +298,15 @@ void Animesh::compute_mvc()
     d_edge_mvc.    copy_from( edge_mvc     );
 }
 
-void Animesh::get_default_junction_radius(std::vector<float> &nearest_rad) const
-{
-    const int nb_verts  = _mesh->get_nb_vertices();
-    const int nb_joints = _skel->nb_joints();
-
-    const float inf = std::numeric_limits<float>::infinity();
-    nearest_rad = std::vector<float>(nb_joints, inf);
-
-    // Junction radius is nearest vertex distance
-    for(int i = 0; i < nb_verts; i++)
-    {
-        const int bone_id = vertToBoneInfo.h_vertices_nearest_bones[i];
-        const Point_cu vert = _mesh -> get_vertex(i).to_point();
-        float dist = _skel->get_bone(bone_id)->dist_to( vert );
-
-        nearest_rad [bone_id] = std::min(nearest_rad [bone_id], dist);
-    }
-
-    for(int i = 0; i < nb_joints; i++)
-    {
-        if(nearest_rad[i] == inf)
-            nearest_rad[i] = 1.f;
-    }
-}
-
 void Animesh::set_default_bones_radius()
 {
+    // XXX: This should be set on the skeleton before we receive it.
+    VertToBoneInfo vertToBoneInfo(_skel, _mesh);
+
     const int nb_verts  = _mesh->get_nb_vertices();
     const int nb_joints = _skel->nb_joints();
 
-    std::vector<float> farthest_rad(nb_joints);
-
-    const float inf = std::numeric_limits<float>::infinity();
-    for(int i = 0; i < nb_joints; i++)
-        farthest_rad[i] = 0.f;
-
+    std::vector<float> farthest_rad(nb_joints, 0);
     for(int i = 0; i < nb_verts; i++)
     {
         const int bone_id = vertToBoneInfo.h_vertices_nearest_bones[i];

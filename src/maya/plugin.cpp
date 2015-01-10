@@ -61,6 +61,7 @@
 #include "cuda_ctrl.hpp"
 #include "skeleton_ctrl.hpp"
 #include "marching_cubes/marching_cubes.hpp"
+#include "vert_to_bone_info.hpp"
 
 // #include "animesh.hpp"
 
@@ -773,14 +774,15 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
     SampleSet::SampleSet samples(skeleton.skel->nb_joints());
 
-    // Get the default junction radius.
-
+    VertToBoneInfo vertToBoneInfo(skeleton.skel, mesh.get());
+    
     SampleSet::SampleSetSettings sampleSettings;
-    animMesh->get_default_junction_radius(sampleSettings.junction_radius);
+    // Get the default junction radius.
+    vertToBoneInfo.get_default_junction_radius(skeleton.skel, mesh.get(), sampleSettings.junction_radius);
 
     // XXX 1->0?
     for(int bone_id = 1; bone_id < skeleton.skel->nb_joints(); ++bone_id)
-        samples.choose_hrbf_samples(mesh.get(), skeleton.skel, sampleSettings, bone_id);
+        samples.choose_hrbf_samples(mesh.get(), skeleton.skel, vertToBoneInfo, sampleSettings, bone_id);
 
     // Save the new SampleSet.
     return save_sampleset(samples);

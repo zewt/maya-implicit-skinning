@@ -30,7 +30,7 @@ struct Skeleton;
 /// @brief base class to find HRBF samples on the mesh given a bone
 class HRBF_sampling {
 public:
-    HRBF_sampling(const Mesh *mesh, const Skeleton *skel);
+    HRBF_sampling(const Mesh *mesh, const Skeleton *skel, const VertToBoneInfo &vertToBoneInfo);
 
     virtual ~HRBF_sampling(){ }
 
@@ -68,7 +68,7 @@ public:
 protected:
     const Mesh *mesh;
     const Skeleton *skel;
-    const VertToBoneInfo vertToBoneInfo;
+    const VertToBoneInfo &vertToBoneInfo;
 };
 
 // -------------------------------------------------------------------------
@@ -78,8 +78,8 @@ protected:
 class Adhoc_sampling : public HRBF_sampling {
 public:
 
-    Adhoc_sampling(const Mesh *mesh, const Skeleton *skel):
-        HRBF_sampling(mesh, skel),
+    Adhoc_sampling(const Mesh *mesh, const Skeleton *skel, const VertToBoneInfo &vertToBoneInfo_):
+        HRBF_sampling(mesh, skel, vertToBoneInfo_),
         _mind(0.f)
     {}
 
@@ -93,8 +93,8 @@ public:
 class Poisson_disk_sampling : public HRBF_sampling {
 public:
 
-    Poisson_disk_sampling(const Mesh *mesh, const Skeleton *skel) :
-        HRBF_sampling(mesh, skel),
+    Poisson_disk_sampling(const Mesh *mesh, const Skeleton *skel, const VertToBoneInfo &vertToBoneInfo_) :
+        HRBF_sampling(mesh, skel, vertToBoneInfo_),
         _mind(0.f),
         _nb_samples(0)
     {}

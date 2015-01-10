@@ -53,8 +53,7 @@ VertToBoneInfo::VertToBoneInfo(const Skeleton *skel, const Mesh *mesh):
     }
 }
 
-
-void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, Cuda_utils::HA_int &vertices_nearest_bones)
+void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, std::vector<int> &vertices_nearest_bones)
 {
     const int nb_bones = (int) skel->get_bones().size();
     std::vector<int> nb_vert_by_bone(nb_bones);
@@ -87,4 +86,29 @@ void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh
 
     for(int j = 0; j < skel->nb_joints(); j++)
         printf("Bone %i has %i clustered vertices\n", j, nb_vert_by_bone[j]);
+}
+
+void VertToBoneInfo::get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &nearest_rad) const
+{
+    const int nb_verts  = mesh->get_nb_vertices();
+    const int nb_joints = skel->nb_joints();
+
+    const float inf = std::numeric_limits<float>::infinity();
+    nearest_rad = std::vector<float>(nb_joints, inf);
+
+    // Junction radius is nearest vertex distance
+    for(int i = 0; i < nb_verts; i++)
+    {
+        const int bone_id = h_vertices_nearest_bones[i];
+        const Point_cu vert = mesh -> get_vertex(i).to_point();
+        float dist = skel->get_bone(bone_id)->dist_to( vert );
+
+        nearest_rad [bone_id] = std::min(nearest_rad [bone_id], dist);
+    }
+
+    for(int i = 0; i < nb_joints; i++)
+    {
+        if(nearest_rad[i] == inf)
+            nearest_rad[i] = 1.f;
+    }
 }

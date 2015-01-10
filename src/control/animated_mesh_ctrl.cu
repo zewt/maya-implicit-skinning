@@ -259,11 +259,6 @@ void Animated_mesh_ctrl::copy_vertices(const std::vector<Vec3_cu> &vertices)
     _animesh->copy_vertices(vertices);
 }
 
-void Animated_mesh_ctrl::get_default_junction_radius(std::vector<float> &radius_per_joint) const
-{
-    _animesh->get_default_junction_radius(radius_per_joint);
-}
-
 int Animated_mesh_ctrl::get_nb_vertices() const
 {
     return _animesh->get_nb_vertices();
