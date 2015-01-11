@@ -32,7 +32,6 @@ namespace { __device__ void fix_debug() { } }
 // This takes ownership of the Mesh (and gives it to Animesh).  It does not take ownership
 // of Skeleton.
 Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel_) :
-    _auto_precompute(true),
     _nb_iter(7),
     _samples(skel_->nb_joints()),
     skel(skel_),
@@ -279,7 +278,7 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
     // Figure out why for diagnostics.
     skel->update_bones_data();
 
-    if(_auto_precompute) precompute_all_bones();
+    precompute_all_bones();
 }
 
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)

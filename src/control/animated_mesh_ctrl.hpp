@@ -54,7 +54,6 @@ public:
 
     void enable_update_base_potential(bool state);
 
-    void set_auto_precompute(bool s){ _auto_precompute = s; }
     void update_base_potential();
 
     //--------------------------------------------------------------------------
@@ -139,7 +138,6 @@ private:
     /// @name Attributes
     //--------------------------------------------------------------------------
 
-    bool _auto_precompute; ///< Bones are always precomputed in grids
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
 
