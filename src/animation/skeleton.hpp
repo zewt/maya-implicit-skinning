@@ -107,11 +107,6 @@ struct SkeletonJoint
     // This joint's parent ID.
     Bone::Id _parent;
 
-    /// List of transformations associated to each bone in order to deform a mesh.
-    /// A point will follow rigidly the ith bone movements if it is transformed
-    /// by bone_transformations[parents[ith]].
-    Transfo _h_transfo;
-
     Skeleton_env::Joint_data _joint_data;
 
     // TODO: this might not be really needed as blending env already stores it
@@ -165,18 +160,6 @@ struct Skeleton {
       return parent(i) != -1;
   }
 
-  // If this joint represents a bone, return the transform used for the bone.  Otherwise,
-  // return identity.
-  //
-  // This is the parent joint's transform.
-  Transfo get_bone_transform(int i) const {
-      if(!is_bone(i))
-          return Transfo::identity();
-
-      const SkeletonJoint &joint = _joints[i];
-      return joint._parent == -1? Transfo::identity():_joints[joint._parent]._h_transfo;
-  }
-
   bool is_leaf(int i) const { return _joints[i]._children.size() == 0; }
 
   /// Get the animated bones of the skeleton
@@ -211,10 +194,6 @@ struct Skeleton {
       return _joints[i]._joint_data._blend_type;
   }
 
-  /// Get the animated joints global transformations expressed with matrices.
-  /// These transformation can be used as is to deformed the mesh
-  const Transfo& get_transfo(Bone::Id bone_id) const;
-
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }
 
@@ -223,7 +202,8 @@ struct Skeleton {
   /// Given a set of global transformation at each joints animate the skeleton.
   /// animated bones frames dual quaternions are updated as well as device
   /// memory
-  void update_bones_pose();
+  void update_bones_pose(const std::vector<Transfo> &transfos);
+  void update_bones_data();
 
 private:
 
@@ -233,10 +213,6 @@ private:
   /// updates 'hrbf_id_to_bone_id' attributes according to the bone array
   // TODO: to be deleted
 //  void update_hrbf_id_to_bone_id();
-
-  /// transform implicit surfaces pre computed in 3D grids
-  /// @param global_transfos array of global transformations for each bone
-  void transform_precomputed_prim();
 
   std::vector<Skeleton_env::Joint_data> get_joints_data() const;
 

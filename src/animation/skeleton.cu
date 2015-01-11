@@ -47,7 +47,7 @@ void Skeleton::init_skel_env()
     }
 
     _skel_id = Skeleton_env::new_skel_instance(bones, parents);
-    update_bones_pose();
+    update_bones_pose(std::vector<Transfo>(_joints.size(), Transfo::identity()));
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
     Skeleton_env::update_bones_data (_skel_id, bones);
 }
@@ -66,8 +66,6 @@ Skeleton::Skeleton(const Loader::Abs_skeleton& skel)
 
         _joints[i]._controller = IBL::Shape::caml();
         Blending_env::update_controller(d._ctrl_id, _joints[i]._controller);
-
-        _joints[i]._h_transfo = Transfo::identity();
     }
 
     std::vector<Transfo> _frames(skel._bones.size());
@@ -188,68 +186,58 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(int i)
     return _joints[i]._controller;
 }
 
-// -----------------------------------------------------------------------------
-
-void Skeleton::transform_precomputed_prim()
-{
-    for( int i = 0; i < (int) _joints.size(); i++)
-    {
-        if(bone_type(i) != EBone::PRECOMPUTED)
-            continue;
-
-        Bone *bone = _joints[i]._anim_bone;
-        Precomputed_prim &prim = bone->get_primitive();
-        prim.set_transform(get_bone_transform(i));
-    }
-
-    Precomputed_prim::update_device_transformations();
-}
-
 void Skeleton::set_transforms(const std::vector<Transfo> &transfos)
 {
     assert(transfos.size() == _joints.size());
-    for(int i = 0; i < (int) _joints.size(); ++i)
-        _joints[i]._h_transfo = transfos[i];
-    update_bones_pose();
+    update_bones_pose(transfos);
 }
 
-void Skeleton::update_bones_pose()
+void Skeleton::update_bones_pose(const std::vector<Transfo> &transfos)
 {
-    // Put _anim_bones in the position specified by _h_transfo.
+    // Put _anim_bones in the position specified by transfos.
     for(unsigned i = 0; i < _joints.size(); i++)
     {
         SkeletonJoint &joint = _joints[i];
+        Bone *bone = joint._anim_bone;
 
         // Check that we don't have a zero orientation.  It's an invalid value that will
         // trickle down through a bunch of other data as IND/INFs and eventually cause other
         // assertion failures, so flag it here to make it easier to debug.
-        Bone_cu b = _joints[i]._bone;
+        Bone_cu b = joint._bone;
         assert(b.dir().norm_squared() > 0);
 
-        const Transfo bone_transform = get_bone_transform(i);
-        _joints[i]._anim_bone->set_length( b.length() );
-        _joints[i]._anim_bone->set_orientation(bone_transform * b.org(), bone_transform * b.dir());
-    }
+        // If this joint represents a bone, transform it by the parent joint's transform.
+        Transfo bone_transform = Transfo::identity();
+        if(is_bone(i))
+        {
+            const SkeletonJoint &joint = _joints[i];
+            bone_transform  = joint._parent == -1? Transfo::identity():transfos[joint._parent];
+        }
 
-    // Transform HRBF bones:
-    for (int i = 0; i < (int) _joints.size(); ++i)
-    {
-        Bone *bone = _joints[i]._anim_bone;
-        if(bone->get_type() != EBone::HRBF)
-            continue;
+        bone->set_length( b.length() );
+        bone->set_orientation(bone_transform * b.org(), bone_transform * b.dir());
+
+        if(bone->get_type() == EBone::HRBF)
+        {
+            const int id = bone->get_hrbf().get_id();
+            if( id > -1) HRBF_env::set_transfo(id, bone_transform);
+        }
         
-        const int id = bone->get_hrbf().get_id();
-        if( id > -1) HRBF_env::set_transfo(id, get_bone_transform(i));
+        if(bone->get_type() == EBone::PRECOMPUTED)
+            bone->get_primitive().set_transform(bone_transform);
     }
 
     HRBF_env::apply_hrbf_transfos();
-
-    // Transform precomputed bones:
-    transform_precomputed_prim();
+    Precomputed_prim::update_device_transformations();
 
     // In order to this call to take effect correctly it MUST be done after
     // transform_hrbf() and transform_precomputed_prim() otherwise bones
     // positions will not be updated correctly within the Skeleton_env.
+    update_bones_data();
+}
+
+void Skeleton::update_bones_data()
+{
     std::vector<const Bone*> bones(_joints.size());
     for(int i = 0; i < (int) _joints.size(); ++i)
         bones[i] = _joints[i]._anim_bone;
@@ -283,10 +271,4 @@ void Skeleton::update_hrbf_id_to_bone_id()
 
 Skeleton_env::DBone_id Skeleton::get_bone_didx(Bone::Id i) const {
     return Skeleton_env::bone_hidx_to_didx(_skel_id, i);
-}
-
-const Transfo&  Skeleton::get_transfo(Bone::Id bone_id) const {
-    assert(bone_id >= 0);
-    assert(bone_id < (int) _joints.size());
-    return _joints[bone_id]._h_transfo;
 }

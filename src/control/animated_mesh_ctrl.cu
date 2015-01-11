@@ -23,6 +23,8 @@
 #include "std_utils.hpp"
 #include "skeleton.hpp"
 #include "timer.hpp"
+#include "precomputed_prim.hpp"
+#include "hrbf_env.hpp"
 
 // -----------------------------------------------------------------------------
 namespace { __device__ void fix_debug() { } }
@@ -46,6 +48,7 @@ Animated_mesh_ctrl::~Animated_mesh_ctrl()
 
 void Animated_mesh_ctrl::precompute_all_bones()
 {
+//    return;
     for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
     {
         if(_animesh->get_skel()->bone_type(i) == EBone::HRBF)
@@ -64,7 +67,7 @@ void Animated_mesh_ctrl::set_bone_type(int id, int bone_type)
     // Make sure that transform_hrbf/transform_precomputed_prim has been
     // called.  XXX: This probably shouldn't be needed here, or at least
     // we could only update the correct bone so we don't do n^2 updates.
-    skel->update_bones_pose();
+    skel->update_bones_data();
 
     Bone *bone = skel->get_bone( id );
     switch(bone_type){
@@ -88,9 +91,14 @@ void Animated_mesh_ctrl::set_bone_type(int id, int bone_type)
 
     }
 
+    // Make sure the current transforms are applied now that we've changed the bone.
+    // XXX: If this is needed, Bone should probably do this internally.
+    HRBF_env::apply_hrbf_transfos();
+    Precomputed_prim::update_device_transformations();
+
     // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
     // Figure out why for diagnostics.
-    skel->update_bones_pose();
+    skel->update_bones_data();
 }
 
 // -----------------------------------------------------------------------------
@@ -262,7 +270,14 @@ void Animated_mesh_ctrl::update_bone_samples(int bone_id)
     bone->get_hrbf().init_coeffs(sample_list.nodes, sample_list.n_nodes);
     printf("update_bone_samples: Solved %i nodes in %f seconds\n", sample_list.nodes.size(), t.stop());
 
-    skel->update_bones_pose();
+    // Make sure the current transforms are applied now that we've changed the bone.
+    // XXX: If this is needed, Bone should probably do this internally.
+    HRBF_env::apply_hrbf_transfos();
+    Precomputed_prim::update_device_transformations();
+
+    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
+    // Figure out why for diagnostics.
+    skel->update_bones_data();
 
     if(_auto_precompute) precompute_all_bones();
 }
