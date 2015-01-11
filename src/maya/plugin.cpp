@@ -707,11 +707,10 @@ MStatus ImplicitSkinDeformer::load_visualization_geom_data(MDataBlock &dataBlock
     vector<Bone *> bones = skel->get_bones();
     for(int i = 0; i < bones.size(); ++i)
     {
-        Bone *bone = bones[i];
+        const Bone *bone = bones[i];
         if(bone->get_type() != EBone::Bone_t::HRBF)
             continue;
-        Bone_hrbf *b = (Bone_hrbf *) bone;
-        MarchingCubes::compute_surface(previewMeshGeometry, b);
+        MarchingCubes::compute_surface(previewMeshGeometry, bone);
     }
 
     return MStatus::kSuccess;
