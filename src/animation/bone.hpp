@@ -53,7 +53,11 @@ struct Skeleton;
 class Bone_cu {
 public:
     IF_CUDA_DEVICE_HOST
-    Bone_cu() { }
+    Bone_cu():
+        _org(0.f, 0.f, 0.f),
+        _dir(0.f, 0.f, 0.f),
+        _length(0)
+    { }
 
     IF_CUDA_DEVICE_HOST
     Bone_cu(const Point_cu& p1, const Point_cu& p2):
@@ -197,10 +201,6 @@ public:
 
     /// @param rad radius used to convert hrbf from global to compact support
     Bone(float rad) : Bone_cu(), _bone_id(-1) {
-        _length = 0.f;
-        _dir    = Vec3_cu(0.f, 0.f, 0.f);
-        _org    = Point_cu(0.f, 0.f, 0.f);
-
         _enabled = false;
         _precomputed = false;
         _hrbf.initialize();
