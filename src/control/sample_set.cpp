@@ -190,8 +190,7 @@ void SampleSet::SampleSet::transform_samples(const std::vector<Transfo> &transfo
     }
 }
 
-int SampleSet::SampleSet::get_all_bone_samples(const Skeleton &skel, int bone_id, InputSample &out) const
+void SampleSet::SampleSet::get_all_bone_samples(int bone_id, InputSample &out) const
 {
     out.append(_samples[bone_id]);
-    return bone_id;
 }

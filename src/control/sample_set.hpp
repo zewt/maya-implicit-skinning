@@ -105,7 +105,7 @@ struct SampleSet
     // Automatically choose samples for the given bone.
     void choose_hrbf_samples(const Mesh *mesh, const Skeleton *skel, const VertToBoneInfo &vertToBoneInfo, const SampleSetSettings &settings, int bone_id);
 
-    int get_all_bone_samples(const Skeleton &skel, int bone_id, InputSample &out) const;
+    void get_all_bone_samples(int bone_id, InputSample &out) const;
 
 private:
     /// Compute caps at the tip of the bone to close the hrbf

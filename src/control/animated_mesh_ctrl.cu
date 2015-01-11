@@ -250,7 +250,7 @@ int Animated_mesh_ctrl::get_nb_vertices() const
 void Animated_mesh_ctrl::update_bone_samples(int bone_id)
 {
     SampleSet::InputSample sample_list;
-    bone_id = _samples.get_all_bone_samples(*_animesh->get_skel(), bone_id, sample_list);
+    _samples.get_all_bone_samples(bone_id, sample_list);
 
     // Solve/compute compute HRBF weights
     Timer t;
