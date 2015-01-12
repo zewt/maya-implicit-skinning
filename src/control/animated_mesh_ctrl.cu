@@ -55,12 +55,6 @@ void Animated_mesh_ctrl::precompute_all_bones()
 
 void Animated_mesh_ctrl::set_bone_type(int id, int bone_type)
 {
-    // Don't waste memory converting joints with no associated vertices.
-    // XXX: but we convert to HRBF elsewhere and we can't leave bones in HRBF, even if
-    // they're empty (eg. bbox will be slow)
-//    if(bone_type != EBone::SSD && h_verts_id_per_bone[id].size() == 0)
-//        return;
-
     // Make sure that transform_hrbf/transform_precomputed_prim has been
     // called.  XXX: This probably shouldn't be needed here, or at least
     // we could only update the correct bone so we don't do n^2 updates.
