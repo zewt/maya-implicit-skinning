@@ -21,7 +21,10 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <memory>
 #include "vec3_cu.hpp"
+#include "bone.hpp"
 #include "bone_type.hpp"
 #include "joint_type.hpp"
 #include "blending_env_type.hpp"
@@ -31,37 +34,21 @@
 
 struct Skeleton;
 
-/**
-    @brief
-*/
 class Skeleton_ctrl {
 public:
-    Skeleton_ctrl();
-    ~Skeleton_ctrl();
-
-    void load(const Loader::Abs_skeleton& abs_skel);
-
     bool is_loaded() const;
-
-    /// @return the bone_id associated to the hrbf_id or -1
-    int find_associated_bone(int hrbf_id);
 
     // -------------------------------------------------------------------------
     /// @name Setters
     // -------------------------------------------------------------------------
 
     void set_joint_blending(int i, EJoint::Joint_t type);
-
     void set_joint_bulge_mag(int i, float m);
-
     void set_joint_controller(int id_joint, const IBL::Ctrl_setup& shape);
 
     // -------------------------------------------------------------------------
     /// @name Getters
     // -------------------------------------------------------------------------
-
-    // Set the current joint transforms.
-    void set_transforms(const std::vector<Transfo> &transfos);
 
     /// @return the bone id associated to the hrbf -1 if the hrbf_id does not
     /// exists
@@ -80,8 +67,7 @@ public:
 
     const std::vector<int>& get_sons(int joint_id);
 
-public: // XXX
-    Skeleton *skel;
+    std::unique_ptr<Skeleton> skel;
 };
 
 

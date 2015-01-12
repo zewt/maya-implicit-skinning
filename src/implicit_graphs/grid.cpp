@@ -93,11 +93,11 @@ void Grid::reset_grid()
 
 void Grid::add_tree()
 {
-    for(int i = 0; i < _tree->bone_size(); ++i) //FIXME: add from root bone to leaf with rec lookup
+    for(auto bone: _tree->bones())
     {
         // Ignore root joints.
-        if( _tree->parent(i) == -1 ) continue;
-        add_bone( _tree->bone(i)->get_bone_id() );
+        if( _tree->parent(bone->get_bone_id()) == -1 ) continue;
+        add_bone( bone->get_bone_id() );
     }
 }
 

@@ -64,9 +64,9 @@ void HRBF_sampling::factor_samples(std::vector<int>& vert_ids,
     for( unsigned i = 0; i < sons.size(); i++)
     {
         const int bone_id = _factor_siblings ? sons[i] : _bone_id;
-        const std::vector<int>&     ids   = vertToBoneInfo.h_verts_id_per_bone     [bone_id];
-        const std::vector<Vec3_cu>& nors  = vertToBoneInfo.h_input_normals_per_bone[bone_id];
-        const std::vector<Vec3_cu>& verts = vertToBoneInfo.h_input_verts_per_bone  [bone_id];
+        const auto &ids   = vertToBoneInfo.h_verts_id_per_bone.at(bone_id);
+        const auto &nors  = vertToBoneInfo.h_input_normals_per_bone.at(bone_id);
+        const auto &verts = vertToBoneInfo.h_input_verts_per_bone.at(bone_id);
 
         vert_ids.insert(vert_ids.end(), ids.begin(), ids.end());
         vertices.insert(vertices.end(), verts.begin(), verts.end());

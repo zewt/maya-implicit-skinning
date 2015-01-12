@@ -22,16 +22,21 @@
 namespace Skeleton_env {
 // =============================================================================
 
-Tree::Tree(const std::vector<const Bone*>& bones, const std::vector<int>& parents) :
-    _bones( bones.begin(), bones.end() ),
-    _parents( parents )
+Tree::Tree(const std::vector<const Bone*>& bones, const std::map<Bone::Id, Bone::Id>& parents):
+    _parents(parents)
 {
-    _datas.resize( bones.size() );
-    _sons.resize( bones.size() );
-    // Build sons adjency :
-    for(unsigned i = 0; i < _sons.size(); ++i) {
-        int pt = _parents[i];
-        if(pt > -1) _sons[pt].push_back( i );
+    for(const Bone *bone: bones)
+    {
+        Bone::Id bone_id = bone->get_bone_id();
+        _bones[bone_id] = bone;
+        int pt = _parents.at(bone_id);
+        if(pt > -1) _sons[pt].push_back(bone_id);
+    }
+
+    // Make sure all bones have an entry in _sons and _datas, even if it's blank.
+    for(const Bone *bone: bones) {
+        _sons[bone->get_bone_id()];
+        _datas[bone->get_bone_id()];
     }
 }
 
@@ -41,8 +46,8 @@ Tree::Tree(const std::vector<const Bone*>& bones, const std::vector<int>& parent
 BBox_cu Tree::bbox() const
 {
     BBox_cu res;
-    for(int i = 0; i < bone_size(); ++i)
-        res = res.bbox_union( _bones[i]->get_bbox() );
+    for(auto &it: _bones)
+        res = res.bbox_union( it.second->get_bbox() );
 
     return res;
 }

@@ -20,18 +20,14 @@
 #define SKELETON_HPP__
 
 #include <vector>
+#include <set>
+#include <map>
 
 #include "bone.hpp"
 #include "joint_type.hpp"
 #include "transfo.hpp"
 #include "blending_lib/controller.hpp"
 #include "skeleton_env_type.hpp"
-
-// Forward definitions ---------------------------------------------------------
-namespace Loader {
-struct Abs_skeleton;
-}
-// End Forward definitions  ----------------------------------------------------
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
@@ -92,14 +88,7 @@ struct SkeletonJoint
 {
     SkeletonJoint() { _anim_bone = NULL; _parent = -1; }
 
-    Bone *_anim_bone;
-
-    /// Bone in rest position.
-    /// @warning a bone can have a orientation different from its associated joint
-    /// Bones orientations are solely deduce from joint positions. _frame[i]
-    /// is not necessarily equal to the _bones[i] frame.
-    /// @see bone.hpp
-    Bone_cu _bone;
+    const Bone *_anim_bone;
 
     // List of children IDs for this bone.
     std::vector<Bone::Id> _children;
@@ -118,16 +107,14 @@ struct SkeletonJoint
 struct Skeleton {
   friend struct SkeletonImpl;
 
-  /// Build skeleton from the abstract representation
-  Skeleton(const Loader::Abs_skeleton& skel);
-
+  Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents);
   ~Skeleton();
 
   //----------------------------------------------------------------------------
   /// @name Setters
   //----------------------------------------------------------------------------
 
-  void set_joint_controller(Blending_env::Ctrl_id i,
+  void set_joint_controller(int i,
                             const IBL::Ctrl_setup& shape);
 
   /// @param type The joint type in the enum field in EJoint namespace
@@ -145,13 +132,19 @@ struct Skeleton {
 
   /// Get the number of joints in the skeleton
   int nb_joints() const { return (int) _joints.size(); }
+  std::set<Bone::Id> get_bone_ids() const {
+      std::set<Bone::Id> result;
+        for(auto &it: _joints)
+            result.insert(it.first);
+      return result;
+  }
 
-  IBL::Ctrl_setup get_joint_controller(int i);
+  IBL::Ctrl_setup get_joint_controller(Bone::Id i);
 
   /// Get the list of children for the ith bone
-  const std::vector<int>& get_sons(int i) const { return _joints[i]._children;  }
+  const std::vector<int>& get_sons(Bone::Id i) const { return _joints.at(i)._children;  }
 
-  int parent(int i) const { return _joints[i]._parent; }
+  int parent(int i) const { return _joints.at(i)._parent; }
 
   // Return true if the joint represents a bone.
   //
@@ -160,25 +153,17 @@ struct Skeleton {
       return parent(i) != -1;
   }
 
-  bool is_leaf(int i) const { return _joints[i]._children.size() == 0; }
+  bool is_leaf(int i) const { return _joints.at(i)._children.size() == 0; }
 
-  /// Get the animated bones of the skeleton
-  std::vector<Bone*> get_bones() const {
-      std::vector<Bone*> bones(_joints.size());
-      for(int i = 0; i < (int) _joints.size(); ++i)
-          bones[i] = _joints[i]._anim_bone;
-      return bones;
-  }
-
-  const Bone* get_bone(Bone::Id i) const{ return _joints[i]._anim_bone;  }
-  Bone *get_bone(Bone::Id i) { return _joints[i]._anim_bone;  }
+  // XXX remove?
+  const Bone* get_bone(Bone::Id i) const{ return _joints.at(i)._anim_bone;  }
 
   Blending_env::Ctrl_id get_ctrl(int joint) const {
-      return _joints[joint]._joint_data._ctrl_id;
+      return _joints.at(joint)._joint_data._ctrl_id;
   }
 
   float get_joints_bulge_magnitude(Bone::Id i) const {
-      return _joints[i]._joint_data._bulge_strength;
+      return _joints.at(i)._joint_data._bulge_strength;
   }
 
   Skeleton_env::DBone_id get_bone_didx(Bone::Id i) const;
@@ -186,23 +171,18 @@ struct Skeleton {
   /// bone type (whether a primitive is attached to it)
   /// @see Bone Bone_hrbf Bone_ssd Bone_cylinder Bone_precomputed EBone
   EBone::Bone_t bone_type(Bone::Id id_bone) const {
-      return _joints[id_bone]._anim_bone->get_type();
+      return _joints.at(id_bone)._anim_bone->get_type();
   }
 
   /// @return The joint type in the enum field in EJoint namespace
   EJoint::Joint_t joint_blending(Bone::Id i) const {
-      return _joints[i]._joint_data._blend_type;
+      return _joints.at(i)._joint_data._blend_type;
   }
 
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }
 
-  void set_transforms(const std::vector<Transfo> &transfos);
-
-  /// Given a set of global transformation at each joints animate the skeleton.
-  /// animated bones frames dual quaternions are updated as well as device
-  /// memory
-  void update_bones_pose(const std::vector<Transfo> &transfos);
+  // This must be called when a Bone's transform changes.
   void update_bones_data();
 
 private:
@@ -214,7 +194,7 @@ private:
   // TODO: to be deleted
 //  void update_hrbf_id_to_bone_id();
 
-  std::vector<Skeleton_env::Joint_data> get_joints_data() const;
+  std::map<Bone::Id, Skeleton_env::Joint_data> get_joints_data() const;
 
   //----------------------------------------------------------------------------
   /// @name Attributes
@@ -223,7 +203,8 @@ private:
   /// Id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id _skel_id;
 
-  std::vector<SkeletonJoint> _joints;
+  // Maps from bone IDs to joints:
+  std::map<Bone::Id, SkeletonJoint> _joints;
 
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
   // TODO: to be deleted

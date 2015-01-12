@@ -8,6 +8,7 @@
 #include "skeleton_ctrl.hpp"
 #include "mesh.hpp"
 #include "animated_mesh_ctrl.hpp"
+#include "bone_set.hpp"
 
 #include <maya/MPxDeformerNode.h> 
 #include <memory>
@@ -47,7 +48,7 @@ public:
     MStatus load_visualization_geom(MDataBlock &dataBlock);
 
     MStatus sample_all_joints();
-    MStatus get_default_hrbf_radius(std::vector<float> &hrbf_radius);
+    MStatus get_default_hrbf_radius(std::map<Bone::Id,float> &hrbf_radius);
 
     static ImplicitSkinDeformer *deformerFromPlug(MObject node, MStatus *status);
 
@@ -77,7 +78,9 @@ public:
     
     MStatus test();
 
+    BoneSet boneSet; // XXX private
 private:
+
     // The loaded mesh.  We own this object.
     std::auto_ptr<Mesh> mesh;
 

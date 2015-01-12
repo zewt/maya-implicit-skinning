@@ -21,11 +21,13 @@
 #define SAMPLE_SET_HPP
 
 #include <vector>
+#include <map>
 #include <iostream>
 #include <fstream>
 
 #include "vec3_cu.hpp"
 #include "transfo.hpp"
+#include "bone.hpp"
 
 struct Skeleton;
 class Mesh;
@@ -86,15 +88,12 @@ struct SampleSetSettings
     int nb_samples;
 
     // The junction radius for each bone.  This is only used if pcap or jcap are enabled.
-    std::vector<float> junction_radius;
+    std::map<Bone::Id,float> junction_radius;
 };
 
 struct SampleSet
 {
-
-    SampleSet(int nb_joints): _samples(nb_joints) { }
-
-    std::vector<InputSample> _samples;
+    std::map<Bone::Id,InputSample> _samples;
 
     /// Transform the hrbf samples of the list bone_ids.
     /// This allows selection/display of samples even if the skeleton is moving
@@ -105,7 +104,7 @@ struct SampleSet
     // Automatically choose samples for the given bone.
     void choose_hrbf_samples(const Mesh *mesh, const Skeleton *skel, const VertToBoneInfo &vertToBoneInfo, const SampleSetSettings &settings, int bone_id);
 
-    void get_all_bone_samples(int bone_id, InputSample &out) const;
+    void get_all_bone_samples(Bone::Id bone_id, InputSample &out) const;
 
 private:
     /// Compute caps at the tip of the bone to close the hrbf

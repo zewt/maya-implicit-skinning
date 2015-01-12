@@ -327,7 +327,6 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
     // Convert host layout to the GPU friendly layout
     // And compute some array sizes.
 
-    int nb_bones_all = 0; // Total number of bones across all skeletons
     int s_blend_list = 0; // Total size of all blending lists
     for(unsigned i = 0; i < h_envs.size(); ++i)
     {
@@ -337,13 +336,11 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         // Convert tree to GPU layout
         delete h_envs[i]->h_tree_cu_instance;
         h_envs[i]->h_tree_cu_instance = new Tree_cu( h_envs[i]->h_tree );
-        nb_bones_all += h_envs[i]->h_tree->bone_size();
         s_blend_list += h_envs[i]->h_tree_cu_instance->_blending_list.size();
     }
 
     // Now we can allocate memory
     hd_offset.malloc( h_envs.size() );
-    h_generic_bones.resize( nb_bones_all );
 
     hd_blending_list.malloc( s_blend_list );
     hd_cluster_data. malloc( s_blend_list );
@@ -367,7 +364,7 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         for(unsigned i = 0; i < tree_cu->_bone_aranged.size(); ++i){
             DBone_id new_didx = DBone_id(i) + off_bone;
             Hbone_id hidx(t, tree_cu->get_id_bone_aranged( i ) );
-            h_generic_bones[new_didx.id()] = tree_cu->_bone_aranged[i];
+            h_generic_bones.push_back(tree_cu->_bone_aranged[i]);
             // Build correspondance between device/host index for the
             // concatenated bones
             _hidx_to_didx[ hidx     ] = new_didx;
@@ -399,7 +396,6 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
     hd_offset.update_device_mem();
     hd_blending_list.update_device_mem();
     hd_cluster_data. update_device_mem();
-    assert( off_bone  == nb_bones_all );
     assert( off_blist == s_blend_list );
 }
 
@@ -485,7 +481,7 @@ void init_env()
 // -----------------------------------------------------------------------------
 
 Skel_id new_skel_instance(const std::vector<const Bone*>& bones,
-                          const std::vector<int>& parents)
+                          const std::map<Bone::Id, Bone::Id>& parents)
 {
     SkeletonEnv *env = new SkeletonEnv();
     env->h_tree = new Tree(bones, parents);
@@ -536,7 +532,7 @@ void update_bones_data(Skel_id i, const std::vector<const Bone*>& bones)
 
 // -----------------------------------------------------------------------------
 
-void update_joints_data(Skel_id i, const std::vector<Joint_data>& joints)
+void update_joints_data(Skel_id i, const std::map<Bone::Id, Joint_data>& joints)
 {
     h_envs[i]->h_tree->set_joints_data( joints );
     h_envs[i]->h_grid->build_grid();

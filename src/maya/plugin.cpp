@@ -104,8 +104,9 @@ static void loadDependency(MObject obj, MObject attr, MStatus *status)
 
 MStatus ImplicitSkinDeformer::test()
 {
+    /*
     Skeleton *skel = skeleton.skel;
-    vector<Bone *> bones = skel->get_bones();
+    vector<const Bone *> bones = skel->get_bones();
     if(bones.size() < 1)
         return MStatus::kSuccess;
     Bone *bone = bones[1];
@@ -116,7 +117,7 @@ MStatus ImplicitSkinDeformer::test()
     HermiteRBF &hrbf = b->get_hrbf();
     vector<Vec3_cu> samples;
     hrbf.get_samples(samples);
-
+*/
     return MStatus::kSuccess;
 }
 
@@ -288,7 +289,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     if(status != MS::kSuccess) return status;
 
     // Update the skeleton.
-    vector<Transfo> bone_transforms;
+    map<Bone::Id,Transfo> bone_transforms;
 
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
@@ -321,18 +322,13 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         MMatrix currentTransformObjectSpace = jointTransformWorldSpace * worldToObjectSpaceMat; // current object space transform
         MMatrix changeToTransform = bindMatrixObjectSpaceInv * currentTransformObjectSpace; // joint transform relative to bind pose in object space
         
-        if(bone_transforms.size() <= logicalIndex)
-            bone_transforms.resize(logicalIndex+1);
-        bone_transforms[logicalIndex] = DagHelpers::MMatrixToTransfo(changeToTransform);
+        const Bone *bone = boneSet.get_bone_by_idx(logicalIndex);
+        bone_transforms[bone->get_bone_id()] = DagHelpers::MMatrixToTransfo(changeToTransform);
     }
 
-    // If we've been given fewer transformations than there are bones, set the missing ones to identity.
-    if(skeleton.get_nb_joints() > bone_transforms.size())
-        return MStatus::kFailure;
-    bone_transforms.insert(bone_transforms.end(), skeleton.get_nb_joints() - bone_transforms.size(), Transfo::identity());
-
     // Update the skeleton transforms.
-    skeleton.set_transforms(bone_transforms);
+    boneSet.set_transforms(bone_transforms);
+    skeleton.skel->update_bones_data();
 
     // Update the vertex data.  We read all geometry, not just the set (if any) that we're being
     // applied to, so the algorithm can see the whole mesh.
@@ -382,10 +378,15 @@ MStatus ImplicitSkinDeformer::load_skeleton(MDataBlock &dataBlock)
     status = createSkeleton(dataBlock, newSkeleton);
     if(status != MS::kSuccess) return status;
 
+    // Load the BoneSet.  This will create the actual bones.
+    boneSet.load(newSkeleton);
+
     // Load the skeleton.
-    skeleton.load(newSkeleton);
+    vector<Bone*> &bones = boneSet.all_bones();
+    vector<const Bone*> const_bones(bones.begin(), bones.end());
+    skeleton.skel.reset(new Skeleton(const_bones, newSkeleton._parents));
     if(mesh.get() != NULL && skeleton.is_loaded())
-        animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel));
+        animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel.get()));
 
     return MStatus::kSuccess;
 }
@@ -462,16 +463,17 @@ MStatus ImplicitSkinDeformer::save_sampleset(const SampleSet::SampleSet &samples
 
     MPlug jointArrayPlug(thisMObject(), ImplicitSkinDeformer::influenceJointsAttr);
     
-    // Skip the dummy root joint.
-    for(int i = 0; i < (int) samples._samples.size(); ++i)
+    for(int i = 0; i < (int) boneSet.bones.size(); ++i)
     {
-        const SampleSet::InputSample &inputSample = samples._samples[i];
+        const Bone *bone = boneSet.get_bone_by_idx(i);
+
+        // Get the samples for this bone, or an empty SampleSet if there's no entry for it.
+        bool has_samples = (samples._samples.find(bone->get_bone_id()) != samples._samples.end());
+        SampleSet::InputSample emptySample;
+        const SampleSet::InputSample &inputSample = has_samples? samples._samples.at(bone->get_bone_id()):emptySample;
 
         MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i, &status);
         if(status != MS::kSuccess) return status;
-
-        // XXX caps, jcap/pcap flags (only one or the other?  if caps are editable, should they
-        // be changed to regular samples?)
 
         // Save the samples.
         MPlug samplePointPlug = jointPlug.child(ImplicitSkinDeformer::samplePointAttr, &status);
@@ -520,8 +522,8 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // Create a new SampleSet, and load its values from the node.
-    SampleSet::SampleSet samples(skeleton.skel->nb_joints());
-
+    SampleSet::SampleSet samples;
+    /*
     if(skeleton.skel->nb_joints() != influenceJointsHandle.elementCount())
     {
         // We don't have the same number of joints loaded as we have .joints elements.  XXX: This happened
@@ -529,11 +531,12 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
         int a = skeleton.skel->nb_joints();
         int b = influenceJointsHandle.elementCount();
         assert(0);
-    }
+    }*/
 
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
-        SampleSet::InputSample &inputSample = samples._samples[i];
+        Bone *bone = boneSet.get_bone_by_idx(i);
+        SampleSet::InputSample &inputSample = samples._samples[bone->get_bone_id()];
 
         status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;
@@ -550,7 +553,6 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
             MDataHandle hrbfRadiusHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::hrbfRadiusAttr);
             if(status != MS::kSuccess) return status;
             float hrbfRadius = hrbfRadiusHandle.asFloat();
-            Bone *bone = skeleton.skel->get_bone(i);
             bone->set_hrbf_radius(hrbfRadius);
         }
 
@@ -614,7 +616,7 @@ MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
 
     // XXX: This will wipe out the loaded bones and require a skeleton/sampleset reload
     if(skeleton.is_loaded())
-        animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel));
+        animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel.get()));
 
     return MStatus::kSuccess;
 }
@@ -652,8 +654,11 @@ MStatus ImplicitSkinDeformer::set_bind_pose()
 
     // Reset the relative joint transformations to identity, eg. no change after setup.  deform() will reload the
     // current transforms the next time it needs them.
-    vector<Transfo> bone_transforms(skeleton.get_nb_joints(), Transfo::identity());
-    skeleton.set_transforms(bone_transforms);
+    map<Bone::Id,Transfo> bone_transforms;
+    for(Bone::Id bone_id: skeleton.skel->get_bone_ids())
+        bone_transforms[bone_id] = Transfo::identity();
+    boneSet.set_transforms(bone_transforms);
+    skeleton.skel->update_bones_data();
 
     // Load the unskinned geometry, which matches with the identity transforms.
     MPlug unskinnedGeomPlug(thisMObject(), unskinnedGeomAttr);
@@ -703,8 +708,7 @@ MStatus ImplicitSkinDeformer::load_visualization_geom_data(MDataBlock &dataBlock
     dataBlock.inputValue(ImplicitSkinDeformer::sampleSetUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
-    Skeleton *skel = skeleton.skel;
-    vector<Bone *> bones = skel->get_bones();
+    vector<Bone *> bones = boneSet.all_bones();
     for(int i = 0; i < bones.size(); ++i)
     {
         const Bone *bone = bones[i];
@@ -735,7 +739,7 @@ MStatus ImplicitSkinDeformer::load_visualization_geom(MDataBlock &dataBlock)
     return MStatus::kSuccess;
 }
 
-MStatus ImplicitSkinDeformer::get_default_hrbf_radius(std::vector<float> &hrbf_radius)
+MStatus ImplicitSkinDeformer::get_default_hrbf_radius(std::map<Bone::Id,float> &hrbf_radius)
 {
     MStatus status = MStatus::kSuccess;
 
@@ -747,8 +751,8 @@ MStatus ImplicitSkinDeformer::get_default_hrbf_radius(std::vector<float> &hrbf_r
     dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
-    VertToBoneInfo vertToBoneInfo(skeleton.skel, mesh.get());
-    vertToBoneInfo.get_default_hrbf_radius(skeleton.skel, mesh.get(), hrbf_radius);
+    VertToBoneInfo vertToBoneInfo(skeleton.skel.get(), mesh.get());
+    vertToBoneInfo.get_default_hrbf_radius(skeleton.skel.get(), mesh.get(), hrbf_radius);
     return MStatus::kSuccess;
 }
 
@@ -808,17 +812,16 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     set_bind_pose();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
-    SampleSet::SampleSet samples(skeleton.skel->nb_joints());
+    SampleSet::SampleSet samples;
 
-    VertToBoneInfo vertToBoneInfo(skeleton.skel, mesh.get());
+    VertToBoneInfo vertToBoneInfo(skeleton.skel.get(), mesh.get());
     
     SampleSet::SampleSetSettings sampleSettings;
     // Get the default junction radius.
-    vertToBoneInfo.get_default_junction_radius(skeleton.skel, mesh.get(), sampleSettings.junction_radius);
+    vertToBoneInfo.get_default_junction_radius(skeleton.skel.get(), mesh.get(), sampleSettings.junction_radius);
 
-    // XXX 1->0?
-    for(int bone_id = 1; bone_id < skeleton.skel->nb_joints(); ++bone_id)
-        samples.choose_hrbf_samples(mesh.get(), skeleton.skel, vertToBoneInfo, sampleSettings, bone_id);
+    for(Bone::Id bone_id: skeleton.skel->get_bone_ids())
+        samples.choose_hrbf_samples(mesh.get(), skeleton.skel.get(), vertToBoneInfo, sampleSettings, bone_id);
 
     // Save the new SampleSet.
     return save_sampleset(samples);
@@ -1004,11 +1007,11 @@ MStatus ImplicitCommand::init(MString nodeName)
 
     // Store the default HRBF radius for the bones we set up.
     {
-        std::vector<float> hrbf_radius;
+        std::map<Bone::Id,float> hrbf_radius;
         status = deformer->get_default_hrbf_radius(hrbf_radius);
         if(status != MS::kSuccess) return status;
 
-        for(int i = 0; i < (int) hrbf_radius.size(); ++i)
+        for(int i = 0; i < (int) deformer->boneSet.bones.size(); ++i)
         {
             MPlug jointPlug = jointArrayPlug.elementByLogicalIndex(i, &status);
             if(status != MS::kSuccess) return status;
@@ -1016,7 +1019,8 @@ MStatus ImplicitCommand::init(MString nodeName)
             MPlug item = jointPlug.child(ImplicitSkinDeformer::hrbfRadiusAttr, &status);
             if(status != MS::kSuccess) return status;
 
-            status = item.setValue(hrbf_radius[i]);
+            const Bone *bone = deformer->boneSet.get_bone_by_idx(i);
+            status = item.setValue(hrbf_radius[bone->get_bone_id()]);
             if(status != MS::kSuccess) return status;
         }
     }

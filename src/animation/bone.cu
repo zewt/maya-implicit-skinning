@@ -197,7 +197,56 @@ void push_face(OBBox_cu& obbox,
     }
 }
 
-// -----------------------------------------------------------------------------
+static std::vector<bool> allocated_device_bone_ids;
+namespace
+{
+    // Offset the bone IDs by an arbitrary amount, so they're easily distinguishable from
+    // other IDs.  These IDs are never used as array offsets.
+    static int bone_test_offset = 1000;
+    Bone::Id create_device_bone_id()
+    {
+        for(int i = 0; i < (int) allocated_device_bone_ids.size(); ++i)
+        {
+            if(!allocated_device_bone_ids[i])
+            {
+                allocated_device_bone_ids[i] = true;
+                return Bone::Id(i+bone_test_offset);
+            }
+        }
+
+        allocated_device_bone_ids.push_back(true);
+        return Bone::Id((int) allocated_device_bone_ids.size() - 1 + bone_test_offset);
+    }
+
+    void release_device_bone_id(Bone::Id id)
+    {
+        id -= bone_test_offset;
+
+        assert(id < allocated_device_bone_ids.size());
+        assert(allocated_device_bone_ids[id]);
+        allocated_device_bone_ids[id] = false;
+    }
+}
+
+Bone::Bone(float rad):
+    Bone_cu(),
+    // Allocate a global device bone ID.
+    _bone_id(create_device_bone_id())
+{
+    _enabled = false;
+    _precomputed = false;
+    _hrbf.initialize();
+    _hrbf.set_radius(rad);
+    _primitive.initialize();
+
+}
+
+Bone::~Bone() {
+    _hrbf.clear();
+    _primitive.clear();
+    release_device_bone_id(_bone_id);
+}
+
 
 OBBox_cu Bone::get_obbox() const
 {

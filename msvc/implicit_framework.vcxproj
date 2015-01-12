@@ -192,6 +192,7 @@
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
+    <ClCompile Include="..\src\maya\bone_set.cpp" />
     <ClCompile Include="..\src\maya\marching_cubes\marching_cubes.cpp" />
     <ClCompile Include="..\src\maya\marching_cubes\mesh_data.cpp" />
     <ClCompile Include="..\src\maya\marching_cubes\vertex_hash.cpp" />
@@ -268,6 +269,7 @@
     <ClInclude Include="..\src\maths\vec2_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
+    <ClInclude Include="..\src\maya\bone_set.hpp" />
     <ClInclude Include="..\src\maya\marching_cubes\marching_cubes.hpp" />
     <ClInclude Include="..\src\maya\marching_cubes\mesh_data.h" />
     <ClInclude Include="..\src\maya\marching_cubes\tables.h" />

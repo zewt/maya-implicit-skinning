@@ -85,7 +85,7 @@ void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, const SampleSetSe
     const std::vector<int> &children = skel.get_sons(bone_id);
     int nb_sons = (int) children.size();
     for (int i = 0; i < nb_sons; ++i)
-        jrad += settings.junction_radius[ children[i] ];
+        jrad += settings.junction_radius.at(children[i]);
 
     // Note that there should never actually be zero children, because our caller checks.
     jrad /= nb_sons > 0 ? (float)nb_sons : 1.f;
@@ -104,7 +104,7 @@ void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, const SampleSetSe
 {
     const Bone* b = skel.get_bone(bone_id);
     int parent = skel.parent(bone_id);
-    float prad = settings.junction_radius[bone_id]; // parent joint radius
+    float prad = settings.junction_radius.at(bone_id); // parent joint radius
     Vec3_cu p;
     Vec3_cu n;
 
@@ -190,7 +190,7 @@ void SampleSet::SampleSet::transform_samples(const std::vector<Transfo> &transfo
     }
 }
 
-void SampleSet::SampleSet::get_all_bone_samples(int bone_id, InputSample &out) const
+void SampleSet::SampleSet::get_all_bone_samples(Bone::Id bone_id, InputSample &out) const
 {
-    out.append(_samples[bone_id]);
+    out.append(_samples.at(bone_id));
 }

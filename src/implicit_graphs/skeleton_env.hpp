@@ -20,6 +20,7 @@
 #define SKELETON_ENV_HPP__
 
 #include <vector>
+#include <map>
 
 #include "skeleton_env_type.hpp"
 #include "bone.hpp"
@@ -95,7 +96,7 @@ void set_grid_res(Skel_id id, int res);
 
 /// Create a new skeleton instance
 Skel_id new_skel_instance(const std::vector<const Bone*>& bones,
-                          const std::vector<int>& parents);
+                          const std::map<Bone::Id, Bone::Id>& parents);
 
 void delete_skel_instance(Skel_id i);
 
@@ -106,7 +107,7 @@ void update_bones_data(Skel_id i, const std::vector<const Bone*>& bones);
 /// in device memory.
 /// @note The type of blending between a bone and its parent is defined by the
 /// parent bone.
-void update_joints_data(Skel_id i, const std::vector<Joint_data>& joints);
+void update_joints_data(Skel_id i, const std::map<Bone::Id, Joint_data>& joints);
 
 DBone_id bone_hidx_to_didx(Skel_id skel_id, Bone::Id bone_hidx);
 Bone::Id bone_didx_to_hidx(Skel_id skel_id, DBone_id bone_didx);

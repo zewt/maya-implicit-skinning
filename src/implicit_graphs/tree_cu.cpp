@@ -26,18 +26,18 @@ Tree_cu::Tree_cu(const Tree *tree) :
     _tree( tree )
 {
 
-    _clusters.       reserve( tree->bone_size() );
-    _bone_aranged.   resize ( tree->bone_size() );
-    _bone_to_cluster.resize ( tree->bone_size() );
-    _parents_aranged.resize ( tree->bone_size() );
+    _clusters.       reserve( tree->bones().size() );
+    _bone_aranged.   resize ( tree->bones().size() );
+    _bone_to_cluster.resize ( tree->bones().size() );
+    _parents_aranged.resize ( tree->bones().size() );
 
     int nb_bones = 0;
-    for(int i = 0; i < tree->bone_size(); ++i)
+    for(const Bone *bone: tree->bones())
     {
-        if(tree->parent(i) != -1)
+        if(tree->parent(bone->get_bone_id()) != -1)
             continue;
 
-        nb_bones = compute_clusters(i,
+        nb_bones = compute_clusters(bone->get_bone_id(),
                                         DBone_id(nb_bones),
                                         _bone_aranged,
                                         _clusters,
@@ -46,21 +46,17 @@ Tree_cu::Tree_cu(const Tree *tree) :
                                         _didx_to_hidx).id();
     }
 
-    assert((unsigned)nb_bones == tree->bone_size());
+    assert((unsigned)nb_bones == tree->bones().size());
 
     // Build adjency for the new bone layout in '_bone_aranged'
     for(int i = 0; i < nb_bones; ++i)
     {
         Bone::Id hidx     = _bone_aranged[i]->get_bone_id();
         Bone::Id h_parent = tree->parent( hidx );
-        if(h_parent == -1)
-        {
-            _parents_aranged[ i ] = DBone_id(-1);
-            continue;
-        }
-
-        assert(_hidx_to_didx.find(h_parent) != _hidx_to_didx.end() );
-        _parents_aranged[ i ] = _hidx_to_didx[ h_parent ];
+        DBone_id parent_device_id = DBone_id(-1);
+        if(h_parent != -1)
+            parent_device_id = _hidx_to_didx.at(h_parent);
+        _parents_aranged[i] = parent_device_id;
     }
 
     compute_blending_list();

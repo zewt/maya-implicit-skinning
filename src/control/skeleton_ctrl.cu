@@ -25,35 +25,11 @@
 
 namespace { __device__ void fix_debug() { } }
 
-Skeleton_ctrl::Skeleton_ctrl()
-{
-    skel = NULL;
-}
-
-Skeleton_ctrl::~Skeleton_ctrl()
-{
-    delete skel;
-    skel = NULL;
-}
-
-void Skeleton_ctrl::load(const Loader::Abs_skeleton& abs_skel)
-{
-    delete skel;
-    skel = new Skeleton(abs_skel);
-}
-
-void Skeleton_ctrl::set_transforms(const std::vector<Transfo> &transfos)
-{
-    skel->set_transforms(transfos);
-}
-
-// -----------------------------------------------------------------------------
-
-bool Skeleton_ctrl::is_loaded() const { return skel != 0; }
+bool Skeleton_ctrl::is_loaded() const { return skel.get() != NULL; }
 
 int Skeleton_ctrl::get_bone_id(int hrbf_id)
 {
-    for (int i = 0; i < skel->nb_joints(); ++i)
+    for(Bone::Id i: skel->get_bone_ids())
     {
         if( skel->bone_type(i) == EBone::HRBF)
         {
@@ -121,7 +97,7 @@ void Skeleton_ctrl::set_joint_bulge_mag(int i, float m){
 }
 
 // -----------------------------------------------------------------------------
-
+// XXX
 int Skeleton_ctrl::get_nb_joints(){
     return skel->nb_joints();
 }
@@ -132,22 +108,3 @@ const std::vector<int>& Skeleton_ctrl::get_sons(int joint_id)
 {
     return skel->get_sons( joint_id );
 }
-
-// -----------------------------------------------------------------------------
-
-int Skeleton_ctrl::find_associated_bone(int hrbf_id)
-{
-    for(int i = 0; i < skel->nb_joints(); i++)
-    {
-        const Bone* b = skel->get_bone(i);
-        if(b->get_type() == EBone::HRBF)
-        {
-            const HermiteRBF& hrbf = b->get_hrbf();
-            if(hrbf.get_id() == hrbf_id)
-                return i;
-        }
-    }
-    return -1;
-}
-
-// -----------------------------------------------------------------------------

@@ -25,14 +25,11 @@
 VertToBoneInfo::VertToBoneInfo(const Skeleton *skel, const Mesh *mesh):
     h_vertices_nearest_bones(mesh->get_nb_vertices())
 {
-    std::vector< std::vector<Vec3_cu> >& vertices = h_input_verts_per_bone;
-    std::vector< std::vector<Vec3_cu> >& normals  = h_input_normals_per_bone;
-    std::vector< std::vector<int>     >& vert_ids = h_verts_id_per_bone;
+    std::map<Bone::Id, std::vector<Vec3_cu> >& vertices = h_input_verts_per_bone;
+    std::map<Bone::Id, std::vector<Vec3_cu> >& normals  = h_input_normals_per_bone;
+    std::map<Bone::Id, std::vector<int>     >& vert_ids = h_verts_id_per_bone;
     vertices.clear();
     normals. clear();
-    vertices.resize(skel->nb_joints());
-    vert_ids.resize(skel->nb_joints());
-    normals. resize(skel->nb_joints());
 
     clusterize_euclidean(skel, mesh, h_vertices_nearest_bones);
 
@@ -55,8 +52,7 @@ VertToBoneInfo::VertToBoneInfo(const Skeleton *skel, const Mesh *mesh):
 
 void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, std::vector<int> &vertices_nearest_bones)
 {
-    const int nb_bones = (int) skel->get_bones().size();
-    std::vector<int> nb_vert_by_bone(nb_bones);
+    std::map<Bone::Id, int> nb_vert_by_bone;
 
     int n = mesh->get_nb_vertices();
     for(int i = 0; i < n ; i++)
@@ -65,7 +61,7 @@ void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh
         int   nd0 = 0;
 
         const Point_cu current_vertex = mesh->get_vertex(i).to_point();
-        for(int j = 0; j < skel->nb_joints(); j++)
+        for(Bone::Id j: skel->get_bone_ids())
         {
             if(!skel->is_bone(j))
                 continue;
@@ -84,19 +80,20 @@ void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh
         nb_vert_by_bone[nd0]++;
     }
 
-    for(int j = 0; j < skel->nb_joints(); j++)
-        printf("Bone %i has %i clustered vertices\n", j, nb_vert_by_bone[j]);
+    for(auto &it: nb_vert_by_bone)
+        printf("Bone %i has %i clustered vertices\n", it.first, it.second);
 }
 
-void VertToBoneInfo::get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &nearest_rad) const
+void VertToBoneInfo::get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::map<Bone::Id,float> &nearest_rad) const
 {
     const int nb_verts  = mesh->get_nb_vertices();
-    const int nb_joints = skel->nb_joints();
 
     const float inf = std::numeric_limits<float>::infinity();
-    nearest_rad = std::vector<float>(nb_joints, inf);
 
     // Junction radius is nearest vertex distance
+    for(Bone::Id bone_id: skel->get_bone_ids())
+        nearest_rad[bone_id] = inf;
+
     for(int i = 0; i < nb_verts; i++)
     {
         const int bone_id = h_vertices_nearest_bones[i];
@@ -106,20 +103,18 @@ void VertToBoneInfo::get_default_junction_radius(const Skeleton *skel, const Mes
         nearest_rad [bone_id] = std::min(nearest_rad [bone_id], dist);
     }
 
-    for(int i = 0; i < nb_joints; i++)
+    for(Bone::Id i: skel->get_bone_ids())
     {
         if(nearest_rad[i] == inf)
             nearest_rad[i] = 1.f;
     }
 }
 
-void VertToBoneInfo::get_default_hrbf_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &out) const
+void VertToBoneInfo::get_default_hrbf_radius(const Skeleton *skel, const Mesh *mesh, std::map<Bone::Id,float> &out) const
 {
     const int nb_verts  = mesh->get_nb_vertices();
-    const int nb_joints = skel->nb_joints();
-    out.resize(nb_joints, 0);
 
-    std::vector<float> farthest_rad(nb_joints, 0);
+    std::map<Bone::Id, float> farthest_rad;
     for(int i = 0; i < nb_verts; i++)
     {
         const int bone_id = h_vertices_nearest_bones[i];
@@ -130,6 +125,6 @@ void VertToBoneInfo::get_default_hrbf_radius(const Skeleton *skel, const Mesh *m
     }
 
     // HRBF compact support radius is farthest vertex distance
-    for(int i = 0; i < nb_joints; i++)
+    for(Bone::Id i: skel->get_bone_ids())
         out[i] = farthest_rad[i] == 0.f ? 1.f : farthest_rad[i];
 }

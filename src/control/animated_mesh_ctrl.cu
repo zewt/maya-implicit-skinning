@@ -33,11 +33,9 @@ namespace { __device__ void fix_debug() { } }
 // of Skeleton.
 Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel_) :
     _nb_iter(7),
-    _samples(skel_->nb_joints()),
     skel(skel_),
     _animesh(new Animesh(mesh, skel_))
 {
-    int n = skel->nb_joints();
 }
 
 Animated_mesh_ctrl::~Animated_mesh_ctrl()
@@ -48,7 +46,7 @@ Animated_mesh_ctrl::~Animated_mesh_ctrl()
 void Animated_mesh_ctrl::precompute_all_bones()
 {
 //    return;
-    for(int i = 0; i < _animesh->get_skel()->nb_joints(); i++)
+    for(Bone::Id i: skel->get_bone_ids())
     {
         if(_animesh->get_skel()->bone_type(i) == EBone::HRBF)
             set_bone_type( i, EBone::PRECOMPUTED);
@@ -171,7 +169,7 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
 {
     using namespace std;
     ifstream file(filename);
-
+/*
     if(!file.is_open()) {
         cerr << "Error importing file " << filename << endl;
         return;
@@ -196,6 +194,7 @@ void Animated_mesh_ctrl::load_ism(const char* filename)
     file.close();
 
     _animesh->update_base_potential();
+    */
 }
 
 void Animated_mesh_ctrl::set_nb_iter_smooting(int nb_iter)
@@ -298,6 +297,6 @@ void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 void Animated_mesh_ctrl::set_sampleset(const SampleSet::SampleSet &sample_set)
 {
     _samples = sample_set;
-    for(int bone_id = 0; bone_id < _animesh->get_skel()->nb_joints(); ++bone_id)
+    for(Bone::Id bone_id: _animesh->get_skel()->get_bone_ids())
         update_bone_samples(bone_id);
 }

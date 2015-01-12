@@ -21,6 +21,7 @@
 
 #include "cuda_utils.hpp"
 #include "bone.hpp"
+#include <map>
 
 struct Skeleton;
 class Mesh;
@@ -31,11 +32,11 @@ struct VertToBoneInfo
 
     /// Initial vertices in their "resting" position. sorted by nearest bone.
     /// h_input_vertices[nearest][ith_vert] = vert_coord
-    std::vector< std::vector<Vec3_cu> > h_input_verts_per_bone;
-    std::vector< std::vector<Vec3_cu> > h_input_normals_per_bone;
+    std::map<Bone::Id, std::vector<Vec3_cu> > h_input_verts_per_bone;
+    std::map<Bone::Id, std::vector<Vec3_cu> > h_input_normals_per_bone;
 
     /// h_input_vertices[nearest][ith_vert] = vert_id_in_mesh
-    std::vector< std::vector<int> > h_verts_id_per_bone;
+    std::map<Bone::Id, std::vector<int> > h_verts_id_per_bone;
 
     /// Mapping of mesh points with there nearest bone
     /// (i.e tab[vert_idx]=bone_idx)
@@ -43,9 +44,9 @@ struct VertToBoneInfo
 
     // Get the default junction radius for each joint.  This can be used as a default _junction_radius
     // in SampleSet.
-    void get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &nearest_rad) const;
+    void get_default_junction_radius(const Skeleton *skel, const Mesh *mesh, std::map<Bone::Id,float> &nearest_rad) const;
 
-    void get_default_hrbf_radius(const Skeleton *skel, const Mesh *mesh, std::vector<float> &out) const;
+    void get_default_hrbf_radius(const Skeleton *skel, const Mesh *mesh, std::map<Bone::Id,float> &out) const;
 
 private:
     static void clusterize_euclidean(const Skeleton *skel, const Mesh *mesh, std::vector<int> &vertices_nearest_bones);

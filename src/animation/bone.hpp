@@ -25,9 +25,6 @@
 #include "bbox.hpp"
 #include "bone_type.hpp"
 
-// TODO : to be moved in Skeleton_env
-struct Skeleton;
-
 /**
   @class Bone_cu
   @brief Mother class of various bones types
@@ -195,23 +192,12 @@ public:
 
 class Bone : public Bone_cu {
 public:
-    friend struct Skeleton;
     /// A bone identifier
     typedef int Id;
 
     /// @param rad radius used to convert hrbf from global to compact support
-    Bone(float rad) : Bone_cu(), _bone_id(-1) {
-        _enabled = false;
-        _precomputed = false;
-        _hrbf.initialize();
-        _hrbf.set_radius(rad);
-        _primitive.initialize();
-    }
-
-    ~Bone(){
-        _hrbf.clear();
-        _primitive.clear();
-    }
+    Bone(float rad);
+    ~Bone();
 
     Id get_bone_id() const { return _bone_id; }
 
@@ -264,7 +250,8 @@ public:
     bool is_precomputed() const { return _precomputed; }
 
 private:
-    Id _bone_id; ///< Bone identifier in skeleton class
+    // A globally unique bone ID.
+    const Id _bone_id;
 
     HermiteRBF _hrbf;
 
