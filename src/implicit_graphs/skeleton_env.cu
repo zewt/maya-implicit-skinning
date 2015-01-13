@@ -514,9 +514,8 @@ void delete_skel_instance(Skel_id skel_id)
 
 // -----------------------------------------------------------------------------
 
-void update_bones_data(Skel_id i, const std::vector<const Bone*>& bones)
+void update_bones_data(Skel_id i)
 {
-    h_envs[i]->h_tree->set_bones( bones );
     h_envs[i]->h_grid->build_grid();
     update_device();
 }

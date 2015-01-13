@@ -101,7 +101,7 @@ Skel_id new_skel_instance(const std::vector<const Bone*>& bones,
 void delete_skel_instance(Skel_id i);
 
 /// Update the bone data ( type length etc.) of the skeleton in device memory
-void update_bones_data(Skel_id i, const std::vector<const Bone*>& bones);
+void update_bones_data(Skel_id i);
 
 /// Update the joints data (type, controller id, bulge strength)
 /// in device memory.

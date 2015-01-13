@@ -51,7 +51,7 @@ void Skeleton::init_skel_env()
     update_bones_data();
 
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
-    Skeleton_env::update_bones_data (_skel_id, bones);
+    Skeleton_env::update_bones_data (_skel_id);
 }
 
 Skeleton::Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents)
@@ -154,11 +154,7 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(Bone::Id bone_id)
 
 void Skeleton::update_bones_data()
 {
-    std::vector<const Bone*> bones;
-    for(auto it: _joints)
-        bones.push_back(it.second._anim_bone);
-
-    Skeleton_env::update_bones_data(_skel_id, bones);
+    Skeleton_env::update_bones_data(_skel_id);
 }
 
 /*
