@@ -20,6 +20,7 @@
 #include "precomputed_prim_constants.hpp"
 #include "ray_cu.hpp"
 #include "precomputed_prim.hpp"
+#include "skeleton.hpp"
 
 namespace { __device__ void fix_debug() { } }
 
@@ -239,6 +240,17 @@ Bone::Bone(float rad):
     _hrbf.set_radius(rad);
     _primitive.initialize();
 
+    // Create the bone skeleton.
+    //
+    // Normally, a Skeleton is given a set of Bones and is used by the deformer.  However, in order to
+    // do things like initial sampling we also need a skeleton, since all of the HRBF/precomp logic
+    // is built around Skeleton_env.  So, we just create a tiny skeleton for each bone, which is only
+    // used for those purposes.
+    std::vector<const Bone *> bone_list;
+    std::vector<int> parents;
+    bone_list.push_back(this);
+    parents.push_back(-1);
+    boneSkeleton.reset(new Skeleton(bone_list, parents));
 }
 
 Bone::~Bone() {
@@ -327,12 +339,30 @@ BBox_cu Bone::get_bbox() const
     return get_obbox().to_bbox();
 }
 
-void Bone::precompute(Skeleton_env::Skel_id skel_id)
+void Bone::set_enabled(bool value) {
+    if(_enabled == value)
+        return;
+
+    _enabled = value;
+    discard_precompute();
+}
+
+void Bone::set_hrbf_radius(float rad)
+{
+    _hrbf.set_radius(rad);
+
+    if(_precomputed) {
+        discard_precompute();
+        precompute();
+    }
+}
+
+void Bone::precompute()
 {
     if(_precomputed)
         return;
 
-    _primitive.fill_grid_with( skel_id, this );
+    _primitive.fill_grid_with( boneSkeleton->get_skel_id(), this );
     _obbox = get_obbox();
 
     _precomputed = true;

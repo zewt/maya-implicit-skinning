@@ -43,57 +43,6 @@ Animated_mesh_ctrl::~Animated_mesh_ctrl()
     delete _animesh;
 }
 
-void Animated_mesh_ctrl::precompute_all_bones()
-{
-//    return;
-    for(Bone::Id i: skel->get_bone_ids())
-    {
-        if(_animesh->get_skel()->bone_type(i) == EBone::HRBF)
-            set_bone_type( i, EBone::PRECOMPUTED);
-    }
-}
-
-void Animated_mesh_ctrl::set_bone_type(int id, int bone_type)
-{
-    // Make sure that transform_hrbf/transform_precomputed_prim has been
-    // called.  XXX: This probably shouldn't be needed here, or at least
-    // we could only update the correct bone so we don't do n^2 updates.
-    skel->update_bones_data();
-
-    Bone *bone = skel->get_bone( id );
-    switch(bone_type){
-    case EBone::PRECOMPUTED:
-    {
-        bone->set_enabled(true);
-        bone->precompute(skel->get_skel_id());
-        break;
-    }
-    case EBone::HRBF:
-        bone->set_enabled(true);
-        bone->discard_precompute();
-        break;
-    case EBone::SSD:
-        bone->set_enabled(false);
-        break;
-
-    default: //unknown bone type !
-        assert(false);
-        break;
-
-    }
-
-    // Make sure the current transforms are applied now that we've changed the bone.
-    // XXX: If this is needed, Bone should probably do this internally.
-    HRBF_env::apply_hrbf_transfos();
-    Precomputed_prim::update_device_transformations();
-
-    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
-    // Figure out why for diagnostics.
-    skel->update_bones_data();
-}
-
-// -----------------------------------------------------------------------------
-
 void Animated_mesh_ctrl::set_do_smoothing(bool state)
 {
     if(_animesh != 0){
@@ -244,53 +193,8 @@ int Animated_mesh_ctrl::get_nb_vertices() const
     return _animesh->get_nb_vertices();
 }
 
-// -----------------------------------------------------------------------------
-
-// Combine the samples in _samples, and send them to the Animesh.
-void Animated_mesh_ctrl::update_bone_samples(int bone_id)
-{
-    SampleSet::InputSample sample_list;
-    _samples.get_all_bone_samples(bone_id, sample_list);
-
-    // Solve/compute compute HRBF weights
-    Timer t;
-    t.start();
-    Bone *bone = skel->get_bone(bone_id);
-
-    bone->set_enabled(true);
-    bone->discard_precompute();
-    bone->get_hrbf().init_coeffs(sample_list.nodes, sample_list.n_nodes);
-    printf("update_bone_samples: Solved %i nodes in %f seconds\n", sample_list.nodes.size(), t.stop());
-
-    // Make sure the current transforms are applied now that we've changed the bone.
-    // XXX: If this is needed, Bone should probably do this internally.
-    HRBF_env::apply_hrbf_transfos();
-    Precomputed_prim::update_device_transformations();
-
-    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
-    // Figure out why for diagnostics.
-    skel->update_bones_data();
-
-    precompute_all_bones();
-}
-
 void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
 {
-    Bone *bone = skel->get_bone(bone_id);
-    bool was_precomputed = (bone->get_type() == EBone::PRECOMPUTED);
-    bone->discard_precompute();
-
+    Bone *bone = const_cast<Bone*>(skel->get_bone(bone_id));
     bone->set_hrbf_radius(rad);
-
-    if(was_precomputed)
-        bone->precompute(skel->get_skel_id());
-}
-
-// -----------------------------------------------------------------------------
-
-void Animated_mesh_ctrl::set_sampleset(const SampleSet::SampleSet &sample_set)
-{
-    _samples = sample_set;
-    for(Bone::Id bone_id: _animesh->get_skel()->get_bone_ids())
-        update_bone_samples(bone_id);
 }

@@ -21,6 +21,8 @@
 #include "bone.hpp"
 #include "precomputed_prim.hpp"
 #include "hrbf_env.hpp"
+#include "sample_set.hpp"
+#include "timer.hpp"
 
 BoneItem::BoneItem(Bone *bone_) {
     bone = bone_;
@@ -172,6 +174,56 @@ void BoneItem::set_transforms(Transfo bone_transform)
         
     if(bone->get_type() == EBone::PRECOMPUTED)
         bone->get_primitive().set_transform(bone_transform);
+}
+
+void BoneSet::load_sampleset_for_bone(const SampleSet::InputSample &sample_list, Bone::Id bone_id)
+{
+    Bone *bone = bones.at(bone_id).bone;
+
+    if(sample_list.nodes.empty())
+    {
+        bone->set_enabled(false);
+        return;
+    }
+
+    // Solve/compute compute HRBF weights
+    Timer t;
+    t.start();
+
+    bone->set_enabled(true);
+    bone->discard_precompute();
+    bone->get_hrbf().init_coeffs(sample_list.nodes, sample_list.n_nodes);
+    printf("update_bone_samples: Solved %i nodes in %f seconds\n", sample_list.nodes.size(), t.stop());
+
+    // Make sure the current transforms are applied now that we've changed the bone.
+    // XXX: If this is needed, Bone should probably do this internally.
+    HRBF_env::apply_hrbf_transfos();
+    Precomputed_prim::update_device_transformations();
+
+    // XXX: It makes sense that we need this here, but if we don't call it we hang in a weird way.
+    // Figure out why for diagnostics.
+//    skel->update_bones_data();
+}
+
+void BoneSet::load_sampleset(const SampleSet::SampleSet &sample_set)
+{
+    for(auto &it: bones) {
+        Bone::Id bone_id = it.first;
+        SampleSet::InputSample sample_list;
+        sample_set.get_all_bone_samples(bone_id, sample_list);
+        load_sampleset_for_bone(sample_list, bone_id);
+    }
+}
+
+void BoneSet::precompute_all_bones()
+{
+//    return;
+    for(auto &it: bones)
+    {
+        Bone *bone = it.second.bone;
+        if(bone->get_type() == EBone::HRBF)
+            bone->precompute();
+    }
 }
 
 // Note that after changing a bone's position, Skeleton.update_bones_data must be called

@@ -292,25 +292,15 @@ static void fill_separated_bone_types(const std::vector<const Bone*>& generic_bo
 
     const int nb_bones = generic_bones.size();
     hd_bone_arrays->resize( nb_bones );
+
+    // For each bone, store the type, and the bone's HRBF and primitive ID.  We can store
+    // the IDs even if the bone is in a different mode.
     for(int i = 0; i < nb_bones; i++)
     {
         const Bone* b = generic_bones[i];
-        const int btype = b->get_type();
-        switch( btype )
-        {
-        case EBone::HRBF:
-            hd_bone_arrays->hd_bone_hrbf[i] = b->get_hrbf();
-            break;
-        case EBone::SSD:
-            /* There is no data to store for ssd bones*/
-            break;
-        case EBone::PRECOMPUTED:
-            // XXX
-            hd_bone_arrays->hd_bone_precomputed[i] = b->get_primitive();
-            break;
-        }
-
-        hd_bone_arrays->hd_bone_types[i] = btype;
+        hd_bone_arrays->hd_bone_hrbf[i] = b->get_hrbf();
+        hd_bone_arrays->hd_bone_precomputed[i] = b->get_primitive();
+        hd_bone_arrays->hd_bone_types[i] = b->get_type();
     }
     // Upload every arrays to GPU
     hd_bone_arrays->update_device_mem();
@@ -406,7 +396,8 @@ void update_device()
 {
     unbind();
     
-    // List of concatened bones for every skeletons in 'h_envs'
+    // List of concatened bones for all skeletons in 'h_envs'.  Note that a bone may
+    // appear in h_generic_bones more than once, if it's used in multiple skeletons.
     std::vector<const Bone*> h_generic_bones;
     update_device_tree(h_generic_bones);
 

@@ -20,6 +20,7 @@
 #define BONE_HPP__
 
 #include <cassert>
+#include <memory>
 #include "cuda_compiler_interop.hpp"
 #include "point_cu.hpp"
 #include "bbox.hpp"
@@ -189,6 +190,7 @@ public:
 #include "hermiteRBF.hpp"
 #include "precomputed_prim.hpp"
 
+struct Skeleton;
 
 class Bone : public Bone_cu {
 public:
@@ -215,39 +217,29 @@ public:
     /// Get the axis aligned bounding box associated to the bone
     BBox_cu get_bbox() const;
 
-    HermiteRBF& get_hrbf() {
-        // Always call discard_precompute before making non-const access to HermiteRBF.
-        assert(!_precomputed);
-
-        return _hrbf;
-    }
-
-    Precomputed_prim& get_primitive(){ return _primitive; }
-    const Precomputed_prim& get_primitive() const { assert(_precomputed); return _primitive; }
-
+    HermiteRBF& get_hrbf() { return _hrbf; }
     const HermiteRBF& get_hrbf() const { return _hrbf; }
-    bool get_enabled() const { return _enabled; }
-    void set_enabled(bool value) {
-        if(_enabled == value)
-            return;
 
-        _enabled = value;
-        discard_precompute();
-    }
+    // The primitive is only populated when is_precomputed is true.  However, we'll always create
+    // an empty primitive, so the primitive ID is always valid.
+    Precomputed_prim& get_primitive(){ return _primitive; }
+    const Precomputed_prim& get_primitive() const { return _primitive; }
+
+    bool get_enabled() const { return _enabled; }
+    void set_enabled(bool value);
 
     /// Set the radius of the hrbf.
     /// The radius is used to transform hrbf from global support to
     /// compact support
-    void set_hrbf_radius(float rad) {
-        _hrbf.set_radius(rad);
-        discard_precompute();
-    }
+    void set_hrbf_radius(float rad);
     float get_hrbf_radius() const { return _hrbf.get_radius(); }
 
     // Precompute the HRBF, allowing get_primitive() to be called.
-    void precompute(Skeleton_env::Skel_id skel_id);
+    void precompute();
     void discard_precompute();
     bool is_precomputed() const { return _precomputed; }
+
+    const Skeleton &get_bone_skeleton() const { return *boneSkeleton.get(); }
 
 private:
     // A globally unique bone ID.
@@ -259,6 +251,8 @@ private:
     bool _precomputed;
     Precomputed_prim _primitive;
     OBBox_cu         _obbox;
+
+    std::unique_ptr<Skeleton> boneSkeleton;
 };
 
 typedef Bone Bone_hrbf;

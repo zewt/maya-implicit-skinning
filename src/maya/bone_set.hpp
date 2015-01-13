@@ -24,6 +24,7 @@
 #include <map>
 #include "loader_skel.hpp"
 #include "bone.hpp"
+#include "sample_set.hpp"
 class Bone;
 
 struct BoneItem
@@ -76,10 +77,18 @@ public:
         return result;
     }
 
+    void load_sampleset(const SampleSet::SampleSet &sample_set);
+
+    /// Precompute all HRBF bones.
+    void precompute_all_bones();
+
     void set_transforms(const std::map<Bone::Id,Transfo> &transfos);
 
     std::map<Bone::Id, BoneItem> bones;
     std::map<Bone::Id, Bone::Id> parents;
+
+private:
+    void load_sampleset_for_bone(const SampleSet::InputSample &sample_list, Bone::Id bone_id);
 };
 
 #endif

@@ -580,7 +580,10 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
     }
 
     // Load the SampleSet into _anim_mesh.
-    animMesh->set_sampleset(samples);
+    boneSet.load_sampleset(samples);
+    boneSet.precompute_all_bones();
+    if(skeleton.skel != NULL)
+        skeleton.skel->update_bones_data();
 
     return MStatus::kSuccess;
 }

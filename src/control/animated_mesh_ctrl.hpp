@@ -29,7 +29,6 @@
 #include "animesh_enum.hpp"
 #include "transfo.hpp"
 #include "bone_type.hpp"
-#include "sample_set.hpp"
 #include "bone.hpp"
 
 // Forward definitions ---------------------------------------------------------
@@ -49,8 +48,6 @@ class Animated_mesh_ctrl {
 public:
     Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel);
     ~Animated_mesh_ctrl();
-
-    void set_sampleset(const SampleSet::SampleSet &sample_set);
 
     void enable_update_base_potential(bool state);
 
@@ -110,19 +107,6 @@ public:
     void set_hrbf_radius(int bone_id, float rad);
 
 private:
-    /// Append the current caps and samples and update the 'bone_id' with them
-    /// also allocates the '_anim_samples_list' for nodes and n_nodes
-    void update_bone_samples(int bone_id);
-
-    /// Convert all bones to the precomputed type. except for SSD bones and
-    /// Already precomputed
-    void precompute_all_bones();
-
-    void set_bone_type(int id, int bone_type);
-
-    //--------------------------------------------------------------------------
-    /// @name Tools file export
-    //--------------------------------------------------------------------------
 #if !defined(NO_CUDA) // XXX: remove this stuff
     //--------------------------------------------------------------------------
     /// @name Tools file import
@@ -140,8 +124,6 @@ private:
 
     bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
     int  _nb_iter;         ///< number of iterations for the mesh smoothing
-
-    SampleSet::SampleSet _samples;
 
 public:
     Animesh* _animesh;
