@@ -40,13 +40,6 @@ struct Skeleton;
 /** @brief Class of animated meshes
 
     As the joints of the skeleton rotates, the mesh is deformed accordingly.
-
-    @warning the class might reorder the mesh vertices when creating the
-    Animesh object instance. Methods output and input in the old order
-    are suffixed 'aifo' that is to say 'as in imported file order'. Methods not
-    marked are suppose to use the new order.
-    A mapping between old and new order is stored in 'vmap_old_new' :
-    vmap_old_new[old_idx] == new_idx
 */
 
 struct Animesh{
@@ -318,21 +311,6 @@ private:
     typedef Skeleton_env::DBone_id DBone_id;
 
     // END CLUSTER -------------------------------------------------------------
-
-    /// Map old vertex index from Mesh class to the new Vertex index in
-    /// Animesh. Because Animesh changes the order of vertex indices
-    /// we need to keep track of that change. It is usefull to load from a file
-    /// the ssd weight which are in the old order for instance.
-    /// vmap_old_new[old_order_idx] == new_order_idx
-    Cuda_utils::Host::Array<int> vmap_old_new;
-
-    /// Map new vertex index from Animesh class to the old Vertex index in
-    /// Mesh. Because Animesh changes the order of vertex indices
-    /// we need to keep track of that change. It is usefull to export a file
-    /// of ssd weights which usually must be stored as imported
-    /// (in the old order).
-    /// vmap_new_old[new_order_idx] == old_order_idx
-    Cuda_utils::Host::Array<int> vmap_new_old;
 
     /// Vertices behind a joint when it flex
     Cuda_utils::Device::Array<bool> d_rear_verts;

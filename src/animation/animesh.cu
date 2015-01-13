@@ -70,8 +70,6 @@ Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_rot_axis(_mesh->get_nb_vertices()),
-    vmap_old_new(_mesh->get_nb_vertices()),
-    vmap_new_old(_mesh->get_nb_vertices()),
     d_rear_verts(_mesh->get_nb_vertices()),
     h_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer(_mesh->get_nb_vertices()),
@@ -80,13 +78,7 @@ Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
 {
 
     int nb_vert = _mesh->get_nb_vertices();
-    Host::Array<EAnimesh::Vert_state> h_vert_state(nb_vert);
-    for (int i = 0; i < nb_vert; ++i)
-    {
-        vmap_old_new[i] = i;
-        vmap_new_old[i] = i;
-        h_vert_state[i] = EAnimesh::NOT_DISPLACED;
-    }
+    Host::Array<EAnimesh::Vert_state> h_vert_state(nb_vert, EAnimesh::NOT_DISPLACED);
 
     d_vertices_state.copy_from(h_vert_state);
 
@@ -306,12 +298,10 @@ void Animesh::diffuse_attr(int nb_iter, float strength, float *attr)
 void Animesh::get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert)
 {
     const int nb_vert = d_output_vertices.size();
-    anim_vert.reserve(nb_vert);
     Cuda_utils::HA_Point_cu h_out_verts(nb_vert);
     h_out_verts.copy_from(d_output_vertices);
 
-    for(int i = 0; i < nb_vert; i++)
-        anim_vert.push_back(h_out_verts[vmap_new_old[i]]);
+    anim_vert.insert(anim_vert.end(), &h_out_verts[0], &h_out_verts[0] + nb_vert);
 }
 
 int Animesh::pack_vert_to_fit(Cuda_utils::Host::Array<int>& in,
