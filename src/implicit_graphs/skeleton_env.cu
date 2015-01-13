@@ -224,7 +224,7 @@ static void update_device_grid()
 
         const Grid* grid = h_envs[grid_id]->h_grid;
 //        grid->build_grid(); should be already done
-        ((Grid *)grid)->build_grid(); // (but isn't always)
+//        ((Grid *)grid)->build_grid(); // (but isn't always)
 
         std::set<int>::const_iterator it = grid->_filled_cells.begin();
         for( ; it != grid->_filled_cells.end(); ++it)
