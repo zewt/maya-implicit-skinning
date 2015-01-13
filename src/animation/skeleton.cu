@@ -49,9 +49,7 @@ void Skeleton::init_skel_env()
     _skel_id = Skeleton_env::new_skel_instance(bones, parents);
 
     update_bones_data();
-
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
-    Skeleton_env::update_bones_data (_skel_id);
 }
 
 Skeleton::Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents)
