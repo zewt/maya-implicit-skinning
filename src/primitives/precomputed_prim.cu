@@ -254,6 +254,7 @@ void Precomputed_prim::initialize()
     PrecomputedInfo &info = h_precomputed_info[_id];
 
     info.id = _id;
+    info.user_transform = Transfo::identity();
     info.d_grid = new Device::CuArray<float4>();
     info.d_grid->set_cuda_flags(cudaArraySurfaceLoadStore);
     info.d_grid->malloc(GRID_RES, GRID_RES, GRID_RES);
@@ -359,7 +360,6 @@ void Precomputed_prim::fill_grid_with(Skeleton_env::Skel_id skel_id, const Bone*
 
     // Adding the transformation to evaluate the grid
     info.grid_transform = world_coord_to_grid(obbox, GRID_RES);
-    info.user_transform = Transfo::identity();
 
     update_device(_id);
 }
