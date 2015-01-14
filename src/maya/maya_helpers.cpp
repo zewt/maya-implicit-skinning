@@ -1194,6 +1194,14 @@ namespace DagHelpers
         return plug.setValue(obj);
     }
 
+    MStatus setPlugValue(MPlug& plug, Vec3_cu value)
+    {
+        MFnNumericData data;
+        MObject obj = data.create(MFnNumericData::k3Float);
+        data.setData3Float(value.x, value.y, value.z);
+        return plug.setValue(obj);
+    }
+
 #if 0
     //---------------------------------------------------
     bool setPlugValue ( MPlug& plug, int value )

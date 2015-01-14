@@ -51,9 +51,21 @@ void Animesh::update_base_potential()
 
     CUDA_CHECK_ERRORS();
 
-
-    std::vector<float> v_base_potential = d_base_potential.to_host_vector();
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
+}
+
+void Animesh::get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &grad) const
+{
+    pot = d_base_potential.to_host_vector();
+    grad = d_base_gradient.to_host_vector();
+}
+
+void Animesh::set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad)
+{
+    assert(pot.size() == d_base_potential.size());
+    assert(grad.size() == d_base_gradient.size());
+    d_base_potential.copy_from(pot);
+    d_base_gradient.copy_from(grad);
 }
 
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)

@@ -18,6 +18,7 @@
 #include <set>
 using namespace std;
 
+#include "vec3_cu.hpp"
 #include "transfo.hpp"
 
 namespace DagHelpers
@@ -89,6 +90,7 @@ namespace DagHelpers
 
     MStatus setPlugValue(MPlug& plug, float x, float y);
     MStatus setPlugValue(MPlug& plug, float x, float y, float z);
+    MStatus setPlugValue(MPlug& plug, Vec3_cu value);
     MStatus getPlugValue(const MPlug& plug, float& x, float& y, float& z);
 
     /*

@@ -77,6 +77,8 @@ using namespace std;
 const MTypeId ImplicitSkinDeformer::id(0xEA115);
 MObject ImplicitSkinDeformer::unskinnedGeomAttr;
 MObject ImplicitSkinDeformer::geomMatrixAttr;
+MObject ImplicitSkinDeformer::basePotentialAttr;
+MObject ImplicitSkinDeformer::baseGradientAttr;
 MObject ImplicitSkinDeformer::influenceJointsAttr;
 MObject ImplicitSkinDeformer::parentJointAttr;
 MObject ImplicitSkinDeformer::influenceBindMatrixAttr;
@@ -204,13 +206,25 @@ MStatus ImplicitSkinDeformer::initialize()
     // reload the SampleSet as well.
     dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
 
+    // The base potential of the mesh.
+    basePotentialAttr = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
+    numAttr.setArray(true);
+    addAttribute(basePotentialAttr);
+
+    baseGradientAttr = numAttr.create("baseGradient", "bg", MFnNumericData::Type::k3Float, 0, &status);
+    numAttr.setArray(true);
+    addAttribute(baseGradientAttr);
+
     basePotentialUpdateAttr = numAttr.create("basePotentialUpdate", "basePotentialUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
     numAttr.setHidden(true);
     addAttribute(basePotentialUpdateAttr);
 
+    numAttr.setHidden(true);
+    numAttr.setStorable(false);
+    dep.add(ImplicitSkinDeformer::basePotentialAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
+    dep.add(ImplicitSkinDeformer::baseGradientAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
     dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
-    dep.add(ImplicitSkinDeformer::sampleSetUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
     dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
 
     // All of the dependency nodes are required by the output geometry.
@@ -676,8 +690,9 @@ MStatus ImplicitSkinDeformer::set_bind_pose()
 }
 
 // Update the base potential for the current mesh and samples.  This requires loading the unskinned geometry.
-MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
+MStatus ImplicitSkinDeformer::calculate_base_potential()
 {
+    MDataBlock dataBlock = this->forceCache();
     MStatus status = MStatus::kSuccess;
 
     // Make sure our dependencies are up to date.
@@ -692,10 +707,94 @@ MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
     if(animMesh.get() == NULL)
         return MStatus::kSuccess;
 
-    set_bind_pose();
+//    set_bind_pose(); XXX remove
 
-    // Update base potential while in bind pose.
+    // Update base potential.
     animMesh->update_base_potential();
+
+    // Read the result.
+    vector<float> pot;
+    vector<Vec3_cu> grad;
+    animMesh->get_base_potential(pot, grad);
+
+    // Save the base potential to basePotentialAttr and baseGradientAttr.
+    MPlug basePotentialPlug(thisMObject(), ImplicitSkinDeformer::basePotentialAttr);
+    MPlug baseGradientPlug(thisMObject(), ImplicitSkinDeformer::baseGradientAttr);
+    for(int i = 0; i < (int) pot.size(); ++i)
+    {
+        MPlug basePotentialItemPlug = basePotentialPlug.elementByLogicalIndex(i, &status);
+        if(status != MS::kSuccess) return status;
+
+        status = basePotentialItemPlug.setValue(pot[i]);
+        if(status != MStatus::kSuccess) return status;
+
+        MPlug baseGradientItemPlug = baseGradientPlug.elementByLogicalIndex(i, &status);
+        if(status != MS::kSuccess) return status;
+
+        status = DagHelpers::setPlugValue(baseGradientItemPlug, grad[i]);
+        if(status != MStatus::kSuccess) return status;
+    }
+
+    return MStatus::kSuccess;
+}
+
+MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+    MArrayDataHandle basePotentialHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::basePotentialAttr, &status);
+    if(status != MS::kSuccess) return status;
+    MArrayDataHandle baseGradientHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::baseGradientAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    // Make sure the mesh is loaded.  
+    // Don't load base potential until we have a mesh.  Wait for the skeleton too, since we
+    // need the animesh, and that's created once we have both the mesh and the skeleton.
+    dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+    dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
+    if(status != MS::kSuccess) return status;
+
+    // If we don't have the animMesh to load into yet, stop.  We'll come back here when it's
+    // available due to the meshUpdateAttr and skeletonUpdateAttr dependency.
+    if(animMesh.get() == NULL)
+        return MS::kSuccess;
+
+    // We can't have the animMesh but no mesh.
+    assert(mesh.get() != NULL);
+
+    vector<float> pot(basePotentialHandle.elementCount());
+    vector<Vec3_cu> grad(baseGradientHandle.elementCount());
+
+    // If the inputs have a different number of entries, we're out of sync.
+    // Clear the base potential.
+    if(mesh->get_nb_vertices() != basePotentialHandle.elementCount() ||
+        baseGradientHandle.elementCount() != basePotentialHandle.elementCount() )
+    {
+        pot.clear();
+        pot.resize(mesh->get_nb_vertices());
+        grad.clear();
+        grad.resize(mesh->get_nb_vertices());
+    }
+    else
+    {
+        for(int i = 0; i < (int) basePotentialHandle.elementCount(); ++i)
+        {
+            status = basePotentialHandle.jumpToElement(i);
+            if(status != MS::kSuccess) return status;
+            status = baseGradientHandle.jumpToElement(i);
+            if(status != MS::kSuccess) return status;
+        
+            MDataHandle potentialItem = basePotentialHandle.inputValue(&status);
+            pot[i] = potentialItem.asFloat();
+
+            MDataHandle gradientItem = baseGradientHandle.inputValue(&status);
+            const float3 &gradient = gradientItem.asFloat3();
+            grad[i] = Vec3_cu(gradient[0], gradient[1], gradient[2]);
+        }
+    }
+
+    // Set the base potential that we loaded.
+    animMesh->set_base_potential(pot, grad);
 
     return MStatus::kSuccess;
 }
@@ -827,7 +926,14 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
         samples.choose_hrbf_samples(mesh.get(), skeleton.skel.get(), vertToBoneInfo, sampleSettings, bone_id);
 
     // Save the new SampleSet.
-    return save_sampleset(samples);
+    status = save_sampleset(samples);
+    if(status != MS::kSuccess) return status;
+
+    // XXX don't do this here
+    status = calculate_base_potential();
+    if(status != MS::kSuccess) return status;
+
+    return MStatus::kSuccess;
 }
 
 ImplicitSkinDeformer *ImplicitSkinDeformer::deformerFromPlug(MObject node, MStatus *status)

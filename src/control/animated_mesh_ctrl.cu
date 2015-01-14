@@ -65,6 +65,9 @@ void Animated_mesh_ctrl::update_base_potential()
     _animesh->update_base_potential();
 }
 
+void Animated_mesh_ctrl::get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &grad) const  { assert(_animesh != NULL); _animesh->get_base_potential(pot, grad); }
+void Animated_mesh_ctrl::set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad) { assert(_animesh != NULL); _animesh->set_base_potential(pot, grad); }
+
 // -----------------------------------------------------------------------------
 
 void Animated_mesh_ctrl::deform_mesh()

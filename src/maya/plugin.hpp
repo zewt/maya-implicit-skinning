@@ -48,6 +48,7 @@ public:
     MStatus load_visualization_geom(MDataBlock &dataBlock);
 
     MStatus sample_all_joints();
+    MStatus calculate_base_potential();
     MStatus get_default_hrbf_radius(std::map<Bone::Id,float> &hrbf_radius);
 
     static ImplicitSkinDeformer *deformerFromPlug(MObject node, MStatus *status);
@@ -56,6 +57,10 @@ public:
 
     // The geomMatrix of the skinCluster at setup time.
     static MObject geomMatrixAttr;
+
+    // The base potential of the mesh, as [normalX, normalY, normalZ, pot].
+    static MObject basePotentialAttr;
+    static MObject baseGradientAttr;
 
     // Per-joint attributes:
     static MObject influenceJointsAttr;
@@ -108,7 +113,7 @@ private:
     // Represents animMesh being up to date with the skinned geometry.
     static MObject meshUpdateAttr;
     
-    // Represents the base potential being up to date for the current SampleSet and unskinned mesh.
+    // The contents of basePotentialAttr are loaded into animesh.
     static MObject basePotentialUpdateAttr;
 
     MStatus createSkeleton(MDataBlock &dataBlock, Loader::Abs_skeleton &skeleton);

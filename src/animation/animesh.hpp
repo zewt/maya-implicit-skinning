@@ -63,6 +63,10 @@ public:
     /// that value of the potential.
     void update_base_potential();
 
+    // Read and write the base potential (and gradient).
+    void get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &grad) const;
+    void set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad);
+
     /// Transform the vertices of the mesh given the rotation at each bone.
     /// Transformation is computed from the initial position of the mesh
     /// @param type specify the technic used to compute vertices deformations
