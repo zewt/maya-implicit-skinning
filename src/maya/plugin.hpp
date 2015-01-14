@@ -38,7 +38,6 @@ public:
     MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
 
     MStatus save_sampleset(const SampleSet::SampleSet &samples);
-    MStatus set_bind_pose();
 
     MStatus load_skeleton(MDataBlock &dataBlock);
     MStatus load_sampleset(MDataBlock &dataBlock);
@@ -52,8 +51,6 @@ public:
     MStatus get_default_hrbf_radius(std::map<Bone::Id,float> &hrbf_radius);
 
     static ImplicitSkinDeformer *deformerFromPlug(MObject node, MStatus *status);
-
-    static MObject unskinnedGeomAttr;
 
     // The geomMatrix of the skinCluster at setup time.
     static MObject geomMatrixAttr;
@@ -113,9 +110,6 @@ private:
     // Represents animMesh being up to date with the skinned geometry.
     static MObject meshUpdateAttr;
     
-    // The contents of basePotentialAttr are loaded into animesh.
-    static MObject basePotentialUpdateAttr;
-
     MStatus createSkeleton(MDataBlock &dataBlock, Loader::Abs_skeleton &skeleton);
     MStatus setGeometry(MDataHandle &inputGeomDataHandle);
 

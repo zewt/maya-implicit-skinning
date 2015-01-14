@@ -13,6 +13,7 @@
 #include <maya/MPxCommand.h>
 #include <maya/MPxData.h>
 #include <maya/MItGeometry.h>
+#include <maya/MItMeshVertex.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
 
@@ -75,7 +76,6 @@ using namespace std;
 // and it does, it won't conflict with somebody's internal-use IDs (0-0x7ffff).  At worst, we'll collide
 // with a sample or somebody else doing the same thing.
 const MTypeId ImplicitSkinDeformer::id(0xEA115);
-MObject ImplicitSkinDeformer::unskinnedGeomAttr;
 MObject ImplicitSkinDeformer::geomMatrixAttr;
 MObject ImplicitSkinDeformer::basePotentialAttr;
 MObject ImplicitSkinDeformer::baseGradientAttr;
@@ -86,7 +86,6 @@ MObject ImplicitSkinDeformer::influenceMatrixAttr;
 MObject ImplicitSkinDeformer::sampleSetUpdateAttr;
 MObject ImplicitSkinDeformer::skeletonUpdateAttr;
 MObject ImplicitSkinDeformer::meshUpdateAttr;
-MObject ImplicitSkinDeformer::basePotentialUpdateAttr;
 MObject ImplicitSkinDeformer::hrbfRadiusAttr;
 MObject ImplicitSkinDeformer::samplePointAttr;
 MObject ImplicitSkinDeformer::sampleNormalAttr;
@@ -137,9 +136,6 @@ MStatus ImplicitSkinDeformer::initialize()
     MFnCompoundAttribute cmpAttr;
     MFnTypedAttribute typeAttr;
 
-    unskinnedGeomAttr = typeAttr.create("unskinnedGeom", "unskinnedGeom", MFnData::Type::kMesh, MObject::kNullObj, &status);
-    addAttribute(unskinnedGeomAttr);
-
     geomMatrixAttr = mAttr.create("geomMatrix", "gm");
     addAttribute(geomMatrixAttr);
 
@@ -176,20 +172,23 @@ MStatus ImplicitSkinDeformer::initialize()
     cmpAttr.addChild(hrbfRadiusAttr);
     addAttribute(influenceJointsAttr);
 
-    meshUpdateAttr = numAttr.create("meshUpdate", "meshUpdate", MFnNumericData::Type::kInt, 0, &status);
-    numAttr.setStorable(false);
-    numAttr.setHidden(true);
-    addAttribute(meshUpdateAttr);
-    dep.add(ImplicitSkinDeformer::unskinnedGeomAttr, ImplicitSkinDeformer::meshUpdateAttr);
-
     skeletonUpdateAttr = numAttr.create("skeletonUpdate", "skeletonUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
     numAttr.setHidden(true);
     addAttribute(skeletonUpdateAttr);
     if(status != MS::kSuccess) return status;
-
     dep.add(ImplicitSkinDeformer::parentJointAttr, ImplicitSkinDeformer::skeletonUpdateAttr);
     dep.add(ImplicitSkinDeformer::influenceBindMatrixAttr, ImplicitSkinDeformer::skeletonUpdateAttr);
+
+    meshUpdateAttr = numAttr.create("meshUpdate", "meshUpdate", MFnNumericData::Type::kInt, 0, &status);
+    numAttr.setStorable(false);
+    numAttr.setHidden(true);
+    addAttribute(meshUpdateAttr);
+    dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::meshUpdateAttr);
+    dep.add(ImplicitSkinDeformer::basePotentialAttr, ImplicitSkinDeformer::meshUpdateAttr);
+    dep.add(ImplicitSkinDeformer::baseGradientAttr, ImplicitSkinDeformer::meshUpdateAttr);
+    dep.add(ImplicitSkinDeformer::input, ImplicitSkinDeformer::meshUpdateAttr);
+    dep.add(ImplicitSkinDeformer::inputGeom, ImplicitSkinDeformer::meshUpdateAttr);
 
     sampleSetUpdateAttr = numAttr.create("sampleSetUpdate", "sampleSetUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
@@ -202,10 +201,6 @@ MStatus ImplicitSkinDeformer::initialize()
     dep.add(ImplicitSkinDeformer::hrbfRadiusAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
     dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
 
-    // Reloading the mesh recreates animesh, which resets bones, so if we reload the whole mesh we need to
-    // reload the SampleSet as well.
-    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::sampleSetUpdateAttr);
-
     // The base potential of the mesh.
     basePotentialAttr = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
     numAttr.setArray(true);
@@ -215,24 +210,11 @@ MStatus ImplicitSkinDeformer::initialize()
     numAttr.setArray(true);
     addAttribute(baseGradientAttr);
 
-    basePotentialUpdateAttr = numAttr.create("basePotentialUpdate", "basePotentialUpdate", MFnNumericData::Type::kInt, 0, &status);
-    numAttr.setStorable(false);
-    numAttr.setHidden(true);
-    addAttribute(basePotentialUpdateAttr);
-
-    numAttr.setHidden(true);
-    numAttr.setStorable(false);
-    dep.add(ImplicitSkinDeformer::basePotentialAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
-    dep.add(ImplicitSkinDeformer::baseGradientAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
-    dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
-    dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::basePotentialUpdateAttr);
-
     // All of the dependency nodes are required by the output geometry.
     dep.add(ImplicitSkinDeformer::geomMatrixAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::outputGeom);
-    dep.add(ImplicitSkinDeformer::basePotentialUpdateAttr, ImplicitSkinDeformer::outputGeom);
 
     visualizationGeomUpdateAttr = numAttr.create("visualizationGeomUpdate", "visualizationGeomUpdate", MFnNumericData::Type::kInt, 0, &status);
     addAttribute(visualizationGeomUpdateAttr);
@@ -261,7 +243,6 @@ MStatus ImplicitSkinDeformer::compute(const MPlug& plug, MDataBlock& dataBlock)
     else if(plug.attribute() == sampleSetUpdateAttr) return load_sampleset(dataBlock);
     else if(plug.attribute() == skeletonUpdateAttr) return load_skeleton(dataBlock);
     else if(plug.attribute() == meshUpdateAttr) return load_mesh(dataBlock);
-    else if(plug.attribute() == basePotentialUpdateAttr) return load_base_potential(dataBlock);
 
     else if(plug.attribute() == visualizationGeomUpdateAttr) return load_visualization_geom_data(dataBlock);
     else if(plug.attribute() == visualizationGeomAttr) return load_visualization_geom(dataBlock);
@@ -279,9 +260,6 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
 
     // Read the dependency attributes that represent data we need.  We don't actually use the
     // results of inputvalue(); this is triggering updates for cudaCtrl data.
-    dataBlock.inputValue(ImplicitSkinDeformer::basePotentialUpdateAttr, &status);
-    if(status != MS::kSuccess) return status;
-
     dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
@@ -524,16 +502,16 @@ MStatus ImplicitSkinDeformer::load_sampleset(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
-    // If the mesh isn't loaded yet, don't do anything.
-    if(animMesh.get() == NULL)
-        return MStatus::kSuccess;
-
     // Update Skeleton.
     dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
     MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
+
+    // If the skeleton isn't attached, do nothing.
+    if(skeleton.skel.get() == NULL)
+        return MStatus::kSuccess;
 
     // Create a new SampleSet, and load its values from the node.
     SampleSet::SampleSet samples;
@@ -606,14 +584,48 @@ MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
-    // Load the geometry.
-    MDataHandle geomHandle = dataBlock.inputValue(ImplicitSkinDeformer::unskinnedGeomAttr, &status);
+    // Always load the skeleton before the mesh.
+    // XXX: This is only so Animesh can always be created, to ensure we can always load base
+    // potential.  However, we don't actually need the Skeleton to store that.  The base potential
+    // and other data in Animesh that has no dependency on the skeleton should be separated.
+    dataBlock.inputValue(skeletonUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
+    if(skeleton.skel.get() == NULL)
+        return MStatus::kSuccess;
+
+    // Get input.
+    MArrayDataHandle inputArray = dataBlock.inputArrayValue(input, &status);
+    if(status != MS::kSuccess) return status;
+
+    // Get input[multiIndex].
+    MDataHandle inputGeomData = DagHelpers::readArrayHandleLogicalIndex<MDataHandle>(inputArray, 0, &status);
+    if(status != MS::kSuccess) return status;
+
+    // Get input[multiIndex].inputGeometry.
+    MDataHandle geomHandle = inputGeomData.child(inputGeom);
 
     MObject geom = geomHandle.asMesh();
     if(!geom.hasFn(MFn::kMesh)) {
         // XXX: only meshes are supported
         return MStatus::kFailure;
+    }
+
+    // Hack: We calculate a bunch of properties from the mesh, such as the nearest joint to each
+    // vertex.  We don't want to recalculate that every time our input (skinned) geometry changes.
+    // Maya only tells us that the input data has changed, not how.  For now, if we already have
+    // geometry loaded and it has the same number of vertices, assume that we already have the correct
+    // mesh loaded.  This will handle the mesh being disconnected, etc.  It'll fail on the edge case
+    // of switching out the geometry with another mesh that has the same number of vertices but a
+    // completely different topology.  XXX
+    if(mesh.get() != NULL)
+    {
+        int loadedVertices = mesh.get()->get_nb_vertices();
+        MItMeshVertex meshIt(geom, &status);
+        if(status != MS::kSuccess) return status;
+        int meshVertices = meshIt.count();
+
+        if(loadedVertices == meshVertices)
+            return MStatus::kSuccess;
     }
 
     // Load the input mesh from the unskinned geometry.
@@ -631,9 +643,12 @@ MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
     // Store the mesh.
     mesh.reset(newMesh);
 
-    // XXX: This will wipe out the loaded bones and require a skeleton/sampleset reload
     if(skeleton.is_loaded())
         animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skeleton.skel.get()));
+
+    // Load base potential.
+    status = load_base_potential(dataBlock);
+    if(status != MS::kSuccess) return status;
 
     return MStatus::kSuccess;
 }
@@ -665,30 +680,6 @@ MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle)
     return MStatus::kSuccess;
 }
 
-MStatus ImplicitSkinDeformer::set_bind_pose()
-{
-    MStatus status = MStatus::kSuccess;
-
-    // Reset the relative joint transformations to identity, eg. no change after setup.  deform() will reload the
-    // current transforms the next time it needs them.
-    map<Bone::Id,Transfo> bone_transforms;
-    for(Bone::Id bone_id: skeleton.skel->get_bone_ids())
-        bone_transforms[bone_id] = Transfo::identity();
-    boneSet.set_transforms(bone_transforms);
-    skeleton.skel->update_bones_data();
-
-    // Load the unskinned geometry, which matches with the identity transforms.
-    MPlug unskinnedGeomPlug(thisMObject(), unskinnedGeomAttr);
-    MDataHandle inputGeomDataHandle;
-    status = unskinnedGeomPlug.getValue(inputGeomDataHandle);
-    if(status != MS::kSuccess) return status;
-
-    status = setGeometry(inputGeomDataHandle);
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
-}
-
 // Update the base potential for the current mesh and samples.  This requires loading the unskinned geometry.
 MStatus ImplicitSkinDeformer::calculate_base_potential()
 {
@@ -706,8 +697,6 @@ MStatus ImplicitSkinDeformer::calculate_base_potential()
     // If we don't have a mesh yet, don't do anything.
     if(animMesh.get() == NULL)
         return MStatus::kSuccess;
-
-//    set_bind_pose(); XXX remove
 
     // Update base potential.
     animMesh->update_base_potential();
@@ -744,14 +733,6 @@ MStatus ImplicitSkinDeformer::load_base_potential(MDataBlock &dataBlock)
     MArrayDataHandle basePotentialHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::basePotentialAttr, &status);
     if(status != MS::kSuccess) return status;
     MArrayDataHandle baseGradientHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::baseGradientAttr, &status);
-    if(status != MS::kSuccess) return status;
-
-    // Make sure the mesh is loaded.  
-    // Don't load base potential until we have a mesh.  Wait for the skeleton too, since we
-    // need the animesh, and that's created once we have both the mesh and the skeleton.
-    dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
-    if(status != MS::kSuccess) return status;
-    dataBlock.inputValue(ImplicitSkinDeformer::skeletonUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
     // If we don't have the animMesh to load into yet, stop.  We'll come back here when it's
@@ -853,6 +834,9 @@ MStatus ImplicitSkinDeformer::get_default_hrbf_radius(std::map<Bone::Id,float> &
     dataBlock.inputValue(ImplicitSkinDeformer::meshUpdateAttr, &status);
     if(status != MS::kSuccess) return status;
 
+    assert(mesh.get() != NULL);
+    assert(skeleton.skel.get() != NULL);
+
     VertToBoneInfo vertToBoneInfo(skeleton.skel.get(), mesh.get());
     vertToBoneInfo.get_default_hrbf_radius(skeleton.skel.get(), mesh.get(), hrbf_radius);
     return MStatus::kSuccess;
@@ -910,8 +894,6 @@ MStatus ImplicitSkinDeformer::sample_all_joints()
     // If we don't have a mesh yet, don't do anything.
     if(animMesh.get() == NULL)
         return MStatus::kSuccess;
-
-    set_bind_pose();
 
     // Run the initial sampling.  Skip bone 0, which is a dummy parent bone.
     SampleSet::SampleSet samples;
@@ -1091,27 +1073,6 @@ MStatus ImplicitCommand::init(MString nodeName)
             status = item.setValue(parentId);
             if(status != MS::kSuccess) return status;
         }
-    }
-
-    // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
-    // we'll use to do initial calculations.  The bind-time positions of the joints we got above
-    // should correspond with the pre-skinned geometry.
-
-    MPlug unskinnedGeomPlug(deformer->thisMObject(), ImplicitSkinDeformer::unskinnedGeomAttr);
-    {
-        // Get the inputGeometry going into the skinCluster.  This is the mesh before skinning, which
-        // we'll use to do initial calculations.  The bind-time positions of the joints we got above
-        // should correspond with the pre-skinned geometry.
-        MPlug skinInputGeometryPlug;
-        status = DagHelpers::getInputGeometryForSkinClusterPlug(skinClusterNode, skinInputGeometryPlug);
-        if(status != MS::kSuccess) return status;
-
-        // Connect the input geometry to unskinnedGeomPlug.  This way, we can always get access to
-        // the base geometry without having to dig through the DG.
-        MDGModifier dgModifier;
-        status = dgModifier.connect(skinInputGeometryPlug, unskinnedGeomPlug);
-        if(status != MS::kSuccess) return status;
-        dgModifier.doIt();
     }
 
     // Store the default HRBF radius for the bones we set up.

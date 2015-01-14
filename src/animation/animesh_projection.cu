@@ -62,9 +62,10 @@ void Animesh::get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &
 
 void Animesh::set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad)
 {
-    assert(pot.size() == d_base_potential.size());
-    assert(grad.size() == d_base_gradient.size());
+    assert(pot.size() == grad.size());
+    d_base_potential.malloc(pot.size());
     d_base_potential.copy_from(pot);
+    d_base_gradient.malloc(grad.size());
     d_base_gradient.copy_from(grad);
 }
 

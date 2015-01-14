@@ -186,46 +186,6 @@ namespace DagHelpers
         return best_match;
     }
 
-
-
-    MStatus getInputGeometryForSkinClusterPlug(MObject skinClusterNode, MPlug &outPlug)
-    {
-        // This gets the original geometry, not the geometry input into the skinCluster:
-        /*
-        MObjectArray inputGeometries;
-        status = skinCluster.getInputGeometry(inputGeometries);
-        if(status != MS::kSuccess)
-            return status;
-
-        if(inputGeometries.length() == 0)
-        {
-            printf("skinCluster has no input geometry\n");
-            return MS::kFailure;
-        }
-
-        // skinClusters don't support more than one input geometry.
-        MObject inputValue = inputGeometries[0];
-        */
-
-        MStatus status = MStatus::kSuccess;
-        MObject inputAttr = MFnDependencyNode(skinClusterNode).attribute("input", &status);
-        if(status != MS::kSuccess) return status;
-
-        MPlug inputPlug(skinClusterNode, inputAttr);
-        if(status != MS::kSuccess) return status;
-
-        // Select input[0].  skinClusters only support a single input.
-        inputPlug = inputPlug.elementByPhysicalIndex(0, &status);
-        if(status != MS::kSuccess) return status;
-
-        MFnDependencyNode inputPlugDep(inputPlug.node());
-        MObject inputObject = inputPlugDep.attribute("inputGeometry", &status);
-        if(status != MS::kSuccess) return status;
-            
-        outPlug = inputPlug.child(inputObject, &status);
-        return status;
-    }
-
     MStatus setPlug(MPlug &plug, MMatrix value)
     {
         MStatus status = MStatus::kSuccess;
