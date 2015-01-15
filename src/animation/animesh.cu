@@ -44,7 +44,6 @@ Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
     do_smooth_mesh(false),
     do_local_smoothing(true),
     do_interleave_fitting(false),
-    do_update_potential(true),
     smoothing_iter(7),
     diffuse_smooth_weights_iter(6),
     smooth_force_a(0.5f),

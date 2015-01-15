@@ -104,8 +104,6 @@ public:
         mesh_smoothing = type;
     }
 
-    void set_enable_update_base_potential(bool s){ do_update_potential = s; }
-
 #if !defined(NO_CUDA)
     inline const Cuda_utils::DA_Vec3_cu& get_rot_axis() const { return d_rot_axis; }
     inline const Cuda_utils::DA_Vec3_cu& get_gradient() const { return d_gradient; }
@@ -220,7 +218,6 @@ private:
     bool do_smooth_mesh;
     bool do_local_smoothing;
     bool do_interleave_fitting;
-    bool do_update_potential;
 
     /// Smoothing strength after animation
 

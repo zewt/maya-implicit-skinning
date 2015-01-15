@@ -37,8 +37,6 @@ namespace { __device__ void fix_debug() { } }
 
 void Animesh::update_base_potential()
 {
-    if(!do_update_potential) return;
-
     Timer time;
     time.start();
     const int nb_verts = d_input_vertices.size();
