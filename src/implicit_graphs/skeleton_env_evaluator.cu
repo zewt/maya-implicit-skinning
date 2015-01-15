@@ -128,6 +128,7 @@ float Skeleton_env::compute_potential(Skel_id skel_id, const Point_cu& p, Vec3_c
             {
                 fn = xfn;
                 gfn = xgfn;
+                first = false;
             } else {
                 // Blend the pair
                 fn = fetch_binop_and_blend(gfn, clus.blend_type, clus.ctrl_id,  off_cid + i,
