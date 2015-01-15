@@ -31,6 +31,14 @@ VertToBoneInfo::VertToBoneInfo(const Skeleton *skel, const Mesh *mesh):
     vertices.clear();
     normals. clear();
 
+    // Create an entry for each bone, even if the value is zero.
+    for(Bone::Id bone_id: skel->get_bone_ids())
+    {
+        vertices[bone_id];
+        normals[bone_id];
+        vert_ids[bone_id];
+    }
+
     clusterize_euclidean(skel, mesh, h_vertices_nearest_bones);
 
     for(int i = 0; i < mesh->get_nb_vertices(); i++)
