@@ -12,6 +12,7 @@
 #include <maya/MPxDeformerNode.h> 
 #include <maya/MPxCommand.h>
 #include <maya/MPxData.h>
+#include <maya/MPxTransform.h>
 #include <maya/MItGeometry.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MDagPath.h>
@@ -76,7 +77,6 @@ using namespace std;
 // and it does, it won't conflict with somebody's internal-use IDs (0-0x7ffff).  At worst, we'll collide
 // with a sample or somebody else doing the same thing.
 const MTypeId ImplicitSkinDeformer::id(0xEA115);
-MObject ImplicitSkinDeformer::geomMatrixAttr;
 MObject ImplicitSkinDeformer::basePotentialAttr;
 MObject ImplicitSkinDeformer::baseGradientAttr;
 MObject ImplicitSkinDeformer::influenceJointsAttr;
@@ -135,9 +135,6 @@ MStatus ImplicitSkinDeformer::initialize()
     MFnNumericAttribute numAttr;
     MFnCompoundAttribute cmpAttr;
     MFnTypedAttribute typeAttr;
-
-    geomMatrixAttr = mAttr.create("geomMatrix", "gm");
-    addAttribute(geomMatrixAttr);
 
     influenceBindMatrixAttr = mAttr.create("influenceBindMatrix", "ibm");
     addAttribute(influenceBindMatrixAttr);
@@ -211,7 +208,6 @@ MStatus ImplicitSkinDeformer::initialize()
     addAttribute(baseGradientAttr);
 
     // All of the dependency nodes are required by the output geometry.
-    dep.add(ImplicitSkinDeformer::geomMatrixAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::influenceMatrixAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::skeletonUpdateAttr, ImplicitSkinDeformer::outputGeom);
     dep.add(ImplicitSkinDeformer::meshUpdateAttr, ImplicitSkinDeformer::outputGeom);
@@ -270,12 +266,6 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     if(mesh.get() == NULL || !skeleton.is_loaded())
         return MStatus::kSuccess;
 
-    // Get the geomMatrixAttr attribute.
-    MMatrix objectToWorldSpaceMat = DagHelpers::readHandle<MMatrix>(dataBlock, geomMatrixAttr, &status);
-    if(status != MS::kSuccess) return status;
-
-    MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
-
     // Get the joint array.
     MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
@@ -285,6 +275,11 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
 
     for(int i = 0; i < (int) influenceJointsHandle.elementCount(); ++i)
     {
+        // If the user created more entries than there are bones (this is easy to do accidentally),
+        // ignore them.
+        if(i >= boneSet.bones.size())
+            break;
+
         status = influenceJointsHandle.jumpToElement(i);
         if(status != MS::kSuccess) return status;
 
@@ -299,20 +294,10 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         MDataHandle bindMatrixHandle = influenceJointsHandle.inputValue(&status).child(influenceBindMatrixAttr);
         if(status != MS::kSuccess) return status;
 
-        // We need to get the change to the joint's transformation compared to when it was bound.
-        // Maya gets this by multiplying the current worldMatrix against the joint's bindPreMatrix.
-        // However, it's doing that in world space; we need it in object space.
-        // XXX: There's probably a way to do this that doesn't require two matrix inversions.  It's
-        // probably not worth caching, though.
         MMatrix bindPreMatrixWorldSpace = DagHelpers::readHandle<MMatrix>(bindMatrixHandle, &status); // original inverted world space transform
-        MMatrix bindMatrixWorldSpace = bindPreMatrixWorldSpace.inverse();                // original (non-inverted) world space transform
-        MMatrix bindMatrixObjectSpace = bindMatrixWorldSpace * worldToObjectSpaceMat;    // original object space transform
-        MMatrix bindMatrixObjectSpaceInv = bindMatrixObjectSpace.inverse();              // original inverted object space transform
-
         MMatrix jointTransformWorldSpace = DagHelpers::readHandle<MMatrix>(matrixHandle, &status); // current world space transform
 
-        MMatrix currentTransformObjectSpace = jointTransformWorldSpace * worldToObjectSpaceMat; // current object space transform
-        MMatrix changeToTransform = bindMatrixObjectSpaceInv * currentTransformObjectSpace; // joint transform relative to bind pose in object space
+        MMatrix changeToTransform = bindPreMatrixWorldSpace * jointTransformWorldSpace; // joint transform relative to bind pose in world space
         
         const Bone *bone = boneSet.get_bone_by_idx(logicalIndex);
         bone_transforms[bone->get_bone_id()] = DagHelpers::MMatrixToTransfo(changeToTransform);
@@ -337,7 +322,7 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
         MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
 
         // Load the vertex positions into animMesh.
-        status = setGeometry(inputGeomDataHandle);
+        status = setGeometry(inputGeomDataHandle, mat);
         if(status != MS::kSuccess) return status;
     }
 
@@ -350,12 +335,14 @@ MStatus ImplicitSkinDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIte
     animMesh->get_anim_vertices_aifo(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
+    MMatrix invMat = mat.inverse();
     for ( ; !geomIter.isDone(); geomIter.next()) {
         int vertex_index = geomIter.index();
 
         Point_cu v = result_verts[vertex_index];
-        MPoint pt = MPoint(v.x, v.y, v.z);
-        geomIter.setPosition(pt, MSpace::kObject);
+        MPoint pt = MPoint(v.x, v.y, v.z) * invMat;
+        status = geomIter.setPosition(pt, MSpace::kObject);
+        if(status != MS::kSuccess) return status;
     }
 
     return MStatus::kSuccess;
@@ -390,13 +377,6 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
 {
     MStatus status = MStatus::kSuccess;
 
-    // Get the geomMatrixAttr.
-    MMatrix objectToWorldSpaceMat;
-    status = DagHelpers::getMatrixPlug(thisMObject(), ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
-    if(status != MS::kSuccess) return status;
-
-    MMatrix worldToObjectSpaceMat = objectToWorldSpaceMat.inverse();
-
     // Create the bones.
     MArrayDataHandle influenceJointsHandle = dataBlock.inputArrayValue(ImplicitSkinDeformer::influenceJointsAttr, &status);
     if(status != MS::kSuccess) return status;
@@ -423,8 +403,6 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
             jointWorldMat = influenceBindMatrix.inverse();
         }
 
-        MMatrix jointObjectMat = jointWorldMat * worldToObjectSpaceMat;
-
         // Make space for the item, if needed.
         if(skeleton._parents.size() <= logicalIndex)
             skeleton._parents.resize(logicalIndex+1);
@@ -432,7 +410,7 @@ MStatus ImplicitSkinDeformer::createSkeleton(MDataBlock &dataBlock, Loader::Abs_
             skeleton._bones.resize(logicalIndex+1);
 
         // Add the bone.
-        skeleton._bones[logicalIndex] = DagHelpers::MMatrixToTransfo(jointObjectMat);
+        skeleton._bones[logicalIndex] = DagHelpers::MMatrixToTransfo(jointWorldMat);
 
         // Read this joint's parent joint index.
         MDataHandle parentJointHandle = influenceJointsHandle.inputValue(&status).child(ImplicitSkinDeformer::parentJointAttr);
@@ -653,12 +631,14 @@ MStatus ImplicitSkinDeformer::load_mesh(MDataBlock &dataBlock)
     return MStatus::kSuccess;
 }
 
-MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle)
+MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle, const MMatrix &objectToWorldSpace)
 {
+    MStatus status = MStatus::kSuccess;
     MItGeometry allGeomIter(inputGeomDataHandle, true);
 
     MPointArray points;
-    allGeomIter.allPositions(points, MSpace::kObject);
+    status = allGeomIter.allPositions(points, MSpace::kObject);
+    if(status != MS::kSuccess) return status;
 
     // If the geometry doesn't have the same number of vertices, we can't use it.  This can be
     // caused by a deformer like deleteVertices being added between us and the skinCluster, and the
@@ -673,7 +653,10 @@ MStatus ImplicitSkinDeformer::setGeometry(MDataHandle &inputGeomDataHandle)
     vector<Vec3_cu> input_verts;
     input_verts.reserve(points.length());
     for(int i = 0; i < (int) points.length(); ++i)
-        input_verts.push_back(Vec3_cu((float) points[i].x, (float) points[i].y, (float) points[i].z));
+    {
+        MPoint point = points[i] * objectToWorldSpace;
+        input_verts.push_back(Vec3_cu((float) point.x, (float) point.y, (float) point.z));
+    }
         
     animMesh->copy_vertices(input_verts);
 
@@ -966,25 +949,6 @@ MStatus ImplicitCommand::init(MString nodeName)
 
     MFnDependencyNode skinClusterDep(skinClusterNode, &status);
     if(status != MS::kSuccess) return status;
-
-    // Copy the skinCluster's geomMatrix value to our geomMatrix.  This records the transform that was
-    // already applied to the unskinned geometry at bind time, which isn't applied by the joints.  This
-    // is used to convert from the unskinned geometry's object space to the skinned geometry's object
-    // space.
-    {
-        MPlug geomMatrixPlug = skinClusterDep.findPlug("geomMatrix", &status);
-
-        MObject obj;
-        status = geomMatrixPlug.getValue(obj);
-        if(status != MS::kSuccess) return status;
-
-        MFnMatrixData fnMat(obj);
-        MMatrix objectToWorldSpaceMat = fnMat.matrix(&status);
-        if(status != MS::kSuccess) return status;
-
-        status = DagHelpers::setMatrixPlug(deformer->thisMObject(), ImplicitSkinDeformer::geomMatrixAttr, objectToWorldSpaceMat);
-        if(status != MS::kSuccess) return status;
-    }
 
     // For each influence going into the skinCluster's .matrix array, connect it to our .matrix array
     // as well.

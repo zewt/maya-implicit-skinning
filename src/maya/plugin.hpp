@@ -52,9 +52,6 @@ public:
 
     static ImplicitSkinDeformer *deformerFromPlug(MObject node, MStatus *status);
 
-    // The geomMatrix of the skinCluster at setup time.
-    static MObject geomMatrixAttr;
-
     // The base potential of the mesh, as [normalX, normalY, normalZ, pot].
     static MObject basePotentialAttr;
     static MObject baseGradientAttr;
@@ -111,7 +108,7 @@ private:
     static MObject meshUpdateAttr;
     
     MStatus createSkeleton(MDataBlock &dataBlock, Loader::Abs_skeleton &skeleton);
-    MStatus setGeometry(MDataHandle &inputGeomDataHandle);
+    MStatus setGeometry(MDataHandle &inputGeomDataHandle, const MMatrix &objectToWorldSpace);
 
     MObject create_visualization_geom(const MeshGeom &srcGeom, MStatus *status);
     MeshGeom previewMeshGeometry;
