@@ -229,7 +229,7 @@ namespace
     }
 }
 
-Bone::Bone(float rad):
+Bone::Bone():
     Bone_cu(),
     // Allocate a global device bone ID.
     _bone_id(create_device_bone_id())
@@ -237,7 +237,6 @@ Bone::Bone(float rad):
     _enabled = false;
     _precomputed = false;
     _hrbf.initialize();
-    _hrbf.set_radius(rad);
     _primitive.initialize();
 
     // Create the bone skeleton.

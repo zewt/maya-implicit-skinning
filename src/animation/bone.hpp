@@ -197,8 +197,7 @@ public:
     /// A bone identifier
     typedef int Id;
 
-    /// @param rad radius used to convert hrbf from global to compact support
-    Bone(float rad);
+    Bone();
     ~Bone();
 
     Id get_bone_id() const { return _bone_id; }

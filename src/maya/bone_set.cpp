@@ -41,7 +41,7 @@ void BoneSet::load(const Loader::Abs_skeleton &skel)
 
     for(int idx = 0; idx < (int) skel._bones.size(); idx++)
     {
-        Bone *bone = new Bone(1);
+        Bone *bone = new Bone();
 
         BoneItem &item = bones.emplace(bone->get_bone_id(), bone).first->second;
         item.caller_idx = idx;
