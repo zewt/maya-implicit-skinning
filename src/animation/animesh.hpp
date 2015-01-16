@@ -104,11 +104,6 @@ public:
         mesh_smoothing = type;
     }
 
-#if !defined(NO_CUDA)
-    inline const Cuda_utils::DA_Vec3_cu& get_rot_axis() const { return d_rot_axis; }
-    inline const Cuda_utils::DA_Vec3_cu& get_gradient() const { return d_gradient; }
-#endif
-
     const Mesh*     get_mesh() const { return _mesh; }
     const Skeleton* get_skel() const { return _skel; }
 
@@ -158,10 +153,6 @@ private:
 
     /// diffuse values over the mesh on GPU
     void diffuse_attr(int nb_iter, float strength, float* attr);
-
-    int pack_vert_to_fit(Cuda_utils::Host::Array<int>& in,
-                         Cuda_utils::Host::Array<int>& out,
-                         int last_nb_vert_to_fit);
 
     /// Pack negative index in 'd_vert_to_fit' (done on gpu)
     /// @param d_vert_to_fit list of vertices to fit negative indices are to be
@@ -217,7 +208,6 @@ private:
 
     bool do_smooth_mesh;
     bool do_local_smoothing;
-    bool do_interleave_fitting;
 
     /// Smoothing strength after animation
 
@@ -290,21 +280,6 @@ private:
     /// ?
     Cuda_utils::Device::Array<Mesh::PrimIdxVertices> d_piv;
 
-    /// Vector representing the rotation axis of the nearest joint for each
-    /// vertex. d_rot_axis[vert_id] == vec_rotation_axis
-    Cuda_utils::Device::Array<Vec3_cu>  d_rot_axis;
-
-    // -------------------------------------------------------------------------
-    /// @name SSD Weights
-    // -------------------------------------------------------------------------
-
-    /// Table of indirection which associates for the ith vertex its list of
-    /// weights and joint IDs.
-    /// For the ith vertex d_jpv gives for (ith*2) the starting index in
-    /// d_joints. The (ith*2+1) element gives the number of joint/
-    /// weigths associated to the vertex in d_joints.
-    Cuda_utils::Device::Array<int> d_jpv;
-
     // -------------------------------------------------------------------------
     /// @name CLUSTER
     // -------------------------------------------------------------------------
@@ -312,9 +287,6 @@ private:
     typedef Skeleton_env::DBone_id DBone_id;
 
     // END CLUSTER -------------------------------------------------------------
-
-    /// Vertices behind a joint when it flex
-    Cuda_utils::Device::Array<bool> d_rear_verts;
 
     // -------------------------------------------------------------------------
     /// @name Pre allocated arrays to store intermediate results of the mesh

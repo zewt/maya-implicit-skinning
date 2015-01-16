@@ -43,7 +43,6 @@ Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
     mesh_smoothing(EAnimesh::LAPLACIAN),
     do_smooth_mesh(false),
     do_local_smoothing(true),
-    do_interleave_fitting(false),
     smoothing_iter(7),
     diffuse_smooth_weights_iter(6),
     smooth_force_a(0.5f),
@@ -68,8 +67,6 @@ Animesh::Animesh(const Mesh *m_, const Skeleton* s_) :
     d_piv(_mesh->get_nb_faces()),
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
-    d_rot_axis(_mesh->get_nb_vertices()),
-    d_rear_verts(_mesh->get_nb_vertices()),
     h_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer_2(_mesh->get_nb_vertices()),
@@ -302,29 +299,6 @@ void Animesh::get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert)
 
     anim_vert.insert(anim_vert.end(), &h_out_verts[0], &h_out_verts[0] + nb_vert);
 }
-
-int Animesh::pack_vert_to_fit(Cuda_utils::Host::Array<int>& in,
-                                   Cuda_utils::Host::Array<int>& out,
-                                   int size)
-{
-    Cuda_utils::mem_cpy_dth(in.ptr(), d_vert_to_fit.ptr(), size);
-
-    int j = 0;
-    for(int i = 0; i < size; i++)
-    {
-        int elt = in[i];
-        if(elt != -1)
-        {
-            out[j] = elt;
-            j++;
-        }
-    }
-
-    Cuda_utils::mem_cpy_htd(d_vert_to_fit.ptr(), out.ptr(), j);
-    return j;
-}
-
-// -----------------------------------------------------------------------------
 
 #include "cuda_utils_thrust.hpp"
 
