@@ -183,10 +183,9 @@ void cell_to_blending_list(Skel_id sid,
 
     std::vector<bool> cluster_done(tree->_clusters.size(), false);
 
-    for(std::list<Bone::Id>::const_iterator bones_it = bones_in_cell.begin();
-        bones_it != bones_in_cell.end(); ++bones_it)
+    for(Bone::Id bone_id: bones_in_cell)
     {
-        DBone_id dbone = tree->hidx_to_didx(*bones_it);
+        DBone_id dbone = tree->hidx_to_didx(bone_id);
 
         Cluster_id clus_id = tree->bone_to_cluster( dbone );
         if( cluster_done[clus_id.id()] ) continue;
@@ -195,11 +194,6 @@ void cell_to_blending_list(Skel_id sid,
 
         cluster_done[clus_id.id()] = true;
     }
-
-    // HACK: this should be done outside this function when convberting cluster
-    // to cluster_cu
-    if(blist.size() > 0)
-        blist[0].datas._blend_type = (EJoint::Joint_t)(tree->_blending_list.size()/2);
 }
 
 // -----------------------------------------------------------------------------
@@ -217,47 +211,49 @@ static void update_device_grid()
     int offset = 0;
     int grid_offset = 0;
     int off_bone = 0;
+
     for(unsigned grid_id = 0; grid_id < h_envs.size(); ++grid_id)
     {
         if(h_envs[grid_id] == NULL)
             continue;
 
         const Grid* grid = h_envs[grid_id]->h_grid;
+        const Tree_cu *tree = h_envs[grid_id]->h_tree_cu_instance;
+
 //        grid->build_grid(); should be already done
 //        ((Grid *)grid)->build_grid(); // (but isn't always)
 
-        std::set<int>::const_iterator it = grid->_filled_cells.begin();
-        for( ; it != grid->_filled_cells.end(); ++it)
-        {
-            int cell_idx = *it;
+        // Get the blending list for each cell, and the total number of resulting clusters.
+        std::map<int, std::vector<Cluster> > blist_per_cell;
+        int total_size = 0;
+        for(int cell_idx: grid->_filled_cells) {
+            cell_to_blending_list(grid_id, cell_idx, blist_per_cell[cell_idx]);
+            total_size += blist_per_cell[cell_idx].size();
+        }
 
-            // XXX: test why we hang in update_base_potential if blist is empty
-            std::vector<Cluster> blist;
-            cell_to_blending_list(grid_id, cell_idx, blist );
+        // Allocate space for these clusters.
+        hd_grid_blending_list.realloc(offset + total_size);
+        hd_grid_data.realloc(offset + total_size);
+
+        for(int cell_idx: grid->_filled_cells)
+        {
+            std::vector<Cluster> &blist = blist_per_cell.at(cell_idx);
+            if(blist.size() > 0)
+                blist[0].datas._blend_type = (EJoint::Joint_t)(tree->_blending_list.size()/2);
 
             hd_grid[grid_offset + cell_idx] = offset;
 
-            // XXX inefficient
-            if(hd_grid_blending_list.size() < offset + blist.size())
-            {
-                hd_grid_blending_list.realloc(offset + blist.size());
-                hd_grid_data.realloc(offset + blist.size());
-            }
-
-            std::vector<Cluster>::const_iterator it = blist.begin();
-            for(unsigned l = 0; it != blist.end(); ++it, ++l)
+            for(const Cluster &c: blist)
             {
                 // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
-                Cluster c = *it;
                 Cluster_cu clus(c);
 
                 clus.first_bone += off_bone;
 
-                hd_grid_blending_list[offset + l] = clus;
-                hd_grid_data         [offset + l]._bulge_strength = c.datas._bulge_strength;
+                hd_grid_blending_list[offset] = clus;
+                hd_grid_data         [offset]._bulge_strength = c.datas._bulge_strength;
+                offset++;
             }
-
-            offset += (int)blist.size();
         }
 
         hd_offset[grid_id].grid_data = grid_offset;
