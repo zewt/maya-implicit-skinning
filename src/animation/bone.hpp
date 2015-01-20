@@ -270,11 +270,4 @@ private:
     std::unique_ptr<Skeleton> boneSkeleton;
 };
 
-namespace EBone {
-
-/// @param type Bone's type from the enum field of Bone_type namespace
-std::string type_to_string(int type);
-
-}
-
 #endif // BONE_HPP__

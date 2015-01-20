@@ -382,26 +382,3 @@ void Bone::set_world_space_matrix(Transfo tr)
 }
 
 // END Bone_hrbf CLASS =========================================================
-
-// =============================================================================
-namespace EBone {
-// =============================================================================
-
-// -----------------------------------------------------------------------------
-
-std::string type_to_string(int type)
-{
-    std::string res = "";
-    switch( type ){
-    case EBone::HRBF:        res = "hermite rbf";           break;
-    case EBone::SSD:         res = "ssd";                   break;
-    case EBone::PRECOMPUTED: res = "precomputed primitive"; break;
-    default: //unknown bone type !
-        assert(false);
-        break;
-    }
-
-    return res;
-}
-
-} // END BONE_TYPE NAMESPACE ===================================================
