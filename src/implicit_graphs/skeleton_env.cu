@@ -220,9 +220,6 @@ static void update_device_grid()
         const Grid* grid = h_envs[grid_id]->h_grid;
         const Tree_cu *tree = h_envs[grid_id]->h_tree_cu_instance;
 
-//        grid->build_grid(); should be already done
-//        ((Grid *)grid)->build_grid(); // (but isn't always)
-
         // Get the blending list for each cell, and the total number of resulting clusters.
         std::map<int, std::vector<Cluster> > blist_per_cell;
         int total_size = 0;
@@ -239,7 +236,7 @@ static void update_device_grid()
         {
             std::vector<Cluster> &blist = blist_per_cell.at(cell_idx);
             if(blist.size() > 0)
-                blist[0].datas._blend_type = (EJoint::Joint_t)(tree->_blending_list.size()/2);
+                blist[0].datas._blend_type = (EJoint::Joint_t)(blist.size()/2);
 
             hd_grid[grid_offset + cell_idx] = offset;
 
