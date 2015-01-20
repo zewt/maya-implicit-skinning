@@ -254,8 +254,6 @@ private:
     std::unique_ptr<Skeleton> boneSkeleton;
 };
 
-typedef Bone Bone_hrbf;
-
 namespace EBone {
 
 /// @param type Bone's type from the enum field of Bone_type namespace

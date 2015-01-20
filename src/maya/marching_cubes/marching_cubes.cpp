@@ -105,7 +105,7 @@ namespace MarchingCubes
 
 }
 
-void MarchingCubes::compute_surface(MeshGeom &geom, const Bone_hrbf *bone)
+void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone)
 {
     const HermiteRBF &hrbf = bone->get_hrbf();
     BBox_cu bbox = bone->get_bbox();
