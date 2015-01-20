@@ -653,7 +653,6 @@ copy_from(const std::vector<B>& h_vec)
         {
             bytes_to_copy = CCA::nb_elt * sizeof(T);
             fprintf(stderr,"cuda_utils : warning array capacity exceeded\n");
-            assert(false);
         }
 
         cuda_mem_cpy_from(data, h_vec, bytes_to_copy);
