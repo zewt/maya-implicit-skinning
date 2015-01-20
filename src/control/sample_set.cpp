@@ -78,7 +78,7 @@ void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, const SampleSetSe
     if(skel.is_leaf(bone_id))
         return;
 
-    const Bone* b = skel.get_bone(bone_id);
+    const Bone* b = skel.get_bone(bone_id).get();
 
     // Get the average _junction_radius of the joint's children.
     float jrad = 0.f;// joint radius mean radius
@@ -102,7 +102,7 @@ void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, const SampleSetSe
                                  bool use_parent_dir,
                                  InputSample &out) const
 {
-    const Bone* b = skel.get_bone(bone_id);
+    const Bone* b = skel.get_bone(bone_id).get();
     int parent = skel.parent(bone_id);
     float prad = settings.junction_radius.at(bone_id); // parent joint radius
     Vec3_cu p;
@@ -110,7 +110,7 @@ void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, const SampleSetSe
 
     if( use_parent_dir)
     {
-        const Bone* pb = skel.get_bone( parent );
+        const Bone* pb = skel.get_bone( parent ).get();
         p =  pb->end() - pb->dir().normalized() * prad;
         n = -pb->dir().normalized();
     }
@@ -131,6 +131,19 @@ void SampleSet::InputSample::delete_sample(int idx)
     nodes  .erase( it+idx );
     it = n_nodes.begin();
     n_nodes.erase( it+idx );
+}
+
+void SampleSet::InputSample::transform(const Transfo &matrix)
+{
+    for(int i = 0; i < nodes.size(); ++i)
+    {
+        // Nodes are vec3, but they're really points.  The difference is that we do want the points
+        // to be translated, where the normals are only rotated and scaled but not translated.
+        // Rather than changing the data type in a ton of places, for now just apply the matrix
+        // as if it was a point.
+        nodes[i] = matrix.multiply_as_point(nodes[i]);
+        n_nodes[i] = matrix * n_nodes[i];
+    }
 }
 
 // -----------------------------------------------------------------------------

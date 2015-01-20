@@ -255,8 +255,10 @@ IF_CUDA_DEVICE_HOST static inline
 float fetch_radius(int id_instance);
 
 /// @return the instance offset in x and size in y
+#if !defined(NO_CUDA)
 IF_CUDA_DEVICE_HOST static inline
 int2 fetch_inst_size_and_offset(int id_instance);
+#endif
 
 /// fetch at the same time points and weights (more efficient than functions below)
 /// @param raw_idx The raw index to fetch directly from the texture.
@@ -269,6 +271,8 @@ float fetch_weights_point(Vec3_cu& beta,
 
 }// END HRBF_ENV NAMESPACE =====================================================
 
+#if !defined(NO_CUDA)
 #include "hrbf_env.inl"
+#endif
 
 #endif // HRBF_ENV_HPP__

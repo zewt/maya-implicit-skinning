@@ -74,7 +74,7 @@ void VertToBoneInfo::clusterize_euclidean(const Skeleton *skel, const Mesh *mesh
             if(!skel->is_bone(j))
                 continue;
 
-            const Bone* b = skel->get_bone( j );
+            const Bone* b = skel->get_bone(j).get();
 
             // Compute nearest bone
             float dist2 = b->dist_sq_to(current_vertex);

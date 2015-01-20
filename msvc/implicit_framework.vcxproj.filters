@@ -76,6 +76,21 @@
     <ClCompile Include="..\src\maya\bone_set.cpp">
       <Filter>maya</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maya\implicit_surface_geometry_override.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\implicit_surface.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\implicit_deformer.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\implicit_blend.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maya\implicit_surface_data.cpp">
+      <Filter>maya</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -361,6 +376,21 @@
       <Filter>animation</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maya\bone_set.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\implicit_surface_geometry_override.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\implicit_surface.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\implicit_deformer.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\implicit_blend.hpp">
+      <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\implicit_surface_data.hpp">
       <Filter>maya</Filter>
     </ClInclude>
   </ItemGroup>

@@ -171,6 +171,19 @@ struct Transfo {
                     m[8] * v.x + m[9] * v.y + m[10] * v.z + m[11]);
     }
 
+    // Multiply a vector by a matrix, as if the vector was a point.
+    //
+    // The only difference is that translations are normally applied only to poitns
+    // and not vectors.  If you have a vector that actually does need translations
+    // applied, you can use this instead of converting to a point and back.
+    IF_CUDA_DEVICE_HOST
+    inline Point_cu multiply_as_point(const Vec3_cu& v) const {
+        return Point_cu(
+                    m[0] * v.x + m[1] * v.y + m[ 2] * v.z + m[ 3],
+                    m[4] * v.x + m[5] * v.y + m[ 6] * v.z + m[ 7],
+                    m[8] * v.x + m[9] * v.y + m[10] * v.z + m[11]);
+    }
+
     /// Multiply 'v' by the matrix and do the perspective division
     IF_CUDA_DEVICE_HOST
     inline Point_cu project(const Point_cu& v) const {

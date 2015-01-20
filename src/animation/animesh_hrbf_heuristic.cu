@@ -93,7 +93,7 @@ void HRBF_sampling::clamp_samples(std::vector<int>& vert_ids_,
     for(unsigned id = 0; id < verts_.size(); id++)
     {
         const int nearest_bone = vertToBoneInfo.h_vertices_nearest_bones[ vert_ids_[id] ];
-        const Bone* b = skel->get_bone(nearest_bone);
+        const Bone* b = skel->get_bone(nearest_bone).get();
         const float length = b->length();
 
         const Point_cu vert = Convs::to_point(verts_[id]);
@@ -139,7 +139,7 @@ void Adhoc_sampling::sample(std::vector<Vec3_cu>& out_verts,
     for(unsigned id = 0; id < in_verts.size(); id++)
     {
 
-        const Bone* b = skel->get_bone(_bone_id);
+        const Bone* b = skel->get_bone(_bone_id).get();
         float length = b->length();
 
         Point_cu vert = Convs::to_point(in_verts[id]);

@@ -32,6 +32,8 @@ void HermiteRBF::init_coeffs(const std::vector<Vec3_cu>& nodes,
 
     // Add nodes and compute the hrbf weights
     HRBF_env::add_samples(_id, nodes, normals);
+
+    HRBF_env::apply_hrbf_transfos();
 }
 
 /// init HRBF from samples and user defined weights

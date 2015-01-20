@@ -44,6 +44,10 @@ void Animesh::update_base_potential()
     const int grid_size =
             (nb_verts + block_size - 1) / block_size;
 
+    assert(d_input_vertices.ptr());
+    assert(d_base_potential.ptr());
+    assert(d_base_gradient.ptr());
+
     Animesh_kers::compute_base_potential<<<grid_size, block_size>>>
         (_skel->get_skel_id(), d_input_vertices.ptr(), nb_verts, d_base_potential.ptr(), d_base_gradient.ptr());
 
@@ -60,10 +64,9 @@ void Animesh::get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &
 
 void Animesh::set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad)
 {
-    assert(pot.size() == grad.size());
-    d_base_potential.malloc(pot.size());
+    d_base_potential.malloc(get_nb_vertices());
     d_base_potential.copy_from(pot);
-    d_base_gradient.malloc(grad.size());
+    d_base_gradient.malloc(get_nb_vertices());
     d_base_gradient.copy_from(grad);
 }
 
@@ -232,6 +235,12 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
                        float smooth_strength)
 {
     if(nb_vert_to_fit == 0) return;
+    if(d_base_potential.size() != nb_vert_to_fit) return;
+
+    assert(d_base_potential.ptr());
+    assert(d_smooth_factors_conservative.ptr());
+    assert(d_smooth_factors_laplacian.ptr());
+    assert(d_vertices_state.ptr());
 
     const int nb_vert    = nb_vert_to_fit;
     const int block_size = 16;

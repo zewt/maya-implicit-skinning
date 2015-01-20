@@ -230,15 +230,26 @@ public:
     /// Set the radius of the hrbf.
     /// The radius is used to transform hrbf from global support to
     /// compact support
-    void set_hrbf_radius(float rad);
+    void set_hrbf_radius(float rad, const Skeleton *skeleton);
     float get_hrbf_radius() const { return _hrbf.get_radius(); }
 
     // Precompute the HRBF, allowing get_primitive() to be called.
-    void precompute();
+    void precompute(const Skeleton *skeleton);
     void discard_precompute();
     bool is_precomputed() const { return _precomputed; }
 
     const Skeleton &get_bone_skeleton() const { return *boneSkeleton.get(); }
+
+    // Set the object space direction and length.  (In object space, the origin is always
+    // 0,0,0.)
+    //
+    // When set_world_space_matrix is called, the Bone_cu base of this object is set to this
+    // object space * the world space matrix.
+    void set_object_space_dir(Vec3_cu b) { _object_space = b; set_world_space_matrix(_world_space_transform); }
+        
+    // Set the bone's coordinate system using the specified transform.
+    void set_world_space_matrix(Transfo tr);
+    Transfo get_world_space_matrix() const { return _world_space_transform; }
 
 private:
     // A globally unique bone ID.
@@ -250,6 +261,11 @@ private:
     bool _precomputed;
     Precomputed_prim _primitive;
     OBBox_cu         _obbox;
+
+    // Our orientation in world space.
+    Vec3_cu _object_space;
+
+    Transfo _world_space_transform;
 
     std::unique_ptr<Skeleton> boneSkeleton;
 };

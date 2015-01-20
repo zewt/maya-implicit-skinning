@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include "loader_skel.hpp"
 #include "bone.hpp"
 #include "sample_set.hpp"
@@ -29,16 +30,10 @@ class Bone;
 
 struct BoneItem
 {
-    BoneItem(Bone *bone);
-    ~BoneItem();
+    BoneItem(std::shared_ptr<Bone> bone);
 
-    void set_transforms(Transfo transfos);
+    std::shared_ptr<Bone> bone;
 
-    // XXX: std::unique_ptr?
-    Bone *bone;
-
-    // Bone in rest position.
-    Bone_cu initial_position;
     Bone::Id parent;
 
     // The index in the initial list.  This is temporary, and assumes only one skeleton.
@@ -56,39 +51,14 @@ public:
     void load(const Loader::Abs_skeleton &skel);
     void unload();
 
-    Bone *get_bone(Bone::Id bone_id) { return bones.at(bone_id).bone; }
-    const Bone *get_bone(Bone::Id bone_id) const { return bones.at(bone_id).bone; }
-
-    // Retrieve a bone according to the order it was added in the Abs_skeleton.  XXX: remove this
-    Bone *get_bone_by_idx(int idx) { return const_cast<Bone*>(const_cast<const BoneSet *>(this)->get_bone_by_idx(idx)); }
-    const Bone *get_bone_by_idx(int idx) const;
-
-    std::vector<Bone*> all_bones() {
-        std::vector<Bone*> result;
+    std::vector<std::shared_ptr<Bone> > all_bones() {
+        std::vector<std::shared_ptr<Bone> > result;
         for(auto &it: bones)
             result.push_back(it.second.bone);
         return result;
     }
-
-    std::vector<const Bone*> all_bones() const {
-        std::vector<const Bone*> result;
-        for(auto &it: bones)
-            result.push_back(it.second.bone);
-        return result;
-    }
-
-    void load_sampleset(const SampleSet::SampleSet &sample_set);
-
-    /// Precompute all HRBF bones.
-    void precompute_all_bones();
-
-    void set_transforms(const std::map<Bone::Id,Transfo> &transfos);
 
     std::map<Bone::Id, BoneItem> bones;
-    std::map<Bone::Id, Bone::Id> parents;
-
-private:
-    void load_sampleset_for_bone(const SampleSet::InputSample &sample_list, Bone::Id bone_id);
 };
 
 #endif

@@ -33,7 +33,7 @@ int Skeleton_ctrl::get_bone_id(int hrbf_id)
     {
         if( skel->bone_type(i) == EBone::HRBF)
         {
-            const Bone *b = skel->get_bone(i);
+            const Bone *b = skel->get_bone(i).get();
             if(b->get_hrbf().get_id() == hrbf_id)
                 return i;
         }

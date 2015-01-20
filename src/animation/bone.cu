@@ -238,18 +238,7 @@ Bone::Bone():
     _precomputed = false;
     _hrbf.initialize();
     _primitive.initialize();
-
-    // Create the bone skeleton.
-    //
-    // Normally, a Skeleton is given a set of Bones and is used by the deformer.  However, in order to
-    // do things like initial sampling we also need a skeleton, since all of the HRBF/precomp logic
-    // is built around Skeleton_env.  So, we just create a tiny skeleton for each bone, which is only
-    // used for those purposes.
-    std::vector<const Bone *> bone_list;
-    std::vector<int> parents;
-    bone_list.push_back(this);
-    parents.push_back(-1);
-    boneSkeleton.reset(new Skeleton(bone_list, parents));
+    _world_space_transform = Transfo::identity();
 }
 
 Bone::~Bone() {
@@ -346,22 +335,22 @@ void Bone::set_enabled(bool value) {
     discard_precompute();
 }
 
-void Bone::set_hrbf_radius(float rad)
+void Bone::set_hrbf_radius(float rad, const Skeleton *skeleton)
 {
     _hrbf.set_radius(rad);
 
     if(_precomputed) {
         discard_precompute();
-        precompute();
+        precompute(skeleton);
     }
 }
 
-void Bone::precompute()
+void Bone::precompute(const Skeleton *skeleton)
 {
     if(_precomputed)
         return;
 
-    _primitive.fill_grid_with( boneSkeleton->get_skel_id(), this );
+    _primitive.fill_grid_with( skeleton->get_skel_id(), this );
     _obbox = get_obbox();
 
     _precomputed = true;
@@ -370,6 +359,26 @@ void Bone::precompute()
 void Bone::discard_precompute()
 {
     _precomputed = false;
+}
+
+void Bone::set_world_space_matrix(Transfo tr)
+{
+    _world_space_transform = tr;
+
+    // Set our orientation to world space.
+    Vec3_cu dir = tr * _object_space;
+    set_length(dir.norm());
+    set_orientation(tr * Point_cu(0,0,0), dir);
+
+    // Update HRBF and precomp with the new world space.
+    const int hrbf_id = get_hrbf().get_id();
+    if(hrbf_id > -1) HRBF_env::set_transfo(hrbf_id, tr);
+        
+    get_primitive().set_transform(tr);
+
+
+    HRBF_env::apply_hrbf_transfos();
+    Precomputed_prim::update_device_transformations();
 }
 
 // END Bone_hrbf CLASS =========================================================

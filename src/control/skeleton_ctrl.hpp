@@ -67,7 +67,7 @@ public:
 
     const std::vector<int>& get_sons(int joint_id);
 
-    std::unique_ptr<Skeleton> skel;
+    std::shared_ptr<Skeleton> skel;
 };
 
 

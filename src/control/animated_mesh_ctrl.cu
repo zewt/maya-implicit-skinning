@@ -31,7 +31,7 @@ namespace { __device__ void fix_debug() { } }
 
 // This takes ownership of the Mesh (and gives it to Animesh).  It does not take ownership
 // of Skeleton.
-Animated_mesh_ctrl::Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel_) :
+Animated_mesh_ctrl::Animated_mesh_ctrl(const Mesh *mesh, std::shared_ptr<const Skeleton> skel_) :
     _nb_iter(7),
     skel(skel_),
     _animesh(new Animesh(mesh, skel_))
@@ -189,10 +189,4 @@ void Animated_mesh_ctrl::copy_vertices(const std::vector<Vec3_cu> &vertices)
 int Animated_mesh_ctrl::get_nb_vertices() const
 {
     return _animesh->get_nb_vertices();
-}
-
-void Animated_mesh_ctrl::set_hrbf_radius(int bone_id, float rad)
-{
-    Bone *bone = const_cast<Bone*>(skel->get_bone(bone_id));
-    bone->set_hrbf_radius(rad);
 }

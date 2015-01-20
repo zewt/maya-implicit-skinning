@@ -129,6 +129,24 @@ namespace DagHelpers
         }
     }
 
+    MStatus getSkinClusterInfluenceObjects(const MFnSkinCluster &skinCluster, std::map<int,MDagPath> &out)
+    {
+        MStatus status = MStatus::kSuccess;
+
+        MDagPathArray influenceObjects;
+        skinCluster.influenceObjects(influenceObjects, &status);
+
+        for(int i = 0; i < (int) influenceObjects.length(); ++i)
+        {
+            const MDagPath &influenceObjectPath = influenceObjects[i];
+
+            int logicalIndex = skinCluster.indexForInfluenceObject(influenceObjectPath, &status);
+            if(status != MS::kSuccess) return status;
+            out[i] = influenceObjectPath;
+        }
+        return MStatus::kSuccess;
+    }
+
     static int compare_length(const MDagPath &lhs, const MDagPath &rhs) { return lhs.fullPathName().length() < rhs.fullPathName().length(); }
 
     /* Return the names of the skinCluster's influence objects, sorted parents before children. */
@@ -204,6 +222,23 @@ namespace DagHelpers
         return MStatus::kSuccess;
     }
 
+    MObject getShapeUnderNode(MObject node, MStatus *status)
+    {
+        // Create an MFnDagNode for the node, and use it to get an MDagPath.  (If there are multiple
+        // DAG paths to the node, the one we get is undefined.)
+        MFnDagNode dagNode(node, status);
+        if(*status != MS::kSuccess) return MObject();
+
+        MDagPath dagPath;
+        *status = dagNode.getPath(dagPath);
+        if(*status != MS::kSuccess) return MObject();
+
+        // Find a shape node directly underneath the node.
+        *status = dagPath.extendToShape();
+        if(*status != MS::kSuccess) return MObject();
+
+        return dagPath.node();
+    }
 
     MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix)
     {
@@ -1418,23 +1453,46 @@ namespace DagHelpers
 #endif
 
 // Changes to from affect to, and everything that to effects.
-void MayaDependencies::add(const MObject &from, const MObject &to)
+void MayaDependencies::add(MObject from, MObject to)
 {
-    dependencies[&from].insert(&to);
+    assert(!from.isNull());
+    assert(!to.isNull());
+    dependencies[from].insert(to);
+}
+
+bool MayaDependencies::isAffectedBy(MObject source, MObject dest) const
+{
+    auto it = dependencies.find(source);
+    // If source doesn't affect anything, then it doesn't affect dest.
+    if(it == dependencies.end())
+        return false;
+
+    // If it directly affects dest, then return true.
+    if(it->second.find(dest) != it->second.end())
+        return true;
+
+    // Otherwise, return true if dest is affected by anything source affects.
+    for(const MObject &node: it->second)
+    {
+        if(isAffectedBy(node, dest))
+            return true;
+    }
+
+    return false;
 }
 
 // Apply all dependencies.
 MStatus MayaDependencies::apply()
 {
-    set<const MObject *> stack;
+    set<MObject, MObjectComparitor> stack;
     MStatus status = MStatus::kSuccess;
 
     // Apply each dependency from it source to its destination.
-    for(map<const MObject*, set<const MObject*> >::iterator it = dependencies.begin(); it != dependencies.end(); ++it)
+    for(auto it = dependencies.begin(); it != dependencies.end(); ++it)
     {
-        const MObject *from = it->first;
-        const set<const MObject*> &deps = it->second;
-        for(set<const MObject*>::iterator it2 = deps.begin(); it2 != deps.end(); ++it2)
+        const MObject &from = it->first;
+        const set<MObject, MObjectComparitor> &deps = it->second;
+        for(auto it2 = deps.begin(); it2 != deps.end(); ++it2)
         {
             MStatus status = apply_one(from, *it2, stack);
             if(status != MS::kSuccess) return status;
@@ -1444,20 +1502,20 @@ MStatus MayaDependencies::apply()
     return MStatus::kSuccess;
 }
 
-MStatus MayaDependencies::apply_one(const MObject *from, const MObject *to, set<const MObject*> &stack)
+MStatus MayaDependencies::apply_one(MObject from, MObject to, set<MObject, MObjectComparitor> &stack)
 {
     MStatus status = MS::kSuccess;
 
     // If this assertion triggers, there's a circular dependency.
     assert(stack.find(to) == stack.end());
 
-    status = MPxNode::attributeAffects(*from, *to);
+    status = MPxNode::attributeAffects(from, to);
     if(status != MS::kSuccess) return status;
 
     stack.insert(to);
 
-    const set<const MObject *> &deps = dependencies[to];
-    for(set<const MObject*>::iterator it = deps.begin(); it != deps.end(); ++it)
+    const set<MObject, MObjectComparitor> &deps = dependencies[to];
+    for(auto it = deps.begin(); it != deps.end(); ++it)
     {
         status = apply_one(from, *it, stack);
         if(status != MS::kSuccess) break;

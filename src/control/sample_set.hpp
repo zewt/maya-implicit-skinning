@@ -28,6 +28,7 @@
 #include "vec3_cu.hpp"
 #include "transfo.hpp"
 #include "bone.hpp"
+#include "transfo.hpp"
 
 struct Skeleton;
 class Mesh;
@@ -50,6 +51,9 @@ struct InputSample
 
     /// Given a 'bone_id' and its sample index, delete the sample.
     void delete_sample(int index);
+
+    // Apply the given transformation to the samples.
+    void transform(const Transfo &matrix);
 };
 
 struct SampleSetSettings

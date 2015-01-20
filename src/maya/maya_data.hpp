@@ -12,7 +12,7 @@
 
 namespace MayaData
 {
-    MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh);
+    MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix vertexTransform = MMatrix::identity);
     MStatus loadSkeletonHierarchyFromSkinCluster(MObject skinClusterNode, std::vector<int> &parentIndexes);
 }
 

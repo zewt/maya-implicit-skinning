@@ -95,11 +95,7 @@ void Grid::reset_grid()
 void Grid::add_tree()
 {
     for(auto bone: _tree->bones())
-    {
-        // Ignore root joints.
-        if( _tree->parent(bone->get_bone_id()) == -1 ) continue;
-        add_bone( bone->get_bone_id() );
-    }
+        add_bone(bone->get_bone_id());
 }
 
 // -----------------------------------------------------------------------------

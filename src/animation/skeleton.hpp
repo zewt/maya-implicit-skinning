@@ -86,9 +86,9 @@
  */
 struct SkeletonJoint
 {
-    SkeletonJoint() { _anim_bone = NULL; _parent = -1; }
+    SkeletonJoint() { _parent = -1; }
 
-    const Bone *_anim_bone;
+    std::shared_ptr<const Bone> _anim_bone;
 
     // List of children IDs for this bone.
     std::vector<Bone::Id> _children;
@@ -109,7 +109,7 @@ struct Skeleton {
 
   // If single_bone is true, the underlying grid will be disabled.  This is slower if the
   // skeleton has many bones, but much faster if it only contains a single bone.
-  Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents, bool single_bone=false);
+  Skeleton(std::vector<std::shared_ptr<const Bone> > bones, std::vector<Bone::Id> parents, bool single_bone=false);
   ~Skeleton();
 
   //----------------------------------------------------------------------------
@@ -157,8 +157,7 @@ struct Skeleton {
 
   bool is_leaf(int i) const { return _joints.at(i)._children.size() == 0; }
 
-  // XXX remove?
-  const Bone* get_bone(Bone::Id i) const{ return _joints.at(i)._anim_bone;  }
+  std::shared_ptr<const Bone> get_bone(Bone::Id i) const{ return _joints.at(i)._anim_bone;  }
 
   Blending_env::Ctrl_id get_ctrl(int joint) const {
       return _joints.at(joint)._joint_data._ctrl_id;
@@ -184,6 +183,10 @@ struct Skeleton {
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }
 
+  // Return a unique ID.  This value is unique among all Skeleton objects for the
+  // lifetime of the application.
+  uint64_t get_unique_id() const { return _unique_id; }
+
   // This must be called when a Bone's transform changes.
   void update_bones_data();
 
@@ -207,6 +210,9 @@ private:
 
   // Maps from bone IDs to joints:
   std::map<Bone::Id, SkeletonJoint> _joints;
+
+  static uint64_t _next_unique_id;
+  uint64_t _unique_id;
 
   /// hrbf_id_to_bone_id[hrbf_id] = bone_id
   // TODO: to be deleted

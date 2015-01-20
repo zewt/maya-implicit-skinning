@@ -37,12 +37,14 @@ namespace { __device__ void fix_debug() { } }
 
 using namespace Cuda_utils;
 
+uint64_t Skeleton::_next_unique_id = 5000;
+
 void Skeleton::init_skel_env(bool single_bone)
 {
     std::vector<const Bone*> bones;
     std::map<Bone::Id, Bone::Id> parents;
     for(auto &it: _joints) {
-        bones.push_back(it.second._anim_bone);
+        bones.push_back(it.second._anim_bone.get());
         parents[it.first] = it.second._parent;
     }
 
@@ -57,15 +59,17 @@ void Skeleton::init_skel_env(bool single_bone)
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
-Skeleton::Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents, bool single_bone)
+Skeleton::Skeleton(std::vector<std::shared_ptr<const Bone> > bones, std::vector<Bone::Id> parents, bool single_bone)
 {
+    _unique_id = _next_unique_id++;
+
     std::map<int,Bone::Id> loaderIdxToBoneId;
     std::map<Bone::Id,int> boneIdToLoaderIdx;
 
     // Create all of the SkeletonJoints, pointing at the Bone.
     for(int bid = 0; bid < (int) bones.size(); bid++)
     {
-        const Bone *bone = bones[bid];
+        std::shared_ptr<const Bone> bone = bones[bid];
         SkeletonJoint &joint = _joints[bone->get_bone_id()];
         joint._anim_bone = bone;
 

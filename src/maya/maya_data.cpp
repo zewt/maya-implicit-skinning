@@ -14,7 +14,7 @@
 
 using namespace std;
 
-MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
+MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix vertexTransform)
 {
     MStatus status = MS::kSuccess;
     MItMeshVertex meshIt(inputObject, &status);
@@ -30,14 +30,17 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
     int idx = 0;
     for ( ; !meshIt.isDone(); meshIt.next())
     {
-        MPoint point = meshIt.position(MSpace::kWorld, &status);
+        MPoint point = meshIt.position(MSpace::kObject, &status);
         if(status != MS::kSuccess) return status;
+
+        // If specified, transform the point from object space to another coordinate space.
+        point = point * vertexTransform;
 
         mesh._vertices[idx] = Loader::Vertex((float)point.x, (float)point.y, (float)point.z);
 
         // XXX: What are we supposed to do with unshared normals?
         MVectorArray normalArray;
-        status = meshIt.getNormals(normalArray, MSpace::kWorld);
+        status = meshIt.getNormals(normalArray, MSpace::kObject);
         if(status != MS::kSuccess) return status;
 
         MVector normal = normalArray[0];
@@ -62,7 +65,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh)
 
         MPointArray trianglePoints;
         MIntArray triangleIndexes;
-        status = polyIt.getTriangles(trianglePoints, triangleIndexes, MSpace::kWorld);
+        status = polyIt.getTriangles(trianglePoints, triangleIndexes, MSpace::kObject);
         if(status != MS::kSuccess) return status;
 
         assert(triangleIndexes.length() % 3 == 0);

@@ -46,7 +46,7 @@ struct Skeleton;
 
 class Animated_mesh_ctrl {
 public:
-    Animated_mesh_ctrl(Mesh* mesh, Skeleton *skel);
+    Animated_mesh_ctrl(const Mesh *mesh, std::shared_ptr<const Skeleton> skel);
     ~Animated_mesh_ctrl();
 
     void update_base_potential();
@@ -99,13 +99,6 @@ public:
 
     void load_ism(const char* filename);
 
-    //--------------------------------------------------------------------------
-    /// @name HRBF Samples Handling
-    //--------------------------------------------------------------------------
-
-    /// Change the radius used to convert hrbf from global to compact
-    void set_hrbf_radius(int bone_id, float rad);
-
 private:
 #if !defined(NO_CUDA) // XXX: remove this stuff
     //--------------------------------------------------------------------------
@@ -127,7 +120,7 @@ private:
 
 public:
     Animesh* _animesh;
-    Skeleton *skel;
+    std::shared_ptr<const Skeleton> skel;
 };
 
 #endif // ANIMATED_MESH_CTRL_HPP__
