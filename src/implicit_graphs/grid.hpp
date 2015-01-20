@@ -33,7 +33,7 @@ namespace Skeleton_env {
 
 struct Grid {
 
-    Grid(const Tree* tree);
+    Grid(const Tree* tree, int res=-1);
 
     /// Update Grid's datas.
     /// Build the grid cells given the current associated tree and states.

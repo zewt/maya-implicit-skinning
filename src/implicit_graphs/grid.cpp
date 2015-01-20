@@ -22,11 +22,12 @@
 namespace Skeleton_env {
 // =============================================================================
 
-Grid::Grid(const Tree* tree) :
-    _tree(tree),
-    _res(20)
-
+Grid::Grid(const Tree* tree, int res) :
+    _tree(tree)
 {
+    if(res == -1)
+        res = 20;
+    _res = res;
     _grid_cells.resize( _res * _res * _res);
     build_grid();
 }

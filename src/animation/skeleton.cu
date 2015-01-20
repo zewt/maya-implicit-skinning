@@ -37,7 +37,7 @@ namespace { __device__ void fix_debug() { } }
 
 using namespace Cuda_utils;
 
-void Skeleton::init_skel_env()
+void Skeleton::init_skel_env(bool single_bone)
 {
     std::vector<const Bone*> bones;
     std::map<Bone::Id, Bone::Id> parents;
@@ -46,13 +46,18 @@ void Skeleton::init_skel_env()
         parents[it.first] = it.second._parent;
     }
 
-    _skel_id = Skeleton_env::new_skel_instance(bones, parents);
+    // If single_bone is true, tell Skeleton_env to create a grid with only one cell.
+    // This effectively disables the grid optimization.  If we only have a single bone
+    // then the grid is expensive to calculate and doesn't do us any good.  If single_bone
+    // is false, use the default.  We do this here rather than with set_grid_res, so we
+    // don't waste time calculating a 20x20x20 grid and then throwing it away.
+    _skel_id = Skeleton_env::new_skel_instance(bones, parents, single_bone? 1:-1);
 
     update_bones_data();
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
-Skeleton::Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents)
+Skeleton::Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents, bool single_bone)
 {
     std::map<int,Bone::Id> loaderIdxToBoneId;
     std::map<Bone::Id,int> boneIdToLoaderIdx;
@@ -94,8 +99,8 @@ Skeleton::Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents
             _joints.at(joint._parent)._children.push_back(bid);
     }
 
-    // must be called last
-    init_skel_env();
+    // Create our Skeleton_env.
+    init_skel_env(single_bone);
 }
 
 // -----------------------------------------------------------------------------

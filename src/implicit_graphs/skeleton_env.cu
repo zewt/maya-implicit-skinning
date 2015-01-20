@@ -468,11 +468,13 @@ void init_env()
 // -----------------------------------------------------------------------------
 
 Skel_id new_skel_instance(const std::vector<const Bone*>& bones,
-                          const std::map<Bone::Id, Bone::Id>& parents)
+                          const std::map<Bone::Id, Bone::Id>& parents,
+                          int grid_res)
 {
     SkeletonEnv *env = new SkeletonEnv();
     env->h_tree = new Tree(bones, parents);
-    env->h_grid = new Grid(env->h_tree);
+    env->h_grid = new Grid(env->h_tree, grid_res);
+    env->h_grid->build_grid();
 
     // Find an empty slot.
     int id;

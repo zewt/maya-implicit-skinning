@@ -107,7 +107,9 @@ struct SkeletonJoint
 struct Skeleton {
   friend struct SkeletonImpl;
 
-  Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents);
+  // If single_bone is true, the underlying grid will be disabled.  This is slower if the
+  // skeleton has many bones, but much faster if it only contains a single bone.
+  Skeleton(std::vector<const Bone*> bones, std::vector<Bone::Id> parents, bool single_bone=false);
   ~Skeleton();
 
   //----------------------------------------------------------------------------
@@ -188,7 +190,7 @@ struct Skeleton {
 private:
 
   /// Create and initilize a skeleton in the environment Skeleton_env
-  void init_skel_env();
+  void init_skel_env(bool single_bone);
 
   /// updates 'hrbf_id_to_bone_id' attributes according to the bone array
   // TODO: to be deleted

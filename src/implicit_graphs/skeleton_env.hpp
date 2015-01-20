@@ -96,7 +96,8 @@ void set_grid_res(Skel_id id, int res);
 
 /// Create a new skeleton instance
 Skel_id new_skel_instance(const std::vector<const Bone*>& bones,
-                          const std::map<Bone::Id, Bone::Id>& parents);
+                          const std::map<Bone::Id, Bone::Id>& parents,
+                          int grid_res=-1);
 
 void delete_skel_instance(Skel_id i);
 
