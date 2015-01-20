@@ -236,7 +236,9 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
     // can never have the same bone more than once.
     std::vector<shared_ptr<const Bone> > bones;
     std::vector<Bone::Id> parents;
-    std::vector<int> firstBonePerSkeleton;
+
+    // firstBonePerSkeleton[n] is the index of the first bone (in bones) added for implicitBones[n].
+    std::vector<int> firstBonePerSkeleton(surfaceParents.size(), -1);
     for(int i = 0; i < (int) hierarchyOrder.size(); ++i)
     {
         int idx = hierarchyOrder[i];
@@ -278,7 +280,7 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
             parents.push_back(parentBoneIdx);
         }
 
-        firstBonePerSkeleton.push_back(firstBoneIdx);
+        firstBonePerSkeleton[idx] = firstBoneIdx;
     }
 
     // Skeletons can't have zero bones, so don't create one if we have no data.
