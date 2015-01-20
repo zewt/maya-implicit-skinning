@@ -1,7 +1,7 @@
 #ifndef IMPLICIT_BLEND_HPP
 #define IMPLICIT_BLEND_HPP
 
-#include "skeleton_ctrl.hpp"
+#include "skeleton.hpp"
 #include "mesh.hpp"
 #include "animated_mesh_ctrl.hpp"
 #include "maya_helpers.hpp"
@@ -46,7 +46,7 @@ private:
     MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
     MStatus update_skeleton(MDataBlock &dataBlock);
 
-    Skeleton_ctrl skeleton;
+    std::shared_ptr<Skeleton> skeleton;
 
     // These are stored by load_world_implicit to tell if any values have changed since the
     // last update.

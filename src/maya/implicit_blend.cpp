@@ -285,12 +285,12 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 
     // Skeletons can't have zero bones, so don't create one if we have no data.
     if(bones.size() == 0) {
-        skeleton.skel.reset();
+        skeleton.reset();
         return MStatus::kSuccess;
     }
 
     // Create a skeleton containing the bones, replacing any previous skeleton.
-    skeleton.skel.reset(new Skeleton(bones, parents));
+    skeleton.reset(new Skeleton(bones, parents));
 
     return MStatus::kSuccess;
 }
@@ -302,14 +302,14 @@ MStatus ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBl
     status = update_skeleton(dataBlock);
     if(status != MS::kSuccess) return status;
 
-    if(skeleton.skel.get() != NULL) {
+    if(skeleton.get() != NULL) {
         // Update our skeleton based on the bone data.  This lets the skeleton know that the bones
         // may have changed orientation.
-        skeleton.skel->update_bones_data();
+        skeleton->update_bones_data();
     }
 
     // Set ImplicitBlend::worldImplicit to our skeleton.  This may be NULL.
-    status = setImplicitSurfaceData(dataBlock, ImplicitBlend::worldImplicit, skeleton.skel);
+    status = setImplicitSurfaceData(dataBlock, ImplicitBlend::worldImplicit, skeleton);
     if(status != MS::kSuccess) return status;
 
     return MStatus::kSuccess;

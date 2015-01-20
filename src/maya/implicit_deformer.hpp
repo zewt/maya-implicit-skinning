@@ -1,7 +1,6 @@
 #ifndef IMPLICIT_DEFORMER_HPP
 #define IMPLICIT_DEFORMER_HPP
 
-#include "skeleton_ctrl.hpp"
 #include "mesh.hpp"
 #include "animated_mesh_ctrl.hpp"
 #include "maya_helpers.hpp"

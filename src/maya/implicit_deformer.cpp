@@ -35,7 +35,6 @@
 
 #include "skeleton.hpp"
 #include "animated_mesh_ctrl.hpp"
-#include "skeleton_ctrl.hpp"
 
 #include <algorithm>
 #include <map>

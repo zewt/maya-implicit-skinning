@@ -32,7 +32,6 @@
 #include "hrbf_env.hpp"
 #include "cuda_current_device.hpp"
 #include "constants_tex.hpp"
-#include "skeleton_ctrl.hpp"
 #include "timer.hpp"
 
 namespace { __device__ void fix_debug() { } }

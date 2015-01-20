@@ -5,7 +5,6 @@
 #error This header requires NO_CUDA.
 #endif
 
-#include "skeleton_ctrl.hpp"
 #include "mesh.hpp"
 #include "animated_mesh_ctrl.hpp"
 #include "maya_helpers.hpp"

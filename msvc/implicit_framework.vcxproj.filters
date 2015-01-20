@@ -174,9 +174,6 @@
     <ClInclude Include="..\src\control\operators_ctrl.hpp">
       <Filter>control</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\control\skeleton_ctrl.hpp">
-      <Filter>control</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\control\animated_mesh_ctrl.hpp">
       <Filter>control</Filter>
     </ClInclude>
@@ -479,9 +476,6 @@
       <Filter>control</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\control\operators_ctrl.cu">
-      <Filter>control</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\src\control\skeleton_ctrl.cu">
       <Filter>control</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\implicit_graphs\skeleton_env.cu">

@@ -251,7 +251,6 @@
     <ClInclude Include="..\src\control\debug_ctrl.hpp" />
     <ClInclude Include="..\src\control\operators_ctrl.hpp" />
     <ClInclude Include="..\src\control\sample_set.hpp" />
-    <ClInclude Include="..\src\control\skeleton_ctrl.hpp" />
     <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp" />
     <ClInclude Include="..\src\global_datas\globals.hpp" />
     <ClInclude Include="..\src\global_datas\macros.hpp" />
@@ -347,9 +346,6 @@
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\control\operators_ctrl.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-    <CudaCompile Include="..\src\control\skeleton_ctrl.cu">
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\implicit_graphs\skeleton_env.cu" />

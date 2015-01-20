@@ -44,7 +44,6 @@
 #include "sample_set.hpp"
 #include "animated_mesh_ctrl.hpp"
 #include "cuda_ctrl.hpp"
-#include "skeleton_ctrl.hpp"
 #include "hrbf_env.hpp"
 #include "vert_to_bone_info.hpp"
 #include "bone_set.hpp"
@@ -198,8 +197,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     // Load the skeleton.
     vector<shared_ptr<Bone> > &bones = boneSet.all_bones();
     vector<shared_ptr<const Bone> > const_bones(bones.begin(), bones.end());
-    Skeleton_ctrl skeleton;
-    skeleton.skel.reset(new Skeleton(const_bones, loader_skeleton._parents));
+    shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, loader_skeleton._parents));
 
 
 
@@ -246,20 +244,20 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     // Run the initial sampling.
     SampleSet::SampleSet samples;
 
-    VertToBoneInfo vertToBoneInfo(skeleton.skel.get(), mesh.get());
+    VertToBoneInfo vertToBoneInfo(skeleton.get(), mesh.get());
     
     SampleSet::SampleSetSettings sampleSettings;
 
     // Get the default junction radius. XXX: this should be a parameter
-    vertToBoneInfo.get_default_junction_radius(skeleton.skel.get(), mesh.get(), sampleSettings.junction_radius);
+    vertToBoneInfo.get_default_junction_radius(skeleton.get(), mesh.get(), sampleSettings.junction_radius);
 
     // Run the sampling for each joint.  The joints are in world space, so the samples will also be in
     // world space.
-    for(Bone::Id bone_id: skeleton.skel->get_bone_ids())
-        samples.choose_hrbf_samples(mesh.get(), skeleton.skel.get(), vertToBoneInfo, sampleSettings, bone_id);
+    for(Bone::Id bone_id: skeleton->get_bone_ids())
+        samples.choose_hrbf_samples(mesh.get(), skeleton.get(), vertToBoneInfo, sampleSettings, bone_id);
 
     std::map<Bone::Id,float> hrbf_radius;
-    vertToBoneInfo.get_default_hrbf_radius(skeleton.skel.get(), mesh.get(), hrbf_radius);
+    vertToBoneInfo.get_default_hrbf_radius(skeleton.get(), mesh.get(), hrbf_radius);
 
     // Create an ImplicitBlend to combine the surfaces that we're creating together.
     ImplicitBlend *blend = createShape<ImplicitBlend>(skinClusterName + "ImplicitBlend", NULL, status);
