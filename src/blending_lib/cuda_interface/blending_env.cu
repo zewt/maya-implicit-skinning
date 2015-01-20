@@ -152,7 +152,31 @@ texture<float2, 3, cudaReadModeElementType> tex_operators_grads;
 
 //------------------------------------------------------------------------------
 
-std::string g_cache_dir  = "";
+#include <sys/stat.h>
+#include <sys/types.h>
+
+// Work around Windows bugs:
+#if defined(WIN32)
+#include <windows.h>
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#endif
+
+std::string get_cache_dir() {
+    std::string dir;
+#if defined(WIN32)
+    char tmp[MAX_PATH+1];
+    GetTempPath(sizeof(tmp), tmp);
+    dir = tmp;
+#else
+    // This is untested.
+    dir = getenv("HOME") + "/.implicit/";
+#endif
+
+    dir += "implicit/";
+    mkdir(dir.c_str(), 0755);
+    return dir;
+}
 
 /// @param src_vals host array to be copied. 3D values are stored linearly
 /// src_vals[x + y*width + z*width*height] = [x][y][z];
@@ -701,8 +725,8 @@ void init_4D_ricci(bool use_cache)
 
     if(use_cache)
     {
-        s = s && read_array(h_block_vals.ptr() , block_len, g_cache_dir+"/4D_ricci_vals.opc"  );
-        s = s && read_array(h_block_grads.ptr(), block_len, g_cache_dir+"/4D_ricci_grads.opc" );
+        s = s && read_array(h_block_vals.ptr() , block_len, get_cache_dir()+"/4D_ricci_vals.opc"  );
+        s = s && read_array(h_block_grads.ptr(), block_len, get_cache_dir()+"/4D_ricci_grads.opc" );
     }
 
     HA_float  h_ricci_profiles      ((NB_SAMPLES+2)*nb_grids, 0.f);
@@ -763,8 +787,8 @@ void init_4D_ricci(bool use_cache)
 
     if(!s)
     {
-        write_array(h_block_vals.ptr() , block_len, g_cache_dir+"/4D_ricci_vals.opc"  );
-        write_array(h_block_grads.ptr(), block_len, g_cache_dir+"/4D_ricci_grads.opc" );
+        write_array(h_block_vals.ptr() , block_len, get_cache_dir()+"/4D_ricci_vals.opc"  );
+        write_array(h_block_grads.ptr(), block_len, get_cache_dir()+"/4D_ricci_grads.opc" );
     }
 
     d_block_3D_ricci.malloc(block_size.x, block_size.y, block_size.z);
@@ -820,8 +844,8 @@ void init_4D_bulge_in_contact(bool use_cache)
 
     if(use_cache)
     {
-        s = s && read_array(h_block_vals.ptr() , block_len, g_cache_dir+"/4D_bulge_vals.opc"  );
-        s = s && read_array(h_block_grads.ptr(), block_len, g_cache_dir+"/4D_bulge_grads.opc" );
+        s = s && read_array(h_block_vals.ptr() , block_len, get_cache_dir()+"/4D_bulge_vals.opc"  );
+        s = s && read_array(h_block_grads.ptr(), block_len, get_cache_dir()+"/4D_bulge_grads.opc" );
     }
 
     HA_float  h_bulge_profiles      ((NB_SAMPLES+2)*nb_grids, 0.f);
@@ -881,8 +905,8 @@ void init_4D_bulge_in_contact(bool use_cache)
 
     if(!s)
     {
-        write_array(h_block_vals.ptr() , block_len, g_cache_dir+"/4D_bulge_vals.opc"  );
-        write_array(h_block_grads.ptr(), block_len, g_cache_dir+"/4D_bulge_grads.opc" );
+        write_array(h_block_vals.ptr() , block_len, get_cache_dir()+"/4D_bulge_vals.opc"  );
+        write_array(h_block_grads.ptr(), block_len, get_cache_dir()+"/4D_bulge_grads.opc" );
     }
 
     d_block_3D_bulge.malloc(block_size.x, block_size.y, block_size.z);
@@ -914,8 +938,8 @@ void init_profile_hyperbola(bool use_cache)
     {
         h_vals  = new float      [len];
         h_grads = new IBL::float2[len];
-        s = s && read_array(h_vals , len, g_cache_dir+"/profile_hyperbola_vals.opc"  );
-        s = s && read_array(h_grads, len, g_cache_dir+"/profile_hyperbola_grads.opc" );
+        s = s && read_array(h_vals , len, get_cache_dir()+"/profile_hyperbola_vals.opc"  );
+        s = s && read_array(h_grads, len, get_cache_dir()+"/profile_hyperbola_grads.opc" );
     }
 
     if(!s)
@@ -930,8 +954,8 @@ void init_profile_hyperbola(bool use_cache)
         h_vals  = hyperbola_curve.get_vals();
         h_grads = hyperbola_curve.get_grads();
         // And save it
-        write_array(h_vals , len, g_cache_dir+"/profile_hyperbola_vals.opc"  );
-        write_array(h_grads, len, g_cache_dir+"/profile_hyperbola_grads.opc" );
+        write_array(h_vals , len, get_cache_dir()+"/profile_hyperbola_vals.opc"  );
+        write_array(h_grads, len, get_cache_dir()+"/profile_hyperbola_grads.opc" );
 
     }
 
@@ -961,8 +985,8 @@ void init_profile_bulge(bool use_cache)
     {
         h_vals  = new float      [len];
         h_grads = new IBL::float2[len];
-        s = s && read_array(h_vals , len, g_cache_dir+"/profile_bulge_vals.opc"  );
-        s = s && read_array(h_grads, len, g_cache_dir+"/profile_bulge_grads.opc" );
+        s = s && read_array(h_vals , len, get_cache_dir()+"/profile_bulge_vals.opc"  );
+        s = s && read_array(h_grads, len, get_cache_dir()+"/profile_bulge_grads.opc" );
     }
 
     if(!s)
@@ -976,8 +1000,8 @@ void init_profile_bulge(bool use_cache)
         h_vals  = bulge_curve.get_vals();
         h_grads = bulge_curve.get_grads();
         // And save it
-        write_array(h_vals , len, g_cache_dir+"/profile_bulge_vals.opc"  );
-        write_array(h_grads, len, g_cache_dir+"/profile_bulge_grads.opc" );
+        write_array(h_vals , len, get_cache_dir()+"/profile_bulge_vals.opc"  );
+        write_array(h_grads, len, get_cache_dir()+"/profile_bulge_grads.opc" );
 
     }
 
@@ -1001,7 +1025,7 @@ void init_opening_hyperbola(bool use_cache)
 
     if(use_cache){
         pan_hyperbola = new float[len];
-        s = s && read_array(pan_hyperbola, len, g_cache_dir+"/opening_hyperbola_vals.opc");
+        s = s && read_array(pan_hyperbola, len, get_cache_dir()+"/opening_hyperbola_vals.opc");
     }
 
 
@@ -1018,7 +1042,7 @@ void init_opening_hyperbola(bool use_cache)
             pan_hyperbola[i] = IBL::Opening::Pan_hf::_vals[i];
 
         // And save it
-        write_array(pan_hyperbola, len, g_cache_dir+"/opening_hyperbola_vals.opc");
+        write_array(pan_hyperbola, len, get_cache_dir()+"/opening_hyperbola_vals.opc");
     }
 
     allocate_and_copy_1D_array(len, pan_hyperbola, d_pan_hyperbola);
@@ -1380,8 +1404,8 @@ void init_3D_operator(const IBL::Profile_polar::Base& profile,
         // Operator must be cached => get it (already padded)
         h_vals  = new float      [len];
         h_grads = new IBL::float2[len];
-        s = s && read_array(h_vals , len, g_cache_dir+"/"+filename+"_vals.opc"  );
-        s = s && read_array(h_grads, len, g_cache_dir+"/"+filename+"_grads.opc" );
+        s = s && read_array(h_vals , len, get_cache_dir()+"/"+filename+"_vals.opc"  );
+        s = s && read_array(h_grads, len, get_cache_dir()+"/"+filename+"_grads.opc" );
     }
 
     if(!s)
@@ -1410,8 +1434,8 @@ void init_3D_operator(const IBL::Profile_polar::Base& profile,
         grid_vals-> padd( Vec3i_cu(PADDING, PADDING, PADDING) );
         grid_grads->padd( Vec3i_cu(PADDING, PADDING, PADDING) );
         if ( filename.size() > 0 ){
-            write_array(grid_vals->get_vals().data(), len, g_cache_dir+"/"+filename+"_vals.opc"  );
-            write_array(grid_grads->get_vals().data(), len, g_cache_dir+"/"+filename+"_grads.opc" );
+            write_array(grid_vals->get_vals().data(), len, get_cache_dir()+"/"+filename+"_vals.opc"  );
+            write_array(grid_grads->get_vals().data(), len, get_cache_dir()+"/"+filename+"_grads.opc" );
         }
     }
 
@@ -1831,8 +1855,8 @@ Op_id new_op_instance(const std::string &filename)
 
     h_vals  = new float      [len];
     h_grads = new IBL::float2[len];
-    bool s = read_array(h_vals , len, g_cache_dir+"/"+filename+"_vals.opc"  );
-    s = s && read_array(h_grads, len, g_cache_dir+"/"+filename+"_grads.opc" );
+    bool s = read_array(h_vals , len, get_cache_dir()+"/"+filename+"_vals.opc"  );
+    s = s && read_array(h_grads, len, get_cache_dir()+"/"+filename+"_grads.opc" );
 
     if (!s)  assert( false );
 
@@ -1881,8 +1905,8 @@ void make_cache(Op_id op_id, const std::string &filename)
     assert( h_custom_op_grads[op_id - NB_PRED_OPS]->size().product() == len);
     if(filename.size() > 0)
     {
-        write_array(&(h_vals [0]), len, g_cache_dir+"/"+filename+"_vals.opc"  );
-        write_array(&(h_grads[0]), len, g_cache_dir+"/"+filename+"_grads.opc" );
+        write_array(&(h_vals [0]), len, get_cache_dir()+"/"+filename+"_vals.opc"  );
+        write_array(&(h_grads[0]), len, get_cache_dir()+"/"+filename+"_grads.opc" );
     }
 }
 
@@ -1916,7 +1940,7 @@ void make_cache_env(const std::string &filename)
     if(filename.size() == 0)
         return;
 
-    std::string base_name = g_cache_dir+"/"+filename;
+    std::string base_name = get_cache_dir()+"/"+filename;
 
     // save concatenation
     const std::vector<float>&   conc_vals  = grid_operators_values->get_vals();
@@ -1950,7 +1974,7 @@ void make_cache_env(const std::string &filename)
 
 bool init_env_from_cache(const std::string &filename)
 {
-    std::string base_name = g_cache_dir+"/"+filename;
+    std::string base_name = get_cache_dir()+"/"+filename;
     clean_env();
     assert(!binded);
 

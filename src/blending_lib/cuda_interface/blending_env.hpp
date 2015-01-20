@@ -106,7 +106,6 @@ namespace Blending_env {
 #define BLOCK_CTRL_LY (MAX_2D_TEX_LENGTH_Y / (GRID_CTRL_LY))
 
 // -----------------------------------------------------------------------------
-extern std::string g_cache_dir;
 
 extern cudaArray* d_bulge_profile;
 extern cudaArray* d_bulge_profile_normals;
