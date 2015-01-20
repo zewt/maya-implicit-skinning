@@ -2,7 +2,6 @@
 #define MAYA_DATA_H
 
 #include "loader_mesh.hpp"
-#include "loader_skel.hpp"
 
 #include <maya/MStatus.h>
 #include <maya/MObject.h>

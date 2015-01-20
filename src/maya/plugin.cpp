@@ -39,7 +39,6 @@
 #include "maya/maya_helpers.hpp"
 #include "maya/maya_data.hpp"
 
-#include "loader_skel.hpp"
 #include "skeleton.hpp"
 #include "sample_set.hpp"
 #include "animated_mesh_ctrl.hpp"
@@ -147,6 +146,13 @@ T *createShape(MString name, MObject *transformNodeOut, MStatus &status)
 }
 
 namespace {
+    struct Abs_skeleton {
+        /// List of bones
+        std::vector<Transfo> _bones;
+        /// _parents[bone_id] == parent_bone_id
+        std::vector<int> _parents;
+    };
+
     struct BoneItem
     {
         BoneItem(std::shared_ptr<Bone> bone_) {
@@ -167,7 +173,7 @@ namespace {
         BoneItem(const BoneItem &rhs) { }
     };
 
-    void loadBones(const Loader::Abs_skeleton &skel, std::map<Bone::Id, BoneItem> &bones)
+    void loadBones(const Abs_skeleton &skel, std::map<Bone::Id, BoneItem> &bones)
     {
         std::map<int,Bone::Id> loaderIdxToBoneId;
         std::map<Bone::Id,int> boneIdToLoaderIdx;
@@ -254,7 +260,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
     // Create entries in loader_skeleton for each influence object.  Each joint is placed at the same world
     // space position as the corresponding influence object.
-    Loader::Abs_skeleton loader_skeleton;
+    Abs_skeleton loader_skeleton;
     for(auto &it: influenceObjectsByLogicalIndex)
     {
         int logicalIndex = it.first;

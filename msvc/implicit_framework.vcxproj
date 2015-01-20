@@ -184,7 +184,6 @@
     <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
     <ClInclude Include="..\include\blending_lib\opening.hpp" />
     <ClInclude Include="..\include\blending_lib\structs.hpp" />
-    <ClCompile Include="..\src\animation\loader_skel.cpp" />
     <CudaCompile Include="..\src\animation\vert_to_bone_info.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -225,7 +224,6 @@
     <ClInclude Include="..\src\animation\bone.hpp" />
     <ClInclude Include="..\src\animation\bone_type.hpp" />
     <ClInclude Include="..\src\animation\joint_type.hpp" />
-    <ClInclude Include="..\src\animation\loader_skel.hpp" />
     <ClInclude Include="..\src\animation\skeleton.hpp" />
     <ClInclude Include="..\src\animation\vert_to_bone_info.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env.hpp" />
