@@ -59,16 +59,16 @@
 
 #define CUDA_CHECK_ERRORS() \
     do{\
-    cudaThreadSynchronize(); \
-    cudaError_t code = cudaGetLastError();\
-    if(code != cudaSuccess){\
-    fprintf(stderr,"CUDA error: %s at %s, line %d\n",\
-    cudaGetErrorString(code), __FILE__, __LINE__);\
-    fflush(stderr);\
-    cuda_print_memory_trace();\
-    cuda_print_rusage();\
-    assert(false);\
-    }\
+        cudaThreadSynchronize(); \
+        cudaError_t code = cudaGetLastError();\
+        if(code != cudaSuccess){\
+            const char *error = cudaGetErrorString(code); \
+            fprintf(stderr,"CUDA error: %s at %s, line %d\n", error, __FILE__, __LINE__);\
+            fflush(stderr);\
+            cuda_print_memory_trace();\
+            cuda_print_rusage();\
+            assert(false);\
+        }\
     } while(0)
 
 
