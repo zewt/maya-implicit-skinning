@@ -73,9 +73,6 @@
     <ClCompile Include="..\src\maya\marching_cubes\mesh_data.cpp">
       <Filter>maya\marching_cubes</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\maya\bone_set.cpp">
-      <Filter>maya</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\maya\implicit_surface_geometry_override.cpp">
       <Filter>maya</Filter>
     </ClCompile>
@@ -371,9 +368,6 @@
     </ClInclude>
     <ClInclude Include="..\src\animation\vert_to_bone_info.hpp">
       <Filter>animation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maya\bone_set.hpp">
-      <Filter>maya</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maya\implicit_surface_geometry_override.hpp">
       <Filter>maya</Filter>

@@ -46,7 +46,6 @@
 #include "cuda_ctrl.hpp"
 #include "hrbf_env.hpp"
 #include "vert_to_bone_info.hpp"
-#include "bone_set.hpp"
 
 #include <string.h>
 #include <math.h>
@@ -147,6 +146,91 @@ T *createShape(MString name, MObject *transformNodeOut, MStatus &status)
     return DagHelpers::GetInterfaceFromNode<T>(shapeNode, &status);
 }
 
+namespace {
+    struct BoneItem
+    {
+        BoneItem(std::shared_ptr<Bone> bone_) {
+            bone = bone_;
+            parent = -1;
+            caller_idx = -1;
+        }
+
+        std::shared_ptr<Bone> bone;
+
+        Bone::Id parent;
+
+        // The index in the initial list.  This is temporary, and assumes only one skeleton.
+        int caller_idx;
+
+    private:
+        BoneItem &operator=(BoneItem &rhs) { return *this; }
+        BoneItem(const BoneItem &rhs) { }
+    };
+
+    void loadBones(const Loader::Abs_skeleton &skel, std::map<Bone::Id, BoneItem> &bones)
+    {
+        std::map<int,Bone::Id> loaderIdxToBoneId;
+        std::map<Bone::Id,int> boneIdToLoaderIdx;
+
+        // Create the Bones.
+        for(int idx = 0; idx < (int) skel._bones.size(); idx++)
+        {
+            std::shared_ptr<Bone> bone(new Bone());
+
+            BoneItem &item = bones.emplace(bone->get_bone_id(), bone).first->second;
+            item.caller_idx = idx;
+
+            loaderIdxToBoneId[idx] = item.bone->get_bone_id();
+            boneIdToLoaderIdx[item.bone->get_bone_id()] = idx;
+        }
+
+        // Set up each BoneItem's parent.
+        for(auto &it: bones)
+        {
+            BoneItem &item = it.second;
+            Bone::Id bid = item.bone->get_bone_id();
+
+            // Set up item.parent.
+            int loader_idx = boneIdToLoaderIdx.at(bid);
+            int loader_parent_idx = skel._parents[loader_idx];
+            if(loader_parent_idx != -1)
+                item.parent = loaderIdxToBoneId.at(loader_parent_idx);
+        }
+
+        // Set up each bone.
+        for(auto &it: bones)
+        {
+            // Set up _bone.
+            Bone::Id bone_id = it.first;
+            BoneItem &item = it.second;
+            int bone_loader_idx = boneIdToLoaderIdx.at(bone_id);
+
+            Bone::Id parent_bone_id = item.parent;
+            Vec3_cu org = Transfo::identity().get_translation();
+            if(parent_bone_id != -1) {
+                int parent_bone_loader_idx = boneIdToLoaderIdx.at(parent_bone_id);
+                org = skel._bones[parent_bone_loader_idx].get_translation();
+            }
+
+            Vec3_cu end = skel._bones[bone_loader_idx].get_translation();
+            Vec3_cu dir = end.to_point() - org.to_point();
+            float length = dir.norm();
+
+            Bone_cu initial_position = Bone_cu(org.to_point(), dir, length);
+            item.bone->set_length(initial_position._length);
+            item.bone->set_orientation(initial_position.org(), initial_position.dir());
+
+            // If any bones lie on the same position as their parent, they'll have a zero length and
+            // an undefined orientation.  Set them to a small length and a default orientation.
+            if(item.bone->length() < 0.000001f)
+            {
+                item.bone->set_length(0.000001f);
+                item.bone->_dir = Vec3_cu(1,0,0);
+            }
+        }
+    }
+}
+
 MStatus ImplicitCommand::init(MString skinClusterName)
 {
     MStatus status = MStatus::kSuccess;
@@ -191,12 +275,13 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     // Create bones from the Abs_skeleton.  These are temporary and used only for sampling.
     // New, final bones will be created within the ImplicitSurfaces once we decide which ones
     // to create.
-    BoneSet boneSet;
-    boneSet.load(loader_skeleton);
+    std::map<Bone::Id, BoneItem> loaderSkeleton;
+    loadBones(loader_skeleton, loaderSkeleton);
 
     // Load the skeleton.
-    vector<shared_ptr<Bone> > &bones = boneSet.all_bones();
-    vector<shared_ptr<const Bone> > const_bones(bones.begin(), bones.end());
+    vector<shared_ptr<const Bone> > const_bones;
+    for(auto &it: loaderSkeleton)
+        const_bones.push_back(it.second.bone);
     shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, loader_skeleton._parents));
 
 
@@ -268,7 +353,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     vector<int> parent_index;
 
     // Create an ImplicitSurface for each bone that has samples.
-    for(auto &it: boneSet.bones)
+    for(auto &it: loaderSkeleton)
     {
         Bone::Id bone_id = it.first;
         BoneItem &bone_item = it.second;
@@ -283,7 +368,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         MString surfaceName = influenceObjectPath.partialPathName();
         if(bone_item.parent != -1)
         {
-            int parentInfluenceIdx = boneSet.bones.at(bone_item.parent).caller_idx;
+            int parentInfluenceIdx = loaderSkeleton.at(bone_item.parent).caller_idx;
             const MDagPath &parentInfluenceObjectPath = influenceObjectsByLogicalIndex.at(parentInfluenceIdx);
             MString parentInfluenceName = parentInfluenceObjectPath.partialPathName();
             surfaceName = parentInfluenceName + "To" + surfaceName;
@@ -350,7 +435,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // bone hierarchy with shapes.
         if(bone_item.parent != -1)
         {
-            int parentInfluenceIdx = boneSet.bones.at(bone_item.parent).caller_idx;
+            int parentInfluenceIdx = loaderSkeleton.at(bone_item.parent).caller_idx;
             parent_index.push_back(parentInfluenceIdx);
 
             const MDagPath &parentInfluenceObjectPath = influenceObjectsByLogicalIndex.at(parentInfluenceIdx);

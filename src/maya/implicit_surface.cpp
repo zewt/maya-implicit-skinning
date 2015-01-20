@@ -32,7 +32,6 @@
 #include "skeleton.hpp"
 
 #include "marching_cubes/marching_cubes.hpp"
-#include "bone_set.hpp"
 #include "implicit_surface_data.hpp"
 
 #include <algorithm>

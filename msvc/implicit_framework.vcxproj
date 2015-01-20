@@ -192,7 +192,6 @@
     <ClCompile Include="..\src\implicit_graphs\grid.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree.cpp" />
     <ClCompile Include="..\src\implicit_graphs\tree_cu.cpp" />
-    <ClCompile Include="..\src\maya\bone_set.cpp" />
     <ClCompile Include="..\src\maya\implicit_blend.cpp" />
     <ClCompile Include="..\src\maya\implicit_surface_data.cpp" />
     <ClCompile Include="..\src\maya\implicit_deformer.cpp" />
@@ -273,7 +272,6 @@
     <ClInclude Include="..\src\maths\vec2_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3i_cu.hpp" />
     <ClInclude Include="..\src\maths\vec3_cu.hpp" />
-    <ClInclude Include="..\src\maya\bone_set.hpp" />
     <ClInclude Include="..\src\maya\implicit_blend.hpp" />
     <ClInclude Include="..\src\maya\implicit_surface_data.hpp" />
     <ClInclude Include="..\src\maya\implicit_deformer.hpp" />
