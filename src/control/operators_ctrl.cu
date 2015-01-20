@@ -20,7 +20,6 @@
 
 #include "blending_env.hpp"
 #include "constants.hpp"
-#include "globals.hpp"
 #include "blending_env.hpp"
 #include "n_ary.hpp"
 #include "n_ary_constant_interface.hpp"

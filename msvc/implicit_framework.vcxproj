@@ -215,7 +215,6 @@
     <ClCompile Include="..\src\blending_lib\generator.cpp" />
     <ClCompile Include="..\src\blending_lib\opening.cpp" />
     <ClCompile Include="..\src\blending_lib\structs.cpp" />
-    <ClCompile Include="..\src\global_datas\globals.cpp" />
     <ClCompile Include="..\src\meshes\vcg_lib\utils_sampling.cpp" />
     <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp" />
     <ClCompile Include="..\src\meshes\mesh.cpp" />
@@ -251,7 +250,6 @@
     <ClInclude Include="..\src\control\operators_ctrl.hpp" />
     <ClInclude Include="..\src\control\sample_set.hpp" />
     <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp" />
-    <ClInclude Include="..\src\global_datas\globals.hpp" />
     <ClInclude Include="..\src\global_datas\macros.hpp" />
     <ClInclude Include="..\src\implicit_graphs\bone_tex.hpp" />
     <ClInclude Include="..\src\implicit_graphs\grid.hpp" />

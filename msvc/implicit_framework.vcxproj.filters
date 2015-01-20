@@ -16,9 +16,6 @@
     <ClCompile Include="..\src\blending_lib\structs.cpp">
       <Filter>blending_lib</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\global_datas\globals.cpp">
-      <Filter>global_datas</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\implicit_graphs\tree.cpp">
       <Filter>implicit_graphs</Filter>
     </ClCompile>
@@ -176,9 +173,6 @@
     </ClInclude>
     <ClInclude Include="..\src\control\cuda_ctrl.hpp">
       <Filter>control</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\global_datas\globals.hpp">
-      <Filter>global_datas</Filter>
     </ClInclude>
     <ClInclude Include="..\src\global_datas\macros.hpp">
       <Filter>global_datas</Filter>

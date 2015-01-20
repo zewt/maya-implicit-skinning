@@ -19,7 +19,6 @@
 #include "animated_mesh_ctrl.hpp"
 
 #include "animesh.hpp"
-#include "globals.hpp"
 #include "std_utils.hpp"
 #include "skeleton.hpp"
 #include "timer.hpp"

@@ -35,9 +35,6 @@
 
 namespace { __device__ void fix_debug() { } }
 
-// From globals.hpp
-extern std::string g_cache_dir;
-
 // From n_ary.hpp
 void init_nary_operators();
 
@@ -154,6 +151,8 @@ texture<float , 3, cudaReadModeElementType> tex_operators_values;
 texture<float2, 3, cudaReadModeElementType> tex_operators_grads;
 
 //------------------------------------------------------------------------------
+
+std::string g_cache_dir  = "";
 
 /// @param src_vals host array to be copied. 3D values are stored linearly
 /// src_vals[x + y*width + z*width*height] = [x][y][z];

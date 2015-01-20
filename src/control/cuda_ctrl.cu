@@ -24,7 +24,6 @@
 #include <string>
 
 #include "skeleton.hpp"
-#include "globals.hpp"
 #include "cuda_utils_common.hpp"
 #include "constants.hpp"
 #include "skeleton_env.hpp"

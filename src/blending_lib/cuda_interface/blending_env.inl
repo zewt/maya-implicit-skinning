@@ -17,7 +17,6 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>
  */
 //#include "glsave.hpp"
-//#include "globals.hpp"
 //#include "blending_env_tex.hpp"
 
 #ifndef M_PI

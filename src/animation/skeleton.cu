@@ -30,7 +30,6 @@
 #include "conversions.hpp"
 #include "std_utils.hpp"
 #include "loader_skel.hpp"
-#include "globals.hpp"
 #include "cuda_utils.hpp"
 
 namespace { __device__ void fix_debug() { } }
