@@ -25,19 +25,11 @@
 VertToBoneInfo::VertToBoneInfo(const Skeleton *skel, const Mesh *mesh):
     h_vertices_nearest_bones(mesh->get_nb_vertices())
 {
-    std::map<Bone::Id, std::vector<Vec3_cu> >& vertices = h_input_verts_per_bone;
-    std::map<Bone::Id, std::vector<Vec3_cu> >& normals  = h_input_normals_per_bone;
     std::map<Bone::Id, std::vector<int>     >& vert_ids = h_verts_id_per_bone;
-    vertices.clear();
-    normals. clear();
 
     // Create an entry for each bone, even if the value is zero.
     for(Bone::Id bone_id: skel->get_bone_ids())
-    {
-        vertices[bone_id];
-        normals[bone_id];
         vert_ids[bone_id];
-    }
 
     clusterize_euclidean(skel, mesh, h_vertices_nearest_bones);
 
@@ -47,12 +39,6 @@ VertToBoneInfo::VertToBoneInfo(const Skeleton *skel, const Mesh *mesh):
 
         if(mesh->is_disconnect(i))
             continue;
-
-        const Vec3_cu vert = mesh->get_vertex(i);
-        const Vec3_cu norm = mesh->get_normal(i);
-
-        vertices[nearest].push_back( Vec3_cu(vert.x,  vert.y,  vert.z)              );
-        normals [nearest].push_back( Vec3_cu(norm.x,  norm.y,  norm.z).normalized() );
 
         vert_ids[nearest].push_back( i );
     }

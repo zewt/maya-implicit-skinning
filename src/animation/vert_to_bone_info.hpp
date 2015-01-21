@@ -30,11 +30,6 @@ struct VertToBoneInfo
 {
     VertToBoneInfo(const Skeleton *skel, const Mesh *mesh);
 
-    /// Initial vertices in their "resting" position. sorted by nearest bone.
-    /// h_input_vertices[nearest][ith_vert] = vert_coord
-    std::map<Bone::Id, std::vector<Vec3_cu> > h_input_verts_per_bone;
-    std::map<Bone::Id, std::vector<Vec3_cu> > h_input_normals_per_bone;
-
     /// h_input_vertices[nearest][ith_vert] = vert_id_in_mesh
     std::map<Bone::Id, std::vector<int> > h_verts_id_per_bone;
 

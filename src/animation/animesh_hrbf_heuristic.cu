@@ -65,12 +65,17 @@ void HRBF_sampling::factor_samples(std::vector<int>& vert_ids,
     {
         const int bone_id = _factor_siblings ? sons[i] : _bone_id;
         const auto &ids   = vertToBoneInfo.h_verts_id_per_bone.at(bone_id);
-        const auto &nors  = vertToBoneInfo.h_input_normals_per_bone.at(bone_id);
-        const auto &verts = vertToBoneInfo.h_input_verts_per_bone.at(bone_id);
 
         vert_ids.insert(vert_ids.end(), ids.begin(), ids.end());
-        vertices.insert(vertices.end(), verts.begin(), verts.end());
-        normals.insert(normals.end(), nors.begin(), nors.end());
+
+        vertices.reserve(vertices.size() + ids.size());
+        normals.reserve(normals.size() + ids.size());
+        for(int vert_id: ids) {
+            Vec3_cu vertex = mesh->get_vertex(vert_id);
+            Vec3_cu normal = mesh->get_normal(vert_id).normalized();
+            vertices.push_back(vertex);
+            normals.push_back(normal);
+        }
 
         if( !_factor_siblings ) break;
     }
