@@ -16,6 +16,7 @@
 
 #include "maya/maya_helpers.hpp"
 #include "maya/maya_data.hpp"
+#include "utils/misc_utils.hpp"
 
 #include "skeleton.hpp"
 
@@ -104,74 +105,6 @@ MStatus ImplicitBlend::compute(const MPlug &plug, MDataBlock &dataBlock)
     return MStatus::kUnknownParameter;
 }
 
-// Given a list of parent indexes, return a list of indexes sorted from parent
-// to child.
-//
-// For example, the input [3,-1,0,1] indicates that node 0's parent is node 3,
-// node 1 is the root node, node 2's parent is node 0, and node 3's parent is
-// node 0.
-//
-// The result of this hierarchy is [1,2,3,0].  Root nodes come first, followed
-// by their children.
-//
-// The order of sibling nodes is unspecified.  Nodes with parent indexes that
-// don't exist in the array are treated as root nodes.
-//
-// If the input contains cycles, the output will be empty and false will be returned.
-// Nodes 
-bool addHierarchyOrderRecursive(const map<int, vector<int> > children, vector<int> &out, int rootIdx, set<int> &indexesOnStack)
-{
-    // If this index is already on the stack, then the input has a cycle.
-    if(indexesOnStack.find(rootIdx) != indexesOnStack.end())
-        return false;
-
-    indexesOnStack.insert(rootIdx);
-
-    // Process this node before its children.
-    out.push_back(rootIdx);
-
-    // Recurse through all children of this node.
-    bool result = true;
-    if(children.find(rootIdx) != children.end()) {
-        const vector<int> &childIndexes = children.at(rootIdx);
-        for(int childIdx: childIndexes)
-        {
-            if(!addHierarchyOrderRecursive(children, out, childIdx, indexesOnStack))
-                result = false;
-        }
-    }
-
-    indexesOnStack.erase(rootIdx);
-    return true;
-}
-
-bool getHierarchyOrder(const vector<int> &parent, vector<int> &out)
-{
-    // Make a list of each node's children.
-    map<int, vector<int> > children;
-    for(int idx = 0; idx < (int) parent.size(); ++idx) {
-        int parent_idx = parent[idx];
-        if(parent_idx >= 0 && parent_idx < parent.size())
-            children[parent_idx].push_back(idx);
-    }
-
-    // Start processing root nodes.
-    set<int> indexesOnStack;
-    for(int idx = 0; idx < (int) parent.size(); ++idx)
-    {
-        int parent_idx = parent[idx];
-        if(parent_idx >= 0 && parent_idx < parent.size())
-            continue;
-
-        if(!addHierarchyOrderRecursive(children, out, idx, indexesOnStack))
-        {
-            out.clear();
-            return false;
-        }
-    }
-    return true;
-}
-
 MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
@@ -218,7 +151,7 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 
     // Get the hierarchy order of the inputs, so we can create parents before children.
     vector<int> hierarchyOrder;
-    if(!getHierarchyOrder(surfaceParents, hierarchyOrder)) {
+    if(!MiscUtils::getHierarchyOrder(surfaceParents, hierarchyOrder)) {
         // The input contains cycles.
         MDagPath dagPath = MDagPath::getAPathTo(thisMObject(), &status);
         if(status != MS::kSuccess) return status;

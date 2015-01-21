@@ -207,6 +207,7 @@
       <FileType>Document</FileType>
     </CudaCompile>
     <ClCompile Include="..\src\utils\cuda_utils\memory_debug.cpp" />
+    <ClCompile Include="..\src\utils\misc_utils.cpp" />
     <ClCompile Include="..\src\utils\timer.cpp" />
     <ClCompile Include="..\src\primitives\hrbf\hrbf_wrapper.cpp" />
     <ClCompile Include="..\src\blending_lib\controller.cpp" />
@@ -307,6 +308,7 @@
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_host_array.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils_thrust.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\memory_debug.hpp" />
+    <ClInclude Include="..\src\utils\misc_utils.hpp" />
     <ClInclude Include="..\src\utils\std_utils.hpp" />
     <ClInclude Include="..\src\utils\timer.hpp" />
     <CudaCompile Include="..\src\animation\animesh.cu">

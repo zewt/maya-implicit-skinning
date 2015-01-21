@@ -82,6 +82,9 @@
     <ClCompile Include="..\src\maya\implicit_surface_data.cpp">
       <Filter>maya</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\misc_utils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\animation\bone.hpp">
@@ -371,6 +374,9 @@
     </ClInclude>
     <ClInclude Include="..\src\maya\implicit_surface_data.hpp">
       <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\misc_utils.hpp">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
