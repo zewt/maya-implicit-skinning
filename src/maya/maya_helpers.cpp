@@ -142,7 +142,7 @@ namespace DagHelpers
 
             int logicalIndex = skinCluster.indexForInfluenceObject(influenceObjectPath, &status);
             if(status != MS::kSuccess) return status;
-            out[i] = influenceObjectPath;
+            out[logicalIndex] = influenceObjectPath;
         }
         return MStatus::kSuccess;
     }
@@ -179,14 +179,14 @@ namespace DagHelpers
 
     /* Find the nearest ancestor to path.  "a|b|c" is an ancestor of "a|b|c|d|e|f".
      * If no nodes are an ancestor of path, return -1. */
-    int findClosestAncestor(const vector<MDagPath> &dagPaths, MDagPath dagPath)
+    int findClosestAncestor(const std::map<int,MDagPath> &logicalIndexToInfluenceObjects, MDagPath dagPath)
     {
         string path = dagPath.fullPathName().asChar();
 
         int best_match = -1;
         int best_match_length = -1;
-        for(size_t i = 0; i < dagPaths.size(); ++i) {
-            string parentPath = dagPaths[i].fullPathName().asChar();
+        for(auto &it: logicalIndexToInfluenceObjects) {
+            string parentPath = it.second.fullPathName().asChar();
             if(parentPath == path)
                 continue;
 
@@ -197,7 +197,7 @@ namespace DagHelpers
 
             if((int) parentPath.size() > best_match_length)
             {
-                best_match = (int) i;
+                best_match = it.first;
                 best_match_length = (int) parentPath.size();
             }
         }

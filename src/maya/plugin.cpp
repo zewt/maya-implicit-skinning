@@ -38,6 +38,7 @@
 
 #include "maya/maya_helpers.hpp"
 #include "maya/maya_data.hpp"
+#include "utils/misc_utils.hpp"
 
 #include "skeleton.hpp"
 #include "sample_set.hpp"
@@ -146,11 +147,69 @@ T *createShape(MString name, MObject *transformNodeOut, MStatus &status)
 }
 
 namespace {
+    struct AbsSkeletonBone {
+        Transfo bone;
+        int parent;
+    };
     struct Abs_skeleton {
         /// List of bones
         std::vector<Transfo> _bones;
         /// _parents[bone_id] == parent_bone_id
         std::vector<int> _parents;
+        std::vector<MDagPath> dagPaths;
+
+        MStatus load(MObject skinClusterNode)
+        {
+            MStatus status = MStatus::kSuccess;
+            MFnSkinCluster skinCluster(skinClusterNode, &status);
+            if(status != MS::kSuccess) return status;
+
+            map<int,MDagPath> logicalIndexToInfluenceObjects;
+            status = DagHelpers::getSkinClusterInfluenceObjects(skinCluster, logicalIndexToInfluenceObjects);
+            if(status != MS::kSuccess) return status;
+
+            map<int,int> logicalIndexToParentIdx;
+            MayaData::loadSkeletonHierarchyFromSkinCluster(logicalIndexToInfluenceObjects, logicalIndexToParentIdx);
+
+            // Make a list of logical indexes.  logicalIndexes[parentIndex[n]] is the logical index
+            // of n's parent.
+            vector<int> logicalIndexes;
+            vector<int> parentIndexes;
+            for(auto &it: logicalIndexToParentIdx)
+            {
+                logicalIndexes.push_back(it.first);
+                parentIndexes.push_back(it.second);
+            }
+
+            // Order the indexes parent nodes first.
+            vector<int> hierarchyOrder;
+            if(!MiscUtils::getHierarchyOrder(parentIndexes, hierarchyOrder))
+            {
+                MGlobal::displayError("The input hierarchy contains cycles.");
+                return MStatus::kFailure;
+            }
+
+            for(int logicalIndex: hierarchyOrder)
+            {
+                const MDagPath &influenceObjectPath = logicalIndexToInfluenceObjects.at(logicalIndex);
+
+                MMatrix jointWorldMat = influenceObjectPath.inclusiveMatrix(&status);
+                if(status != MS::kSuccess) return status;
+
+                // Make space for the item, if needed.
+                int size = max((int) _parents.size(), logicalIndex+1);
+                _parents.resize(size, -1);
+                _bones.resize(size);
+                dagPaths.resize(size);
+
+                // Add the bone.
+                _bones[logicalIndex] = DagHelpers::MMatrixToTransfo(jointWorldMat);
+                _parents[logicalIndex] = parentIndexes[logicalIndex];
+                dagPaths[logicalIndex] = influenceObjectPath;
+            }
+            return MStatus::kSuccess;
+        }
+
     };
 
     struct BoneItem
@@ -158,15 +217,13 @@ namespace {
         BoneItem(std::shared_ptr<Bone> bone_) {
             bone = bone_;
             parent = -1;
-            caller_idx = -1;
         }
 
         std::shared_ptr<Bone> bone;
 
         Bone::Id parent;
 
-        // The index in the initial list.  This is temporary, and assumes only one skeleton.
-        int caller_idx;
+        MDagPath dagPath;
 
     private:
         BoneItem &operator=(BoneItem &rhs) { return *this; }
@@ -184,7 +241,7 @@ namespace {
             std::shared_ptr<Bone> bone(new Bone());
 
             BoneItem &item = bones.emplace(bone->get_bone_id(), bone).first->second;
-            item.caller_idx = idx;
+            item.dagPath = skel.dagPaths[idx];
 
             loaderIdxToBoneId[idx] = item.bone->get_bone_id();
             boneIdToLoaderIdx[item.bone->get_bone_id()] = idx;
@@ -245,50 +302,25 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     status = getOnePlugByName(skinClusterName, skinClusterPlug);
     if(status != MS::kSuccess) return status;
 
-    vector<int> parentIndexes;
-    status = MayaData::loadSkeletonHierarchyFromSkinCluster(skinClusterPlug.node(), parentIndexes);
-    if(status != MS::kSuccess) return status;
-
     MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
     if(status != MS::kSuccess) return status;
 
-
-
-    map<int,MDagPath> influenceObjectsByLogicalIndex;
-    status = DagHelpers::getSkinClusterInfluenceObjects(skinCluster, influenceObjectsByLogicalIndex);
-    if(status != MS::kSuccess) return status;
-
-    // Create entries in loader_skeleton for each influence object.  Each joint is placed at the same world
+    // Create entries in abs_skeleton for each influence object.  Each joint is placed at the same world
     // space position as the corresponding influence object.
-    Abs_skeleton loader_skeleton;
-    for(auto &it: influenceObjectsByLogicalIndex)
-    {
-        int logicalIndex = it.first;
-        MDagPath &influenceObjectPath = it.second;
-
-        MMatrix jointWorldMat = influenceObjectPath.inclusiveMatrix(&status);
-        if(status != MS::kSuccess) return status;
-
-        // Make space for the item, if needed.
-        loader_skeleton._parents.resize(max((int) loader_skeleton._parents.size(), logicalIndex+1), -1);
-        loader_skeleton._bones.resize(max((int) loader_skeleton._bones.size(), logicalIndex+1));
-
-        // Add the bone.
-        loader_skeleton._bones[logicalIndex] = DagHelpers::MMatrixToTransfo(jointWorldMat);
-        loader_skeleton._parents[logicalIndex] = parentIndexes[logicalIndex];
-    }
+    Abs_skeleton abs_skeleton;
+    abs_skeleton.load(skinClusterPlug.node());
 
     // Create bones from the Abs_skeleton.  These are temporary and used only for sampling.
     // New, final bones will be created within the ImplicitSurfaces once we decide which ones
     // to create.
     std::map<Bone::Id, BoneItem> loaderSkeleton;
-    loadBones(loader_skeleton, loaderSkeleton);
+    loadBones(abs_skeleton, loaderSkeleton);
 
     // Load the skeleton.
     vector<shared_ptr<const Bone> > const_bones;
     for(auto &it: loaderSkeleton)
         const_bones.push_back(it.second.bone);
-    shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, loader_skeleton._parents));
+    shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, abs_skeleton._parents));
 
 
 
@@ -357,6 +389,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     // The surfaces that we're creating, and their corresponding parents.
     vector<ImplicitSurface *> surfaces;
     vector<int> parent_index;
+    map<Bone::Id, int> sourceBoneIdToIdx;
 
     // Create an ImplicitSurface for each bone that has samples.
     for(auto &it: loaderSkeleton)
@@ -366,7 +399,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         shared_ptr<Bone> bone = bone_item.bone;
 
         // The path to the influence object this surface was created for:
-        const MDagPath &influenceObjectPath = influenceObjectsByLogicalIndex.at(bone_item.caller_idx);
+        const MDagPath &influenceObjectPath = bone_item.dagPath;
 
         // Figure out a name for the surface.  If we have a parent joint, this surface is the
         // bone between the parent joint and this joint.  If we don't have a parent joint then
@@ -374,8 +407,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         MString surfaceName = influenceObjectPath.partialPathName();
         if(bone_item.parent != -1)
         {
-            int parentInfluenceIdx = loaderSkeleton.at(bone_item.parent).caller_idx;
-            const MDagPath &parentInfluenceObjectPath = influenceObjectsByLogicalIndex.at(parentInfluenceIdx);
+            const MDagPath &parentInfluenceObjectPath = loaderSkeleton.at(bone_item.parent).dagPath;
             MString parentInfluenceName = parentInfluenceObjectPath.partialPathName();
             surfaceName = parentInfluenceName + "To" + surfaceName;
         }
@@ -388,6 +420,9 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         MObject transformNode;
         ImplicitSurface *surface = createShape<ImplicitSurface>(surfaceName + "Implicit", &transformNode, status);
         if(status != MS::kSuccess) return status;
+
+        // Remember the offset in surfaces[] for this source bone ID.
+        sourceBoneIdToIdx[bone->get_bone_id()] = (int) surfaces.size();
 
         surfaces.push_back(surface);
 
@@ -441,10 +476,21 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // bone hierarchy with shapes.
         if(bone_item.parent != -1)
         {
-            int parentInfluenceIdx = loaderSkeleton.at(bone_item.parent).caller_idx;
-            parent_index.push_back(parentInfluenceIdx);
+            // The source bone has a parent.  If the parent is in the skeleton, we should have already
+            // created it, so find the index of its output bone.
+            const BoneItem &parentItem = loaderSkeleton.at(bone_item.parent);
+            auto boneIt = sourceBoneIdToIdx.find(parentItem.bone->get_bone_id());
+            if(boneIt != sourceBoneIdToIdx.end())
+            {
+                int parent_idx = (int) std::distance(sourceBoneIdToIdx.begin(), boneIt);
+                parent_index.push_back(parent_idx);
+            }
+            else
+            {
+                parent_index.push_back(-1);
+            }
 
-            const MDagPath &parentInfluenceObjectPath = influenceObjectsByLogicalIndex.at(parentInfluenceIdx);
+            const MDagPath &parentInfluenceObjectPath = parentItem.dagPath;
             parentInfluenceObjectPath.node();
 
             MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status);

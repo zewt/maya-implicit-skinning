@@ -5,14 +5,15 @@
 
 #include <maya/MStatus.h>
 #include <maya/MObject.h>
+#include <maya/MDagPath.h>
 #include <maya/MPlug.h>
 #include <maya/MMatrix.h>
-#include <vector>
+#include <map>
 
 namespace MayaData
 {
     MStatus load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix vertexTransform = MMatrix::identity);
-    MStatus loadSkeletonHierarchyFromSkinCluster(MObject skinClusterNode, std::vector<int> &parentIndexes);
+    void loadSkeletonHierarchyFromSkinCluster(const std::map<int,MDagPath> &logicalIndexToInfluenceObjects, std::map<int,int> &logicalIndexToParentIdx);
 }
 
 #endif

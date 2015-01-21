@@ -85,24 +85,11 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
     return MS::kSuccess;
 }
 
-MStatus MayaData::loadSkeletonHierarchyFromSkinCluster(MObject skinClusterNode, vector<int> &parentIndexes)
+void MayaData::loadSkeletonHierarchyFromSkinCluster(const std::map<int,MDagPath> &logicalIndexToInfluenceObjects, std::map<int,int> &logicalIndexToParentIdx)
 {
-    MStatus status = MStatus::kSuccess;
-
-    // Get the influence objects (joints) for the skin cluster.
-    // Convert to a vector.
-    vector<MDagPath> joints;
-    status = DagHelpers::getMDagPathsFromSkinCluster(skinClusterNode, joints);
-    if(status != MS::kSuccess) return status;
-
-    // Create the bones.
-    for(int i = 0; i < joints.size(); ++i)
+    for(auto &it: logicalIndexToInfluenceObjects)
     {
-        // Find this bone's closest ancestor to be its parent.  If it has no ancestors, use the root.
-        const MDagPath &dagPath = joints[i];
-        int parentIdx = DagHelpers::findClosestAncestor(joints, dagPath);
-        parentIndexes.push_back(parentIdx);
+        const MDagPath &dagPath = it.second;
+        logicalIndexToParentIdx[it.first] = DagHelpers::findClosestAncestor(logicalIndexToInfluenceObjects, dagPath);
     }
-
-    return MStatus::kSuccess;
 }
