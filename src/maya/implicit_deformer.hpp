@@ -39,10 +39,10 @@ private:
     std::shared_ptr<const Skeleton> get_implicit_skeleton(MDataBlock &dataBlock, MStatus *status);
 
     // The loaded mesh.  We own this object.
-    std::auto_ptr<Mesh> mesh;
+    std::unique_ptr<Mesh> mesh;
 
     // The wrapper class around both the mesh and the skeleton.
-    std::auto_ptr<Animated_mesh_ctrl> animMesh;
+    std::unique_ptr<Animated_mesh_ctrl> animMesh;
 };
 
 #endif

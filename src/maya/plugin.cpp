@@ -353,7 +353,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     if(status != MS::kSuccess) return status;
 
     // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
-    std::auto_ptr<Mesh> mesh(new Mesh(loaderMesh));
+    std::unique_ptr<Mesh> mesh(new Mesh(loaderMesh));
     mesh->check_integrity();
 
 
