@@ -134,21 +134,18 @@ static math::MarsenneTwisterRNG &SamplingRandomGenerator()
 // Returns an integer random number in the [0,i-1] interval using the improve Marsenne-Twister method.
 static unsigned int RandomInt(unsigned int i)
 {
-    return 0;
 	return (SamplingRandomGenerator().generate(0) % i);
 }
 
 // Returns a random number in the [0,1) real interval using the improved Marsenne-Twister method.
 static double RandomDouble01()
 {
-    return 0.5;
 	return SamplingRandomGenerator().generate01();
 }
 
 // Returns a random number in the [0,1] real interval using the improved Marsenne-Twister.
 static double RandomDouble01closed()
 {
-    return 0.5;
 	return SamplingRandomGenerator().generate01closed();
 }
 
@@ -490,7 +487,8 @@ static void Montecarlo(MetroMesh & m, VertexSampler &ps,int sampleNum)
 	ScalarType meshArea = intervals.back().first;
 	for(i=0;i<sampleNum;++i)
 		{
-			ScalarType val = meshArea * (((double)i / sampleNum) * 0.9 + 0.05); // RandomDouble01();
+
+                        ScalarType val = meshArea * RandomDouble01();
 			// lower_bound returns the furthermost iterator i in [first, last) such that, for every iterator j in [first, i), *j < value.
 			// E.g. An iterator pointing to the first element "not less than" val, or end() if every element is less than val.
 			typename std::vector<IntervalType>::iterator it = lower_bound(intervals.begin(),intervals.end(),std::make_pair(val,FacePointer(0)) );
@@ -498,10 +496,8 @@ static void Montecarlo(MetroMesh & m, VertexSampler &ps,int sampleNum)
 			assert(it != intervals.begin());
 			assert( (*(it-1)).first <val );
 			assert( (*(it)).first >= val);
-                        double a = (((double)i / sampleNum) * 0.9 + 0.05);
-                        double b = 1-a;
-			ps.AddFace( *(*it).second, NotRandomBaricentric(a, b) );
-			// ps.AddFace( *(*it).second, RandomBaricentric() );
+
+			ps.AddFace( *(*it).second, RandomBaricentric() );
 		}
 }
 	
@@ -966,7 +962,7 @@ static void PoissonDiskPruning(MetroMesh &origMesh, VertexSampler &ps, MetroMesh
 
 
     unsigned int (*p_myrandom)(unsigned int) = RandomInt;
-//    std::random_shuffle(montecarloSHT.AllocatedCells.begin(),montecarloSHT.AllocatedCells.end(), p_myrandom);
+    std::random_shuffle(montecarloSHT.AllocatedCells.begin(),montecarloSHT.AllocatedCells.end(), p_myrandom);
 
 #ifdef QT_VERSION
     qDebug("PDS: Completed creation of activeCells, %i cells (%i msec)", (int)montecarloSHT.AllocatedCells.size(), tt.restart());
