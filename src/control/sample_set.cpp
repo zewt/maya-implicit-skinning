@@ -29,7 +29,7 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton 
     if(!skel->is_bone(bone_id))
         return;
 
-    if(settings.mode == SampleSetSettings::Poisson)
+    if(settings.mode == SampleSetSettings::AdHoc)
     {
         Adhoc_sampling heur(mesh, skel, vertToBoneInfo);
         heur._bone_id = bone_id;
