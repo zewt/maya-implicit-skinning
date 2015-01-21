@@ -292,6 +292,34 @@ namespace {
             }
         }
     }
+
+    // Return a Mesh loaded from the output of the given skin cluster.
+    std::unique_ptr<Mesh> createMeshFromSkinClusterOutput(MObject skinClusterNode, MStatus &status)
+    {
+        MFnSkinCluster skinCluster(skinClusterNode, &status);
+        if(status != MS::kSuccess) return std::unique_ptr<Mesh>();
+
+        MDagPath skinClusterOutputPath;
+        status = skinCluster.getPathAtIndex(0, skinClusterOutputPath);
+        if(status != MS::kSuccess) return std::unique_ptr<Mesh>();
+    
+        MObject skinClusterOutputShape = skinClusterOutputPath.node();
+        if(!skinClusterOutputShape.hasFn(MFn::kMesh)) {
+            status = MStatus::kFailure;
+            return std::unique_ptr<Mesh>();
+        }
+
+        // Load the input mesh from the skinCluster's output.
+        Loader::Abs_mesh loaderMesh;
+        MMatrix objectToWorldMatrix = skinClusterOutputPath.inclusiveMatrix(&status);
+        status = MayaData::load_mesh(skinClusterOutputShape, loaderMesh, objectToWorldMatrix);
+        if(status != MS::kSuccess) return std::unique_ptr<Mesh>();
+
+        // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
+        std::unique_ptr<Mesh> mesh(new Mesh(loaderMesh));
+        mesh->check_integrity();
+        return mesh;
+    }
 }
 
 MStatus ImplicitCommand::init(MString skinClusterName)
@@ -300,9 +328,6 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
     MPlug skinClusterPlug;
     status = getOnePlugByName(skinClusterName, skinClusterPlug);
-    if(status != MS::kSuccess) return status;
-
-    MFnSkinCluster skinCluster(skinClusterPlug.node(), &status);
     if(status != MS::kSuccess) return status;
 
     // Create entries in abs_skeleton for each influence object.  Each joint is placed at the same world
@@ -322,47 +347,10 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         const_bones.push_back(it.second.bone);
     shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, abs_skeleton._parents));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Get the output of the skin cluster, which is what we'll sample.  We'll create
     // implicit surfaces based on the skin cluster in its current pose.
-    MDagPath skinClusterOutputPath;
-    status = skinCluster.getPathAtIndex(0, skinClusterOutputPath);
+    std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node(), status));
     if(status != MS::kSuccess) return status;
-    
-    MObject skinClusterOutputShape = skinClusterOutputPath.node();
-    if(!skinClusterOutputShape.hasFn(MFn::kMesh))
-        return MStatus::kFailure;
-
-    // Load the input mesh from the skinCluster's output.
-    Loader::Abs_mesh loaderMesh;
-    MMatrix objectToWorldMatrix = skinClusterOutputPath.inclusiveMatrix(&status);
-    status = MayaData::load_mesh(skinClusterOutputShape, loaderMesh, objectToWorldMatrix);
-    if(status != MS::kSuccess) return status;
-
-    // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
-    std::unique_ptr<Mesh> mesh(new Mesh(loaderMesh));
-    mesh->check_integrity();
-
-
-
-
-
-
-
-
 
     // Run the initial sampling.
     SampleSet::SampleSet samples;
