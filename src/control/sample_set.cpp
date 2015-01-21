@@ -62,6 +62,10 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton 
         heur.sample(_samples[bone_id].nodes, _samples[bone_id].n_nodes);
     }
 
+    // Don't add caps if we don't have any actual samples.
+    if(_samples[bone_id].nodes.empty())
+        return;
+
     if(settings.jcap)
         compute_jcaps(*skel, settings, bone_id, _samples[bone_id]);
 
