@@ -172,7 +172,7 @@ namespace {
             MayaData::loadSkeletonHierarchyFromSkinCluster(logicalIndexToInfluenceObjects, logicalIndexToParentIdx);
 
             // Make a list of logical indexes.  logicalIndexes[parentIndex[n]] is the logical index
-            // of n's parent.
+            // of logicalIndexes[n]'s parent.
             vector<int> logicalIndexes;
             vector<int> parentIndexes;
             for(auto &it: logicalIndexToParentIdx)
@@ -189,8 +189,9 @@ namespace {
                 return MStatus::kFailure;
             }
 
-            for(int logicalIndex: hierarchyOrder)
+            for(int idx: hierarchyOrder)
             {
+                int logicalIndex = logicalIndexes[idx];
                 const MDagPath &influenceObjectPath = logicalIndexToInfluenceObjects.at(logicalIndex);
 
                 MMatrix jointWorldMat = influenceObjectPath.inclusiveMatrix(&status);
@@ -204,7 +205,7 @@ namespace {
 
                 // Add the bone.
                 _bones[logicalIndex] = DagHelpers::MMatrixToTransfo(jointWorldMat);
-                _parents[logicalIndex] = parentIndexes[logicalIndex];
+                _parents[logicalIndex] = parentIndexes[idx];
                 dagPaths[logicalIndex] = influenceObjectPath;
             }
             return MStatus::kSuccess;
