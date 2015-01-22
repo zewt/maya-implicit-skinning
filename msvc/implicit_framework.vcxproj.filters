@@ -177,9 +177,6 @@
     <ClInclude Include="..\src\global_datas\macros.hpp">
       <Filter>global_datas</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\global_datas\ad_hoc_hand.hpp">
-      <Filter>global_datas</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\implicit_graphs\tree.hpp">
       <Filter>implicit_graphs</Filter>
     </ClInclude>

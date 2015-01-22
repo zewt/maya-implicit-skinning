@@ -19,7 +19,6 @@
 
 #include "skeleton_env_evaluator.hpp"
 #include "blending_functions.hpp"
-#include "ad_hoc_hand.hpp"
 
 
 /**
