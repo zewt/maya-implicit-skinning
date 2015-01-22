@@ -61,9 +61,9 @@ public:
     /// level of the skeleton tree will be ignored.
     bool _factor_siblings;
 
-    float _jmax; ///< percentage max dist from joint (range [-1 1])
-    float _pmax; ///< percentage max dist from joint parent (range [-1 1])
-    float _fold; ///< threshold scalar product dir projection/mesh normal
+    float _jmax; // percentage max dist from joint (range [-1 1])
+    float _pmax; // percentage max dist from joint parent (range [-1 1])
+    float _fold; // threshold scalar product dir projection/mesh normal
 
 protected:
     const Mesh *mesh;

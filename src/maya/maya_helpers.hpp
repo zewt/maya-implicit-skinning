@@ -39,7 +39,7 @@ namespace DagHelpers
     MStatus getConnectedPlugWithName(MObject inputNode, std::string name, MObject &result);
     MMatrix getMatrixFromPlug(MPlug plug, MStatus *status);
     MStatus findAncestorDeformer(MObject node, MFn::Type type, MObject &resultNode);
-    MStatus getSkinClusterInfluenceObjects(const MFnSkinCluster &skinCluster, std::map<int,MDagPath> &out);
+    MStatus getWeightsForAllVertices(MObject skinClusterNode, vector<vector<double> > &weightsPerIndex);
     MStatus getMDagPathsFromSkinCluster(MObject skinClusterNode, std::vector<MDagPath> &out);
     int findClosestAncestor(const std::map<int,MDagPath> &logicalIndexToInfluenceObjects, MDagPath dagPath);
     MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix);

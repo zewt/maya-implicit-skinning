@@ -39,6 +39,7 @@
 #include "maya/maya_helpers.hpp"
 #include "maya/maya_data.hpp"
 #include "utils/misc_utils.hpp"
+#include "utils/std_utils.hpp"
 
 #include "skeleton.hpp"
 #include "sample_set.hpp"
@@ -158,15 +159,31 @@ namespace {
         std::vector<int> _parents;
         std::vector<MDagPath> dagPaths;
 
+        // The physical index for each value in _bones.  Bones that don't actually have an
+        // influence object and don't really exist will have no entry.
+        map<int,int> logicalIndexToPhysicalIndex;
+
         MStatus load(MObject skinClusterNode)
         {
             MStatus status = MStatus::kSuccess;
             MFnSkinCluster skinCluster(skinClusterNode, &status);
             if(status != MS::kSuccess) return status;
 
-            map<int,MDagPath> logicalIndexToInfluenceObjects;
-            status = DagHelpers::getSkinClusterInfluenceObjects(skinCluster, logicalIndexToInfluenceObjects);
+            MDagPathArray influenceObjects;
+            skinCluster.influenceObjects(influenceObjects, &status);
             if(status != MS::kSuccess) return status;
+
+            map<int,MDagPath> logicalIndexToInfluenceObjects;
+            for(int i = 0; i < (int) influenceObjects.length(); ++i)
+            {
+                const MDagPath &influenceObjectPath = influenceObjects[i];
+
+                int logicalIndex = skinCluster.indexForInfluenceObject(influenceObjectPath, &status);
+                if(status != MS::kSuccess) return status;
+
+                logicalIndexToPhysicalIndex[logicalIndex] = i;
+                logicalIndexToInfluenceObjects[logicalIndex] = influenceObjectPath;
+            }
 
             map<int,int> logicalIndexToParentIdx;
             MayaData::loadSkeletonHierarchyFromSkinCluster(logicalIndexToInfluenceObjects, logicalIndexToParentIdx);
@@ -222,6 +239,13 @@ namespace {
 
         std::shared_ptr<Bone> bone;
 
+        // The logical index of this bone in the skinCluster's influences.
+        int influence_logical_index;
+
+        // The physical index of this bone in the skinCluster's influences, or -1 if this
+        // bone has no entry.
+        int physicalIndex;
+
         Bone::Id parent;
 
         MDagPath dagPath;
@@ -243,6 +267,8 @@ namespace {
 
             BoneItem &item = bones.emplace(bone->get_bone_id(), bone).first->second;
             item.dagPath = skel.dagPaths[idx];
+            item.influence_logical_index = idx;
+            item.physicalIndex = Std_utils::get(skel.logicalIndexToPhysicalIndex, idx, -1);
 
             loaderIdxToBoneId[idx] = item.bone->get_bone_id();
             boneIdToLoaderIdx[item.bone->get_bone_id()] = idx;
@@ -321,6 +347,59 @@ namespace {
         mesh->check_integrity();
         return mesh;
     }
+
+    MStatus clusterVerticesToBones(MObject skinClusterNode, const std::map<Bone::Id, BoneItem> &boneItems, std::vector< std::vector<Bone::Id> > &bonesPerVertex)
+    {
+        MStatus status = MS::kSuccess;
+
+        // Retrieve skin weights.  We'll use these to cluster vertices to surfaces.
+        vector<vector<double> > weightsPerIndex;
+        status = DagHelpers::getWeightsForAllVertices(skinClusterNode, weightsPerIndex);
+        if(status != MS::kSuccess) return status;
+
+        // Make a list of bones that we want each vertex to be a part of.  A vertex can be in
+        // more than one bone.
+        bonesPerVertex.reserve(weightsPerIndex.size());
+        for(vector<double> &weights: weightsPerIndex)
+        {
+            bonesPerVertex.emplace_back();
+            std::vector<int> &bones = bonesPerVertex.back();
+
+            // Look at each bone, and decide if we want this vertex to be included in it.
+            for(auto &it: boneItems)
+            {
+                Bone::Id boneId = it.first;
+                const BoneItem &boneItem = it.second;
+
+                // We create a surface going from each joint to its parent, using the vertices
+                // that are influenced by the parent.  Root joints don't create surfaces, so skip
+                // them.
+                Bone::Id parentBoneId = boneItem.parent;
+                if(parentBoneId == -1)
+                    continue;
+
+                // If the parent joint has no physical index, then it doesn't influence any
+                // vertices.
+                const BoneItem &parentBoneItem = boneItems.at(parentBoneId);
+                if(parentBoneItem.physicalIndex == -1)
+                    continue;
+
+                // If the vertex weight is below the threshold, don't include it in this bone.
+                // Err low on the threshold, so we prefer to include vertices that shouldn't be
+                // in the bone rather than omitting ones that should be.  It's easier to correct
+                // a surface by removing unwanted points than to fix a surface with few or no
+                // vertices because the threshold was too high.
+                double weight = weights[parentBoneItem.physicalIndex];
+                double threshold = 0.3;
+                if(weight < threshold)
+                    continue;
+
+                bones.push_back(boneId);
+            }
+        }
+
+        return MS::kSuccess;
+    }
 }
 
 MStatus ImplicitCommand::init(MString skinClusterName)
@@ -348,15 +427,17 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         const_bones.push_back(it.second.bone);
     shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, abs_skeleton._parents));
 
+    // Create a list of the bones that each vertex should be included in.
+    std::vector< std::vector<Bone::Id> > bonesPerVertex;
+    status = clusterVerticesToBones(skinClusterPlug.node(), loaderSkeleton, bonesPerVertex);
+    if(status != MS::kSuccess) return status;
+
     // Get the output of the skin cluster, which is what we'll sample.  We'll create
     // implicit surfaces based on the skin cluster in its current pose.
     std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node(), status));
     if(status != MS::kSuccess) return status;
 
-    // Run the initial sampling.
-    SampleSet::SampleSet samples;
-
-    VertToBoneInfo vertToBoneInfo(skeleton.get(), mesh.get());
+    VertToBoneInfo vertToBoneInfo(skeleton.get(), mesh.get(), bonesPerVertex);
     
     SampleSet::SampleSetSettings sampleSettings;
 
@@ -365,6 +446,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
     // Run the sampling for each joint.  The joints are in world space, so the samples will also be in
     // world space.
+    SampleSet::SampleSet samples;
     for(Bone::Id bone_id: skeleton->get_bone_ids())
         samples.choose_hrbf_samples(mesh.get(), skeleton.get(), vertToBoneInfo, sampleSettings, bone_id);
 

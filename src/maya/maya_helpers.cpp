@@ -17,6 +17,7 @@
 #include "maya_helpers.hpp"
 
 #include <maya/MPxDeformerNode.h> 
+#include <maya/MItGeometry.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItMeshVertex.h>
 #include <maya/MItMeshEdge.h>
@@ -40,6 +41,7 @@
 #include <maya/MDataHandle.h>
 #include <maya/MArrayDataHandle.h>
 
+#include <maya/MDoubleArray.h>
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
 #include <maya/MVector.h>
@@ -129,22 +131,47 @@ namespace DagHelpers
         }
     }
 
-    MStatus getSkinClusterInfluenceObjects(const MFnSkinCluster &skinCluster, std::map<int,MDagPath> &out)
+    /* Return the skin weights for all vertices.  weightsPerIndex[vtx] is the weights for vertex n.
+     * weightsPerIndex[vtx][physical_idx] is the weight for a single influence on the vertex.  Note
+     * that this uses physical indexes, not logical indexes. */
+    MStatus getWeightsForAllVertices(MObject skinClusterNode, vector<vector<double> > &weightsPerIndex)
     {
         MStatus status = MStatus::kSuccess;
+        MFnSkinCluster skinCluster(skinClusterNode, &status);
+        if(status != MS::kSuccess) return status;
+
+        MDagPath dagPath;
+        status = skinCluster.getPathAtIndex(0, dagPath);
+        if(status != MS::kSuccess) return status;
+
+        MItGeometry geomIter(dagPath, &status);
+        if(status != MS::kSuccess) return status;
+
+        weightsPerIndex.reserve(geomIter.count());
 
         MDagPathArray influenceObjects;
         skinCluster.influenceObjects(influenceObjects, &status);
         if(status != MS::kSuccess) return status;
 
-        for(int i = 0; i < (int) influenceObjects.length(); ++i)
-        {
-            const MDagPath &influenceObjectPath = influenceObjects[i];
-
-            int logicalIndex = skinCluster.indexForInfluenceObject(influenceObjectPath, &status);
+        int expectedWeightsPerIndex = -1;
+        for( ; !geomIter.isDone(); geomIter.next() ) {
+            MObject component = geomIter.component(&status);
             if(status != MS::kSuccess) return status;
-            out[logicalIndex] = influenceObjectPath;
+
+            MDoubleArray weights;
+            unsigned influenceCount;
+            status = skinCluster.getWeights(dagPath, component, weights, influenceCount);
+            if(status != MS::kSuccess) return status;
+
+            // We should get the same number of influences for all vertices.
+            if(expectedWeightsPerIndex == -1)
+                expectedWeightsPerIndex = influenceCount;
+            else
+                assert(expectedWeightsPerIndex == influenceCount);
+
+            weightsPerIndex.emplace_back(&weights[0], &weights[0] + weights.length());
         }
+
         return MStatus::kSuccess;
     }
 

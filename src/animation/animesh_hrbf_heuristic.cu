@@ -95,23 +95,21 @@ void HRBF_sampling::clamp_samples(std::vector<int>& vert_ids_,
     verts.   reserve( verts_.size()    );
     normals. reserve( normals_.size()  );
 
+    const Bone* b = skel->get_bone(_bone_id).get();
+    const float length = b->length();
+    float jlength = length * _jmax;
+    float plength = length * _pmax;
+
     for(unsigned id = 0; id < verts_.size(); id++)
     {
-        const int nearest_bone = vertToBoneInfo.h_vertices_nearest_bones[ vert_ids_[id] ];
-        const Bone* b = skel->get_bone(nearest_bone).get();
-        const float length = b->length();
-
         const Point_cu vert = Convs::to_point(verts_[id]);
         const float dist_proj = b->dist_proj_to(vert);
 
         Vec3_cu dir_proj = vert - (b->org() + b->dir().normalized() * dist_proj);
 
-        float jlength = length * _jmax;
-        float plength = length * _pmax;
-
         const Vec3_cu normal = normals_[id];
 
-        const std::vector<int>& sons = skel->get_sons(nearest_bone);
+        const std::vector<int>& sons = skel->get_sons(_bone_id);
         bool leaf = sons.size() > 0 ? skel->is_leaf(sons[0]) : true;
 
         if( (dist_proj >= -plength ) &&
@@ -189,7 +187,10 @@ void Poisson_disk_sampling::sample(std::vector<Vec3_cu>& out_verts,
     std::vector<int>     in_vert_ids;
     std::vector<Vec3_cu> in_normals;
     factor_samples(in_vert_ids, in_verts, in_normals);
-    clamp_samples (in_vert_ids, in_verts, in_normals);
+
+    // XXX: This culls too many vertices, and I'm not sure how this is supposed to
+    // work.  Disable it for now, since the results are reasonable without it.
+//    clamp_samples (in_vert_ids, in_verts, in_normals);
 
     if( in_verts.size() == 0) return;
 

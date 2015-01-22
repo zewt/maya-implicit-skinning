@@ -106,6 +106,18 @@ static bool exists(const std::vector<T0>& vec, const T1& elt)
     return false;
 }
 
+
+// Read a value from a map, returning a default value if there's no entry.
+// http://stackoverflow.com/questions/2333728
+template <template<class,class,class...> class C, typename K, typename V, typename... Args>
+V get(const C<K,V,Args...>& m, K const& key, const V & defval)
+{
+    typename C<K,V,Args...>::const_iterator it = m.find( key );
+    if (it == m.end())
+        return defval;
+    return it->second;
+}
+
 // -----------------------------------------------------------------------------
 
 /// Find and retreive an element from the map. If not found an assertion is
