@@ -135,6 +135,7 @@ namespace DagHelpers
 
         MDagPathArray influenceObjects;
         skinCluster.influenceObjects(influenceObjects, &status);
+        if(status != MS::kSuccess) return status;
 
         for(int i = 0; i < (int) influenceObjects.length(); ++i)
         {
