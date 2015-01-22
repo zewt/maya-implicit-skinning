@@ -483,6 +483,11 @@ MStatus ImplicitCommand::init(MString skinClusterName)
             surfaceName = parentInfluenceName + "To" + surfaceName;
         }
 
+        // XXX: This happens for disconnected slots in the skinCluster.  Don't create surfaces
+        // for these.
+        if(surfaceName == "")
+            surfaceName = "unknown";
+
         // Don't create a surface for a bone that has no samples.
 //        if(samples._samples.find(bone_id) == samples._samples.end())
 //            continue;
