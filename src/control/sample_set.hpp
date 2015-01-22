@@ -60,8 +60,8 @@ struct SampleSetSettings
 {
     SampleSetSettings():
         mode(Poisson),
-        pcap(false),
-        jcap(false),
+        pcap(true),
+        jcap(true),
         jmax(-0.2f),
         pmax(-0.2f),
         min_dist(0),
