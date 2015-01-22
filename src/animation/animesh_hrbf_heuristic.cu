@@ -141,19 +141,18 @@ void Adhoc_sampling::sample(std::vector<Vec3_cu>& out_verts,
 
     std::vector<bool> done;
     done.resize(in_verts.size(), false);
+
+    const Bone* b = skel->get_bone(_bone_id).get();
+    float length = b->length();
+    float jlength = length * _jmax;
+    float plength = length * _pmax;
+
     for(unsigned id = 0; id < in_verts.size(); id++)
     {
-
-        const Bone* b = skel->get_bone(_bone_id).get();
-        float length = b->length();
-
         Point_cu vert = Convs::to_point(in_verts[id]);
         float dist_proj = b->dist_proj_to(vert);
 
         Vec3_cu dir_proj = vert - (b->org() + b->dir().normalized() * dist_proj);
-
-        float jlength = length * _jmax;
-        float plength = length * _pmax;
 
         Vec3_cu normal = in_normals[id];
         if(dist_proj >= -jlength && dist_proj < (length + plength) &&
