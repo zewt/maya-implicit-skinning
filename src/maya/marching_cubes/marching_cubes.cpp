@@ -6,7 +6,7 @@
 namespace MarchingCubes
 {
     struct GridCell {
-        MFloatPoint p[8];
+        Point_cu p[8];
         MColor c[8];
         float val[8];
     };
@@ -34,8 +34,8 @@ namespace MarchingCubes
 
         float mu = (isoLevel - cell.val[i1]) / (cell.val[i2] - cell.val[i1]);
 
-        res.pos = cell.p[i1] + mu * (cell.p[i2] - cell.p[i1]);
-        res.col = cell.c[i1] + mu * (cell.c[i2] - cell.c[i1]);
+        res.pos = cell.p[i1] + (cell.p[i2] - cell.p[i1])*mu;
+        res.col = cell.c[i1] + (cell.c[i2] - cell.c[i1])*mu;
 
         return res;
     }
@@ -91,25 +91,25 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone)
     float deltaY = (bbox.pmax.y - bbox.pmin.y) / gridRes;
     float deltaZ = (bbox.pmax.z - bbox.pmin.z) / gridRes;
 
-    MFloatPoint deltas[8];
-    deltas[0] = MFloatPoint(0,      0,      0);
-    deltas[1] = MFloatPoint(deltaX, 0,      0);
-    deltas[2] = MFloatPoint(deltaX, deltaY, 0);
-    deltas[3] = MFloatPoint(0,      deltaY, 0);
-    deltas[4] = MFloatPoint(0,      0,      deltaZ);
-    deltas[5] = MFloatPoint(deltaX, 0,      deltaZ);
-    deltas[6] = MFloatPoint(deltaX, deltaY, deltaZ);
-    deltas[7] = MFloatPoint(0,      deltaY, deltaZ);
+    Point_cu deltas[8];
+    deltas[0] = Point_cu(0,      0,      0);
+    deltas[1] = Point_cu(deltaX, 0,      0);
+    deltas[2] = Point_cu(deltaX, deltaY, 0);
+    deltas[3] = Point_cu(0,      deltaY, 0);
+    deltas[4] = Point_cu(0,      0,      deltaZ);
+    deltas[5] = Point_cu(deltaX, 0,      deltaZ);
+    deltas[6] = Point_cu(deltaX, deltaY, deltaZ);
+    deltas[7] = Point_cu(0,      deltaY, deltaZ);
 
     for(float px = bbox.pmin.x; px < bbox.pmax.x; px += deltaX) {
         for(float py = bbox.pmin.y; py < bbox.pmax.y; py += deltaY) {
             for(float pz = bbox.pmin.z; pz < bbox.pmax.z; pz += deltaZ) {
-                MFloatPoint p(px, py, pz);
+                Point_cu p(px, py, pz);
 
                 GridCell cell;
                 for(int i = 0; i < 8; i++)
                 {
-                    MFloatPoint &c = cell.p[i];
+                    Point_cu &c = cell.p[i];
                     c = p + deltas[i];
 
                     Vec3_cu gf;

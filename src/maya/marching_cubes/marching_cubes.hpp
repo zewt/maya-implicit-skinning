@@ -10,7 +10,7 @@
 
 
 struct MeshGeomVertex {
-    MFloatPoint pos;
+    Point_cu pos;
     MColor col;
 };
 
