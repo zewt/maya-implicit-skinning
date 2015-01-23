@@ -321,7 +321,7 @@ MStatus ImplicitSurface::load_mesh_geometry(MDataBlock &dataBlock)
     set_world_space(Transfo::identity());
 
     meshGeometry = MeshGeom();
-    MarchingCubes::compute_surface(meshGeometry, bone.get());
+    MarchingCubes::compute_surface(meshGeometry, bone.get(), boneSkeleton.get());
 
     // Set the transform of the bone back.
     set_world_space(worldSpace);

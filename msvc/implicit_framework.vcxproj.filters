@@ -58,9 +58,6 @@
     <ClCompile Include="..\src\control\sample_set.cpp">
       <Filter>control</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\maya\marching_cubes\marching_cubes.cpp">
-      <Filter>maya\marching_cubes</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\maya\implicit_surface_geometry_override.cpp">
       <Filter>maya</Filter>
     </ClCompile>
@@ -480,6 +477,9 @@
     </CudaCompile>
     <CudaCompile Include="..\src\animation\vert_to_bone_info.cu">
       <Filter>animation</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\maya\marching_cubes\marching_cubes.cu">
+      <Filter>maya\marching_cubes</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

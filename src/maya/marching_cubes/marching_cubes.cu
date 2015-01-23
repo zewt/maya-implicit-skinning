@@ -1,5 +1,3 @@
-#define NO_CUDA
-
 #include "marching_cubes.hpp"
 #include "tables.h"
 
@@ -79,50 +77,61 @@ namespace MarchingCubes
 
 }
 
-void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone)
+void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone, const Skeleton *skel)
 {
-    const HermiteRBF &hrbf = bone->get_hrbf();
     OBBox_cu obbox = bone->get_obbox(true);
-    BBox_cu bbox = obbox._bb;
+
+    // Get the set of all of the bounding boxes in the skeleton.  These may overlap.
+    std::vector<OBBox_cu> bbox_list;
+    for(Bone::Id bone_id: skel->get_bone_ids())
+        bbox_list.push_back(bone->get_obbox());
 
     // set the size of the grid cells, and the amount of cells per side
     int gridRes = 16;
 
-    float deltaX = (bbox.pmax.x - bbox.pmin.x) / gridRes;
-    float deltaY = (bbox.pmax.y - bbox.pmin.y) / gridRes;
-    float deltaZ = (bbox.pmax.z - bbox.pmin.z) / gridRes;
+    const HermiteRBF &hrbf = bone->get_hrbf();
 
     Point_cu deltas[8];
-    deltas[0] = Point_cu(0,      0,      0);
-    deltas[1] = Point_cu(deltaX, 0,      0);
-    deltas[2] = Point_cu(deltaX, deltaY, 0);
-    deltas[3] = Point_cu(0,      deltaY, 0);
-    deltas[4] = Point_cu(0,      0,      deltaZ);
-    deltas[5] = Point_cu(deltaX, 0,      deltaZ);
-    deltas[6] = Point_cu(deltaX, deltaY, deltaZ);
-    deltas[7] = Point_cu(0,      deltaY, deltaZ);
-    for(int i = 0; i < 8; ++i)
-        deltas[i] = obbox._tr * deltas[i];
+    deltas[0] = Point_cu(0, 0, 0);
+    deltas[1] = Point_cu(1, 0, 0);
+    deltas[2] = Point_cu(1, 1, 0);
+    deltas[3] = Point_cu(0, 1, 0);
+    deltas[4] = Point_cu(0, 0, 1);
+    deltas[5] = Point_cu(1, 0, 1);
+    deltas[6] = Point_cu(1, 1, 1);
+    deltas[7] = Point_cu(0, 1, 1);
 
-    for(float px = bbox.pmin.x; px < bbox.pmax.x; px += deltaX) {
-        for(float py = bbox.pmin.y; py < bbox.pmax.y; py += deltaY) {
-            for(float pz = bbox.pmin.z; pz < bbox.pmax.z; pz += deltaZ) {
-                Point_cu p(px, py, pz);
-                p = obbox._tr * p;
+    for(OBBox_cu obbox: bbox_list)
+    {
+        BBox_cu bbox = obbox._bb;
 
-                GridCell cell;
-                for(int i = 0; i < 8; i++)
-                {
-                    Point_cu &c = cell.p[i];
-                    c = p + deltas[i];
+        float deltaX = (bbox.pmax.x - bbox.pmin.x) / gridRes;
+        float deltaY = (bbox.pmax.y - bbox.pmin.y) / gridRes;
+        float deltaZ = (bbox.pmax.z - bbox.pmin.z) / gridRes;
 
-                    Vec3_cu gf;
-                    // XXX: bring back hrbf.f()? we don't need the gradient
-                    cell.val[i] = hrbf.fngf(gf, Point_cu((float) c.x, (float) c.y, (float) c.z));
+        Point_cu delta(deltaX, deltaY, deltaZ);
+        delta = obbox._tr * delta;
+
+        for(float px = bbox.pmin.x; px < bbox.pmax.x; px += deltaX) {
+            for(float py = bbox.pmin.y; py < bbox.pmax.y; py += deltaY) {
+                for(float pz = bbox.pmin.z; pz < bbox.pmax.z; pz += deltaZ) {
+                    Point_cu p(px, py, pz);
+                    p = obbox._tr * p;
+
+                    GridCell cell;
+                    for(int i = 0; i < 8; i++)
+                    {
+                        Point_cu &c = cell.p[i];
+                        c = p + delta*deltas[i];
+
+                        Vec3_cu gf;
+                        // XXX: bring back hrbf.f()? we don't need the gradient
+                        cell.val[i] = hrbf.fngf(gf, Point_cu((float) c.x, (float) c.y, (float) c.z));
+                    }
+
+                    // generate triangles from this cell
+                    polygonize(cell, geom);
                 }
-
-                // generate triangles from this cell
-                polygonize(cell, geom);
             }
         }
     }

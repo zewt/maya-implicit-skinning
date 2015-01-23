@@ -196,7 +196,9 @@
     <ClCompile Include="..\src\maya\implicit_deformer.cpp" />
     <ClCompile Include="..\src\maya\implicit_surface.cpp" />
     <ClCompile Include="..\src\maya\implicit_surface_geometry_override.cpp" />
-    <ClCompile Include="..\src\maya\marching_cubes\marching_cubes.cpp" />
+    <CudaCompile Include="..\src\maya\marching_cubes\marching_cubes.cu">
+      <FileType>CppCode</FileType>
+    </CudaCompile>
     <ClCompile Include="..\src\maya\maya_data.cpp" />
     <ClCompile Include="..\src\maya\maya_helpers.cpp" />
     <ClCompile Include="..\src\maya\plugin.cpp" />
