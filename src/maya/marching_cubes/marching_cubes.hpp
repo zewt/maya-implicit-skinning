@@ -1,17 +1,15 @@
 #ifndef MARCHING_CUBES_H
 #define MARCHING_CUBES_H
 
-#include <maya/MColorArray.h> 
-#include <maya/MColor.h>
-#include <maya/MFloatPoint.h>
 #include <vector>
 
 #include "bone.hpp"
+#include "skeleton.hpp"
 
 
 struct MeshGeomVertex {
     Point_cu pos;
-    MColor col;
+    Point_cu col;
 };
 
 class MeshGeom
@@ -25,7 +23,7 @@ public:
 namespace MarchingCubes
 {
     // Compute the geometry to preview the given bone, and append it to meshGeom.
-    void compute_surface(MeshGeom &geom, const Bone *bone);
+    void compute_surface(MeshGeom &geom, const Bone *bone, const Skeleton *skel);
 }
 
 #endif

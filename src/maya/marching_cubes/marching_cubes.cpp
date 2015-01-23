@@ -7,7 +7,7 @@ namespace MarchingCubes
 {
     struct GridCell {
         Point_cu p[8];
-        MColor c[8];
+        Point_cu c[8];
         float val[8];
     };
 
