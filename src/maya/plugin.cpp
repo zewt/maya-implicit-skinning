@@ -348,7 +348,7 @@ namespace {
         return mesh;
     }
 
-    MStatus clusterVerticesToBones(MObject skinClusterNode, const std::map<Bone::Id, BoneItem> &boneItems, std::vector< std::vector<Bone::Id> > &bonesPerVertex)
+    MStatus clusterVerticesToBones(MObject skinClusterNode, const Mesh *mesh, const std::map<Bone::Id, BoneItem> &boneItems, std::vector< std::vector<Bone::Id> > &bonesPerVertex)
     {
         MStatus status = MS::kSuccess;
 
@@ -360,12 +360,17 @@ namespace {
         // Make a list of bones that we want each vertex to be a part of.  A vertex can be in
         // more than one bone.
         bonesPerVertex.reserve(weightsPerIndex.size());
-        for(vector<double> &weights: weightsPerIndex)
+        for(int vertIdx = 0; vertIdx < (int) weightsPerIndex.size(); ++vertIdx)
         {
+            vector<double> &weights = weightsPerIndex[vertIdx];
             bonesPerVertex.emplace_back();
             std::vector<int> &bones = bonesPerVertex.back();
 
+            Point_cu currentVertex = mesh->get_vertex(vertIdx).to_point();
+
             // Look at each bone, and decide if we want this vertex to be included in it.
+            int closestBoneId = -1;
+            double closestBoneDistance = 999999;
             for(auto &it: boneItems)
             {
                 Bone::Id boneId = it.first;
@@ -384,18 +389,22 @@ namespace {
                 if(parentBoneItem.physicalIndex == -1)
                     continue;
 
-                // If the vertex weight is below the threshold, don't include it in this bone.
-                // Err low on the threshold, so we prefer to include vertices that shouldn't be
-                // in the bone rather than omitting ones that should be.  It's easier to correct
-                // a surface by removing unwanted points than to fix a surface with few or no
-                // vertices because the threshold was too high.
+                // Ignore very low weights.
                 double weight = weights[parentBoneItem.physicalIndex];
-                double threshold = 0.3;
+                double threshold = 0.05;
                 if(weight < threshold)
                     continue;
 
-                bones.push_back(boneId);
+                float distanceFromBone = boneItem.bone->dist_sq_to(currentVertex);
+                if(distanceFromBone < closestBoneDistance)
+                {
+                    closestBoneDistance = distanceFromBone;
+                    closestBoneId = boneId;
+                }
             }
+
+            if(closestBoneId != -1)
+                bones.push_back(closestBoneId);
         }
 
         return MS::kSuccess;
@@ -427,14 +436,14 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         const_bones.push_back(it.second.bone);
     shared_ptr<Skeleton> skeleton(new Skeleton(const_bones, abs_skeleton._parents));
 
-    // Create a list of the bones that each vertex should be included in.
-    std::vector< std::vector<Bone::Id> > bonesPerVertex;
-    status = clusterVerticesToBones(skinClusterPlug.node(), loaderSkeleton, bonesPerVertex);
-    if(status != MS::kSuccess) return status;
-
     // Get the output of the skin cluster, which is what we'll sample.  We'll create
     // implicit surfaces based on the skin cluster in its current pose.
     std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node(), status));
+    if(status != MS::kSuccess) return status;
+
+    // Create a list of the bones that each vertex should be included in.
+    std::vector< std::vector<Bone::Id> > bonesPerVertex;
+    status = clusterVerticesToBones(skinClusterPlug.node(), mesh.get(), loaderSkeleton, bonesPerVertex);
     if(status != MS::kSuccess) return status;
 
     VertToBoneInfo vertToBoneInfo(skeleton.get(), mesh.get(), bonesPerVertex);
