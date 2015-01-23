@@ -61,12 +61,6 @@
     <ClCompile Include="..\src\maya\marching_cubes\marching_cubes.cpp">
       <Filter>maya\marching_cubes</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\maya\marching_cubes\vertex_hash.cpp">
-      <Filter>maya\marching_cubes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\maya\marching_cubes\mesh_data.cpp">
-      <Filter>maya\marching_cubes</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\maya\implicit_surface_geometry_override.cpp">
       <Filter>maya</Filter>
     </ClCompile>
@@ -343,12 +337,6 @@
       <Filter>maya\marching_cubes</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maya\marching_cubes\tables.h">
-      <Filter>maya\marching_cubes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maya\marching_cubes\vertex_hash.h">
-      <Filter>maya\marching_cubes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maya\marching_cubes\mesh_data.h">
       <Filter>maya\marching_cubes</Filter>
     </ClInclude>
     <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp">

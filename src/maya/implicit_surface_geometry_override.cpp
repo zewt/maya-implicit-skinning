@@ -108,9 +108,9 @@ void ImplicitSurfaceGeometryOverride::populateGeometry(const MHWRender::MGeometr
 
         MHWRender::MIndexBufferDescriptor desc(MHWRender::MIndexBufferDescriptor::kVertexPoint, "", MHWRender::MGeometry::kPoints, 3);
 
-        unsigned int *buf = (unsigned int*)indexBuffer->acquire(meshGeometry->indices.length(), true);
-        for(int i = 0; i < (int) meshGeometry->indices.length(); i++)
-            buf[i] = meshGeometry->indices[i];
+        unsigned int *buf = (unsigned int*)indexBuffer->acquire((int) meshGeometry->vertices.size(), true);
+        for(int i = 0; i < (int) meshGeometry->vertices.size(); i++)
+            buf[i] = i;
         indexBuffer->commit(buf);
         item->associateWithIndexBuffer(indexBuffer);
     }
