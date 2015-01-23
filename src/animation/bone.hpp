@@ -210,11 +210,13 @@ public:
             EBone::HRBF;
     }
 
-    /// Get the oriented bounding box associated to the bone
-    OBBox_cu get_obbox() const;
+    // Get the oriented bounding box associated to the bone.
+    // If surface is false, return the bounding box where the ISO value reaches the
+    // HRBF radius.  If true, return the bounding box of the ISO 0.5 surface.
+    OBBox_cu get_obbox(bool surface=false) const;
 
     /// Get the axis aligned bounding box associated to the bone
-    BBox_cu get_bbox() const;
+    BBox_cu get_bbox(bool surface=false) const;
 
     HermiteRBF& get_hrbf() { return _hrbf; }
     const HermiteRBF& get_hrbf() const { return _hrbf; }
@@ -260,7 +262,16 @@ private:
     bool _enabled;
     bool _precomputed;
     Precomputed_prim _primitive;
+
+    // A cache of the bounding box (with surface=false), set when _precomputed is true.
     OBBox_cu         _obbox;
+
+    // Cache the surface=true bounding box.  We only cache this after it's been requested, since
+    // it's never needed if we're never drawing a mesh preview and it takes some time to compute.
+    // Like _obbox, this is only used when precomputed, and is discarded when precompute is
+    // discarded.
+    mutable bool _obbox_surface_cached;
+    mutable OBBox_cu _obbox_surface;
 
     // Our orientation in world space.
     Vec3_cu _object_space;

@@ -76,7 +76,7 @@ float dichotomic_search(const Ray_cu& r,
 
 // -----------------------------------------------------------------------------
 
-/// Cast a ray and return the farthest point whose potential is null.
+/// Cast a ray and return the farthest point whose potential is equal to iso.
 /// We use newton iterations
 /// @param start : origin of the ray must be inside the primitive
 /// @param dir : direction we do the ray marching if custom direction is enabled
@@ -90,10 +90,10 @@ float dichotomic_search(const Ray_cu& r,
 /// @return the farthest point which potential is null along the ray.
 Point_cu push_point(const Point_cu& start,
                     const Vec3_cu& dir,
+                    float iso,
                     const HermiteRBF& hrbf,
                     bool custom_dir = false)
 {
-    const float rad = hrbf.get_radius();
     Vec3_cu  grad;
     Vec3_cu  n_dir = dir.normalized();
     Vec3_cu  step;
@@ -108,7 +108,7 @@ Point_cu push_point(const Point_cu& start,
     for(int i = 0; i < 25; i++)
     {
         const float pot      = hrbf.fngf_global( grad, res );
-        const float pot_diff = fabsf( pot - rad);
+        const float pot_diff = fabsf(pot - iso);
         const float norm     = grad.safe_normalize();
         #ifdef GL_DEBUG_BBOX
         glColor3f(cl.x, cl.y, cl.z);
@@ -121,10 +121,10 @@ Point_cu push_point(const Point_cu& start,
 
         step = (custom_dir ? n_dir : grad );
 
-        if( pot > rad)
+        if(pot > iso)
         {
             Ray_cu r( prev, step);
-            float t = dichotomic_search(r, 0.f, (res-prev).norm(), rad, hrbf);
+            float t = dichotomic_search(r, 0.f, (res-prev).norm(), iso, hrbf);
             res = r( t );
             break;
         }
@@ -139,7 +139,7 @@ Point_cu push_point(const Point_cu& start,
     #ifdef GL_DEBUG_BBOX
     glEnd();
 
-    if( (res-start).norm( ) > rad * 2.f)
+    if( (res-start).norm( ) > iso * 2.f)
     {
         glBegin(GL_LINES);
         glVertex3f(start.x, start.y, start.z);
@@ -154,7 +154,7 @@ Point_cu push_point(const Point_cu& start,
 // -----------------------------------------------------------------------------
 
 /// Cast several rays along a square grid and return the farthest point which
-/// potential is zero.
+/// potential is iso.
 /// @param obbox : oriented bounding box which we add casted points to
 /// @param org : origin point of the grid (top left corner)
 /// @param x : extrimity point of the grid in x direction (top right corner)
@@ -168,6 +168,7 @@ void push_face(OBBox_cu& obbox,
                const Point_cu& org,
                const Point_cu& x,
                const Point_cu& y,
+               float iso,
                const HermiteRBF& hrbf)
 {
     int res = 8/*GRID_RES*/;
@@ -191,7 +192,7 @@ void push_face(OBBox_cu& obbox,
                          axis_x * (step_x * (float)i + step_x * 0.5f) +
                          axis_y * (step_y * (float)j + step_y * 0.5f);
 
-            Point_cu res = push_point(p, udir, hrbf, true);
+            Point_cu res = push_point(p, udir, iso, hrbf, true);
 
             obbox._bb.add_point( tr * res);
         }
@@ -236,6 +237,7 @@ Bone::Bone():
 {
     _enabled = false;
     _precomputed = false;
+    _obbox_surface_cached = false;
     _hrbf.initialize();
     _primitive.initialize();
     _world_space_transform = Transfo::identity();
@@ -248,9 +250,18 @@ Bone::~Bone() {
 }
 
 
-OBBox_cu Bone::get_obbox() const
+OBBox_cu Bone::get_obbox(bool surface) const
 {
-    if(_precomputed)
+    // If we're computing the surface bounding box, we can use the cache if it's computed.
+    if(surface && _obbox_surface_cached)
+    {
+        OBBox_cu tmp = _obbox_surface;
+        tmp._tr = _primitive.get_user_transform() * tmp._tr;
+        return  tmp;
+    }
+
+    // If we're precomputed, the non-surface bbox is always precomputed.
+    if(_precomputed && !surface)
     {
         OBBox_cu tmp = _obbox;
         tmp._tr = _primitive.get_user_transform() * tmp._tr;
@@ -272,10 +283,13 @@ OBBox_cu Bone::get_obbox() const
 
     const HermiteRBF& hrbf = get_hrbf();
 
+    // If we're computing the surface bounding box, find ISO 0.  Otherwise, find the radius.
+    float iso = surface? 0:hrbf.get_radius();
+
     // Seek zero along samples normals of the HRBF
     for(unsigned i = 0; i < samp_list.size(); i++)
     {
-        Point_cu pt = push_point(samp_list[i], Vec3_cu(), hrbf);
+        Point_cu pt = push_point(samp_list[i], Vec3_cu(), iso, hrbf);
         obbox._bb.add_point(bbox_tr_inv * pt);
     }
 
@@ -313,18 +327,25 @@ OBBox_cu Bone::get_obbox() const
 
     // Pushing according a grid from the box's faces
     for(int i = 0; i < 6; ++i) {
-        push_face(obbox, list[i][0], list[i][1], list[i][2], hrbf);
+        push_face(obbox, list[i][0], list[i][1], list[i][2], iso, hrbf);
     }
 #endif
+
+    // If we just calculated the surface bbox, cache it if we're precomputed.
+    if(surface && _precomputed)
+    {
+        _obbox_surface = obbox;
+        _obbox_surface_cached = true;
+    }
 
     return obbox;
 }
 
 // -----------------------------------------------------------------------------
 
-BBox_cu Bone::get_bbox() const
+BBox_cu Bone::get_bbox(bool surface) const
 {
-    return get_obbox().to_bbox();
+    return get_obbox(surface).to_bbox();
 }
 
 void Bone::set_enabled(bool value) {
@@ -359,6 +380,7 @@ void Bone::precompute(const Skeleton *skeleton)
 void Bone::discard_precompute()
 {
     _precomputed = false;
+    _obbox_surface_cached = false;
 }
 
 void Bone::set_world_space_matrix(Transfo tr)

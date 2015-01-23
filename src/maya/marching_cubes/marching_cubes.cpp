@@ -82,7 +82,7 @@ namespace MarchingCubes
 void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone)
 {
     const HermiteRBF &hrbf = bone->get_hrbf();
-    BBox_cu bbox = bone->get_bbox();
+    BBox_cu bbox = bone->get_bbox(true);
 
     // set the size of the grid cells, and the amount of cells per side
     int gridRes = 16;
