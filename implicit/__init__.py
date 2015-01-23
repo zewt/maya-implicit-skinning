@@ -115,3 +115,18 @@ def main():
     for node in selection:
         create_deformer(node)
 
+def create_locators():
+    node = cmds.ls(sl=True)[0]
+    parent_node = cmds.listRelatives(node, p=True)
+    pts = cmds.getAttr('%s.point[*]' % node)
+    all_names = []
+    for x in pts:
+        n=cmds.spaceLocator(p=x)[0]
+        all_names.append(n)
+        cmds.setAttr(n+'.localScale', 0.1, 0.1, 0.1)
+    cmds.select(all_names)
+    group_name = cmds.group()
+    cmds.parent(group_name, parent_node)
+    cmds.xform(group_name, ro=(0,0,0), s=(1,1,1), t=(0,0,0), os=True)
+    return group_name
+
