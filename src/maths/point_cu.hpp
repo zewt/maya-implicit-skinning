@@ -129,6 +129,10 @@ struct Point_cu {
     inline Point_cu operator+(const Point_cu& p) const {
         return Point_cu(x + p.x, y + p.y, z + p.z);
     }
+    IF_CUDA_DEVICE_HOST
+    inline Point_cu operator*(const Point_cu& p) const {
+        return Point_cu(x * p.x, y * p.y, z * p.z);
+    }
 
     IF_CUDA_DEVICE_HOST
     inline Point_cu operator*(float f) const {

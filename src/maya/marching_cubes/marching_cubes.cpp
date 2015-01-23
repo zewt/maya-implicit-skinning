@@ -82,7 +82,8 @@ namespace MarchingCubes
 void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone)
 {
     const HermiteRBF &hrbf = bone->get_hrbf();
-    BBox_cu bbox = bone->get_bbox(true);
+    OBBox_cu obbox = bone->get_obbox(true);
+    BBox_cu bbox = obbox._bb;
 
     // set the size of the grid cells, and the amount of cells per side
     int gridRes = 16;
@@ -100,11 +101,14 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone)
     deltas[5] = Point_cu(deltaX, 0,      deltaZ);
     deltas[6] = Point_cu(deltaX, deltaY, deltaZ);
     deltas[7] = Point_cu(0,      deltaY, deltaZ);
+    for(int i = 0; i < 8; ++i)
+        deltas[i] = obbox._tr * deltas[i];
 
     for(float px = bbox.pmin.x; px < bbox.pmax.x; px += deltaX) {
         for(float py = bbox.pmin.y; py < bbox.pmax.y; py += deltaY) {
             for(float pz = bbox.pmin.z; pz < bbox.pmax.z; pz += deltaZ) {
                 Point_cu p(px, py, pz);
+                p = obbox._tr * p;
 
                 GridCell cell;
                 for(int i = 0; i < 8; i++)
