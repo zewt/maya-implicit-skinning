@@ -38,12 +38,13 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
 
         mesh._vertices[idx] = Loader::Vertex((float)point.x, (float)point.y, (float)point.z);
 
-        // XXX: What are we supposed to do with unshared normals?
-        MVectorArray normalArray;
-        status = meshIt.getNormals(normalArray, MSpace::kObject);
+        // Load the vertex's normal.  If the normal has unshared normals, this will retrieve
+        // the averaged normal.  Since we're normally blending soft surfaces, this is usually
+        // okay.
+        MVector normal;
+        status = meshIt.getNormal(normal, MSpace::kObject);
         if(status != MS::kSuccess) return status;
 
-        MVector normal = normalArray[0];
         mesh._normals[idx] = Loader::Normal((float)normal[0], (float)normal[1], (float)normal[2]);
 
         ++idx;
