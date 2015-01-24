@@ -88,7 +88,7 @@ float dichotomic_search(const Ray_cu& r,
 /// @param custom_dir : if true we don't follow the gradient but use 'dir'
 /// defined by the user
 /// @return the farthest point which potential is null along the ray.
-Point_cu push_point(const Point_cu& start,
+static Point_cu push_point(const Point_cu& start,
                     const Vec3_cu& dir,
                     float iso,
                     const HermiteRBF& hrbf,
@@ -183,7 +183,6 @@ void push_face(OBBox_cu& obbox,
     float step_x = len_x / (float)res;
     float step_y = len_y / (float)res;
 
-    Transfo tr = obbox._tr.fast_invert();
     for(int i = 0; i < res; i++)
     {
         for(int j = 0; j < res; j++)
@@ -194,7 +193,7 @@ void push_face(OBBox_cu& obbox,
 
             Point_cu res = push_point(p, udir, iso, hrbf, true);
 
-            obbox._bb.add_point( tr * res);
+            obbox._bb.add_point(res);
         }
     }
 }
@@ -250,49 +249,60 @@ Bone::~Bone() {
 }
 
 
-OBBox_cu Bone::get_obbox(bool surface) const
+OBBox_cu Bone::get_obbox_object_space(bool surface) const
 {
-    // If we're computing the surface bounding box, we can use the cache if it's computed.
-    if(surface && _obbox_surface_cached)
-    {
-        OBBox_cu tmp = _obbox_surface;
-        tmp._tr = _primitive.get_user_transform() * tmp._tr;
-        return  tmp;
-    }
-
-    // If we're precomputed, the non-surface bbox is always precomputed.
-    if(_precomputed && !surface)
-    {
-        OBBox_cu tmp = _obbox;
-        tmp._tr = _primitive.get_user_transform() * tmp._tr;
-        return  tmp;
-    }
-
     const int hrbf_id = _hrbf.get_id();
-    std::vector<Point_cu> samp_list;
-    HRBF_env::get_anim_samples(hrbf_id, samp_list);
 
     OBBox_cu obbox;
-    obbox._tr = get_frame();
+
+    /// Get the local frame of the bone. This method only guarantes to generate
+    /// a frame with an x direction parallel to the bone and centered about '_org'
+    Vec3_cu dirObj = _object_space; // _dir in object space
+    {
+        Vec3_cu x = dirObj.normalized();
+        Vec3_cu ortho = x.cross(Vec3_cu(0.f, 1.f, 0.f));
+        Vec3_cu z, y;
+        if (ortho.norm_squared() < 1e-06f * 1e-06f)
+        {
+            ortho = Vec3_cu(0.f, 0.f, 1.f).cross(x);
+            y = ortho.normalized();
+            z = x.cross(y).normalized();
+        }
+        else
+        {
+            z = ortho.normalized();
+            y = z.cross(x).normalized();
+        }
+
+        obbox._tr = Transfo(Mat3_cu(x, y, z), Vec3_cu(0,0,0));
+    }
     Transfo bbox_tr_inv = obbox._tr.fast_invert();
 
-    Point_cu pmin = bbox_tr_inv *  _org;
-    Point_cu pmax = bbox_tr_inv * (_org + _dir);
-
-    obbox._bb = BBox_cu(pmin, pmax);
+    obbox._bb = BBox_cu(Point_cu(0,0,0),
+                        bbox_tr_inv * dirObj.to_point());
 
     const HermiteRBF& hrbf = get_hrbf();
 
     // If we're computing the surface bounding box, find ISO 0.  Otherwise, find the radius.
     float iso = surface? 0:hrbf.get_radius();
 
+    
+    
+    // The HRBF samples are in world space, but we want them in object space.
+    // Temporarily transform them back to the bbox's object space.
+    Transfo hrbf_world_transform = HRBF_env::get_transfo(hrbf_id);
+    HRBF_env::set_transfo(hrbf_id, bbox_tr_inv);
+    HRBF_env::apply_hrbf_transfos();
+
+    std::vector<Point_cu> samp_list;
+    HRBF_env::get_anim_samples(hrbf_id, samp_list);
+
     // Seek zero along samples normals of the HRBF
     for(unsigned i = 0; i < samp_list.size(); i++)
     {
         Point_cu pt = push_point(samp_list[i], Vec3_cu(), iso, hrbf);
-        obbox._bb.add_point(bbox_tr_inv * pt);
+        obbox._bb.add_point(pt);
     }
-
 
 
 #if 1
@@ -311,10 +321,8 @@ OBBox_cu Bone::get_obbox(bool surface) const
         // Vertex 0 is pmin and vertex 7 pmax
         @endcode
     */
-    // Get obox in world coordinates
+    // Get obox in bbox coordinates
     obbox._bb.get_corners(corners);
-    for(int i = 0; i < 8; ++i)
-        corners[i] = obbox._tr * corners[i];
 
 
     Point_cu list[6][3] = {{corners[2], corners[3], corners[0]}, // FRONT
@@ -331,12 +339,42 @@ OBBox_cu Bone::get_obbox(bool surface) const
     }
 #endif
 
-    // If we just calculated the surface bbox, cache it if we're precomputed.
-    if(surface && _precomputed)
+    // Restore the HRBF transform.
+    HRBF_env::set_transfo(hrbf_id, hrbf_world_transform);
+    HRBF_env::apply_hrbf_transfos();
+
+    return obbox;
+}
+
+OBBox_cu Bone::get_obbox(bool surface) const
+{
+    OBBox_cu obbox;
+
+    if(surface && _obbox_surface_cached)
     {
-        _obbox_surface = obbox;
-        _obbox_surface_cached = true;
+        // If we're computing the surface bounding box, we can use the cache if it's computed.
+        obbox = _obbox_surface;
     }
+    else if(_precomputed && !surface)
+    {
+        // If we're precomputed, the non-surface bbox is always precomputed.
+        obbox = _obbox;
+    }
+    else
+    {
+        // Calculate the obbox in object space, and transform it to world space.
+        obbox = get_obbox_object_space(surface);
+
+        // If we just calculated the surface bbox, cache it if we're precomputed.
+        if(surface && _precomputed)
+        {
+            _obbox_surface = obbox;
+            _obbox_surface_cached = true;
+        }
+    }
+
+    // Transform it to world space.  Don't cache this value.
+    obbox._tr = _primitive.get_user_transform() * obbox._tr;
 
     return obbox;
 }
@@ -372,7 +410,9 @@ void Bone::precompute(const Skeleton *skeleton)
         return;
 
     _primitive.fill_grid_with( skeleton->get_skel_id(), this );
-    _obbox = get_obbox();
+
+    // Cache the object space bounding box.
+    _obbox = get_obbox_object_space(false);
 
     _precomputed = true;
 }

@@ -118,7 +118,7 @@ MStatus ImplicitSurface::initialize()
     dependencies.add(ImplicitSurface::sampleNormalAttr, ImplicitSurface::sampleSetUpdateAttr);
     dependencies.add(ImplicitSurface::hrbfRadiusAttr, ImplicitSurface::sampleSetUpdateAttr);
 
-    meshGeometryUpdateAttr = numAttr.create("surfaceGeometryUpdate", "surfaceGeometryUpdate", MFnNumericData::Type::kInt, 0, &status);
+    meshGeometryUpdateAttr = numAttr.create("meshGeometryUpdate", "meshGeometryUpdate", MFnNumericData::Type::kInt, 0, &status);
     numAttr.setStorable(false);
     numAttr.setHidden(true);
     addAttribute(meshGeometryUpdateAttr);
@@ -166,11 +166,7 @@ MStatus ImplicitSurface::setDependentsDirty(const MPlug &plug_, MPlugArray &plug
     // us, but that doesn't seem to work.
     MObject node = plug.attribute();
     if(dependencies.isAffectedBy(node, ImplicitSurface::meshGeometryUpdateAttr))
-    {
-        childChanged(MPxSurfaceShape::kBoundingBoxChanged);
-        childChanged(MPxSurfaceShape::kObjectChanged);
         MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
-    }
 
     return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
 }
@@ -316,12 +312,12 @@ MStatus ImplicitSurface::load_mesh_geometry(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // Temporarily set the world space transform of the bone to identity, so we can calculate
-    // the mesh in object space.
+    // the mesh in object space.  Our transform node will apply the world space transform.
     Transfo worldSpace = bone->get_world_space_matrix();
     set_world_space(Transfo::identity());
 
     meshGeometry = MeshGeom();
-    MarchingCubes::compute_surface(meshGeometry, bone.get(), boneSkeleton.get());
+    MarchingCubes::compute_surface(meshGeometry, boneSkeleton.get());
 
     // Set the transform of the bone back.
     set_world_space(worldSpace);

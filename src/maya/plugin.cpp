@@ -729,7 +729,7 @@ MStatus initializePlugin(MObject obj)
     }
 
     status = plugin.registerShape("ImplicitBlend", ImplicitBlend::id, &ImplicitBlend::creator,
-           &ImplicitBlend::initialize, &ImplicitBlend::creator); //, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+           &ImplicitBlend::initialize, &ImplicitBlend::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
     if (!status) {
        status.perror("registerNode");
        return status;

@@ -34,6 +34,7 @@ DagHelpers::MayaDependencies ImplicitBlend::dependencies;
 MObject ImplicitBlend::surfaces;
 MObject ImplicitBlend::parentJoint;
 MObject ImplicitBlend::implicit;
+MObject ImplicitBlend::meshGeometryUpdateAttr;
 MObject ImplicitBlend::worldImplicit;
 
 namespace {
@@ -68,6 +69,11 @@ MStatus ImplicitBlend::initialize()
     MFnCompoundAttribute cmpAttr;
     MFnTypedAttribute typedAttr;
 
+    meshGeometryUpdateAttr = numAttr.create("meshGeometryUpdate", "meshGeometryUpdate", MFnNumericData::Type::kInt, 0, &status);
+    numAttr.setStorable(false);
+    numAttr.setHidden(true);
+    addAttribute(meshGeometryUpdateAttr);
+
     // Note that this attribute isn't set to worldSpace.  The input surfaces are world space, and the
     // output combined surfaces are world space, but we ignore the position of this actual node.
     worldImplicit = typedAttr.create("worldImplicit", "worldImplicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
@@ -80,6 +86,7 @@ MStatus ImplicitBlend::initialize()
     if(status != MS::kSuccess) return status;
     typedAttr.setReadable(false);
     dependencies.add(implicit, worldImplicit);
+    dependencies.add(ImplicitBlend::worldImplicit, ImplicitBlend::meshGeometryUpdateAttr);
     addAttribute(implicit);
 
     parentJoint = numAttr.create("parentIdx", "parentIdx", MFnNumericData::Type::kInt, -1, &status);
@@ -92,6 +99,7 @@ MStatus ImplicitBlend::initialize()
     cmpAttr.addChild(implicit);
     cmpAttr.addChild(parentJoint);
     addAttribute(surfaces);
+    dependencies.add(ImplicitBlend::surfaces, ImplicitBlend::worldImplicit);
 
     status = dependencies.apply();
     if(status != MS::kSuccess) return status;
@@ -99,10 +107,64 @@ MStatus ImplicitBlend::initialize()
     return MStatus::kSuccess;
 }
 
+MStatus ImplicitBlend::setDependentsDirty(const MPlug &plug_, MPlugArray &plugArray)
+{
+    MStatus status = MStatus::kSuccess;
+
+    MPlug plug(plug_);
+    MString s = plug.name();
+
+    // If the plug that was changed is a child, eg. point[0].x, move up to the parent
+    // compound plug, eg. point[0].
+    if(plug.isChild()) {
+        plug = plug.parent(&status);
+        if(status != MS::kSuccess) return status;
+    }
+
+    // The rendered geometry is based on meshGeometryUpdateAttr.  If the node that was changed
+    // affects that, then tell Maya that it needs to redraw the geometry.  This will
+    // trigger ImplicitSurfaceGeometryOverride::updateDG, etc. if the shape is visible.
+    // It looks like setAffectsAppearance() on meshGeometryUpdateAttr should do this for
+    // us, but that doesn't seem to work.
+    MObject node = plug.attribute();
+    s = plug.name();
+    if(dependencies.isAffectedBy(node, ImplicitBlend::meshGeometryUpdateAttr))
+        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
+
+    return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
+}
+
 MStatus ImplicitBlend::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
     if(plug == worldImplicit) return load_world_implicit(plug, dataBlock);
+    else if(plug == meshGeometryUpdateAttr) return load_mesh_geometry(dataBlock);
     return MStatus::kUnknownParameter;
+}
+
+const MeshGeom &ImplicitBlend::get_mesh_geometry()
+{
+    // Update and return meshGeometry for the preview renderer.
+    MStatus status = MStatus::kSuccess;
+    MDataBlock dataBlock = forceCache();
+    dataBlock.inputValue(ImplicitBlend::meshGeometryUpdateAttr, &status);
+    return meshGeometry;
+}
+
+// On meshGeometryUpdateAttr, update meshGeometry.
+MStatus ImplicitBlend::load_mesh_geometry(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+
+    dataBlock.inputValue(ImplicitBlend::worldImplicit, &status);
+    if(status != MS::kSuccess) return status;
+
+    if(skeleton.get() == NULL)
+        return MStatus::kSuccess;
+
+    meshGeometry = MeshGeom();
+    MarchingCubes::compute_surface(meshGeometry, skeleton.get());
+
+    return MStatus::kSuccess;
 }
 
 MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)

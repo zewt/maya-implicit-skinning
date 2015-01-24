@@ -17,8 +17,9 @@
 #include <memory>
 
 #include "implicit_surface_data.hpp"
+#include "implicit_surface_geometry_override.hpp"
 
-class ImplicitBlend: public MPxSurfaceShape
+class ImplicitBlend: public MPxSurfaceShape, public ImplicitSurfaceGeometryOverrideSource
 {
 public:
     static void *creator();
@@ -29,8 +30,9 @@ public:
 
 //    bool isBounded() const;
 //    MBoundingBox boundingBox() const;
+    MStatus setDependentsDirty(const MPlug &plug_, MPlugArray &plugArray);
     MStatus compute(const MPlug &plug, MDataBlock &dataBlock);
-
+    const MeshGeom &get_mesh_geometry();
 
     static MObject surfaces;
 
@@ -44,6 +46,7 @@ public:
 private:
     // compute() implementations:
     MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
+    MStatus load_mesh_geometry(MDataBlock &dataBlock);
     MStatus update_skeleton(MDataBlock &dataBlock);
 
     std::shared_ptr<Skeleton> skeleton;
@@ -53,19 +56,14 @@ private:
     vector<shared_ptr<const Skeleton> > lastImplicitBones;
     vector<int> lastParents;
 
-
     // This is updated by meshGeometryUpdateAttr, and contains a mesh reprensentation of the
     // implicit surface.  This is used for preview rendering.  If the surface shape is hidden
     // (which is normally is, when being used for deformation), this won't be evaluated.
-//    MeshGeom meshGeometry;
-
-    // Internal dependency attributes:
-    // Evaluated when we need to update a SampleSet and load it:
-    static MObject sampleSetUpdateAttr;
+    MeshGeom meshGeometry;
 
     // This is marked dirty to tell ImplicitSurfaceGeometryOverride that it needs to
     // recalculate the displayed geometry.
-//    static MObject meshGeometryUpdateAttr;
+    static MObject meshGeometryUpdateAttr;
 };
 
 #endif

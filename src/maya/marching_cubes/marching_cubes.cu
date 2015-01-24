@@ -1,10 +1,15 @@
 #include "marching_cubes.hpp"
 #include "tables.h"
+#include "timer.hpp"
+#include "cuda_current_device.hpp"
+#include "skeleton_env_evaluator.hpp"
+#include "conversions.hpp"
 
 namespace MarchingCubes
 {
     struct GridCell {
         Point_cu p[8];
+        Vec3_cu normal[8];
         Point_cu c[8];
         float val[8];
     };
@@ -16,17 +21,20 @@ namespace MarchingCubes
         if(fabsf(isoLevel - cell.val[i1]) < 0.00001f) {
             res.pos = cell.p[i1];
             res.col = cell.c[i1];
+            res.normal = cell.normal[i1];
             return res;
         }
         if(fabsf(isoLevel - cell.val[i2]) < 0.00001f) {
             res.pos = cell.p[i2];
             res.col = cell.c[i2];
+            res.normal = cell.normal[i2];
             return res;
         }
     
         if(fabsf(cell.val[i1] - cell.val[i2]) < 0.00001f) {
             res.pos = cell.p[i1];
             res.col = cell.c[i1];
+            res.normal = cell.normal[i1];
             return res;
         }
 
@@ -34,6 +42,7 @@ namespace MarchingCubes
 
         res.pos = cell.p[i1] + (cell.p[i2] - cell.p[i1])*mu;
         res.col = cell.c[i1] + (cell.c[i2] - cell.c[i1])*mu;
+        res.normal = cell.normal[i1] + (cell.normal[i2] - cell.normal[i1])*mu;
 
         return res;
     }
@@ -77,59 +86,140 @@ namespace MarchingCubes
 
 }
 
-void MarchingCubes::compute_surface(MeshGeom &geom, const Bone *bone, const Skeleton *skel)
-{
-    OBBox_cu obbox = bone->get_obbox(true);
+#include "cuda_utils_common.hpp"
 
+template<typename T>
+class CudaManagedArray
+{
+public:
+    T *p;
+    const int size;
+
+    CudaManagedArray(int size_):
+        size(size_)
+    {
+        CUDA_SAFE_CALL(cudaMallocManaged(&p, sizeof(T) * size));
+
+        for(int i = 0; i < size; ++i)
+            new(&p[i]) T();
+    }
+
+    ~CudaManagedArray()
+    {
+        for(int i = 0; i < size; ++i)
+            p[i].~T();
+        cudaFree(p);
+    }
+
+    T &operator[](int n) { return p[n]; }
+    const T &operator[](int n) const { return p[n]; }
+};
+
+namespace
+{
+    __global__
+    void compute_marching_cubes_grid(int skel_id, int gridRes, float *isoBuffer, Vec3_cu *normals,
+        Point_cu origin, Point_cu delta, Transfo transfo)
+    {
+        int idx = blockIdx.x * blockDim.x + threadIdx.x;
+        if(idx >= gridRes*gridRes*gridRes)
+            return;
+
+        int x = idx / (gridRes*gridRes);
+        int y = (idx / gridRes) % gridRes;
+        int z = idx % gridRes;
+
+        Point_cu pWorld = Point_cu(x, y, z)*delta;
+        pWorld = pWorld  + origin;
+        pWorld = transfo * pWorld;
+
+        isoBuffer[idx] = Skeleton_env::compute_potential(skel_id, pWorld, normals[idx]);
+    }
+}
+
+void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel)
+{
     // Get the set of all of the bounding boxes in the skeleton.  These may overlap.
-    std::vector<OBBox_cu> bbox_list;
-    for(Bone::Id bone_id: skel->get_bone_ids())
-        bbox_list.push_back(bone->get_obbox());
 
     // set the size of the grid cells, and the amount of cells per side
-    int gridRes = 16;
+    const int gridRes = 16;
 
-    const HermiteRBF &hrbf = bone->get_hrbf();
+    const Point_cu deltas[8] = {
+        Point_cu(0, 0, 0),
+        Point_cu(1, 0, 0),
+        Point_cu(1, 1, 0),
+        Point_cu(0, 1, 0),
+        Point_cu(0, 0, 1),
+        Point_cu(1, 0, 1),
+        Point_cu(1, 1, 1),
+        Point_cu(0, 1, 1),
+    };
 
-    Point_cu deltas[8];
-    deltas[0] = Point_cu(0, 0, 0);
-    deltas[1] = Point_cu(1, 0, 0);
-    deltas[2] = Point_cu(1, 1, 0);
-    deltas[3] = Point_cu(0, 1, 0);
-    deltas[4] = Point_cu(0, 0, 1);
-    deltas[5] = Point_cu(1, 0, 1);
-    deltas[6] = Point_cu(1, 1, 1);
-    deltas[7] = Point_cu(0, 1, 1);
-
-    for(OBBox_cu obbox: bbox_list)
+    // We have a single surface comprised of any number of bones.  Render the bounding box
+    // of each underlying bone.  Note that we only render the skeleton, not the bones.
+    for(Bone::Id bone_id: skel->get_bone_ids())
     {
-        BBox_cu bbox = obbox._bb;
+        const Bone *bone = skel->get_bone(bone_id).get();
+        OBBox_cu obbox = bone->get_obbox(true);
 
-        float deltaX = (bbox.pmax.x - bbox.pmin.x) / gridRes;
-        float deltaY = (bbox.pmax.y - bbox.pmin.y) / gridRes;
-        float deltaZ = (bbox.pmax.z - bbox.pmin.z) / gridRes;
+        // Don't draw a grid for empty regions.
+        BBox_cu &bb = obbox._bb;
+        if(!bb.is_valid())
+            continue;
 
-        Point_cu delta(deltaX, deltaY, deltaZ);
-        delta = obbox._tr * delta;
+        // We've been given the bounding box, eg. where the iso == 0.5 at both ends.  We want
+        // to scan just beyond that, where iso < 0.5.  We won't draw all of the boundaries if
+        // we never actually cross 0.5.  Extend the grid slightly in all directions.  Additionally,
+        // blended surfaces may extend beyond the bounding box of any of the underlying bones,
+        // so we extend the bbox a little further.
+        Vec3_cu box_size = bb.pmax - bb.pmin;
+        bb.pmin = bb.pmin - box_size * 0.2;
+        bb.pmax = bb.pmax + box_size * 0.2;
 
-        for(float px = bbox.pmin.x; px < bbox.pmax.x; px += deltaX) {
-            for(float py = bbox.pmin.y; py < bbox.pmax.y; py += deltaY) {
-                for(float pz = bbox.pmin.z; pz < bbox.pmax.z; pz += deltaZ) {
-                    Point_cu p(px, py, pz);
-                    p = obbox._tr * p;
+        Point_cu delta = Convs::to_point((obbox._bb.pmax - obbox._bb.pmin) / gridRes);
 
+        // Calculate the iso and normal at each grid position.
+        CudaManagedArray<float> isoBuffer(gridRes*gridRes*gridRes);
+        CudaManagedArray<Vec3_cu> normalBuffer(gridRes*gridRes*gridRes);
+
+        const int block_size = 512;
+        const int grid_size = (gridRes*gridRes*gridRes) / block_size;
+        CUDA_CHECK_KERNEL_SIZE(block_size, grid_size);
+        compute_marching_cubes_grid<<<grid_size, block_size>>>(skel->get_skel_id(), gridRes, &isoBuffer[0], &normalBuffer[0], obbox._bb.pmin, delta, obbox._tr);
+        CUDA_CHECK_ERRORS();
+
+        for(int x = 0; x < gridRes-1; ++x) {
+            for(int y = 0; y < gridRes-1; ++y) {
+                for(int z = 0; z < gridRes-1; ++z) {
                     GridCell cell;
                     for(int i = 0; i < 8; i++)
                     {
-                        Point_cu &c = cell.p[i];
-                        c = p + delta*deltas[i];
+                        int pX = x+deltas[i].x;
+                        int pY = y+deltas[i].y;
+                        int pZ = z+deltas[i].z;
 
-                        Vec3_cu gf;
-                        // XXX: bring back hrbf.f()? we don't need the gradient
-                        cell.val[i] = hrbf.fngf(gf, Point_cu((float) c.x, (float) c.y, (float) c.z));
+                        // (pX,pY,pZ) is the grid position, eg. [0,15].  Multiply by delta to scale to
+                        // the axis-aligned bounding box, add pmin to offset to the bounding box, and
+                        // multiply by _tr to convert to world space.
+                        Point_cu pWorld = Point_cu(pX, pY, pZ)*delta;
+                        pWorld = pWorld  + obbox._bb.pmin;
+                        pWorld = obbox._tr * pWorld;
+
+                        cell.p[i] = pWorld;
+
+                        int idx =
+                            pX*gridRes*gridRes +
+                            pY*gridRes +
+                            pZ;
+
+                        cell.val[i] = isoBuffer[idx];
+
+                        // Gradients point in towards the surface.  Multiply by -1 to get a normal pointing
+                        // away from the surface.
+                        cell.normal[i] = normalBuffer[idx] * -1;
                     }
 
-                    // generate triangles from this cell
+                    // Generate tris.
                     polygonize(cell, geom);
                 }
             }

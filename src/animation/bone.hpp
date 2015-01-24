@@ -149,29 +149,6 @@ public:
         else                 return _org + _dir.normalized() * d;
     }
 
-    /// Get the local frame of the bone. This method only guarantes to generate
-    /// a frame with an x direction parallel to the bone and centered about '_org'
-    IF_CUDA_DEVICE_HOST
-    Transfo get_frame() const
-    {
-        Vec3_cu x = _dir.normalized();
-        Vec3_cu ortho = x.cross(Vec3_cu(0.f, 1.f, 0.f));
-        Vec3_cu z, y;
-        if (ortho.norm_squared() < 1e-06f * 1e-06f)
-        {
-            ortho = Vec3_cu(0.f, 0.f, 1.f).cross(x);
-            y = ortho.normalized();
-            z = x.cross(y).normalized();
-        }
-        else
-        {
-            z = ortho.normalized();
-            y = z.cross(x).normalized();
-        }
-
-        return Transfo(Mat3_cu(x, y, z), _org.to_vector() );
-    }
-
     // -------------------------------------------------------------------------
     /// @name Attributes
     // -------------------------------------------------------------------------
@@ -210,7 +187,7 @@ public:
             EBone::HRBF;
     }
 
-    // Get the oriented bounding box associated to the bone.
+    // Get the oriented bounding box associated to the bone in world space.
     // If surface is false, return the bounding box where the ISO value reaches the
     // HRBF radius.  If true, return the bounding box of the ISO 0.5 surface.
     OBBox_cu get_obbox(bool surface=false) const;
@@ -254,6 +231,8 @@ public:
     Transfo get_world_space_matrix() const { return _world_space_transform; }
 
 private:
+    OBBox_cu get_obbox_object_space(bool surface) const;
+
     // A globally unique bone ID.
     const Id _bone_id;
 
@@ -263,7 +242,8 @@ private:
     bool _precomputed;
     Precomputed_prim _primitive;
 
-    // A cache of the bounding box (with surface=false), set when _precomputed is true.
+    // A cache of the bounding box (with surface=false), set when _precomputed is true,
+    // in object space (ignores _world_space_transform).
     OBBox_cu         _obbox;
 
     // Cache the surface=true bounding box.  We only cache this after it's been requested, since

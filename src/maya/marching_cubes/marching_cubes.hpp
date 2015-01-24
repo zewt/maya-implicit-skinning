@@ -9,6 +9,7 @@
 
 struct MeshGeomVertex {
     Point_cu pos;
+    Vec3_cu normal;
     Point_cu col;
 };
 
@@ -22,8 +23,8 @@ public:
 
 namespace MarchingCubes
 {
-    // Compute the geometry to preview the given bone, and append it to meshGeom.
-    void compute_surface(MeshGeom &geom, const Bone *bone, const Skeleton *skel);
+    // Compute the geometry to preview the given skeleton, and append it to meshGeom.
+    void compute_surface(MeshGeom &geom, const Skeleton *skel);
 }
 
 #endif

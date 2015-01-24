@@ -55,17 +55,16 @@ void ImplicitSurfaceGeometryOverride::updateRenderItems(const MDagPath &path, MH
     if(!shaderManager)
         return;
 
-    // add render item for drawing wireframe on the mesh
     MHWRender::MRenderItem *wireframeItem = NULL;
     int index = list.indexOf("wireframe");
     if(index < 0)
     {
-        wireframeItem = MHWRender::MRenderItem::Create("wireframe", MHWRender::MRenderItem::DecorationItem, MHWRender::MGeometry::kLines);
-        wireframeItem->setDrawMode(MHWRender::MGeometry::kWireframe);
+        wireframeItem = MHWRender::MRenderItem::Create("wireframe", MHWRender::MRenderItem::NonMaterialSceneItem, MHWRender::MGeometry::kTriangles);
+        wireframeItem->setDrawMode(MHWRender::MGeometry::kAll);
         wireframeItem->depthPriority(MHWRender::MRenderItem::sActiveWireDepthPriority);
         list.append(wireframeItem);
 
-        MHWRender::MShaderInstance *shader = shaderManager->getStockShader(MHWRender::MShaderManager::k3dSolidShader);
+        MHWRender::MShaderInstance *shader = shaderManager->getStockShader(MHWRender::MShaderManager::k3dDefaultMaterialShader);
         if(shader) {
             static const float theColor[] = {1.0f, 0.0f, 0.0f, 1.0f};
             shader->setParameter("solidColor", theColor);
@@ -96,6 +95,20 @@ void ImplicitSurfaceGeometryOverride::populateGeometry(const MHWRender::MGeometr
             buf[i*3+0] = meshGeometry->vertices[i].pos.x;
             buf[i*3+1] = meshGeometry->vertices[i].pos.y;
             buf[i*3+2] = meshGeometry->vertices[i].pos.z;
+        }
+        vertexBuffer->commit(buf);
+    }
+
+    {
+        MHWRender::MVertexBufferDescriptor desc("", MHWRender::MGeometry::kNormal, MHWRender::MGeometry::DataType::kFloat, 3);
+
+        MHWRender::MVertexBuffer *vertexBuffer = data.createVertexBuffer(desc);
+        int numVertices = (int)meshGeometry->vertices.size();
+        float *buf = (float *)vertexBuffer->acquire(numVertices*3, true);
+        for(int i = 0; i < numVertices; i++) {
+            buf[i*3+0] = meshGeometry->vertices[i].normal.x;
+            buf[i*3+1] = meshGeometry->vertices[i].normal.y;
+            buf[i*3+2] = meshGeometry->vertices[i].normal.z;
         }
         vertexBuffer->commit(buf);
     }
