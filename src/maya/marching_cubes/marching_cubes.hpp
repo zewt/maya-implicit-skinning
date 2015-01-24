@@ -24,7 +24,7 @@ public:
 namespace MarchingCubes
 {
     // Compute the geometry to preview the given skeleton, and append it to meshGeom.
-    void compute_surface(MeshGeom &geom, const Skeleton *skel);
+    void compute_surface(MeshGeom &geom, const Skeleton *skel, float isoLevel = 0.5f);
 }
 
 #endif
