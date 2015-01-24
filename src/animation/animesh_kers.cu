@@ -302,11 +302,14 @@ void conservative_smooth(Vec3_cu* d_verts,
     Vec3_cu* d_verts_a = d_verts;
     Vec3_cu* d_verts_b = d_buff_verts;
 
-    if(nb_iter > 1){
-        // TODO: we could only copy vert_to_fit and there neighbors and avoid
-        // copy over every elements.
+    // We're double buffering between d_verts and d_buff_verts.  conservative_smooth_kernel
+    // below will only copy entries where d_vert_to_fit[n] isn't negative, which means that
+    // values we're not smoothing won't be copied to the output.  We do need all of the
+    // vertices to be readable, not just the ones we're smoothing, so copy all of the data
+    // to the second buffer.  If we're only doing one pass then we'll never read these values,
+    // so this can be skipped.
+    if(nb_iter > 1)
         Cuda_utils::mem_cpy_dtd(d_buff_verts, d_verts, d_edge_list_offsets.size()/2);
-    }
 
     for(int i = 0; i < nb_iter; i++)
     {
