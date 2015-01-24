@@ -46,28 +46,24 @@ void Animesh::update_base_potential()
 
     assert(d_input_vertices.ptr());
     assert(d_base_potential.ptr());
-    assert(d_base_gradient.ptr());
 
     Animesh_kers::compute_base_potential<<<grid_size, block_size>>>
-        (_skel->get_skel_id(), d_input_vertices.ptr(), nb_verts, d_base_potential.ptr(), d_base_gradient.ptr());
+        (_skel->get_skel_id(), d_input_vertices.ptr(), nb_verts, d_base_potential.ptr());
 
     CUDA_CHECK_ERRORS();
 
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
 }
 
-void Animesh::get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &grad) const
+void Animesh::get_base_potential(std::vector<float> &pot) const
 {
     pot = d_base_potential.to_host_vector();
-    grad = d_base_gradient.to_host_vector();
 }
 
-void Animesh::set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad)
+void Animesh::set_base_potential(const std::vector<float> &pot)
 {
     d_base_potential.malloc(get_nb_vertices());
     d_base_potential.copy_from(pot);
-    d_base_gradient.malloc(get_nb_vertices());
-    d_base_gradient.copy_from(grad);
 }
 
 void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)

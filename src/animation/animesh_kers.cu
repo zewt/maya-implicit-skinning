@@ -716,13 +716,13 @@ __global__
 void compute_base_potential(Skeleton_env::Skel_id skel_id,
                             const Point_cu* in_verts,
                             const int nb_verts,
-                            float* base_potential,
-                            Vec3_cu* base_grad)
+                            float* base_potential)
 {
     const int p = blockIdx.x * blockDim.x + threadIdx.x;
     if(p < nb_verts)
     {
-        float f = eval_potential(skel_id, in_verts[p], base_grad[p]);
+        Vec3_cu grad;
+        float f = eval_potential(skel_id, in_verts[p], grad);
         base_potential[p] = f;
     }
 }

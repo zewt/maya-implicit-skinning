@@ -63,7 +63,6 @@ Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     d_edge_list(_mesh->get_nb_edges()),
     d_edge_list_offsets(2 * _mesh->get_nb_vertices()),
     d_base_potential(_mesh->get_nb_vertices()),
-    d_base_gradient(_mesh->get_nb_vertices()),
     d_piv(_mesh->get_nb_faces()),
     d_unpacked_normals(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),
     d_unpacked_tangents(_mesh->get_nb_vertices() * _mesh->_max_faces_per_vertex),

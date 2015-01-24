@@ -50,8 +50,8 @@ public:
     ~Animated_mesh_ctrl();
 
     void update_base_potential();
-    void get_base_potential(std::vector<float> &pot, std::vector<Vec3_cu> &grad) const;
-    void set_base_potential(const std::vector<float> &pot, const std::vector<Vec3_cu> &grad);
+    void get_base_potential(std::vector<float> &pot) const;
+    void set_base_potential(const std::vector<float> &pot);
 
     //--------------------------------------------------------------------------
     /// @name Mesh deformation

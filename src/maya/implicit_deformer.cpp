@@ -308,7 +308,7 @@ MStatus ImplicitDeformer::calculate_base_potential()
     // Read the result.
     vector<float> pot;
     vector<Vec3_cu> grad;
-    animMesh->get_base_potential(pot, grad);
+    animMesh->get_base_potential(pot);
 
     // Save the base potential to basePotential and baseGradient.
     status = DagHelpers::setArray(dataBlock, ImplicitDeformer::basePotential, pot); check("setArray(basePotential)");
@@ -363,7 +363,7 @@ MStatus ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // Set the base potential that we loaded.
-    animMesh->set_base_potential(pot, grad);
+    animMesh->set_base_potential(pot);
 
     return MStatus::kSuccess;
 }

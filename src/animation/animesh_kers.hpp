@@ -44,8 +44,7 @@ __global__ void
 compute_base_potential(Skeleton_env::Skel_id skel_id,
                        const Point_cu* d_input_vertices,
                        const int nb_verts,
-                       float* d_base_potential,
-                       Vec3_cu* d_base_gradient );
+                       float* d_base_potential);
 
 /// Match the base potential after basic ssd deformation
 /// (i.e : do the implicit skinning step)
