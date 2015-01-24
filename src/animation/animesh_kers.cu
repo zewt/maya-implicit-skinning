@@ -214,7 +214,6 @@ void conservative_smooth_kernel(const Vec3_cu* in_vertices,
                                 const int* edge_list_offsets,
                                 const float* edge_mvc,
                                 const int* vert_to_fit,
-                                bool use_vert_to_fit,
                                 float force,
                                 int nb_verts,
                                 const float* smooth_fac,
@@ -270,7 +269,6 @@ __global__ static
 void copy_vert_to_fit(const T* d_in,
                       T* d_out,
                       const int* vert_to_fit,
-                      bool use_vert_to_fit,
                       int n)
 {
     int thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -290,7 +288,6 @@ void conservative_smooth(Vec3_cu* d_verts,
                          const DA_float& d_edge_mvc,
                          const int* d_vert_to_fit,
                          int nb_vert_to_fit,
-                         bool use_vert_to_fit,
                          float strength,
                          int nb_iter,
                          const float* smooth_fac,
@@ -320,7 +317,6 @@ void conservative_smooth(Vec3_cu* d_verts,
                                                               d_edge_list_offsets.ptr(),
                                                               d_edge_mvc.ptr(),
                                                               d_vert_to_fit,
-                                                              use_vert_to_fit,
                                                               strength,
                                                               nb_vert_to_fit,
                                                               smooth_fac,
@@ -333,7 +329,7 @@ void conservative_smooth(Vec3_cu* d_verts,
     if(nb_iter % 2 == 1){
         // d_vertices[n] = d_tmp_vertices[n]
         copy_vert_to_fit<<<grid_size, block_size>>>
-            (d_buff_verts, d_verts, d_vert_to_fit, use_vert_to_fit, nb_threads);
+            (d_buff_verts, d_verts, d_vert_to_fit, nb_threads);
         CUDA_CHECK_ERRORS();
     }
 }

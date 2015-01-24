@@ -140,8 +140,7 @@ private:
                              Vec3_cu* buff,
                              const Cuda_utils::DA_int& d_vert_to_fit,
                              int nb_vert_to_fit,
-                             int nb_iter,
-                             bool use_vert_to_fit = true);
+                             int nb_iter);
 
     /// Compute normals in 'normals' and the vertices position in 'vertices'
     void compute_normals(const Vec3_cu* vertices, Vec3_cu* normals);
