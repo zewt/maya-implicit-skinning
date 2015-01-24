@@ -217,8 +217,6 @@ public:
     void discard_precompute();
     bool is_precomputed() const { return _precomputed; }
 
-    const Skeleton &get_bone_skeleton() const { return *boneSkeleton.get(); }
-
     // Set the object space direction and length.  (In object space, the origin is always
     // 0,0,0.)
     //
@@ -257,8 +255,6 @@ private:
     Vec3_cu _object_space;
 
     Transfo _world_space_transform;
-
-    std::unique_ptr<Skeleton> boneSkeleton;
 };
 
 #endif // BONE_HPP__
