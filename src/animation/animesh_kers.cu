@@ -33,7 +33,6 @@
 #define BINARY_SEARCH_STEPS (20)
 #define EPSILON 0.0001f
 #define ENABLE_COLOR
-#define ENABLE_MARCH
 
 #ifndef PI
 #define PI (3.14159265358979323846f)
@@ -876,7 +875,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
                           const int slope,
                           const bool raphson)
 {
-#ifdef ENABLE_MARCH
     const int thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(thread_idx < nb_vert_to_fit)
     {
@@ -992,7 +990,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         out_gradient[p] = gfi;
         out_verts[p] = res;
     }
-#endif
 }
 
 }
