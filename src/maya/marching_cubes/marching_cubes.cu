@@ -47,10 +47,8 @@ namespace MarchingCubes
         return res;
     }
 
-    void polygonize(const GridCell &grid, MeshGeom &geom)
+    void polygonize(const GridCell &grid, MeshGeom &geom, float isoLevel)
     {
-        const float isoLevel = 0.5f;
-
         // Determine the index into the edge table which
         // tells us which vertices are inside of the surface
         int cubeIndex = 0;
@@ -137,7 +135,7 @@ namespace
     }
 }
 
-void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel)
+void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float isoLevel)
 {
     // Get the set of all of the bounding boxes in the skeleton.  These may overlap.
 
@@ -160,7 +158,13 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel)
     for(Bone::Id bone_id: skel->get_bone_ids())
     {
         const Bone *bone = skel->get_bone(bone_id).get();
-        OBBox_cu obbox = bone->get_obbox(true);
+
+        // The surface bounding box is the bbox at iso 0.5.  If we're showing ISO 0.5 or greater,
+        // use that, since it's much smaller, giving us better resolution for a given grid resolution.
+        // If the user has changed the ISO level to display the surface beyond that, use the full
+        // bbox.
+        bool use_surface_bbox = isoLevel >= 0.5 - 1e-6;
+        OBBox_cu obbox = bone->get_obbox(use_surface_bbox);
 
         // Don't draw a grid for empty regions.
         BBox_cu &bb = obbox._bb;
@@ -220,7 +224,7 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel)
                     }
 
                     // Generate tris.
-                    polygonize(cell, geom);
+                    polygonize(cell, geom, isoLevel);
                 }
             }
         }

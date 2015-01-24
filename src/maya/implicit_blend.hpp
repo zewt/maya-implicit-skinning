@@ -43,6 +43,9 @@ public:
     static MObject implicit;
     static MObject worldImplicit;
 
+    // The ISO used for the preview display (default 0.5).
+    static MObject previewIso;
+
 private:
     // compute() implementations:
     MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);

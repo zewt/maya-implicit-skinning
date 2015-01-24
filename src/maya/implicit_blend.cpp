@@ -36,6 +36,7 @@ MObject ImplicitBlend::parentJoint;
 MObject ImplicitBlend::implicit;
 MObject ImplicitBlend::meshGeometryUpdateAttr;
 MObject ImplicitBlend::worldImplicit;
+MObject ImplicitBlend::previewIso;
 
 namespace {
     MStatus setImplicitSurfaceData(MDataBlock &dataBlock, MObject attr, shared_ptr<const Skeleton> skel)
@@ -73,6 +74,10 @@ MStatus ImplicitBlend::initialize()
     numAttr.setStorable(false);
     numAttr.setHidden(true);
     addAttribute(meshGeometryUpdateAttr);
+
+    previewIso = numAttr.create("previewIso", "previewIso", MFnNumericData::Type::kFloat, 0.5f, &status);
+    addAttribute(previewIso);
+    dependencies.add(previewIso, meshGeometryUpdateAttr);
 
     // Note that this attribute isn't set to worldSpace.  The input surfaces are world space, and the
     // output combined surfaces are world space, but we ignore the position of this actual node.
@@ -158,11 +163,14 @@ MStatus ImplicitBlend::load_mesh_geometry(MDataBlock &dataBlock)
     dataBlock.inputValue(ImplicitBlend::worldImplicit, &status);
     if(status != MS::kSuccess) return status;
 
+    float iso = DagHelpers::readHandle<float>(dataBlock, ImplicitBlend::previewIso, &status);
+    if(status != MS::kSuccess) return status;
+
     if(skeleton.get() == NULL)
         return MStatus::kSuccess;
 
     meshGeometry = MeshGeom();
-    MarchingCubes::compute_surface(meshGeometry, skeleton.get());
+    MarchingCubes::compute_surface(meshGeometry, skeleton.get(), iso);
 
     return MStatus::kSuccess;
 }
