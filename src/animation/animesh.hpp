@@ -58,6 +58,9 @@ public:
 
     ~Animesh();
 
+    // Get the loaded skeleton.
+    const Skeleton *get_skel() const { return _skel.get(); }
+
     /// Computes the potential at each vertex of the mesh. When the mesh is
     /// animated, if implicit skinning is enabled, vertices move so as to match
     /// that value of the potential.

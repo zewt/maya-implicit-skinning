@@ -26,16 +26,15 @@ namespace { __device__ void fix_debug() { } }
 // This takes ownership of the Mesh (and gives it to Animesh).  It does not take ownership
 // of Skeleton.
 Animated_mesh_ctrl::Animated_mesh_ctrl(const Mesh *mesh, std::shared_ptr<const Skeleton> skel_) :
-    skel(skel_),
     _animesh(new Animesh(mesh, skel_))
 {
 }
 
 Animated_mesh_ctrl::~Animated_mesh_ctrl()
 {
-    delete _animesh;
 }
 
+const Skeleton *Animated_mesh_ctrl::get_skel() const { return _animesh->get_skel(); }
 void Animated_mesh_ctrl::set_do_smoothing(bool state) { _animesh->set_smooth_mesh(state); }
 void Animated_mesh_ctrl::set_smooth_factor(int i, float fact) { _animesh->set_smooth_factor(i, fact); }
 void Animated_mesh_ctrl::update_base_potential() { _animesh->update_base_potential(); }

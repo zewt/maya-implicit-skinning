@@ -232,7 +232,10 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     //
     // If we didn't already have a skeleton, or the skeleton we've been given has a different unique ID
     // than the one we had, then this is a new skeleton.
-    bool skeletonChanged = animMesh.get() == NULL || animMesh->skel->get_unique_id() != skel->get_unique_id();
+    //
+    // If our input skeleton has changed, it's guaranteed to be different from the Skeleton* pointer
+    // in animMesh, because animMesh won't release its previous Skeleton.
+    bool skeletonChanged = animMesh.get() == NULL || animMesh->get_skel() != skel.get();
 
     // Hack: We calculate a bunch of properties from the mesh, such as the nearest joint to each
     // vertex.  We don't want to recalculate that every time our input (skinned) geometry changes.

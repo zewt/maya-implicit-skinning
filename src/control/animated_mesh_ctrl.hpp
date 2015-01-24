@@ -38,6 +38,7 @@ public:
     Animated_mesh_ctrl(const Mesh *mesh, std::shared_ptr<const Skeleton> skel);
     ~Animated_mesh_ctrl();
 
+    const Skeleton *get_skel() const;
     void update_base_potential();
     void get_base_potential(std::vector<float> &pot) const;
     void set_base_potential(const std::vector<float> &pot);
@@ -80,8 +81,7 @@ public:
     // same number of vertices.
     int get_nb_vertices() const;
 
-    Animesh* _animesh;
-    std::shared_ptr<const Skeleton> skel;
+    std::unique_ptr<Animesh> _animesh;
 };
 
 #endif // ANIMATED_MESH_CTRL_HPP__
