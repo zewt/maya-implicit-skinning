@@ -895,11 +895,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         smooth_factors_iso[p] = iso_to_sfactor(f0, slope) * smooth_strength;
 
     out_gradient[p] = gf0;
-    // STOP CASE : Gradient is null we can't know where to march
-    if(gf0.norm() <= 0.00001f){
-        if(!final_pass) vert_to_fit[thread_idx] = -1;
-        return;
-    }
 
     // STOP CASE : Point already near enough the isosurface
     if( fabsf(f0) < EPSILON ){
@@ -911,17 +906,19 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
     // outside along the gradient :
     const float dl = (f0 > 0.f) ? -step_length : step_length;
 
-    Ray_cu r;
-    r.set_pos(v0);
-    float t = 0.f;
-
-    Vec3_cu  gfi    = gf0;
-    float    fi     = f0;
     float    abs_f0 = fabsf(f0);
-    Point_cu vi     = v0;
 
     for(unsigned short i = 0; i < nb_iter; ++i)
     {
+        // Stop if the gradient is null, so we don't know which way to go.
+        if(gf0.norm_squared() < 0.00001f) {
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            break;
+        }
+
+        Ray_cu r;
+        r.set_pos(v0);
+        float t = 0.f;
 
         r.set_pos(v0);
         if( raphson ){
@@ -940,8 +937,10 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             t = dl;
         }
 
-        vi = r(t);
-        fi = eval_potential(skel_id, vi, gfi) - ptl;
+        Point_cu vi = r(t);
+
+        Vec3_cu gfi;
+        float fi = eval_potential(skel_id, vi, gfi) - ptl;
 
         // STOP CASE 1 : Initial iso-surface reached
         abs_f0 = fabsf(fi);
@@ -950,9 +949,12 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             if(!final_pass) vert_to_fit[thread_idx] = -1;
             break;
         }
-        else if( fi * f0 <= 0.f)
+        
+        // If the sign of the potential is different, we've overshot.  Switch to binary search.
+        if( fi * f0 <= 0.f)
         {
             t = binary_search(skel_id, r, 0.f, t, gfi, ptl);
+            v0 = r(t);
 
             if(!final_pass) vert_to_fit[thread_idx] = -1;
             break;
@@ -964,6 +966,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             #if 0
             t = binary_search_div(r, -step_length, t, .0,
                                         gtmp, gradient_threshold);
+            v0 = r(t);
             #endif
 
             if(!final_pass) vert_to_fit[thread_idx] = -1;
@@ -972,8 +975,8 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             break;
         }
 
-        // STOP CASE 3 : Potential pit
-        if( ((fi - f0)*dl < 0.f) & potential_pit )
+        // STOP CASE 3 : Stop if the last step made the potential value worse.
+        if( ((fi - f0)*dl < 0.f) && potential_pit )
         {
             if(!final_pass) vert_to_fit[thread_idx] = -1;
             smooth_factors[p] = smooth_strength;
@@ -983,13 +986,10 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         v0  = vi;
         f0  = fi;
         gf0 = gfi;
-
-        if(gf0.norm_squared() < (0.001f*0.001f)) break;
     }
 
-    const Point_cu res = r(t);
-    out_gradient[p] = gfi;
-    out_verts[p] = res;
+    out_gradient[p] = gf0;
+    out_verts[p] = v0;
 }
 
 }
