@@ -868,7 +868,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
                           const float gradient_threshold,
                           const float step_length,
                           const bool potential_pit, // TODO: this condition should not be necessary
-                          int* d_vert_state,
+                          EAnimesh::Vert_state *d_vert_state,
                           const float smooth_strength,
                           const float collision_depth,
                           const int slope,
