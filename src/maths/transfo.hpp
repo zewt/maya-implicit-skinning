@@ -173,7 +173,7 @@ struct Transfo {
 
     // Multiply a vector by a matrix, as if the vector was a point.
     //
-    // The only difference is that translations are normally applied only to poitns
+    // The only difference is that translations are normally applied only to points
     // and not vectors.  If you have a vector that actually does need translations
     // applied, you can use this instead of converting to a point and back.
     IF_CUDA_DEVICE_HOST
