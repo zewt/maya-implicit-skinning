@@ -855,7 +855,6 @@ inline static float iso_to_sfactor(float x, int s)
 /// d_vert_to_fit has it is suppossed to be the last pass
 __global__
 void match_base_potential(Skeleton_env::Skel_id skel_id, 
-                          const bool final_pass,
                           const bool smooth_fac_from_iso,
                           Vec3_cu* out_verts,
                           const float* base_potential,
@@ -897,7 +896,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
 
     // STOP CASE : Point already near enough the isosurface
     if( fabsf(f0) < EPSILON ){
-        if(!final_pass) vert_to_fit[thread_idx] = -1;
+        vert_to_fit[thread_idx] = -1;
         return;
     }
 
@@ -911,7 +910,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
     {
         // Stop if the gradient is null, so we don't know which way to go.
         if(gf0.norm_squared() < 0.00001f) {
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            vert_to_fit[thread_idx] = -1;
             break;
         }
 
@@ -945,7 +944,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         abs_f0 = fabsf(fi);
         if(raphson && abs_f0 < EPSILON )
         {
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            vert_to_fit[thread_idx] = -1;
             break;
         }
         
@@ -955,7 +954,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             t = binary_search(skel_id, r, 0.f, t, gfi, ptl);
             v0 = r(t);
 
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            vert_to_fit[thread_idx] = -1;
             break;
         }
 
@@ -968,7 +967,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             v0 = r(t);
             #endif
 
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            vert_to_fit[thread_idx] = -1;
 
             smooth_factors[p] = smooth_strength;
             break;
@@ -977,7 +976,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         // STOP CASE 3 : Stop if the last step made the potential value worse.
         if( ((fi - f0)*dl < 0.f) && potential_pit )
         {
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            vert_to_fit[thread_idx] = -1;
             smooth_factors[p] = smooth_strength;
             break;
         }

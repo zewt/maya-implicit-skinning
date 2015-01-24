@@ -50,7 +50,6 @@ compute_base_potential(Skeleton_env::Skel_id skel_id,
 /// (i.e : do the implicit skinning step)
 __global__
 void match_base_potential(Skeleton_env::Skel_id skel_id,
-                          const bool full_fit,
                           const bool smooth_fac_from_iso,
                           Vec3_cu* d_output_vertices,
                           const float* d_base_potential,

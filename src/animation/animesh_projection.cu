@@ -220,7 +220,6 @@ void Animesh::conservative_smooth(Vec3_cu* output_vertices,
 
 void Animesh::fit_mesh(int nb_vert_to_fit,
                        int* d_vert_to_fit,
-                       bool final_pass,
                        bool smooth_fac_from_iso,
                        Vec3_cu* d_vertices,
                        int nb_steps,
@@ -244,7 +243,6 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
     Animesh_kers::match_base_potential
         <<<grid_size, block_size >>>
         (_skel->get_skel_id(),
-         final_pass,
          smooth_fac_from_iso,
          d_vertices,
          d_base_potential.ptr(),
@@ -289,10 +287,9 @@ void Animesh::transform_vertices()
         // Interleaved fittig
         for( int i = 0; i < nb_steps && nb_vert_to_fit != 0; i++)
         {
-            // First fitting (only evaluate the three adjacent nearest bones)
-            if(nb_vert_to_fit > 0){
-                fit_mesh(nb_vert_to_fit, curr->ptr(), false/*final pass*/, true/*smooth from iso*/, out_verts, 2, smooth_force_a);
-            }
+            // Do a small number of iterations per step.  Should we be doing 1 rather than 2, so we don't
+            // do nb_steps*2 iterations?
+            fit_mesh(nb_vert_to_fit, curr->ptr(), true/*smooth from iso*/, out_verts, 2, smooth_force_a);
 
             nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
             Utils::swap_pointers(curr, prev);
@@ -308,30 +305,31 @@ void Animesh::transform_vertices()
         if(nb_vert_to_fit > 0)
         {
             d_vert_to_fit.copy_from(d_vert_to_fit_base);
-            fit_mesh(nb_vert_to_fit, curr->ptr(), true/*final pass*/, false/*smooth from iso*/, out_verts, nb_steps, Cuda_ctrl::_debug._smooth1_force);
+            fit_mesh(nb_vert_to_fit, curr->ptr(), false/*smooth from iso*/, out_verts, nb_steps, Cuda_ctrl::_debug._smooth1_force);
         }
     }
 
 #if 0
     // Smooth the initial guess
-    if(_debug._smooth_mesh)
+    if(Cuda_ctrl::_debug._smooth_mesh)
     {
         this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-        smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth1_iter);
+        smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth1_iter);
     }
 
     // Final fitting (global evaluation of the skeleton)
     if(Cuda_ctrl::_debug._fit_on_all_bones)
     {
+        // Reset d_vert_to_fit, so we always re-fit all vertices on this pass.
         curr->copy_from(d_vert_to_fit_base);
-        fit_mesh(curr->size(), curr->ptr(), true/*final pass*/, false/*smooth from iso*/, out_verts, nb_steps, _debug._smooth2_force);
+        fit_mesh(curr->size(), curr->ptr(), false/*smooth from iso*/, out_verts, nb_steps, Cuda_ctrl::_debug._smooth2_force);
     }
 
     // Final smoothing
-    if(_debug._smooth_mesh)
+    if(Cuda_ctrl::_debug._smooth_mesh)
     {
         this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-        smooth_mesh(out_verts, out_normals, d_smooth_factors_laplacian.ptr(), _debug._smooth2_iter);
+        smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth2_iter);
     }
 #endif
 }

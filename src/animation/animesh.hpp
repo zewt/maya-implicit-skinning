@@ -148,7 +148,6 @@ private:
 
     void fit_mesh(int nb_vert_to_fit,
                   int* d_vert_to_fit,
-                  bool final_pass,
                   bool smooth_fac_from_iso,
                   Vec3_cu *d_vertices,
                   int nb_steps, float smooth_strength);
