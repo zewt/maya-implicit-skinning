@@ -23,26 +23,15 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 #include "vec3_cu.hpp"
 #include "mesh.hpp"
 #include "animesh_enum.hpp"
 #include "transfo.hpp"
-#include "bone_type.hpp"
-#include "bone.hpp"
 
-// Forward definitions ---------------------------------------------------------
 struct Animesh;
 struct Skeleton;
-// END Forward definitions -----------------------------------------------------
-
-
-
-
-/** @brief Settings Controler for the animated mesh
-    This class provide a control interface for the animated mesh.
-    Point selection and coloring are handle here.
-*/
 
 class Animated_mesh_ctrl {
 public:
@@ -81,8 +70,6 @@ public:
 
     void set_smoothing_weights_diffusion_iter(int nb_iter);
 
-    int  get_nb_iter_smooth(){ return _nb_iter;       }
-
     // Get the current (possibly deformed) vertices, in their original order.
     void get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert) const;
 
@@ -93,32 +80,6 @@ public:
     // same number of vertices.
     int get_nb_vertices() const;
 
-    //--------------------------------------------------------------------------
-    /// @name File import/export
-    //--------------------------------------------------------------------------
-
-    void load_ism(const char* filename);
-
-private:
-#if !defined(NO_CUDA) // XXX: remove this stuff
-    //--------------------------------------------------------------------------
-    /// @name Tools file import
-    //--------------------------------------------------------------------------
-
-    void read_hrbf_env_weights( std::ifstream& file,
-                                std::vector<std::vector<float4> >& bone_weights);
-
-    void read_weights(std::ifstream& file,
-                      std::vector<float4>& weights );
-#endif
-    //--------------------------------------------------------------------------
-    /// @name Attributes
-    //--------------------------------------------------------------------------
-
-    bool _factor_bones;    ///< factor hrbf samples of siblings in a single bone
-    int  _nb_iter;         ///< number of iterations for the mesh smoothing
-
-public:
     Animesh* _animesh;
     std::shared_ptr<const Skeleton> skel;
 };
