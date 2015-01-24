@@ -876,120 +876,120 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
                           const bool raphson)
 {
     const int thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(thread_idx < nb_vert_to_fit)
-    {
-        const int p = vert_to_fit[thread_idx];
+    if(thread_idx >= nb_vert_to_fit)
+        return;
 
-        // STOP CASE : Vertex already fitted
-        if(p == -1) return;
+    const int p = vert_to_fit[thread_idx];
 
-        const float ptl = base_potential[p];
+    // STOP CASE : Vertex already fitted
+    if(p == -1) return;
 
-        Point_cu v0 = out_verts[p].to_point();
-        Vec3_cu gf0;
-        float f0;
-        f0 = eval_potential(skel_id, v0, gf0) - ptl;
+    const float ptl = base_potential[p];
 
-        if(smooth_fac_from_iso)
-            smooth_factors_iso[p] = iso_to_sfactor(f0, slope) * smooth_strength;
+    Point_cu v0 = out_verts[p].to_point();
+    Vec3_cu gf0;
+    float f0;
+    f0 = eval_potential(skel_id, v0, gf0) - ptl;
 
-        out_gradient[p] = gf0;
-        // STOP CASE : Gradient is null we can't know where to march
-        if(gf0.norm() <= 0.00001f){
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
-            return;
-        }
+    if(smooth_fac_from_iso)
+        smooth_factors_iso[p] = iso_to_sfactor(f0, slope) * smooth_strength;
 
-        // STOP CASE : Point already near enough the isosurface
-        if( fabsf(f0) < EPSILON ){
-            if(!final_pass) vert_to_fit[thread_idx] = -1;
-            return;
-        }
-
-        // Inside we march along the inverted gradient
-        // outside along the gradient :
-        const float dl = (f0 > 0.f) ? -step_length : step_length;
-
-        Ray_cu r;
-        r.set_pos(v0);
-        float t = 0.f;
-
-        Vec3_cu  gfi    = gf0;
-        float    fi     = f0;
-        float    abs_f0 = fabsf(f0);
-        Point_cu vi     = v0;
-
-        for(unsigned short i = 0; i < nb_iter; ++i)
-        {
-
-            r.set_pos(v0);
-            if( raphson ){
-                float nm = gf0.norm_squared();
-                r.set_dir( gf0 );
-                t = dl * abs_f0 / nm;
-                //t = t < 0.001f ? dl : t;
-            } else {
-                #if 1
-                    r.set_dir( gf0.normalized() );
-                #else
-                    if( gf0.dot( c_dir ) > 0.f ) r.set_dir(  c_dir );
-                    else                         r.set_dir( -c_dir );
-
-                #endif
-                t = dl;
-            }
-
-            vi = r(t);
-            fi = eval_potential(skel_id, vi, gfi) - ptl;
-
-            // STOP CASE 1 : Initial iso-surface reached
-            abs_f0 = fabsf(fi);
-            if(raphson && abs_f0 < EPSILON )
-            {
-                if(!final_pass) vert_to_fit[thread_idx] = -1;
-                break;
-            }
-            else if( fi * f0 <= 0.f)
-            {
-                t = binary_search(skel_id, r, 0.f, t, gfi, ptl);
-
-                if(!final_pass) vert_to_fit[thread_idx] = -1;
-                break;
-            }
-
-            // STOP CASE 2 : Gradient divergence
-            if( (gf0.normalized()).dot(gfi.normalized()) < gradient_threshold)
-            {
-                #if 0
-                t = binary_search_div(r, -step_length, t, .0,
-                                          gtmp, gradient_threshold);
-                #endif
-
-                if(!final_pass) vert_to_fit[thread_idx] = -1;
-
-                smooth_factors[p] = smooth_strength;
-                break;
-            }
-
-            // STOP CASE 3 : Potential pit
-            if( ((fi - f0)*dl < 0.f) & potential_pit )
-            {
-                if(!final_pass) vert_to_fit[thread_idx] = -1;
-                smooth_factors[p] = smooth_strength;
-                break;
-            }
-
-            v0  = vi;
-            f0  = fi;
-            gf0 = gfi;
-
-            if(gf0.norm_squared() < (0.001f*0.001f)) break;
-        }
-
-        const Point_cu res = r(t);
-        out_gradient[p] = gfi;
-        out_verts[p] = res;
+    out_gradient[p] = gf0;
+    // STOP CASE : Gradient is null we can't know where to march
+    if(gf0.norm() <= 0.00001f){
+        if(!final_pass) vert_to_fit[thread_idx] = -1;
+        return;
     }
+
+    // STOP CASE : Point already near enough the isosurface
+    if( fabsf(f0) < EPSILON ){
+        if(!final_pass) vert_to_fit[thread_idx] = -1;
+        return;
+    }
+
+    // Inside we march along the inverted gradient
+    // outside along the gradient :
+    const float dl = (f0 > 0.f) ? -step_length : step_length;
+
+    Ray_cu r;
+    r.set_pos(v0);
+    float t = 0.f;
+
+    Vec3_cu  gfi    = gf0;
+    float    fi     = f0;
+    float    abs_f0 = fabsf(f0);
+    Point_cu vi     = v0;
+
+    for(unsigned short i = 0; i < nb_iter; ++i)
+    {
+
+        r.set_pos(v0);
+        if( raphson ){
+            float nm = gf0.norm_squared();
+            r.set_dir( gf0 );
+            t = dl * abs_f0 / nm;
+            //t = t < 0.001f ? dl : t;
+        } else {
+            #if 1
+                r.set_dir( gf0.normalized() );
+            #else
+                if( gf0.dot( c_dir ) > 0.f ) r.set_dir(  c_dir );
+                else                         r.set_dir( -c_dir );
+
+            #endif
+            t = dl;
+        }
+
+        vi = r(t);
+        fi = eval_potential(skel_id, vi, gfi) - ptl;
+
+        // STOP CASE 1 : Initial iso-surface reached
+        abs_f0 = fabsf(fi);
+        if(raphson && abs_f0 < EPSILON )
+        {
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            break;
+        }
+        else if( fi * f0 <= 0.f)
+        {
+            t = binary_search(skel_id, r, 0.f, t, gfi, ptl);
+
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            break;
+        }
+
+        // STOP CASE 2 : Gradient divergence
+        if( (gf0.normalized()).dot(gfi.normalized()) < gradient_threshold)
+        {
+            #if 0
+            t = binary_search_div(r, -step_length, t, .0,
+                                        gtmp, gradient_threshold);
+            #endif
+
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
+
+            smooth_factors[p] = smooth_strength;
+            break;
+        }
+
+        // STOP CASE 3 : Potential pit
+        if( ((fi - f0)*dl < 0.f) & potential_pit )
+        {
+            if(!final_pass) vert_to_fit[thread_idx] = -1;
+            smooth_factors[p] = smooth_strength;
+            break;
+        }
+
+        v0  = vi;
+        f0  = fi;
+        gf0 = gfi;
+
+        if(gf0.norm_squared() < (0.001f*0.001f)) break;
+    }
+
+    const Point_cu res = r(t);
+    out_gradient[p] = gfi;
+    out_verts[p] = res;
 }
 
 }
