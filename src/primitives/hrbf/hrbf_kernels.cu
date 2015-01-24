@@ -19,7 +19,6 @@
 #include "hrbf_kernels.hpp"
 
 #include "hrbf_env.hpp"
-#include "conversions.hpp"
 
 #include <iostream>
 

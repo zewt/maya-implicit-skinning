@@ -22,7 +22,6 @@
 #include "macros.hpp"
 #include "vec3_cu.hpp"
 #include "distance_field.hpp"
-#include "conversions.hpp"
 #include "std_utils.hpp"
 #include "skeleton.hpp"
 
@@ -141,7 +140,7 @@ void Animesh::copy_vertices(const std::vector<Vec3_cu> &vertices)
     Host::Array<Point_cu > input_vertices(nb_vert);
 
     for(int i = 0; i < nb_vert; i++)
-        input_vertices[i] = Convs::to_point(vertices[i]);
+        input_vertices[i] = vertices[i].to_point();
 
     d_input_vertices.copy_from(input_vertices);
 }
@@ -153,7 +152,7 @@ void Animesh::copy_mesh_data(const Mesh& a_mesh)
     Host::Array<Point_cu > input_vertices(nb_vert);
     for(int i = 0; i < nb_vert; i++)
     {
-        Point_cu  pos = Convs::to_point( a_mesh.get_vertex(i) );
+        Point_cu  pos = a_mesh.get_vertex(i).to_point();
         input_vertices[i] = pos;
     }
 
@@ -192,8 +191,8 @@ void Animesh::compute_mvc()
     Host::Array<float> edge_mvc    (_mesh->get_nb_edges());
     for(int i = 0; i < _mesh->get_nb_vertices(); i++)
     {
-        Point_cu pos = Convs::to_point( _mesh->get_vertex(i)      );
-        Vec3_cu  nor = Convs::to_point( _mesh->get_mean_normal(i) ); // FIXME : should be the gradient
+        Point_cu pos = _mesh->get_vertex(i).to_point();
+        Vec3_cu  nor = _mesh->get_mean_normal(i).to_point(); // FIXME : should be the gradient
 
         Mat3_cu frame = Mat3_cu::coordinate_system( nor ).transpose();
         float sum = 0.f;
@@ -215,7 +214,7 @@ void Animesh::compute_mvc()
                 int id_prev = _mesh->get_edge( (n-1) <  dep  ? end-1 : n-1 );
 
                 // compute edge length
-                Point_cu  curr = Convs::to_point( _mesh->get_vertex(id_curr) );
+                Point_cu  curr = _mesh->get_vertex(id_curr).to_point();
                 Vec3_cu e_curr = (curr - pos);
                 edge_lengths[n] = e_curr.norm();
 
@@ -224,8 +223,8 @@ void Animesh::compute_mvc()
                 // tangent plane
                 {
                     // Project on tangent plane
-                    Vec3_cu e_next = Convs::to_point( _mesh->get_vertex(id_next) ) - pos;
-                    Vec3_cu e_prev = Convs::to_point( _mesh->get_vertex(id_prev) ) - pos;
+                    Vec3_cu e_next = _mesh->get_vertex(id_next).to_point() - pos;
+                    Vec3_cu e_prev = _mesh->get_vertex(id_prev).to_point() - pos;
 
                     e_curr = frame * e_curr;
                     e_next = frame * e_next;

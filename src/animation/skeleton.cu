@@ -27,7 +27,6 @@
 #include "precomputed_prim.hpp"
 #include "hrbf_kernels.hpp"
 #include "hrbf_env.hpp"
-#include "conversions.hpp"
 #include "std_utils.hpp"
 #include "cuda_utils.hpp"
 

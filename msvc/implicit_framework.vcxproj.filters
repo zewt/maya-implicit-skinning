@@ -270,9 +270,6 @@
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp">
       <Filter>primitives\precomputed_prim</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utils\conversions.hpp">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\utils\std_utils.hpp">
       <Filter>utils</Filter>
     </ClInclude>

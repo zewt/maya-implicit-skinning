@@ -18,7 +18,6 @@
  */
 
 #include "sample_set.hpp"
-#include "conversions.hpp"
 #include "skeleton.hpp"
 #include "animesh_hrbf_heuristic.hpp"
 
@@ -194,10 +193,10 @@ void SampleSet::SampleSet::transform_samples(const std::vector<Transfo> &transfo
 
         for(unsigned j = 0; j < _samples[bone_id].nodes.size(); j++)
         {
-            Point_cu  p = Convs::to_point(_samples[bone_id].nodes[j]);
+            Point_cu  p = _samples[bone_id].nodes[j].to_point();
             Vec3_cu n = _samples[bone_id].n_nodes[j];
 
-            Vec3_cu pos = Convs::to_vector(tr * p);
+            Vec3_cu pos = (tr * p).to_vector();
             Vec3_cu nor = tr * n;
             _samples[bone_id].nodes  [j] = pos;
             _samples[bone_id].n_nodes[j] = nor;

@@ -295,7 +295,6 @@
     <ClInclude Include="..\src\primitives\precomputed_prim.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
     <ClInclude Include="..\src\utils\class_saver.hpp" />
-    <ClInclude Include="..\src\utils\conversions.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_compiler_interop.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_current_device.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_utils.hpp" />

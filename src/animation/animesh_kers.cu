@@ -18,7 +18,6 @@
  */
 #include "animesh_kers.hpp"
 
-#include "conversions.hpp"
 #include "cuda_current_device.hpp"
 #include "std_utils.hpp"
 #include "skeleton_env_evaluator.hpp"
@@ -67,9 +66,9 @@ void clean_unpacked_normals(Device::Array<Vec3_cu> unpacked_normals)
 /// Compute the normal of triangle pi
 __device__ Vec3_cu
 compute_normal_tri(const Mesh::PrimIdx& pi, const Vec3_cu* prim_vertices) {
-    const Point_cu va = Convs::to_point(prim_vertices[pi.a]);
-    const Point_cu vb = Convs::to_point(prim_vertices[pi.b]);
-    const Point_cu vc = Convs::to_point(prim_vertices[pi.c]);
+    const Point_cu va = prim_vertices[pi.a].to_point();
+    const Point_cu vb = prim_vertices[pi.b].to_point();
+    const Point_cu vc = prim_vertices[pi.c].to_point();
     return ((vb - va).cross(vc - va)).normalized();
 }
 
@@ -183,9 +182,9 @@ compute_tangent_tri(const Mesh::PrimIdx& pi,
                     const Vec3_cu* prim_vertices,
                     const float* tex_coords)
 {
-    const Point_cu va = Convs::to_point(prim_vertices[pi.a]);
-    const Point_cu vb = Convs::to_point(prim_vertices[pi.b]);
-    const Point_cu vc = Convs::to_point(prim_vertices[pi.c]);
+    const Point_cu va = prim_vertices[pi.a].to_point();
+    const Point_cu vb = prim_vertices[pi.b].to_point();
+    const Point_cu vc = prim_vertices[pi.c].to_point();
 
     float2 st1 = { tex_coords[upi.b*2    ] - tex_coords[upi.a*2    ],
                    tex_coords[upi.b*2 + 1] - tex_coords[upi.a*2 + 1]};
@@ -255,7 +254,7 @@ void conservative_smooth_kernel(Vec3_cu* in_vertices,
         cog = cog * (1.f/sum);
 
         // this force the smoothing to be only tangential :
-        const Vec3_cu cog_proj = n.proj_on_plane(Convs::to_point(in_vert), Convs::to_point(cog));
+        const Vec3_cu cog_proj = n.proj_on_plane(in_vert.to_point(), cog.to_point());
         // this is more like a conservative laplacian smoothing
         //const Vec3_cu cog_proj = cog;
 

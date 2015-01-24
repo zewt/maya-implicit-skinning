@@ -3,7 +3,6 @@
 #include "timer.hpp"
 #include "cuda_current_device.hpp"
 #include "skeleton_env_evaluator.hpp"
-#include "conversions.hpp"
 
 namespace MarchingCubes
 {
@@ -180,7 +179,7 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
         bb.pmin = bb.pmin - box_size * 0.2;
         bb.pmax = bb.pmax + box_size * 0.2;
 
-        Point_cu delta = Convs::to_point((obbox._bb.pmax - obbox._bb.pmin) / gridRes);
+        Point_cu delta = (obbox._bb.pmax - obbox._bb.pmin).to_point() / gridRes;
 
         // Calculate the iso and normal at each grid position.
         CudaManagedArray<float> isoBuffer(gridRes*gridRes*gridRes);

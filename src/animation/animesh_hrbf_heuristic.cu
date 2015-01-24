@@ -22,7 +22,6 @@
 // -----------------------------------------------------------------------------
 
 #include "timer.hpp"
-#include "conversions.hpp"
 #include "utils_sampling.hpp"
 #include "skeleton.hpp"
 #include "hrbf_env.hpp"
@@ -102,7 +101,7 @@ void HRBF_sampling::clamp_samples(std::vector<int>& vert_ids_,
 
     for(unsigned id = 0; id < verts_.size(); id++)
     {
-        const Point_cu vert = Convs::to_point(verts_[id]);
+        const Point_cu vert = verts_[id].to_point();
         const float dist_proj = b->dist_proj_to(vert);
 
         Vec3_cu dir_proj = vert - (b->org() + b->dir().normalized() * dist_proj);
@@ -147,7 +146,7 @@ void Adhoc_sampling::sample(std::vector<Vec3_cu>& out_verts,
 
     for(unsigned id = 0; id < in_verts.size(); id++)
     {
-        Point_cu vert = Convs::to_point(in_verts[id]);
+        Point_cu vert = in_verts[id].to_point();
         float dist_proj = b->dist_proj_to(vert);
 
         Vec3_cu dir_proj = vert - (b->org() + b->dir().normalized() * dist_proj);
@@ -160,7 +159,7 @@ void Adhoc_sampling::sample(std::vector<Vec3_cu>& out_verts,
             float dist = std::numeric_limits<float>::infinity();
             for(unsigned j = 0; j < in_verts.size(); j++)
             {
-                float norm = (Convs::to_vector(vert) - in_verts[j]).norm();
+                float norm = (vert.to_vector() - in_verts[j]).norm();
                 if( (unsigned)id != j && !done[j] && norm < dist)
                     dist = norm;
             }
