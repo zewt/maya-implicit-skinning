@@ -319,7 +319,7 @@ void pack(const int* prefix_sum, const int* src, int* dst, const int nb_vert)
 }
 
 int Animesh::pack_vert_to_fit_gpu(
-        Cuda_utils::Device::Array<int>& d_vert_to_fit,
+        const Cuda_utils::Device::Array<int>& d_vert_to_fit,
         Cuda_utils::Device::Array<int>& buff,
         Cuda_utils::Device::Array<int>& packed_array,
         int nb_vert_to_fit)
@@ -329,6 +329,7 @@ int Animesh::pack_vert_to_fit_gpu(
     assert(buff.size()          >= d_vert_to_fit.size() + 1 );
     assert(packed_array.size()  >= d_vert_to_fit.size()     );
 
+    // Set buff[n] to true if d_vert_to_fit[n] is valid, or false if it's -1.
     const int block_s = 16;
     const int grid_s  = (nb_vert_to_fit + block_s - 1) / block_s;
     transform_vert_to_fit<<<grid_s, block_s >>>(d_vert_to_fit.ptr(), buff.ptr()+1, nb_vert_to_fit);
@@ -342,8 +343,6 @@ int Animesh::pack_vert_to_fit_gpu(
 
     pack<<<grid_s, block_s >>>(buff.ptr(), d_vert_to_fit.ptr(), packed_array.ptr(), nb_vert_to_fit);
     CUDA_CHECK_ERRORS();
-
-    //Cuda_utils::mem_cpy_dtd(d_vert_to_fit.ptr(), packed_array.ptr(), new_nb_vert_to_fit);
 
     return new_nb_vert_to_fit;
 }

@@ -156,20 +156,14 @@ private:
     /// diffuse values over the mesh on GPU
     void diffuse_attr(int nb_iter, float strength, float* attr);
 
-    /// Pack negative index in 'd_vert_to_fit' (done on gpu)
-    /// @param d_vert_to_fit list of vertices to fit negative indices are to be
-    /// eliminated and indices regrouped to the begining of this array
-    /// @param buff_prefix_sum intermediate array filled with the prefix sum of
-    /// 'd_vert_to_fit' where negative indices are considered as zeros positives
-    /// as ones. buff_prefix_sum.size() == 1+d_vert_to_fit.size()
-    /// @param packed_vert_to_fit result of the packing of 'd_vert_to_fit'.
-    /// packed_vert_to_fit contains the positive indices regrouped at its
-    /// beginning. packed_vert_to_fit.size() == d_vert_to_fit.size()
-    /// @return the number of vertices to fit (i.e number of index >= 0)
-    /// its the size of packed_vert_to_fit which holds the positive indices of
-    /// d_vert_to_fit
+    // Given an array [2,5,-1,-1,3,4] and nb_vert_to_fit == 6, set packed_vert_to_fit
+    // to a packed list removing negative indexes, resulting in [2,5,3,4].  Return the
+    // number of indexes in the result.
+    //
+    // buff_prefix_sum is a scratch buffer that must be at least one element larger
+    // than d_vert_to_fit.
     int pack_vert_to_fit_gpu(
-            Cuda_utils::Device::Array<int>& d_vert_to_fit,
+            const Cuda_utils::Device::Array<int>& d_vert_to_fit,
             Cuda_utils::Device::Array<int>& buff_prefix_sum,
             Cuda_utils::Device::Array<int>& packed_vert_to_fit,
             int nb_vert_to_fit);
