@@ -207,7 +207,7 @@ compute_tangent_tri(const Mesh::PrimIdx& pi,
 // -----------------------------------------------------------------------------
 
 __global__
-void conservative_smooth_kernel(Vec3_cu* in_vertices,
+void conservative_smooth_kernel(const Vec3_cu* in_vertices,
                                 Vec3_cu* out_verts,
                                 const Vec3_cu* normals,
                                 const int* edge_list,

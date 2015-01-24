@@ -94,7 +94,7 @@ void Animesh::tangential_smooth(float* factors,
     const int grid_size = (nb_threads + block_size - 1) / block_size;
     Vec3_cu* d_vertices_a = d_vertices;
     Vec3_cu* d_vertices_b = d_vertices_prealloc;
-    Vec3_cu* normals   = (Vec3_cu*)d_normals;
+    Vec3_cu* normals   = d_normals;
 
     compute_normals(d_vertices, d_normals);
 
@@ -139,8 +139,8 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
 {
     if(nb_iter == 0) return;
 
-    Vec3_cu* buff  = (Vec3_cu*)d_vert_buffer.ptr();
-    Vec3_cu* buff2 = (Vec3_cu*)d_vert_buffer_2.ptr();
+    Vec3_cu* buff  = d_vert_buffer.ptr();
+    Vec3_cu* buff2 = d_vert_buffer_2.ptr();
 
     switch(mesh_smoothing)
     {
@@ -152,7 +152,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
     case EAnimesh::CONSERVATIVE:
         Animesh_kers::conservative_smooth(output_vertices,
                                           buff,
-                                          (Vec3_cu*)d_gradient.ptr(),
+                                          d_gradient.ptr(),
                                           d_edge_list,
                                           d_edge_list_offsets,
                                           d_edge_mvc,
@@ -173,10 +173,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
         const int block_size = 16;
         const int grid_size  = (nb_vert + block_size - 1) / block_size;
 
-        Animesh_kers::copy_arrays<<<grid_size, block_size >>>
-                 (output_vertices,
-                  (Vec3_cu*)d_vert_buffer.ptr(),
-                  nb_vert);
+        Animesh_kers::copy_arrays<<<grid_size, block_size >>>(output_vertices, d_vert_buffer.ptr(), nb_vert);
 
         Animesh_kers::hc_laplacian_smooth(d_vert_buffer,
                                           output_vertices,
@@ -206,7 +203,7 @@ void Animesh::conservative_smooth(Vec3_cu* output_vertices,
 {
     Animesh_kers::conservative_smooth(output_vertices,
                                       buff,
-                                      (Vec3_cu*)d_gradient.ptr(),
+                                      d_gradient.ptr(),
                                       d_edge_list,
                                       d_edge_list_offsets,
                                       d_edge_mvc,
