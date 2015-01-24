@@ -251,16 +251,17 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
 
         if(points.length() == mesh.get()->get_nb_vertices())
         {
-            // Set the deformed vertex data.
-            vector<Vec3_cu> input_verts;
-            input_verts.reserve(points.length());
+            // Set the deformed vertex data.  Input normals are only used during sampling,
+            // not during deformation, so we don't need to update them here.
+            vector<Vec3_cu> inputVerts;
+            inputVerts.reserve(points.length());
             for(int i = 0; i < (int) points.length(); ++i)
             {
                 MPoint point = points[i] * worldMatrix;
-                input_verts.push_back(Vec3_cu((float) point.x, (float) point.y, (float) point.z));
+                inputVerts.push_back(Vec3_cu((float) point.x, (float) point.y, (float) point.z));
             }
-        
-            animMesh->copy_vertices(input_verts);
+
+            animMesh->copy_vertices(inputVerts);
 
             return MStatus::kSuccess;
         }
