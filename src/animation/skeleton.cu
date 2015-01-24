@@ -34,8 +34,6 @@ namespace { __device__ void fix_debug() { } }
 
 using namespace Cuda_utils;
 
-uint64_t Skeleton::_next_unique_id = 5000;
-
 void Skeleton::init_skel_env(bool single_bone)
 {
     std::vector<const Bone*> bones;
@@ -58,8 +56,6 @@ void Skeleton::init_skel_env(bool single_bone)
 
 Skeleton::Skeleton(std::vector<std::shared_ptr<const Bone> > bones, std::vector<Bone::Id> parents, bool single_bone)
 {
-    _unique_id = _next_unique_id++;
-
     std::map<int,Bone::Id> loaderIdxToBoneId;
     std::map<Bone::Id,int> boneIdToLoaderIdx;
 
@@ -160,30 +156,6 @@ void Skeleton::update_bones_data()
 {
     Skeleton_env::update_bones_data(_skel_id);
 }
-
-/*
-  // TODO: to be deleted
-void Skeleton::update_hrbf_id_to_bone_id()
-{
-    int res = 0;
-    for(int i = 0; i < (int) _joints.size(); i++){
-        if(bone_type(i) == EBone::HRBF){
-            int hrbf_id = _anim_bones[i]->get_hrbf().get_id();
-            res = std::max(hrbf_id , res);
-        }
-    }
-
-    _hrbf_id_to_bone_id.clear();
-    _hrbf_id_to_bone_id.resize(res+1);
-
-    for(int i = 0; i < (int) _joints.size(); i++){
-        if(bone_type(i) == EBone::HRBF){
-            int hrbf_id = _anim_bones[i]->get_hrbf().get_id();
-            _hrbf_id_to_bone_id[hrbf_id] = i;
-        }
-    }
-}
-*/
 
 Skeleton_env::DBone_id Skeleton::get_bone_didx(Bone::Id i) const {
     return Skeleton_env::bone_hidx_to_didx(_skel_id, i);

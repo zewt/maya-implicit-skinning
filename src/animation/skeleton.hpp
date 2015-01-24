@@ -183,10 +183,6 @@ struct Skeleton {
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }
 
-  // Return a unique ID.  This value is unique among all Skeleton objects for the
-  // lifetime of the application.
-  uint64_t get_unique_id() const { return _unique_id; }
-
   // This must be called when a Bone's transform changes.
   void update_bones_data();
 
@@ -194,10 +190,6 @@ private:
 
   /// Create and initilize a skeleton in the environment Skeleton_env
   void init_skel_env(bool single_bone);
-
-  /// updates 'hrbf_id_to_bone_id' attributes according to the bone array
-  // TODO: to be deleted
-//  void update_hrbf_id_to_bone_id();
 
   std::map<Bone::Id, Skeleton_env::Joint_data> get_joints_data() const;
 
@@ -210,13 +202,6 @@ private:
 
   // Maps from bone IDs to joints:
   std::map<Bone::Id, SkeletonJoint> _joints;
-
-  static uint64_t _next_unique_id;
-  uint64_t _unique_id;
-
-  /// hrbf_id_to_bone_id[hrbf_id] = bone_id
-  // TODO: to be deleted
-  //std::vector<int> _hrbf_id_to_bone_id;
 };
 
 #endif // SKELETON_HPP__
