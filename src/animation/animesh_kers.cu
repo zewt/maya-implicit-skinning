@@ -29,8 +29,8 @@
 
 #include <math_constants.h>
 
-// Max number of steps for the vertices fit with the dichotomie
-#define DICHOTOMIE (20)
+// Max number of binary search steps
+#define BINARY_SEARCH_STEPS (20)
 #define EPSILON 0.0001f
 #define ENABLE_COLOR
 #define ENABLE_MARCH
@@ -731,7 +731,7 @@ void compute_base_potential(Skeleton_env::Skel_id skel_id,
 // -----------------------------------------------------------------------------
 
 __device__
-float dichotomic_search(Skeleton_env::Skel_id skel_id,
+float binary_search(Skeleton_env::Skel_id skel_id,
                         const Ray_cu&r,
                         float t0, float t1,
                         Vec3_cu& grad,
@@ -747,7 +747,7 @@ float dichotomic_search(Skeleton_env::Skel_id skel_id,
     }
 
     Point_cu p;
-    for(unsigned short i = 0 ; i < DICHOTOMIE; ++i)
+    for(unsigned short i = 0 ; i < BINARY_SEARCH_STEPS; ++i)
     {
         t = (t0 + t1) * 0.5f;
         p = r(t);
@@ -768,7 +768,7 @@ float dichotomic_search(Skeleton_env::Skel_id skel_id,
 
 /// Search for the gradient divergence section
 __device__
-float dichotomic_search_div(Skeleton_env::Skel_id skel_id,
+float binary_search_div(Skeleton_env::Skel_id skel_id,
                             const Ray_cu&r,
                             float t0, float t1,
                             Vec3_cu& grad1,
@@ -780,7 +780,7 @@ float dichotomic_search_div(Skeleton_env::Skel_id skel_id,
     float f = eval_potential(skel_id, r(t0), grad0);
 
     Point_cu p;
-    for(unsigned short i = 0; i < DICHOTOMIE; ++i)
+    for(unsigned short i = 0; i < BINARY_SEARCH_STEPS; ++i)
     {
         t = (t0 + t1) * 0.5f;
         p = r(t);
@@ -953,7 +953,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             }
             else if( fi * f0 <= 0.f)
             {
-                t = dichotomic_search(skel_id, r, 0.f, t, gfi, ptl);
+                t = binary_search(skel_id, r, 0.f, t, gfi, ptl);
 
                 if(!final_pass) vert_to_fit[thread_idx] = -1;
                 break;
@@ -963,7 +963,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             if( (gf0.normalized()).dot(gfi.normalized()) < gradient_threshold)
             {
                 #if 0
-                t = dichotomic_search_div(r, -step_length, t, .0,
+                t = binary_search_div(r, -step_length, t, .0,
                                           gtmp, gradient_threshold);
                 #endif
 

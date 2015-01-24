@@ -27,14 +27,14 @@ namespace { __device__ void fix_debug() { } }
 // Bone CLASS ==================================================================
 
 // If defined enable bbox constructions visualitions with opengl
-// (white points are dichotomic steps, colored points are newton iterations)
+// (white points are binary search steps, colored points are newton iterations)
 //#define GL_DEBUG_BBOX
 
 #include "hrbf_env.hpp"
 #include "hermiteRBF.hpp"
 #include "hermiteRBF.inl"
 
-float dichotomic_search(const Ray_cu& r,
+float binary_search(const Ray_cu& r,
                         float t0, float t1,
                         float iso,
                         const HermiteRBF& hrbf,
@@ -124,7 +124,7 @@ static Point_cu push_point(const Point_cu& start,
         if(pot > iso)
         {
             Ray_cu r( prev, step);
-            float t = dichotomic_search(r, 0.f, (res-prev).norm(), iso, hrbf);
+            float t = binary_search(r, 0.f, (res-prev).norm(), iso, hrbf);
             res = r( t );
             break;
         }
