@@ -17,6 +17,7 @@
 #include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnMatrixAttribute.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MFnEnumAttribute.h>
 
 #include <maya/MFnPluginData.h>
 #include <maya/MTypeId.h> 
@@ -86,6 +87,8 @@ MObject ImplicitSurface::initialDir;
 MObject ImplicitSurface::sampleSetUpdateAttr;
 MObject ImplicitSurface::meshGeometryUpdateAttr;
 MObject ImplicitSurface::worldImplicit;
+MObject ImplicitSurface::blendMode;
+MObject ImplicitSurface::bulgeStrength;
 
 DagHelpers::MayaDependencies ImplicitSurface::dependencies;
 
@@ -97,6 +100,7 @@ MStatus ImplicitSurface::initialize()
     MFnNumericAttribute numAttr;
     MFnCompoundAttribute cmpAttr;
     MFnTypedAttribute typedAttr;
+    MFnEnumAttribute enumAttr;
 
     samplePointAttr = numAttr.create("point", "p", MFnNumericData::Type::k3Float, 0, &status);
     numAttr.setArray(true);
@@ -124,6 +128,15 @@ MStatus ImplicitSurface::initialize()
     addAttribute(meshGeometryUpdateAttr);
     dependencies.add(ImplicitSurface::sampleSetUpdateAttr, ImplicitSurface::meshGeometryUpdateAttr);
 
+    blendMode = enumAttr.create("blendMode", "blendMode", 0, &status);
+    enumAttr.addField("Max", 0);
+    enumAttr.addField("Bulge", 1);
+    enumAttr.addField("Circle", 2);
+    addAttribute(blendMode);
+
+    bulgeStrength = numAttr.create("bulgeStrength", "bulgeStrength", MFnNumericData::Type::kFloat, 0.7, &status);
+    addAttribute(bulgeStrength);
+
     // XXX: we want to allow connections but never want to store a value; does setStorable prevent
     // all storage or only data
     worldImplicit = typedAttr.create("worldImplicit", "worldImplicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
@@ -134,6 +147,8 @@ MStatus ImplicitSurface::initialize()
     status = typedAttr.setWorldSpace(true);
     addAttribute(worldImplicit);
 
+    dependencies.add(ImplicitSurface::blendMode, ImplicitSurface::worldImplicit);
+    dependencies.add(ImplicitSurface::bulgeStrength, ImplicitSurface::worldImplicit);
     dependencies.add(ImplicitSurface::sampleSetUpdateAttr, ImplicitSurface::worldImplicit);
 
     initialDir = numAttr.create("initialDir", "initialDir", MFnNumericData::Type::k3Float, 0, &status);
@@ -366,6 +381,24 @@ MStatus ImplicitSurface::load_world_implicit(const MPlug &plug, MDataBlock &data
     // that we're actually using the ImplicitSurface::initialDir dependency.
     dataBlock.inputValue(ImplicitSurface::initialDir, &status);
     if(status != MS::kSuccess) return status;
+
+    int smoothMode = DagHelpers::readHandle<short>(dataBlock, ImplicitSurface::blendMode, &status);
+    if(status != MS::kSuccess) return status;
+
+    EJoint::Joint_t jointType = EJoint::Joint_t::GC_ARC_CIRCLE_TWEAK;
+
+    // These values must match the values in initialize().
+    switch(smoothMode)
+    {
+    case 0: jointType = EJoint::Joint_t::MAX; break;
+    case 1: jointType = EJoint::Joint_t::BULGE; break;
+    case 2: jointType = EJoint::Joint_t::GC_ARC_CIRCLE_TWEAK; break;
+    }
+    boneSkeleton->set_joint_blending(bone->get_bone_id(), jointType);
+
+    float bulgeStrength = DagHelpers::readHandle<float>(dataBlock, ImplicitSurface::bulgeStrength, &status);
+    if(status != MS::kSuccess) return status;
+    boneSkeleton->set_joint_bulge_mag(bone->get_bone_id(), bulgeStrength);
 
     // Set our orientation to world space.
     set_world_space(worldMatrixTransfo);

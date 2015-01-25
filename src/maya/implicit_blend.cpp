@@ -298,11 +298,56 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
     return MStatus::kSuccess;
 }
 
+// Load the parameters associated with our input skeletons.  This is done on
+// every update.
+MStatus ImplicitBlend::update_skeleton_params(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+
+    MArrayDataHandle surfacesHandle = dataBlock.inputArrayValue(ImplicitBlend::surfaces, &status);
+    if(status != MS::kSuccess) return status;
+
+    // Propagate each source bone's blending properties to our skeleton.  These are set
+    // per-bone, but are stored on the skeleton.
+    for(int i = 0; i < (int) surfacesHandle.elementCount(); ++i)
+    {
+        status = surfacesHandle.jumpToElement(i);
+        if(status != MS::kSuccess) return status;
+
+        int logicalIndex = surfacesHandle.elementIndex(&status);
+        if(status != MS::kSuccess) return status;
+
+        MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
+        if(status != MS::kSuccess) return status;
+
+        ImplicitSurfaceData *implicitSurfaceData = (ImplicitSurfaceData *) implicitHandle.asPluginData();
+        const Skeleton *skel = implicitSurfaceData->getSkeleton().get();
+
+        for(Bone::Id boneId: skel->get_bone_ids())
+        {
+            const Bone *srcBone = skel->get_bone(boneId).get();
+
+            EJoint::Joint_t blending = skel->joint_blending(boneId);
+            skeleton->set_joint_blending(boneId, blending);
+
+            float bulgeMagnitude = skel->get_joints_bulge_magnitude(boneId);
+            skeleton->set_joint_bulge_mag(boneId, bulgeMagnitude);
+
+            IBL::Ctrl_setup controller = skel->get_joint_controller(boneId);
+            skeleton->set_joint_controller(boneId, controller);
+        }
+    }
+
+    return MStatus::kSuccess;
+}
+
 MStatus ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
     status = update_skeleton(dataBlock);
+    if(status != MS::kSuccess) return status;
+    status = update_skeleton_params(dataBlock);
     if(status != MS::kSuccess) return status;
 
     if(skeleton.get() != NULL) {

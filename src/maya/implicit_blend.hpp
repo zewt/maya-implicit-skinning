@@ -50,6 +50,7 @@ private:
     MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
     MStatus load_mesh_geometry(MDataBlock &dataBlock);
     MStatus update_skeleton(MDataBlock &dataBlock);
+    MStatus update_skeleton_params(MDataBlock &dataBlock);
 
     std::shared_ptr<Skeleton> skeleton;
 

@@ -53,6 +53,12 @@ public:
     MStatus set_bone_direction(Vec3_cu dir);
 //    const Bone &get_bone() const { return bone; }
 
+    // The mode used to blend this joint with its children.
+    static MObject blendMode;
+
+    // The bulge strength, used only when blendMode is set to BULGE.
+    static MObject bulgeStrength;
+    
 private:
     // compute() implementations:
     MStatus load_sampleset(MDataBlock &dataBlock);
