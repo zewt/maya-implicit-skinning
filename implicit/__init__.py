@@ -4,19 +4,28 @@ import maya.mel as mel
 import maya.OpenMaya as om
 import maya.OpenMayaAnim as omanim
 
-def create_deformer(node):
+def find_skin_cluster(node):
     # Find the skinCluster for the selected node.
     history_nodes = mel.eval('listHistory -pdo true "%s"' % node)
-    skin_clusters = mel.eval('ls -type "skinCluster" %s' % ' '.join(history_nodes))
+    if not history_nodes:
+        return None
 
+    skin_clusters = mel.eval('ls -type "skinCluster" %s' % ' '.join(history_nodes))
     if not skin_clusters:
-        print 'Couldn\'t find the skinCluster for "%s".  Is the geometry skinned?'
-        return
+        return None
+
     if len(skin_clusters) > 1:
         # This isn't normally possible.
-        print '"%s" has more than one skinCluster.'
+        raise Exception('"%s" has more than one skinCluster.' % node)
+
+    return skin_clusters[0]
+
+def create_deformer(node):
+    # Find the skinCluster for the selected node.
+    skin_cluster = find_skin_cluster(node)
+    if not skin_cluster:
+        print 'Couldn\'t find the skinCluster for "%s".  Is the geometry skinned?' % node
         return
-    skin_cluster = skin_clusters[0]
 
     # Create implicit surfaces for each bone in the skin cluster, and an implicit
     # blend tying them together.  The implicit blend node will be returned.
