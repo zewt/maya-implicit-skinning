@@ -49,6 +49,7 @@ private:
     // compute() implementations:
     MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
     MStatus load_mesh_geometry(MDataBlock &dataBlock);
+    MStatus get_input_bones(MDataBlock &dataBlock, std::vector<shared_ptr<const Bone> > &bones, std::vector<Bone::Id> &parents) const;
     MStatus update_skeleton(MDataBlock &dataBlock);
     MStatus update_skeleton_params(MDataBlock &dataBlock);
 
@@ -56,7 +57,7 @@ private:
 
     // These are stored by load_world_implicit to tell if any values have changed since the
     // last update.
-    vector<shared_ptr<const Skeleton> > lastImplicitBones;
+    vector<shared_ptr<const Bone> > lastImplicitBones;
     vector<int> lastParents;
 
     // This is updated by meshGeometryUpdateAttr, and contains a mesh reprensentation of the

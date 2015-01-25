@@ -166,16 +166,20 @@ MStatus ImplicitBlend::load_mesh_geometry(MDataBlock &dataBlock)
     float iso = DagHelpers::readHandle<float>(dataBlock, ImplicitBlend::previewIso, &status);
     if(status != MS::kSuccess) return status;
 
+    meshGeometry = MeshGeom();
+
+    // If we have no skeleton, just clear the geometry.
     if(skeleton.get() == NULL)
         return MStatus::kSuccess;
 
-    meshGeometry = MeshGeom();
     MarchingCubes::compute_surface(meshGeometry, skeleton.get(), iso);
 
     return MStatus::kSuccess;
 }
 
-MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
+// Retrieve the list of input bones and their parents from our attributes.
+MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
+    std::vector<shared_ptr<const Bone> > &bones, std::vector<Bone::Id> &parents) const
 {
     MStatus status = MStatus::kSuccess;
 
@@ -195,7 +199,7 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
         if(status != MS::kSuccess) return status;
 
         implicitBones.resize(max(logicalIndex+1, (int) implicitBones.size()));
-        surfaceParents.resize(max(logicalIndex+1, (int) surfaceParents.size()));
+        surfaceParents.resize(max(logicalIndex+1, (int) surfaceParents.size()), -1);
 
         MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
         if(status != MS::kSuccess) return status;
@@ -212,12 +216,12 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
         surfaceParents[logicalIndex] = parentIdx;
     }
 
-    // If the actual bones and their parenting hasn't changed, we're already up to date.
-    if(implicitBones == lastImplicitBones && surfaceParents == lastParents)
-        return MStatus::kSuccess;
-
-    lastImplicitBones = implicitBones;
-    lastParents = surfaceParents;
+    // Check for out of bounds parent indexes.
+    for(int i = 0; i < surfaceParents.size(); ++i)
+    {
+        if(surfaceParents[i] < -1 || surfaceParents[i] >= (int) surfaceParents.size())
+            surfaceParents[i] = -1;
+    }
 
     // Get the hierarchy order of the inputs, so we can create parents before children.
     vector<int> hierarchyOrder;
@@ -228,6 +232,7 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 
         MString path = dagPath.partialPathName(&status);
         if(status != MS::kSuccess) return status;
+
         MGlobal::displayError("The ImplicitBlend node " + path + " contains cycles.");
         return MStatus::kSuccess;
     }
@@ -237,8 +242,6 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
     // if the input is another ImplicitBlend.  Add all bones in the input into our skeleton.
     // We can have the same bone more than once, if multiple skeletons give it to us, but a skeleton
     // can never have the same bone more than once.
-    std::vector<shared_ptr<const Bone> > bones;
-    std::vector<Bone::Id> parents;
 
     // firstBonePerSkeleton[n] is the index of the first bone (in bones) added for implicitBones[n].
     std::vector<int> firstBonePerSkeleton(surfaceParents.size(), -1);
@@ -246,7 +249,6 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
     {
         int idx = hierarchyOrder[i];
         shared_ptr<const Skeleton> subSkeleton = implicitBones[idx];
-        int surfaceParentIdx = surfaceParents[idx];
 
         int firstBoneIdx = -1;
 
@@ -259,7 +261,9 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
             boneIdToIdx[bone->get_bone_id()] = (int) bones.size();
             bones.push_back(bone);
         }
+        firstBonePerSkeleton[idx] = firstBoneIdx;
 
+        int surfaceParentIdx = surfaceParents[idx];
         for(Bone::Id boneId: subSkeleton->get_bone_ids())
         {
             int parentBoneIdx = -1;
@@ -282,9 +286,25 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 
             parents.push_back(parentBoneIdx);
         }
-
-        firstBonePerSkeleton[idx] = firstBoneIdx;
     }
+
+    return MStatus::kSuccess;
+}
+
+MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
+{
+    MStatus status = MStatus::kSuccess;
+
+    std::vector<shared_ptr<const Bone> > bones;
+    std::vector<Bone::Id> parents;
+    status = get_input_bones(dataBlock, bones, parents);
+
+    // If the actual bones and their parenting hasn't changed, we're already up to date.
+    if(bones == lastImplicitBones && parents == lastParents)
+        return MStatus::kSuccess;
+
+    lastImplicitBones = bones;
+    lastParents = parents;
 
     // Skeletons can't have zero bones, so don't create one if we have no data.
     if(bones.size() == 0) {
@@ -303,6 +323,9 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 MStatus ImplicitBlend::update_skeleton_params(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
+
+    if(skeleton.get() == NULL)
+        return MStatus::kSuccess;
 
     MArrayDataHandle surfacesHandle = dataBlock.inputArrayValue(ImplicitBlend::surfaces, &status);
     if(status != MS::kSuccess) return status;
