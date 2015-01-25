@@ -64,7 +64,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <Optimization>Disabled</Optimization>
@@ -107,7 +107,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -146,7 +146,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\precomputed_prim;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
@@ -295,7 +295,7 @@
     <ClInclude Include="..\src\primitives\hrbf\hrbf_wrapper.hpp" />
     <ClInclude Include="..\src\primitives\plane.hpp" />
     <ClInclude Include="..\src\primitives\precomputed_prim.hpp" />
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp" />
+    <ClInclude Include="..\src\primitives\precomputed_prim_constants.hpp" />
     <ClInclude Include="..\src\utils\class_saver.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_compiler_interop.hpp" />
     <ClInclude Include="..\src\utils\cuda_utils\cuda_current_device.hpp" />

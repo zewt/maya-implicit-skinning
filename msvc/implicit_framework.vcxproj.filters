@@ -261,9 +261,6 @@
     <ClInclude Include="..\src\primitives\hrbf\hrbf_kernels.hpp">
       <Filter>primitives\hrbf</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\primitives\precomputed_prim\precomputed_prim_constants.hpp">
-      <Filter>primitives\precomputed_prim</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\utils\std_utils.hpp">
       <Filter>utils</Filter>
     </ClInclude>
@@ -354,6 +351,9 @@
     <ClInclude Include="..\src\animation\animesh_base.hpp">
       <Filter>animation</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\primitives\precomputed_prim_constants.hpp">
+      <Filter>primitives</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="animation">
@@ -391,9 +391,6 @@
     </Filter>
     <Filter Include="primitives\hrbf">
       <UniqueIdentifier>{afd8c0ea-ba1a-4c56-9928-e9aefcd90f6c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="primitives\precomputed_prim">
-      <UniqueIdentifier>{e3573fbc-2166-4998-83ce-1ca866987da3}</UniqueIdentifier>
     </Filter>
     <Filter Include="utils">
       <UniqueIdentifier>{2d1558ff-6880-4630-ac4d-e05d492c179b}</UniqueIdentifier>
