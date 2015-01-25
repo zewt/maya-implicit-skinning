@@ -176,7 +176,7 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
     animMesh->deform_mesh();
 
     vector<Point_cu> result_verts;
-    animMesh->get_anim_vertices_aifo(result_verts);
+    animMesh->get_vertices(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
     MMatrix invMat = mat.inverse();
@@ -264,7 +264,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
                 inputVerts.push_back(Vec3_cu((float) point.x, (float) point.y, (float) point.z));
             }
 
-            animMesh->copy_vertices(inputVerts);
+            animMesh->set_vertices(inputVerts);
 
             return MStatus::kSuccess;
         }

@@ -71,10 +71,10 @@ public:
     void set_smoothing_weights_diffusion_iter(int nb_iter);
 
     // Get the current (possibly deformed) vertices, in their original order.
-    void get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert) const;
+    void get_vertices(std::vector<Point_cu>& anim_vert) const;
 
     // Copy the given vertices into the mesh.
-    void copy_vertices(const std::vector<Vec3_cu> &vertices);
+    void set_vertices(const std::vector<Vec3_cu> &vertices);
 
     // Return the number of vertices in the mesh.  Calls to copy_vertices must have the
     // same number of vertices.

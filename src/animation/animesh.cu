@@ -132,7 +132,16 @@ void Animesh::init_vert_to_fit()
 
 // -----------------------------------------------------------------------------
 
-void Animesh::copy_vertices(const std::vector<Vec3_cu> &vertices)
+void Animesh::get_vertices(std::vector<Point_cu>& anim_vert) const
+{
+    const int nb_vert = d_output_vertices.size();
+    Cuda_utils::HA_Point_cu h_out_verts(nb_vert);
+    h_out_verts.copy_from(d_output_vertices);
+
+    anim_vert.insert(anim_vert.end(), &h_out_verts[0], &h_out_verts[0] + nb_vert);
+}
+
+void Animesh::set_vertices(const std::vector<Vec3_cu> &vertices)
 {
     assert(vertices.size() == d_input_vertices.size());
     const int nb_vert = vertices.size();
@@ -284,17 +293,6 @@ void Animesh::diffuse_attr(int nb_iter, float strength, float *attr)
                             d_edge_list_offsets,
                             strength,
                             nb_iter);
-}
-
-// -----------------------------------------------------------------------------
-
-void Animesh::get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert)
-{
-    const int nb_vert = d_output_vertices.size();
-    Cuda_utils::HA_Point_cu h_out_verts(nb_vert);
-    h_out_verts.copy_from(d_output_vertices);
-
-    anim_vert.insert(anim_vert.end(), &h_out_verts[0], &h_out_verts[0] + nb_vert);
 }
 
 #include "cuda_utils_thrust.hpp"

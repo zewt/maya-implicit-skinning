@@ -79,15 +79,15 @@ public:
     /// @name Getter & Setters
     // -------------------------------------------------------------------------
 
-    /// Fill the vector as in the imported file order
-    void get_anim_vertices_aifo(std::vector<Point_cu>& anim_vert);
-
     // Return the number of vertices in the mesh.  Calls to copy_vertices must have the
     // same number of vertices.
     int get_nb_vertices() const { return d_input_vertices.size(); }
 
+    // Read the vertices.
+    void get_vertices(std::vector<Point_cu>& anim_vert) const;
+
     // Copy the given vertices into the mesh.
-    void copy_vertices(const std::vector<Vec3_cu> &vertices);
+    void set_vertices(const std::vector<Vec3_cu> &vertices);
 
     inline void set_smooth_factor(int i, float val){
         d_input_smooth_factors.set(i, val);

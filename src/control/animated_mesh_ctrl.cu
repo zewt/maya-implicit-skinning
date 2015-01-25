@@ -50,6 +50,6 @@ void Animated_mesh_ctrl::set_local_smoothing(bool state) { _animesh->set_local_s
 void Animated_mesh_ctrl::set_smooth_force_a (float alpha) { _animesh->set_smooth_force_a(alpha); }
 void Animated_mesh_ctrl::set_smooth_force_b (float beta) { _animesh->set_smooth_force_b(beta); }
 void Animated_mesh_ctrl::set_smoothing_weights_diffusion_iter(int nb_iter) { _animesh->set_smoothing_weights_diffusion_iter(nb_iter); }
-void Animated_mesh_ctrl::get_anim_vertices_aifo(std::vector<Point_cu>& out) const { _animesh->get_anim_vertices_aifo(out); }
-void Animated_mesh_ctrl::copy_vertices(const std::vector<Vec3_cu> &vertices) { _animesh->copy_vertices(vertices); }
+void Animated_mesh_ctrl::get_vertices(std::vector<Point_cu>& out) const { _animesh->get_vertices(out); }
+void Animated_mesh_ctrl::set_vertices(const std::vector<Vec3_cu> &vertices) { _animesh->set_vertices(vertices); }
 int Animated_mesh_ctrl::get_nb_vertices() const { return _animesh->get_nb_vertices(); }
