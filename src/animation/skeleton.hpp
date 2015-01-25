@@ -141,7 +141,7 @@ struct Skeleton {
       return result;
   }
 
-  IBL::Ctrl_setup get_joint_controller(Bone::Id i);
+  IBL::Ctrl_setup get_joint_controller(Bone::Id i) const;
 
   /// Get the list of children for the ith bone
   const std::vector<int>& get_sons(Bone::Id i) const { return _joints.at(i)._children;  }

@@ -145,7 +145,7 @@ void Skeleton::set_joint_bulge_mag(int i, float m)
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
-IBL::Ctrl_setup Skeleton::get_joint_controller(Bone::Id bone_id)
+IBL::Ctrl_setup Skeleton::get_joint_controller(Bone::Id bone_id) const
 {
     return _joints.at(bone_id)._controller;
 }
