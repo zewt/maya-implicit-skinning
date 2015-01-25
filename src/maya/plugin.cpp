@@ -247,7 +247,15 @@ namespace {
 
         Bone::Id parent;
 
+        // The DAG path to the influence this surface was created from.
         MDagPath dagPath;
+
+        // The DAG path to the node that this surface should be parented under.
+        // This may be different from the path to "parent".  When empty surfaces are
+        // removed, the parent is updated to point to the next parent up the hierarchy,
+        // but the Maya parent influence always remains the same, since the surface is
+        // still affected by the same joint.
+        MDagPath parentInfluence;
 
     private:
         BoneItem &operator=(BoneItem &rhs) { return *this; }
@@ -282,8 +290,17 @@ namespace {
             // Set up item.parent.
             int loader_idx = boneIdToLoaderIdx.at(bid);
             int loader_parent_idx = skel._parents[loader_idx];
-            if(loader_parent_idx != -1)
+            if(loader_parent_idx != -1) {
                 item.parent = loaderIdxToBoneId.at(loader_parent_idx);
+
+                // Store the DAG path that this node's parent is for.  This is the node that this
+                // surface will be parented under for transforms.
+                if(item.parent != -1)
+                {
+                    const BoneItem &parentItem = bones.at(item.parent);
+                    item.parentInfluence = skel.dagPaths[parentItem.influence_logical_index];
+                }
+            }
         }
 
         // Set up each bone.
@@ -408,6 +425,34 @@ namespace {
 
         return MS::kSuccess;
     }
+
+    // Remove items from loaderSkeleton that have no samples, reparenting children.
+    void removeEmptySurfaces(std::map<Bone::Id, BoneItem> &loaderSkeleton, const SampleSet::SampleSet &samples)
+    {
+        // Move the children of surfaces with no samples to its parent, so we don't have to
+        // create empty surfaces.
+        set<Bone::Id> emptySurfaces;
+        for(auto &it: loaderSkeleton)
+        {
+            Bone::Id boneId = it.first;
+            bool empty = samples._samples.find(boneId) == samples._samples.end() || samples._samples.at(boneId).nodes.empty();
+            if(!empty)
+                continue;
+            emptySurfaces.insert(boneId);
+
+            // Assign children of this surface to its parent.
+            Bone::Id newParent = it.second.parent;
+            for(auto &it2: loaderSkeleton)
+            {
+                if(it2.second.parent == boneId)
+                    it2.second.parent = newParent;
+            }
+        }
+
+        // Erase the empty nodes.
+        for(Bone::Id boneId: emptySurfaces)
+            loaderSkeleton.erase(boneId);
+    }
 }
 
 MStatus ImplicitCommand::init(MString skinClusterName)
@@ -458,6 +503,9 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     for(Bone::Id bone_id: skeleton->get_bone_ids())
         samples.choose_hrbf_samples(mesh.get(), skeleton.get(), vertToBoneInfo, sampleSettings, bone_id);
 
+    // Remove surfaces that didn't find any samples.
+    removeEmptySurfaces(loaderSkeleton, samples);
+
     std::map<Bone::Id,float> hrbf_radius;
     vertToBoneInfo.get_default_hrbf_radius(skeleton.get(), mesh.get(), hrbf_radius);
 
@@ -490,15 +538,6 @@ MStatus ImplicitCommand::init(MString skinClusterName)
             MString parentInfluenceName = parentInfluenceObjectPath.partialPathName();
             surfaceName = parentInfluenceName + "To" + surfaceName;
         }
-
-        // XXX: This happens for disconnected slots in the skinCluster.  Don't create surfaces
-        // for these.
-        if(surfaceName == "")
-            surfaceName = "unknown";
-
-        // Don't create a surface for a bone that has no samples.
-//        if(samples._samples.find(bone_id) == samples._samples.end())
-//            continue;
 
         // Name the shape "BoneImplicitShape", and the transform node around it "BoneImplicit".
         MObject transformNode;
@@ -558,6 +597,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // Parent this implicit surface's transform under the parent influence.  We may actually want
         // to group the surfaces together and use parent constraints, to avoid polluting the user's
         // bone hierarchy with shapes.
+        // XXX: store the DAG parent, since we change the "parent" when purging empty surfaces
         if(bone_item.parent != -1)
         {
             // The source bone has a parent.  If the parent is in the skeleton, we should have already
@@ -574,22 +614,23 @@ MStatus ImplicitCommand::init(MString skinClusterName)
                 parent_index.push_back(-1);
             }
 
-            const MDagPath &parentInfluenceObjectPath = parentItem.dagPath;
-            parentInfluenceObjectPath.node();
+            const MDagPath &parentInfluenceObjectPath = bone_item.parentInfluence;
+            if(!parentInfluenceObjectPath.node().isNull())
+            {
+                MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status);
+                if(status != MS::kSuccess) return status;
 
-            MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status);
-            if(status != MS::kSuccess) return status;
+                status = dagNode.addChild(transformNode);
+                if(status != MS::kSuccess) return status;
 
-            status = dagNode.addChild(transformNode);
-            if(status != MS::kSuccess) return status;
+                // The transform was previously transformed to the position of this influence.  We put the transform
+                // under the influence, it'll be double-transformed; set the transform to identity.
+                MFnTransform transform(transformNode, &status);
+                if(status != MS::kSuccess) return status;
 
-            // The transform was previously transformed to the position of this influence.  We put the transform
-            // under the influence, it'll be double-transformed; set the transform to identity.
-            MFnTransform transform(transformNode, &status);
-            if(status != MS::kSuccess) return status;
-
-            status = transform.set(MTransformationMatrix(MMatrix::identity));
-            if(status != MS::kSuccess) return status;
+                status = transform.set(MTransformationMatrix(MMatrix::identity));
+                if(status != MS::kSuccess) return status;
+            }
         }
         else
             parent_index.push_back(-1);
