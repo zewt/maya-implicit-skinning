@@ -223,7 +223,6 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
                        float smooth_strength)
 {
     if(nb_vert_to_fit == 0) return;
-    if(d_base_potential.size() != nb_vert_to_fit) return;
 
     assert(d_base_potential.ptr());
     assert(d_smooth_factors_conservative.ptr());
