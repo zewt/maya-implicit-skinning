@@ -67,7 +67,6 @@ public:
     void set_local_smoothing(bool state);
     void set_smooth_force_a (float alpha);
     void set_smooth_force_b (float beta);
-    void set_smooth_smear   (float val );
 
     void set_smoothing_weights_diffusion_iter(int nb_iter);
 

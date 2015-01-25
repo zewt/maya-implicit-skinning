@@ -46,7 +46,6 @@ Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     diffuse_smooth_weights_iter(6),
     smooth_force_a(0.5f),
     smooth_force_b(0.5f),
-    smooth_smear(0.f),
     d_input_smooth_factors(_mesh->get_nb_vertices()),
     d_smooth_factors_conservative(_mesh->get_nb_vertices(), 0.f),
     d_smooth_factors_laplacian(_mesh->get_nb_vertices()),

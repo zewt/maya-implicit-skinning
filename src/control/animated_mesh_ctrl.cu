@@ -49,7 +49,6 @@ void Animated_mesh_ctrl::smooth_humphrey() { _animesh->set_smoothing_type(EAnime
 void Animated_mesh_ctrl::set_local_smoothing(bool state) { _animesh->set_local_smoothing(state); }
 void Animated_mesh_ctrl::set_smooth_force_a (float alpha) { _animesh->set_smooth_force_a(alpha); }
 void Animated_mesh_ctrl::set_smooth_force_b (float beta) { _animesh->set_smooth_force_b(beta); }
-void Animated_mesh_ctrl::set_smooth_smear(float val ) { _animesh->set_smooth_smear(val); }
 void Animated_mesh_ctrl::set_smoothing_weights_diffusion_iter(int nb_iter) { _animesh->set_smoothing_weights_diffusion_iter(nb_iter); }
 void Animated_mesh_ctrl::get_anim_vertices_aifo(std::vector<Point_cu>& out) const { _animesh->get_anim_vertices_aifo(out); }
 void Animated_mesh_ctrl::copy_vertices(const std::vector<Vec3_cu> &vertices) { _animesh->copy_vertices(vertices); }

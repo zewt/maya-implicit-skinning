@@ -101,7 +101,6 @@ public:
     void set_local_smoothing(bool state  ) { do_local_smoothing = state; }
     void set_smooth_force_a (float alpha ) { smooth_force_a = alpha;     }
     void set_smooth_force_b (float beta  ) { smooth_force_b = beta;      }
-    void set_smooth_smear   (float v     ) { smooth_smear   = v;         }
 
     void set_smoothing_type (EAnimesh::Smooth_type type ) {
         mesh_smoothing = type;
@@ -209,7 +208,6 @@ private:
     int diffuse_smooth_weights_iter;
     float smooth_force_a; ///< must be between [0 1]
     float smooth_force_b; ///< must be between [0 1] only for humphrey smoothing
-    float smooth_smear;   ///< between [-1 1]
 
     /// Smoothing weights associated to each vertex
     Cuda_utils::Device::Array<float> d_input_smooth_factors;
