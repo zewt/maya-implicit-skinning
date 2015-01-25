@@ -85,7 +85,7 @@ MStatus ImplicitDeformer::initialize()
     
     implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
     if(status != MS::kSuccess) return status;
-    typedAttr.setHidden(true);
+    typedAttr.setReadable(false);
     addAttribute(implicit);
 
     // The base potential of the mesh.
