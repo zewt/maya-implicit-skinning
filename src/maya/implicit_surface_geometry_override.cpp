@@ -55,6 +55,8 @@ void ImplicitSurfaceGeometryOverride::updateRenderItems(const MDagPath &path, MH
     if(!shaderManager)
         return;
 
+    bool enable = !meshGeometry->vertices.empty();
+
     MHWRender::MRenderItem *wireframeItem = NULL;
     int index = list.indexOf("wireframe");
     if(index < 0)
@@ -77,12 +79,16 @@ void ImplicitSurfaceGeometryOverride::updateRenderItems(const MDagPath &path, MH
         wireframeItem = list.itemAt(index);
 
     if(wireframeItem)
-        wireframeItem->enable(true);
+        wireframeItem->enable(enable);
 }
 
 void ImplicitSurfaceGeometryOverride::populateGeometry(const MHWRender::MGeometryRequirements &requirements,
     const MHWRender::MRenderItemList &renderItems, MHWRender::MGeometry &data)
 {
+    // Calling indexBuffer->acquire(0) causes an error.  We work around this by disabling the
+    // render items if we have no data.
+    if(meshGeometry->vertices.empty())
+        return;
 
     // Copy the results of MarchingCubes into the output vertex and index buffers.
     {
@@ -118,8 +124,6 @@ void ImplicitSurfaceGeometryOverride::populateGeometry(const MHWRender::MGeometr
     {
         const MHWRender::MRenderItem *item = renderItems.itemAt(index);
         MHWRender::MIndexBuffer *indexBuffer = data.createIndexBuffer(MHWRender::MGeometry::kUnsignedInt32);
-
-        MHWRender::MIndexBufferDescriptor desc(MHWRender::MIndexBufferDescriptor::kVertexPoint, "", MHWRender::MGeometry::kPoints, 3);
 
         unsigned int *buf = (unsigned int*)indexBuffer->acquire((int) meshGeometry->vertices.size(), true);
         for(int i = 0; i < (int) meshGeometry->vertices.size(); i++)
