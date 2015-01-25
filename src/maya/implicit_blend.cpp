@@ -86,12 +86,12 @@ MStatus ImplicitBlend::initialize()
     typedAttr.setUsesArrayDataBuilder(true);
     typedAttr.setWritable(false);
     addAttribute(worldImplicit);
+    dependencies.add(ImplicitBlend::worldImplicit, ImplicitBlend::meshGeometryUpdateAttr);
 
     implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
     if(status != MS::kSuccess) return status;
     typedAttr.setReadable(false);
-    dependencies.add(implicit, worldImplicit);
-    dependencies.add(ImplicitBlend::worldImplicit, ImplicitBlend::meshGeometryUpdateAttr);
+    dependencies.add(ImplicitBlend::implicit, ImplicitBlend::worldImplicit);
     addAttribute(implicit);
 
     parentJoint = numAttr.create("parentIdx", "parentIdx", MFnNumericData::Type::kInt, -1, &status);

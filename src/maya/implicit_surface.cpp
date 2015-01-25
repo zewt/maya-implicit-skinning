@@ -137,11 +137,10 @@ MStatus ImplicitSurface::initialize()
     bulgeStrength = numAttr.create("bulgeStrength", "bulgeStrength", MFnNumericData::Type::kFloat, 0.7, &status);
     addAttribute(bulgeStrength);
 
-    // XXX: we want to allow connections but never want to store a value; does setStorable prevent
-    // all storage or only data
     worldImplicit = typedAttr.create("worldImplicit", "worldImplicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
     if(status != MS::kSuccess) return status;
     typedAttr.setWritable(false);
+    typedAttr.setStorable(false);
     typedAttr.setUsesArrayDataBuilder(true);
     typedAttr.setArray(true); // We don't actually want an array, but setWorldSpace only works with arrays
     status = typedAttr.setWorldSpace(true);
