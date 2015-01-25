@@ -28,6 +28,7 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnMatrixAttribute.h>
 #include <maya/MFnMatrixData.h>
+#include <maya/MFnTransform.h>
 
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnSkinCluster.h>
@@ -266,6 +267,50 @@ namespace DagHelpers
         if(*status != MS::kSuccess) return MObject();
 
         return dagPath.node();
+    }
+
+    MStatus lockTransforms(MObject node)
+    {
+        MStatus status = MS::kSuccess;
+
+        MFnDependencyNode depNode(node, &status);
+        if(status != MS::kSuccess) return status;
+
+        for(const char *attr: {"translate", "rotate", "scale"})
+        {
+            MPlug plug = depNode.findPlug(attr, &status);
+            if(status != MS::kSuccess) return status;
+
+            status = plug.setLocked(true);
+            if(status != MS::kSuccess) return status;
+        }
+
+        return MS::kSuccess;
+    }
+    
+    MStatus setParent(MObject parent, MObject child)
+    {
+        MStatus status = MS::kSuccess;
+
+        MFnDagNode dagNode(parent, &status);
+        if(status != MS::kSuccess) return status;
+
+        status = dagNode.addChild(child);
+        if(status != MS::kSuccess) return status;
+
+        return MS::kSuccess;
+    }
+
+    MObject createTransform(MString name, MStatus status)
+    {
+        MFnTransform transform;
+        MObject node = transform.create(MObject::kNullObj, &status);
+        if(status != MS::kSuccess) return MObject::kNullObj;
+        
+        transform.setName(name, false, &status);
+        if(status != MS::kSuccess) return MObject::kNullObj;
+
+        return node;
     }
 
     MStatus setMatrixPlug(MObject node, MObject attr, MMatrix matrix)

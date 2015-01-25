@@ -46,6 +46,9 @@ namespace DagHelpers
     MStatus getMatrixPlug(MObject node, MObject attr, MMatrix &matrix);
     MStatus setPlug(MPlug &plug, MMatrix value);
     MObject getShapeUnderNode(MObject node, MStatus *status);
+    MStatus lockTransforms(MObject node);
+    MStatus setParent(MObject parent, MObject child);
+    MObject createTransform(MString name, MStatus status);
 
     template<class T>
     T readHandle(MDataHandle handle, MStatus *status);

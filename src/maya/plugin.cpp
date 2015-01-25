@@ -509,14 +509,29 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     std::map<Bone::Id,float> hrbf_radius;
     vertToBoneInfo.get_default_hrbf_radius(skeleton.get(), mesh.get(), hrbf_radius);
 
+    // Create a group to store all of the nodes we'll create.
+    MObject mainGroup = DagHelpers::createTransform(skinClusterName + "Implicit", status);
+    if(status != MS::kSuccess) return status;
+
+    status = DagHelpers::lockTransforms(mainGroup);
+    if(status != MS::kSuccess) return status;
+
     // Create an ImplicitBlend to combine the surfaces that we're creating together.
-    ImplicitBlend *blend = createShape<ImplicitBlend>(skinClusterName + "ImplicitBlend", NULL, status);
+    MObject blendTransformNode;
+    ImplicitBlend *blend = createShape<ImplicitBlend>(skinClusterName + "ImplicitBlend", &blendTransformNode, status);
+    if(status != MS::kSuccess) return status;
+
+    status = DagHelpers::lockTransforms(blendTransformNode);
+    if(status != MS::kSuccess) return status;
+
+    status = DagHelpers::setParent(mainGroup, blendTransformNode);
     if(status != MS::kSuccess) return status;
 
     // The surfaces that we're creating, and their corresponding parents.
     vector<ImplicitSurface *> surfaces;
     vector<int> parent_index;
     map<Bone::Id, int> sourceBoneIdToIdx;
+    MFn::kSkinClusterFilter;
 
     // Create an ImplicitSurface for each bone that has samples.
     for(auto &it: loaderSkeleton)
@@ -528,18 +543,8 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // The path to the influence object this surface was created for:
         const MDagPath &influenceObjectPath = bone_item.dagPath;
 
-        // Figure out a name for the surface.  If we have a parent joint, this surface is the
-        // bone between the parent joint and this joint.  If we don't have a parent joint then
-        // we probably don't have any samples.
+        // Figure out a name for the surface.
         MString surfaceName = influenceObjectPath.partialPathName();
-        if(bone_item.parent != -1)
-        {
-            const MDagPath &parentInfluenceObjectPath = loaderSkeleton.at(bone_item.parent).dagPath;
-            MString parentInfluenceName = parentInfluenceObjectPath.partialPathName();
-            surfaceName = parentInfluenceName + "To" + surfaceName;
-        }
-
-        // Name the shape "BoneImplicitShape", and the transform node around it "BoneImplicit".
         MObject transformNode;
         ImplicitSurface *surface = createShape<ImplicitSurface>(surfaceName + "Implicit", &transformNode, status);
         if(status != MS::kSuccess) return status;
@@ -548,6 +553,9 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         sourceBoneIdToIdx[bone->get_bone_id()] = (int) surfaces.size();
 
         surfaces.push_back(surface);
+
+        status = DagHelpers::setParent(mainGroup, transformNode);
+        if(status != MS::kSuccess) return status;
 
         // This surface was created for a joint.  Get the transform for the joint associated
         // with this surface, and move the transform to the same place.  This positions the
@@ -562,6 +570,20 @@ MStatus ImplicitCommand::init(MString skinClusterName)
             if(status != MS::kSuccess) return status;
 
             status = transform.set(MTransformationMatrix(jointTransformMatrix));
+            if(status != MS::kSuccess) return status;
+
+            // Parent this implicit surface's transform under the parent influence.
+            const MDagPath &parentInfluenceObjectPath = bone_item.parentInfluence;
+            assert(!parentInfluenceObjectPath.node().isNull());
+
+            MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status);
+            if(status != MS::kSuccess) return status;
+
+            MString pathName = transform.fullPathName(&status);
+            MString parentPathName = parentInfluenceObjectPath.fullPathName(&status);
+            MString cmd("parentConstraint -mo \"" + parentPathName + "\" \"" + pathName + "\";");
+
+            status = MGlobal::executeCommand(cmd);
             if(status != MS::kSuccess) return status;
         }
 
@@ -594,10 +616,6 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         status = surface->save_sampleset(inputSample);
         if(status != MS::kSuccess) return status;
 
-        // Parent this implicit surface's transform under the parent influence.  We may actually want
-        // to group the surfaces together and use parent constraints, to avoid polluting the user's
-        // bone hierarchy with shapes.
-        // XXX: store the DAG parent, since we change the "parent" when purging empty surfaces
         if(bone_item.parent != -1)
         {
             // The source bone has a parent.  If the parent is in the skeleton, we should have already
@@ -612,24 +630,6 @@ MStatus ImplicitCommand::init(MString skinClusterName)
             else
             {
                 parent_index.push_back(-1);
-            }
-
-            const MDagPath &parentInfluenceObjectPath = bone_item.parentInfluence;
-            if(!parentInfluenceObjectPath.node().isNull())
-            {
-                MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status);
-                if(status != MS::kSuccess) return status;
-
-                status = dagNode.addChild(transformNode);
-                if(status != MS::kSuccess) return status;
-
-                // The transform was previously transformed to the position of this influence.  We put the transform
-                // under the influence, it'll be double-transformed; set the transform to identity.
-                MFnTransform transform(transformNode, &status);
-                if(status != MS::kSuccess) return status;
-
-                status = transform.set(MTransformationMatrix(MMatrix::identity));
-                if(status != MS::kSuccess) return status;
             }
         }
         else
