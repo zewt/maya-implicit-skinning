@@ -19,6 +19,7 @@
 #ifndef IBL_CONTROLLER_HPP__
 #define IBL_CONTROLLER_HPP__
 
+#include <string.h>
 #include "structs.hpp"
 
 // =============================================================================
@@ -42,6 +43,11 @@ public:
         // TODO: clamp values maybe ? or assert ?
         _pt[0] = p0; _pt[1] = p1; _pt[2] = p2;
         _slopes[0] = s0; _slopes[1] = s1;
+    }
+
+    bool operator==(const Ctrl_setup &rhs) const {
+        return !memcmp(_pt, rhs._pt, sizeof(_pt)) &&
+            !memcmp(_slopes, rhs._slopes, sizeof(_slopes));
     }
 
     IBL::float2 p0() const { return _pt[0];     }

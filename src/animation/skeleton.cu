@@ -116,6 +116,9 @@ Skeleton::~Skeleton()
 void Skeleton::set_joint_controller(int i,
                                     const IBL::Ctrl_setup& shape)
 {
+    if(_joints.at(i)._controller == shape)
+        return;
+
     _joints.at(i)._controller = shape;
     Blending_env::update_controller(_joints.at(i)._joint_data._ctrl_id, shape);
 }
@@ -132,7 +135,11 @@ std::map<Bone::Id, Skeleton_env::Joint_data> Skeleton::get_joints_data() const
 
 void Skeleton::set_joint_blending(int i, EJoint::Joint_t type)
 {
-    _joints.at(i)._joint_data._blend_type = type;
+    Skeleton_env::Joint_data &data = _joints.at(i)._joint_data;
+    if(data._blend_type == type)
+        return;
+
+    data._blend_type = type;
 
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
@@ -141,7 +148,12 @@ void Skeleton::set_joint_blending(int i, EJoint::Joint_t type)
 
 void Skeleton::set_joint_bulge_mag(int i, float m)
 {
-    _joints.at(i)._joint_data._bulge_strength = std::min(std::max(m, 0.f), 1.f);
+    m = std::min(std::max(m, 0.f), 1.f);
+    Skeleton_env::Joint_data &data = _joints.at(i)._joint_data;
+    if(data._bulge_strength == m)
+        return;
+
+    data._bulge_strength = m;
     Skeleton_env::update_joints_data(_skel_id, get_joints_data());
 }
 
