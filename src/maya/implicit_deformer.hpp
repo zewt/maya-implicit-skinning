@@ -34,6 +34,9 @@ public:
     // The number of deformer iterations to perform.
     static MObject deformerIterations;
 
+    // Enable or disable iterative smoothing during deformation.
+    static MObject iterativeSmoothing;
+
 private:
     static DagHelpers::MayaDependencies dependencies;
 

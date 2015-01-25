@@ -67,6 +67,7 @@ MObject ImplicitDeformer::implicit;
 MObject ImplicitDeformer::basePotential;
 MObject ImplicitDeformer::baseGradient;
 MObject ImplicitDeformer::deformerIterations;
+MObject ImplicitDeformer::iterativeSmoothing;
 
 DagHelpers::MayaDependencies ImplicitDeformer::dependencies;
 
@@ -95,18 +96,19 @@ MStatus ImplicitDeformer::initialize()
     addAttribute(deformerIterations);
     dependencies.add(deformerIterations, outputGeom);
 
+    iterativeSmoothing = numAttr.create("iterativeSmoothing", "iterativeSmoothing", MFnNumericData::Type::kBoolean, true, &status);
+    addAttribute(iterativeSmoothing);
+    dependencies.add(ImplicitDeformer::iterativeSmoothing, ImplicitDeformer::outputGeom);
+
     // The base potential of the mesh.
     basePotential = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
     numAttr.setArray(true);
-//    numAttr.setInternal(true);
     numAttr.setUsesArrayDataBuilder(true);
     addAttribute(basePotential);
     dependencies.add(implicit, basePotential);
-    
 
     baseGradient = numAttr.create("baseGradient", "bg", MFnNumericData::Type::k3Float, 0, &status);
     numAttr.setArray(true);
-//    numAttr.setInternal(true);
     numAttr.setUsesArrayDataBuilder(true);
     addAttribute(baseGradient);
     dependencies.add(implicit, baseGradient);
@@ -179,8 +181,13 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
     // Run the algorithm.  XXX: If we're being applied to a set, use init_vert_to_fit to only
     // process the vertices we need to.
     int iterations = DagHelpers::readHandle<int>(dataBlock, ImplicitDeformer::deformerIterations, &status);
+    if(status != MS::kSuccess) return status;
     animesh->set_nb_transform_steps(iterations);
-    animesh->set_smooth_mesh(true);
+
+    bool iterativeSmoothing = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::iterativeSmoothing, &status);
+    if(status != MS::kSuccess) return status;
+    animesh->set_smooth_mesh(iterativeSmoothing);
+
     animesh->transform_vertices();
 
     vector<Point_cu> result_verts;
