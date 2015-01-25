@@ -275,7 +275,7 @@ void Animesh::transform_vertices()
 
     Cuda_utils::DA_int* curr = &d_vert_to_fit;
 
-    if(do_smooth_mesh && false)
+    if(do_smooth_mesh)
     {
         Cuda_utils::DA_int* prev = &d_vert_to_fit_buff;
         // Interleaved fitting
