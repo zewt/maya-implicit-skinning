@@ -52,6 +52,7 @@ namespace DagHelpers
 
     template<> inline MDataHandle readHandle(MDataHandle handle, MStatus *status) { return handle; }
     template<> inline int readHandle(MDataHandle handle, MStatus *status) { return handle.asInt(); }
+    template<> inline short readHandle(MDataHandle handle, MStatus *status) { return handle.asShort(); }
     template<> inline float readHandle(MDataHandle handle, MStatus *status) { return handle.asFloat(); }
     template<> inline MMatrix readHandle(MDataHandle handle, MStatus *status) { return handle.asMatrix(); }
     template<> inline bool readHandle(MDataHandle handle, MStatus *status) { return handle.asBool(); }

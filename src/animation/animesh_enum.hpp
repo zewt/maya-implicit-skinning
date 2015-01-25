@@ -60,6 +60,7 @@ enum Color_type {
 // -----------------------------------------------------------------------------
 
 enum Smooth_type {
+    NONE,
     LAPLACIAN,     ///< Based on the centroid of the first ring neighborhood
     CONSERVATIVE,  ///< Try to minimize changes with the rest position
     TANGENTIAL,    ///< Laplacian corrected with the mesh normals

@@ -18,6 +18,7 @@
 #include <maya/MFnMatrixAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnMatrixData.h>
+#include <maya/MFnEnumAttribute.h>
 
 #include <maya/MFnPluginData.h>
 
@@ -68,6 +69,8 @@ MObject ImplicitDeformer::basePotential;
 MObject ImplicitDeformer::baseGradient;
 MObject ImplicitDeformer::deformerIterations;
 MObject ImplicitDeformer::iterativeSmoothing;
+MObject ImplicitDeformer::finalFitting;
+MObject ImplicitDeformer::finalSmoothingMode;
 
 DagHelpers::MayaDependencies ImplicitDeformer::dependencies;
 
@@ -84,6 +87,7 @@ MStatus ImplicitDeformer::initialize()
     MFnNumericAttribute numAttr;
     MFnCompoundAttribute cmpAttr;
     MFnTypedAttribute typedAttr;
+    MFnEnumAttribute enumAttr;
     
     implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
     if(status != MS::kSuccess) return status;
@@ -99,6 +103,22 @@ MStatus ImplicitDeformer::initialize()
     iterativeSmoothing = numAttr.create("iterativeSmoothing", "iterativeSmoothing", MFnNumericData::Type::kBoolean, true, &status);
     addAttribute(iterativeSmoothing);
     dependencies.add(ImplicitDeformer::iterativeSmoothing, ImplicitDeformer::outputGeom);
+
+    finalFitting = numAttr.create("finalFitting", "finalFitting", MFnNumericData::Type::kBoolean, true, &status);
+    addAttribute(finalFitting);
+    dependencies.add(ImplicitDeformer::finalFitting, ImplicitDeformer::outputGeom);
+    
+    // Don't use the raw values of EAnimesh::Smooth_type here.  Maya saves the integer value
+    // to the file for some reason (it should save the string), and we shouldn't embed the
+    // order of Animesh's enums into the file format.
+    finalSmoothingMode = enumAttr.create("finalSmoothingMode", "finalSmoothingMode", 0, &status);
+    enumAttr.addField("Laplacian", 0);
+    enumAttr.addField("Conservative", 1);
+    enumAttr.addField("Tangental", 2);
+    enumAttr.addField("Humphrey", 3);
+    enumAttr.addField("Disabled", 4);
+    addAttribute(finalSmoothingMode);
+    dependencies.add(ImplicitDeformer::finalSmoothingMode, ImplicitDeformer::outputGeom);
 
     // The base potential of the mesh.
     basePotential = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
@@ -187,6 +207,26 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
     bool iterativeSmoothing = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::iterativeSmoothing, &status);
     if(status != MS::kSuccess) return status;
     animesh->set_smooth_mesh(iterativeSmoothing);
+
+    bool finalFitting = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::finalFitting, &status);
+    if(status != MS::kSuccess) return status;
+    animesh->set_final_fitting(finalFitting);
+
+    int smoothMode = DagHelpers::readHandle<short>(dataBlock, ImplicitDeformer::finalSmoothingMode, &status);
+    if(status != MS::kSuccess) return status;
+
+    EAnimesh::Smooth_type smoothType = EAnimesh::Smooth_type::LAPLACIAN;
+
+    // These values must match the values in initialize().
+    switch(smoothMode)
+    {
+    case 0: smoothType = EAnimesh::Smooth_type::LAPLACIAN; break;
+    case 1: smoothType = EAnimesh::Smooth_type::CONSERVATIVE; break;
+    case 2: smoothType = EAnimesh::Smooth_type::TANGENTIAL; break;
+    case 3: smoothType = EAnimesh::Smooth_type::HUMPHREY; break;
+    case 4: smoothType = EAnimesh::Smooth_type::NONE; break;
+    }
+    animesh->set_smoothing_type(smoothType);
 
     animesh->transform_vertices();
 

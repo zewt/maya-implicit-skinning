@@ -140,6 +140,8 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
 
     switch(mesh_smoothing)
     {
+    case EAnimesh::NONE:
+        break;
     case EAnimesh::LAPLACIAN:
         Animesh_kers::laplacian_smooth(output_vertices, output_vertices_temp, d_edge_list,
                                        d_edge_list_offsets, factors, local_smoothing,
@@ -302,7 +304,7 @@ void Animesh::transform_vertices()
         }
     }
 
-#if 0
+#if 1
     // Smooth the initial guess
     if(Cuda_ctrl::_debug._smooth_mesh)
     {
@@ -311,7 +313,7 @@ void Animesh::transform_vertices()
     }
 
     // Final fitting (global evaluation of the skeleton)
-    if(Cuda_ctrl::_debug._fit_on_all_bones)
+    if(final_fitting)
     {
         // Reset d_vert_to_fit, so we always re-fit all vertices on this pass.
         curr->copy_from(d_vert_to_fit_base);

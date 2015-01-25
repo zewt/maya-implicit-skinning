@@ -28,7 +28,6 @@ public:
         _show_gradient(false),
         _do_selection(false),
         _potential_pit(true),
-        _fit_on_all_bones(true),
         _step_length(0.05f),
         _raphson(false),
         _collision_threshold(0.9f),
@@ -47,7 +46,6 @@ public:
     bool _do_selection;
 
     bool _potential_pit;
-    bool _fit_on_all_bones;
 
     float _step_length;
     bool  _raphson;

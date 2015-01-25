@@ -46,6 +46,7 @@ Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     do_smooth_mesh(false),
     do_local_smoothing(true),
     nb_transform_steps(250),
+    final_fitting(true),
     smoothing_iter(7),
     diffuse_smooth_weights_iter(6),
     smooth_force_a(0.5f),

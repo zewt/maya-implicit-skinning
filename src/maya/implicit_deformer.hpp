@@ -37,6 +37,13 @@ public:
     // Enable or disable iterative smoothing during deformation.
     static MObject iterativeSmoothing;
 
+    // Enable or disable final fitting, which takes place between the first and second
+    // pass of final smoothing.
+    static MObject finalFitting;
+
+    // The final smoothing method.  Note that this is independent of iterativeSmoothing.
+    static MObject finalSmoothingMode;
+    
 private:
     static DagHelpers::MayaDependencies dependencies;
 
