@@ -31,6 +31,9 @@ public:
     // The input implicit surface.
     static MObject implicit;
 
+    // The number of deformer iterations to perform.
+    static MObject deformerIterations;
+
 private:
     static DagHelpers::MayaDependencies dependencies;
 

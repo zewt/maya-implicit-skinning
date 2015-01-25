@@ -66,6 +66,7 @@ const MTypeId ImplicitDeformer::id(0xEA115);
 MObject ImplicitDeformer::implicit;
 MObject ImplicitDeformer::basePotential;
 MObject ImplicitDeformer::baseGradient;
+MObject ImplicitDeformer::deformerIterations;
 
 DagHelpers::MayaDependencies ImplicitDeformer::dependencies;
 
@@ -87,6 +88,12 @@ MStatus ImplicitDeformer::initialize()
     if(status != MS::kSuccess) return status;
     typedAttr.setReadable(false);
     addAttribute(implicit);
+
+    deformerIterations = numAttr.create("deformerIterations", "deformerIterations", MFnNumericData::Type::kInt, 250, &status);
+    numAttr.setMin(0);
+    numAttr.setSoftMax(500);
+    addAttribute(deformerIterations);
+    dependencies.add(deformerIterations, outputGeom);
 
     // The base potential of the mesh.
     basePotential = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
@@ -171,6 +178,8 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
 
     // Run the algorithm.  XXX: If we're being applied to a set, use init_vert_to_fit to only
     // process the vertices we need to.
+    int iterations = DagHelpers::readHandle<int>(dataBlock, ImplicitDeformer::deformerIterations, &status);
+    animesh->set_nb_transform_steps(iterations);
     animesh->set_smooth_mesh(true);
     animesh->transform_vertices();
 

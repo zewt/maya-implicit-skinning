@@ -72,6 +72,7 @@ public:
 
     inline void set_smooth_factor(int i, float val) { d_input_smooth_factors.set(i, val); }
 
+    void set_nb_transform_steps(int nb_iter) { nb_transform_steps = nb_iter; }
     void set_smoothing_weights_diffusion_iter(int nb_iter) { diffuse_smooth_weights_iter = nb_iter; }
     void set_smoothing_iter (int nb_iter ) { smoothing_iter = nb_iter;   }
     void set_smooth_mesh    (bool state  ) { do_smooth_mesh = state;     }
@@ -173,6 +174,7 @@ private:
 
     bool do_smooth_mesh;
     bool do_local_smoothing;
+    int nb_transform_steps;
 
     /// Smoothing strength after animation
 

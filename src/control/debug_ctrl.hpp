@@ -29,7 +29,6 @@ public:
         _do_selection(false),
         _potential_pit(true),
         _fit_on_all_bones(true),
-        _nb_step(250),
         _step_length(0.05f),
         _raphson(false),
         _collision_threshold(0.9f),
@@ -50,7 +49,6 @@ public:
     bool _potential_pit;
     bool _fit_on_all_bones;
 
-    int   _nb_step;               ///< maximum number of steps for the fitting
     float _step_length;
     bool  _raphson;
     float _collision_threshold;

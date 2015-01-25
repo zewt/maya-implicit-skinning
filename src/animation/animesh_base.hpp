@@ -50,6 +50,7 @@ public:
 
     virtual inline void set_smooth_factor(int i, float val) = 0;
 
+    virtual void set_nb_transform_steps(int nb_iter) = 0;
     virtual void set_smoothing_weights_diffusion_iter(int nb_iter) = 0;
     virtual void set_smoothing_iter (int nb_iter ) = 0;
     virtual void set_smooth_mesh    (bool state  ) = 0;

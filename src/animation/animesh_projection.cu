@@ -271,7 +271,7 @@ void Animesh::transform_vertices()
     // doesn't depend on the results of skinning
     d_vert_to_fit.copy_from(d_vert_to_fit_base);
     int nb_vert_to_fit = d_vert_to_fit.size();
-    const int nb_steps = Cuda_ctrl::_debug._nb_step;
+    const int nb_steps = nb_transform_steps;
 
     Cuda_utils::DA_int* curr = &d_vert_to_fit;
 
