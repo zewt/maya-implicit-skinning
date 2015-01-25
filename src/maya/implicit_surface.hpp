@@ -93,6 +93,7 @@ public:
     static void *creator() { return new ImplicitSurfaceUI; }
 
     ImplicitSurfaceUI() { }
+    bool select(MSelectInfo &selectInfo, MSelectionList &selectionList, MPointArray &worldSpaceSelectPts ) const;
 
 private:
     ImplicitSurfaceUI(const ImplicitSurfaceUI &obj);

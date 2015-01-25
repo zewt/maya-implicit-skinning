@@ -448,4 +448,15 @@ MBoundingBox ImplicitSurface::boundingBox() const
     return MBoundingBox(MPoint(top.x, top.y, top.z), MPoint(bottom.x, bottom.y, bottom.z));
 }
 
+// XXX: It would be better to cast a ray down the selection to see if it intersects with the
+// implicit surface.  This simple implementation just selects for any click in the bounding
+// box.  Note that we use this for both ImplicitSurface and ImplicitBlend.
+bool ImplicitSurfaceUI::select(MSelectInfo &selectInfo, MSelectionList &selectionList, MPointArray &worldSpaceSelectPts) const
+{
+    MSelectionList item;
+    item.add(selectInfo.selectPath());
 
+    MPoint point;
+    selectInfo.addSelection(item, point, selectionList, worldSpaceSelectPts, MSelectionMask(MSelectionMask::kSelectObjectsMask), false);
+    return true;
+}

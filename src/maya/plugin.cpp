@@ -762,14 +762,14 @@ MStatus initializePlugin(MObject obj)
     if (!status) return status;
 
     status = plugin.registerShape("implicitSurface", ImplicitSurface::id, &ImplicitSurface::creator,
-           &ImplicitSurface::initialize, &ImplicitSurface::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+           &ImplicitSurface::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
     if (!status) {
        status.perror("registerNode");
        return status;
     }
 
     status = plugin.registerShape("ImplicitBlend", ImplicitBlend::id, &ImplicitBlend::creator,
-           &ImplicitBlend::initialize, &ImplicitBlend::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+           &ImplicitBlend::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
     if (!status) {
        status.perror("registerNode");
        return status;
