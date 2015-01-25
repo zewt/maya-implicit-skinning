@@ -141,15 +141,15 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
     // set the size of the grid cells, and the amount of cells per side
     const int gridRes = 16;
 
-    const Point_cu deltas[8] = {
-        Point_cu(0, 0, 0),
-        Point_cu(1, 0, 0),
-        Point_cu(1, 1, 0),
-        Point_cu(0, 1, 0),
-        Point_cu(0, 0, 1),
-        Point_cu(1, 0, 1),
-        Point_cu(1, 1, 1),
-        Point_cu(0, 1, 1),
+    const int deltas[8][3] = {
+        { 0, 0, 0 },
+        { 1, 0, 0 },
+        { 1, 1, 0 },
+        { 0, 1, 0 },
+        { 0, 0, 1 },
+        { 1, 0, 1 },
+        { 1, 1, 1 },
+        { 0, 1, 1 },
     };
 
     // We have a single surface comprised of any number of bones.  Render the bounding box
@@ -197,14 +197,14 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
                     GridCell cell;
                     for(int i = 0; i < 8; i++)
                     {
-                        int pX = x+deltas[i].x;
-                        int pY = y+deltas[i].y;
-                        int pZ = z+deltas[i].z;
+                        int pX = x+deltas[i][0];
+                        int pY = y+deltas[i][1];
+                        int pZ = z+deltas[i][2];
 
                         // (pX,pY,pZ) is the grid position, eg. [0,15].  Multiply by delta to scale to
                         // the axis-aligned bounding box, add pmin to offset to the bounding box, and
                         // multiply by _tr to convert to world space.
-                        Point_cu pWorld = Point_cu(pX, pY, pZ)*delta;
+                        Point_cu pWorld = Point_cu((float) pX, (float) pY, (float) pZ)*delta;
                         pWorld = pWorld  + obbox._bb.pmin;
                         pWorld = obbox._tr * pWorld;
 
