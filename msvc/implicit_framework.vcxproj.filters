@@ -159,9 +159,6 @@
     <ClInclude Include="..\src\control\operators_ctrl.hpp">
       <Filter>control</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\control\animated_mesh_ctrl.hpp">
-      <Filter>control</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\control\cuda_ctrl.hpp">
       <Filter>control</Filter>
     </ClInclude>
@@ -357,6 +354,9 @@
     <ClInclude Include="..\src\utils\misc_utils.hpp">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\animation\animesh_base.hpp">
+      <Filter>animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="animation">
@@ -435,9 +435,6 @@
     </CudaCompile>
     <CudaCompile Include="..\src\blending_lib\cuda_interface\constants.cu">
       <Filter>blending_lib\cuda_interface</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\src\control\animated_mesh_ctrl.cu">
-      <Filter>control</Filter>
     </CudaCompile>
     <CudaCompile Include="..\src\control\cuda_ctrl.cu">
       <Filter>control</Filter>

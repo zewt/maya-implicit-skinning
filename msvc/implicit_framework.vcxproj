@@ -222,6 +222,7 @@
     <ClCompile Include="..\src\meshes\vcg_lib\vcg_mesh.cpp" />
     <ClCompile Include="..\src\meshes\mesh.cpp" />
     <ClInclude Include="..\src\animation\animesh.hpp" />
+    <ClInclude Include="..\src\animation\animesh_base.hpp" />
     <ClInclude Include="..\src\animation\animesh_enum.hpp" />
     <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp" />
     <ClInclude Include="..\src\animation\animesh_kers.hpp" />
@@ -246,7 +247,6 @@
     <ClInclude Include="..\src\blending_lib\splines.hpp" />
     <ClInclude Include="..\src\containers\grid3_cu.hpp" />
     <ClInclude Include="..\src\containers\idx3_cu.hpp" />
-    <ClInclude Include="..\src\control\animated_mesh_ctrl.hpp" />
     <ClInclude Include="..\src\control\cuda_ctrl.hpp" />
     <ClInclude Include="..\src\control\debug_ctrl.hpp" />
     <ClInclude Include="..\src\control\operators_ctrl.hpp" />
@@ -332,9 +332,6 @@
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\blending_lib\cuda_interface\constants.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-    <CudaCompile Include="..\src\control\animated_mesh_ctrl.cu">
       <FileType>Document</FileType>
     </CudaCompile>
     <CudaCompile Include="..\src\control\cuda_ctrl.cu">

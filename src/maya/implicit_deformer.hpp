@@ -2,8 +2,8 @@
 #define IMPLICIT_DEFORMER_HPP
 
 #include "mesh.hpp"
-#include "animated_mesh_ctrl.hpp"
 #include "maya_helpers.hpp"
+#include "animesh_base.hpp"
 
 #include <maya/MPxDeformerNode.h> 
 
@@ -41,8 +41,8 @@ private:
     // The loaded mesh.  We own this object.
     std::unique_ptr<Mesh> mesh;
 
-    // The wrapper class around both the mesh and the skeleton.
-    std::unique_ptr<Animated_mesh_ctrl> animMesh;
+    // The main deformer implementation.
+    std::unique_ptr<AnimeshBase> animesh;
 };
 
 #endif

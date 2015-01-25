@@ -43,7 +43,6 @@
 
 #include "skeleton.hpp"
 #include "sample_set.hpp"
-#include "animated_mesh_ctrl.hpp"
 #include "cuda_ctrl.hpp"
 #include "hrbf_env.hpp"
 #include "vert_to_bone_info.hpp"

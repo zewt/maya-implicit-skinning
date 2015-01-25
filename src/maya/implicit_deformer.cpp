@@ -34,7 +34,6 @@
 #include "maya/maya_data.hpp"
 
 #include "skeleton.hpp"
-#include "animated_mesh_ctrl.hpp"
 
 #include <algorithm>
 #include <map>
@@ -167,16 +166,16 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
     if(status != MS::kSuccess) return status;
 
     // If we don't have a mesh yet, stop.
-    if(animMesh.get() == NULL)
+    if(animesh.get() == NULL)
         return MStatus::kSuccess;
 
     // Run the algorithm.  XXX: If we're being applied to a set, use init_vert_to_fit to only
     // process the vertices we need to.
-    animMesh->set_do_smoothing(true);
-    animMesh->deform_mesh();
+    animesh->set_smooth_mesh(true);
+    animesh->transform_vertices();
 
     vector<Point_cu> result_verts;
-    animMesh->get_vertices(result_verts);
+    animesh->get_vertices(result_verts);
 
     // Copy out the vertices that we were actually asked to process.
     MMatrix invMat = mat.inverse();
@@ -200,7 +199,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     if(skel == NULL) {
         // We don't have a surface connected.  If we have an animMesh, discard it, since it's
         // pointing to an old Skeleton that no longer exists.
-        animMesh.release();
+        animesh.release();
         return MStatus::kSuccess;
     }
 
@@ -235,7 +234,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     //
     // If our input skeleton has changed, it's guaranteed to be different from the Skeleton* pointer
     // in animMesh, because animMesh won't release its previous Skeleton.
-    bool skeletonChanged = animMesh.get() == NULL || animMesh->get_skel() != skel.get();
+    bool skeletonChanged = animesh.get() == NULL || animesh->get_skel() != skel.get();
 
     // Hack: We calculate a bunch of properties from the mesh, such as the nearest joint to each
     // vertex.  We don't want to recalculate that every time our input (skinned) geometry changes.
@@ -244,7 +243,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     // mesh loaded.  This will handle the mesh being disconnected, etc.  It'll fail on the edge case
     // of switching out the geometry with another mesh that has the same number of vertices but a
     // completely different topology.  XXX
-    if(!skeletonChanged && animMesh.get() != NULL)
+    if(!skeletonChanged && animesh.get() != NULL)
     {
         MItGeometry allGeomIter(inputGeomDataHandle, true);
 
@@ -264,7 +263,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
                 inputVerts.push_back(Vec3_cu((float) point.x, (float) point.y, (float) point.z));
             }
 
-            animMesh->set_vertices(inputVerts);
+            animesh->set_vertices(inputVerts);
 
             return MStatus::kSuccess;
         }
@@ -281,7 +280,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     mesh->check_integrity();
 
     // Create a new animMesh with the current mesh and skeleton.
-    animMesh.reset(new Animated_mesh_ctrl(mesh.get(), skel));
+    animesh.reset(AnimeshBase::create(mesh.get(), skel));
 
     // Load base potential.
     status = load_base_potential(dataBlock);
@@ -303,16 +302,16 @@ MStatus ImplicitDeformer::calculate_base_potential()
     if(status != MS::kSuccess) return status;
 
     // If we don't have a mesh yet, don't do anything.
-    if(animMesh.get() == NULL)
+    if(animesh.get() == NULL)
         return MStatus::kSuccess;
 
     // Update base potential.
-    animMesh->update_base_potential();
+    animesh->update_base_potential();
 
     // Read the result.
     vector<float> pot;
     vector<Vec3_cu> grad;
-    animMesh->get_base_potential(pot);
+    animesh->get_base_potential(pot);
 
     // Save the base potential to basePotential and baseGradient.
     status = DagHelpers::setArray(dataBlock, ImplicitDeformer::basePotential, pot); check("setArray(basePotential)");
@@ -350,7 +349,7 @@ MStatus ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
     MStatus status = MStatus::kSuccess;
 
     // If we don't have the animMesh to load into yet, stop.
-    if(animMesh.get() == NULL)
+    if(animesh.get() == NULL)
         return MS::kSuccess;
 
     MArrayDataHandle basePotentialHandle = dataBlock.inputArrayValue(ImplicitDeformer::basePotential, &status);
@@ -367,7 +366,7 @@ MStatus ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
     if(status != MS::kSuccess) return status;
 
     // Set the base potential that we loaded.
-    animMesh->set_base_potential(pot);
+    animesh->set_base_potential(pot);
 
     return MStatus::kSuccess;
 }

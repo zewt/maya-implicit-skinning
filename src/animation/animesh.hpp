@@ -25,11 +25,12 @@
 #include "skeleton.hpp"
 #include "tree_cu_type.hpp"
 #include "bone.hpp"
+#include "animesh_base.hpp"
 
 #include <map>
 #include <vector>
 
-struct Animesh{
+struct Animesh: public AnimeshBase {
 public:
     // The Mesh must exist for the lifetime of this object.
     Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_);

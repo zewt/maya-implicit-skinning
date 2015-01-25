@@ -35,6 +35,11 @@
 
 using namespace Cuda_utils;
 
+AnimeshBase *AnimeshBase::create(const Mesh *mesh, std::shared_ptr<const Skeleton> skel)
+{
+    return new Animesh(mesh, skel);
+}
+
 Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     _mesh(m_), _skel(s_),
     mesh_smoothing(EAnimesh::LAPLACIAN),

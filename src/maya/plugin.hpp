@@ -6,7 +6,6 @@
 #endif
 
 #include "mesh.hpp"
-#include "animated_mesh_ctrl.hpp"
 #include "maya_helpers.hpp"
 #include "sample_set.hpp"
 
