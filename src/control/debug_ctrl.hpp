@@ -36,7 +36,6 @@ public:
         _smooth2_iter(1),
         _smooth1_force(1.f),
         _smooth2_force(0.5f),
-        _smooth_mesh(true),
         _slope_smooth_weight(2)
     {
     }
@@ -57,7 +56,6 @@ public:
     int _smooth2_iter;
     float _smooth1_force;
     float _smooth2_force;
-    bool _smooth_mesh;
     int _slope_smooth_weight;
 };
 

@@ -306,11 +306,8 @@ void Animesh::transform_vertices()
 
 #if 1
     // Smooth the initial guess
-    if(Cuda_ctrl::_debug._smooth_mesh)
-    {
-        this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-        smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth1_iter);
-    }
+    this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
+    smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth1_iter);
 
     // Final fitting (global evaluation of the skeleton)
     if(final_fitting)
@@ -321,11 +318,8 @@ void Animesh::transform_vertices()
     }
 
     // Final smoothing
-    if(Cuda_ctrl::_debug._smooth_mesh)
-    {
-        this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-        smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth2_iter);
-    }
+    this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
+    smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth2_iter);
 #endif
 }
 
