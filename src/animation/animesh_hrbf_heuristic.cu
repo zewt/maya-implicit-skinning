@@ -18,16 +18,10 @@
  */
 #include "animesh_hrbf_heuristic.hpp"
 #include "animesh.hpp"
-
-// -----------------------------------------------------------------------------
-
 #include "timer.hpp"
 #include "utils_sampling.hpp"
 #include "skeleton.hpp"
 #include "hrbf_env.hpp"
-
-// -----------------------------------------------------------------------------
-namespace { __device__ void fix_debug() { } }
 
 #include <iostream>
 #include <limits>

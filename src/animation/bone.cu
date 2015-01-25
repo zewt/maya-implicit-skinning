@@ -22,10 +22,6 @@
 #include "precomputed_prim.hpp"
 #include "skeleton.hpp"
 
-namespace { __device__ void fix_debug() { } }
-
-// Bone CLASS ==================================================================
-
 // If defined enable bbox constructions visualitions with opengl
 // (white points are binary search steps, colored points are newton iterations)
 //#define GL_DEBUG_BBOX

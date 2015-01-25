@@ -21,16 +21,10 @@
 #include <limits>
 #include <iostream>
 
-// -----------------------------------------------------------------------------
-
 #include "cuda_utils.hpp"
 #include "hrbf_env.hpp"
 #include "hrbf_wrapper.hpp"
 #include "hrbf_kernels.hpp"
-
-namespace { __device__ void fix_debug() { } }
-
-// -----------------------------------------------------------------------------
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846f)

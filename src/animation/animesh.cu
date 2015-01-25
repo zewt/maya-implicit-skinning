@@ -35,8 +35,6 @@
 
 using namespace Cuda_utils;
 
-namespace { __device__ void fix_debug() { } }
-
 Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     _mesh(m_), _skel(s_),
     mesh_smoothing(EAnimesh::LAPLACIAN),

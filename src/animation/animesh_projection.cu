@@ -30,10 +30,6 @@
 #include "cuda_current_device.hpp"
 #include "std_utils.hpp"
 
-namespace { __device__ void fix_debug() { } }
-
-// -----------------------------------------------------------------------------
-
 void Animesh::update_base_potential()
 {
     Timer time;

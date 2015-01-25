@@ -33,11 +33,7 @@
 #include "constants_tex.hpp"
 #include "timer.hpp"
 
-namespace { __device__ void fix_debug() { } }
-
-// =============================================================================
 namespace Cuda_ctrl {
-// =============================================================================
 
 Debug_ctrl           _debug;
 Operators_ctrl       _operators;

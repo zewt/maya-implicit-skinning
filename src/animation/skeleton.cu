@@ -30,8 +30,6 @@
 #include "std_utils.hpp"
 #include "cuda_utils.hpp"
 
-namespace { __device__ void fix_debug() { } }
-
 using namespace Cuda_utils;
 
 void Skeleton::init_skel_env(bool single_bone)

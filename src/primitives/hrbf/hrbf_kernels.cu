@@ -17,12 +17,9 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>
  */
 #include "hrbf_kernels.hpp"
-
 #include "hrbf_env.hpp"
 
 #include <iostream>
-
-namespace { __device__ void fix_debug() { } }
 
 // =============================================================================
 namespace HRBF_kernels{

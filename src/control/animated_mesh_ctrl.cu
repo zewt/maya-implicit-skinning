@@ -20,9 +20,6 @@
 
 #include "animesh.hpp"
 
-// -----------------------------------------------------------------------------
-namespace { __device__ void fix_debug() { } }
-
 // This takes ownership of the Mesh (and gives it to Animesh).  It does not take ownership
 // of Skeleton.
 Animated_mesh_ctrl::Animated_mesh_ctrl(const Mesh *mesh, std::shared_ptr<const Skeleton> skel_) :

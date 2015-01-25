@@ -31,6 +31,22 @@
 #include "cuda_utils_device_array.hpp"
 #include "cuda_utils_device_elt.hpp"
 
+// Work around a nasty CUDA bug.  If any files in the application are compiled by nvcc, but don't
+// contain any __device__ symbols, the CUDA debugger doesn't see any symbols in the whole application.
+// Work around this by defining a dummy function in each file.  Make sure this file is included in
+// all .cu files that may have no __device__ functions.
+namespace {
+    __device__ void fix_debug() { };
+
+    // Avoid unused local warnings by referencing fix_debug.  We can't just use a variable,
+    // since that variable would then be unused.  Declare a class, since compilers won't warn
+    // about unreferenced class instances.
+    struct Dummy {
+        Dummy(void (*func)()) { }
+    };
+    Dummy d(fix_debug);
+}
+
 /**
     @namespace Cuda_utils
     @brief This file defines classes to handle both Host and Device arrays.

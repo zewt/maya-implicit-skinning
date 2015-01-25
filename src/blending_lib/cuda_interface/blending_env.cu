@@ -33,8 +33,6 @@
 
 #include "grid3_cu.hpp"
 
-namespace { __device__ void fix_debug() { } }
-
 // From n_ary.hpp
 void init_nary_operators();
 

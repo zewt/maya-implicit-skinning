@@ -2,8 +2,6 @@
 #include "hrbf_env.hpp"
 #include "distance_field.hpp"
 
-namespace { __device__ void fix_debug() { } }
-
 void HermiteRBF::initialize()
 {
     assert(_id < 0);

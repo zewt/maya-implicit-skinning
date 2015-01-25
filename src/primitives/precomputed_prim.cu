@@ -22,9 +22,6 @@
 #include <deque>
 #include <iostream>
 
-namespace { __device__ void fix_debug() { } }
-
-
 using namespace Cuda_utils;
 
 // All info for the object is stored here, instead of in the class itself, so the object

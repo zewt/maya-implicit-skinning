@@ -17,8 +17,7 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>
  */
 #include "distance_field.hpp"
-
-namespace { __device__ void fix_debug() { } }
+#include "cuda_utils.hpp" // for fix_debug workaround
 
 // =============================================================================
 namespace Field{
