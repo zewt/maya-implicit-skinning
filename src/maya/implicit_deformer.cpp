@@ -255,7 +255,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     if(skel == NULL) {
         // We don't have a surface connected.  If we have an animMesh, discard it, since it's
         // pointing to an old Skeleton that no longer exists.
-        animesh.release();
+        animesh.reset();
         return MStatus::kSuccess;
     }
 
