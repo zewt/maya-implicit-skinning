@@ -190,10 +190,10 @@ public:
     // Get the oriented bounding box associated to the bone in world space.
     // If surface is false, return the bounding box where the ISO value reaches the
     // HRBF radius.  If true, return the bounding box of the ISO 0.5 surface.
-    OBBox_cu get_obbox(bool surface=false) const;
+    OBBox_cu get_obbox(bool surface=false, bool world_space=true) const;
 
     /// Get the axis aligned bounding box associated to the bone
-    BBox_cu get_bbox(bool surface=false) const;
+    BBox_cu get_bbox(bool surface=false, bool world_space=true) const;
 
     HermiteRBF& get_hrbf() { return _hrbf; }
     const HermiteRBF& get_hrbf() const { return _hrbf; }

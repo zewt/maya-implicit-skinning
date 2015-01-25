@@ -117,7 +117,6 @@ MStatus ImplicitBlend::setDependentsDirty(const MPlug &plug_, MPlugArray &plugAr
     MStatus status = MStatus::kSuccess;
 
     MPlug plug(plug_);
-    MString s = plug.name();
 
     // If the plug that was changed is a child, eg. point[0].x, move up to the parent
     // compound plug, eg. point[0].
@@ -132,9 +131,10 @@ MStatus ImplicitBlend::setDependentsDirty(const MPlug &plug_, MPlugArray &plugAr
     // It looks like setAffectsAppearance() on meshGeometryUpdateAttr should do this for
     // us, but that doesn't seem to work.
     MObject node = plug.attribute();
-    s = plug.name();
-    if(dependencies.isAffectedBy(node, ImplicitBlend::meshGeometryUpdateAttr))
+    if(dependencies.isAffectedBy(node, ImplicitBlend::meshGeometryUpdateAttr)) {
+        childChanged(kBoundingBoxChanged);
         MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
+    }
 
     return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
 }
@@ -386,5 +386,26 @@ MStatus ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBl
     return MStatus::kSuccess;
 }
 
+
+bool ImplicitBlend::isBounded() const { return true; }
+
+MBoundingBox ImplicitBlend::boundingBox() const
+{
+    // Our bounding box is the union of our bones' bounding boxes.
+    BBox_cu bbox;
+    for(Bone::Id boneId: skeleton->get_bone_ids())
+    {
+        const Bone *bone = skeleton->get_bone(boneId).get();
+
+        // Get the surface bounding box in world space.
+        BBox_cu boneBbox = bone->get_bbox(true, true);
+        bbox = bbox.bbox_union(boneBbox);
+    }
+
+    Point_cu top = bbox.get_corner(0);
+    Point_cu bottom = bbox.get_corner(7);
+
+    return MBoundingBox(MPoint(top.x, top.y, top.z), MPoint(bottom.x, bottom.y, bottom.z));
+}
 
 

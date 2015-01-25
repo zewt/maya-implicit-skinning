@@ -27,8 +27,8 @@ public:
 
     static MTypeId id;
 
-//    bool isBounded() const;
-//    MBoundingBox boundingBox() const;
+    bool isBounded() const;
+    MBoundingBox boundingBox() const;
     MStatus setDependentsDirty(const MPlug &plug_, MPlugArray &plugArray);
     MStatus compute(const MPlug &plug, MDataBlock &dataBlock);
     const MeshGeom &get_mesh_geometry();

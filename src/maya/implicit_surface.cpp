@@ -180,8 +180,10 @@ MStatus ImplicitSurface::setDependentsDirty(const MPlug &plug_, MPlugArray &plug
     // It looks like setAffectsAppearance() on meshGeometryUpdateAttr should do this for
     // us, but that doesn't seem to work.
     MObject node = plug.attribute();
-    if(dependencies.isAffectedBy(node, ImplicitSurface::meshGeometryUpdateAttr))
+    if(dependencies.isAffectedBy(node, ImplicitSurface::meshGeometryUpdateAttr)) {
+        childChanged(kBoundingBoxChanged);
         MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
+    }
 
     return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
 }
@@ -204,8 +206,6 @@ void ImplicitSurface::postConstructor()
     meshUpdatePlug.elementByLogicalIndex(0, &status);
 //    childPlug.setInt(0);
 }
-
-bool ImplicitSurface::isBounded() const { return true; }
 
 MStatus ImplicitSurface::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
@@ -436,13 +436,16 @@ MStatus ImplicitSurface::set_bone_direction(Vec3_cu dir)
 
 }
 
-// XXX: this is wrong; surfaces disappear when they're still on screen, this is probably why
+bool ImplicitSurface::isBounded() const { return true; }
+
 MBoundingBox ImplicitSurface::boundingBox() const
 {
-    MPoint corner1( -0.5, 0.0, -0.5 );
-    MPoint corner2( 0.5, 0.0, 0.5 );
+    // Get the surface bounding box in object space.
+    BBox_cu bbox = bone->get_bbox(true, false);
+    Point_cu top = bbox.get_corner(0);
+    Point_cu bottom = bbox.get_corner(7);
 
-    return MBoundingBox( corner1, corner2 );
+    return MBoundingBox(MPoint(top.x, top.y, top.z), MPoint(bottom.x, bottom.y, bottom.z));
 }
 
 

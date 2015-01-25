@@ -342,7 +342,7 @@ OBBox_cu Bone::get_obbox_object_space(bool surface) const
     return obbox;
 }
 
-OBBox_cu Bone::get_obbox(bool surface) const
+OBBox_cu Bone::get_obbox(bool surface, bool world_space) const
 {
     OBBox_cu obbox;
 
@@ -370,16 +370,17 @@ OBBox_cu Bone::get_obbox(bool surface) const
     }
 
     // Transform it to world space.  Don't cache this value.
-    obbox._tr = _primitive.get_user_transform() * obbox._tr;
+    if(world_space)
+        obbox._tr = _primitive.get_user_transform() * obbox._tr;
 
     return obbox;
 }
 
 // -----------------------------------------------------------------------------
 
-BBox_cu Bone::get_bbox(bool surface) const
+BBox_cu Bone::get_bbox(bool surface, bool world_space) const
 {
-    return get_obbox(surface).to_bbox();
+    return get_obbox(surface, world_space).to_bbox();
 }
 
 void Bone::set_enabled(bool value) {
