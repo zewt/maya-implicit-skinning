@@ -1,3 +1,55 @@
+To build in Windows, just open msvc/implicit_framework.vcxproj.  If you're not
+in Maya 2015 or CUDA 6.5, you may need to update the include and library paths.
+
+Building in Linux with CMake hasn't been tested in a while and will probably
+need to be updated.
+
+This requires CUDA with an SM 3 device or better.
+
+Maya quick start:
+
+- Open the script console.
+- Load the plugin in the MEL tab:
+
+loadPlugin "/path/to/implicit_framework.mll"
+
+- In the Python tab, add the top directory containing "implicit" to the Python path:
+
+import sys
+sys.path.append('/path/to/repository')
+
+- Open a scene and select a mesh.  The mesh must already be skinned.
+- In the Python script tab, import and run the main script:
+
+import implicit
+implicit.main()
+
+This will create a number of nodes, which will all be placed in a group
+named after your skinCluster:
+
+- One ImplicitShape will be created for each skin joint that has painted
+weights on the shape.  These are parent constrained to the joints, but
+are placed in a separate group to avoid cluttering your bone hierarchy.
+These nodes can be seen and viewed in the viewport.  Normally you'll want
+to hide them.
+- One ImplicitBlend shape will be created, connecting all of the ImplicitShape
+nodes together.  This is also shown in the viewport as a merging of all
+of the individual ImplicitShapes.  This node isn't parented to anything
+and never moves, since it lives in world space.  You'll usually want to
+hide this, too.
+- An ImplicitDeformer is added to the deformer chain of the original object,
+with the ImplicitBlend node as its input.  This performs the actual deformation.
+
+
+
+
+
+
+
+
+
+
+
 WARNING 1: this is a CUDA project only compatible for Nvidia graphic cards.
 The project only guarantee support of GPU card down to compute capability
 sm_20 (FERMI architecture). But it might work for architecture below sm_20.
