@@ -20,31 +20,11 @@
 #define LOADER_MESH_HPP__
 
 #include <vector>
-#include <string>
 
-// =============================================================================
+#include "point_cu.hpp"
+
 namespace Loader {
-// =============================================================================
 
-struct Vertex {
-    /// Vertex components
-    float x, y, z;
-
-    Vertex() : x(0),y(0),z(0) {}
-    Vertex(float _x, float _y, float _z) : x(_x), y(_y), z(_z) { }
-};
-
-//------------------------------------------------------------------------------
-
-struct Normal {
-    /// Normal components
-    float x, y, z;
-
-    Normal() : x(0), y(0), z(0) { }
-    Normal(float _x, float _y, float _z) : x(_x), y(_y), z(_z) { }
-};
-
-//------------------------------------------------------------------------------
 struct Tri_face {
     unsigned v[3]; ///< vertex indices for the triangle
     int n[3];      ///< normal indices for the triangle
@@ -66,13 +46,11 @@ struct Tri_face {
   in wireframe mode (attribute _render_faces)
 */
 struct Abs_mesh {
-    std::vector<Vertex>    _vertices;
-    std::vector<Normal>    _normals;
+    std::vector<Point_cu>    _vertices;
+    std::vector<Vec3_cu>    _normals;
     std::vector<Tri_face>  _triangles;  ///< the triangulated faces
-
-    void clear();
 };
 
-} // END LOADER NAMESPACE ======================================================
+}
 
-#endif // LOADER_MESH_HPP__
+#endif

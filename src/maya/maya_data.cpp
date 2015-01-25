@@ -36,7 +36,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
         // If specified, transform the point from object space to another coordinate space.
         point = point * vertexTransform;
 
-        mesh._vertices[idx] = Loader::Vertex((float)point.x, (float)point.y, (float)point.z);
+        mesh._vertices[idx] = Point_cu((float)point.x, (float)point.y, (float)point.z);
 
         // Load the vertex's normal.  If the normal has unshared normals, this will retrieve
         // the averaged normal.  Since we're normally blending soft surfaces, this is usually
@@ -45,7 +45,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
         status = meshIt.getNormal(normal, MSpace::kObject);
         if(status != MS::kSuccess) return status;
 
-        mesh._normals[idx] = Loader::Normal((float)normal[0], (float)normal[1], (float)normal[2]);
+        mesh._normals[idx] = Vec3_cu((float)normal[0], (float)normal[1], (float)normal[2]);
 
         ++idx;
     }

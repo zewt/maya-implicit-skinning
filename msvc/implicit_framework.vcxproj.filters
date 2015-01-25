@@ -52,9 +52,6 @@
     <ClCompile Include="..\src\maya\maya_data.cpp">
       <Filter>maya</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\meshes\loader_mesh.cpp">
-      <Filter>meshes</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\control\sample_set.cpp">
       <Filter>control</Filter>
     </ClCompile>

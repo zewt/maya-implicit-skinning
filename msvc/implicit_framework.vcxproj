@@ -205,7 +205,6 @@
     <ClCompile Include="..\src\maya\maya_data.cpp" />
     <ClCompile Include="..\src\maya\maya_helpers.cpp" />
     <ClCompile Include="..\src\maya\plugin.cpp" />
-    <ClCompile Include="..\src\meshes\loader_mesh.cpp" />
     <CudaCompile Include="..\src\primitives\hermiteRBF.cu">
       <FileType>Document</FileType>
     </CudaCompile>

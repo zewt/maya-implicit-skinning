@@ -241,7 +241,7 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
     // Copy vertex coordinates
     for( int i = 0; i < _nb_vert; i++)
     {
-        (*(Loader::Vertex*)(_vert+i*3)) = mesh._vertices[i];
+        (*(Point_cu*)(_vert+i*3)) = mesh._vertices[i];
         _is_connected[i] = false;
     }
 
@@ -311,10 +311,10 @@ Mesh::Mesh(const Loader::Abs_mesh& mesh):
             if( n_idx != -1 )
             {
                 _has_normals = true;
-                *((Loader::Normal*)(_normals+v_unpacked*3)) = mesh._normals[n_idx];
+                *((Vec3_cu*)(_normals+v_unpacked*3)) = mesh._normals[n_idx];
             }
             else
-                *((Loader::Normal*)(_normals+v_unpacked*3)) = Loader::Normal();
+                *((Vec3_cu*)(_normals+v_unpacked*3)) = Vec3_cu();
         }
     }
 
