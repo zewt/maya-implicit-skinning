@@ -261,6 +261,8 @@ void Animesh::transform_vertices()
 {
     const int nb_vert    = d_input_vertices.size();
 
+    // XXX: This is actually Point_cu; we should probably adjust the calls below to allow using
+    // that type, instead of casting Vec3_cu to Point_cu.
     Vec3_cu* out_verts    = (Vec3_cu*)d_output_vertices.ptr();
     d_output_vertices.copy_from(d_input_vertices);
 
@@ -276,11 +278,10 @@ void Animesh::transform_vertices()
     if(do_smooth_mesh && false)
     {
         Cuda_utils::DA_int* prev = &d_vert_to_fit_buff;
-        // Interleaved fittig
+        // Interleaved fitting
+        // Should we be doing nb_steps/2 steps here, since we're doing two steps per iteration?
         for( int i = 0; i < nb_steps && nb_vert_to_fit != 0; i++)
         {
-            // Do a small number of iterations per step.  Should we be doing 1 rather than 2, so we don't
-            // do nb_steps*2 iterations?
             fit_mesh(nb_vert_to_fit, curr->ptr(), true/*smooth from iso*/, out_verts, 2, smooth_force_a);
 
             nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );

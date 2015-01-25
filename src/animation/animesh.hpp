@@ -19,47 +19,27 @@
 #ifndef ANIMATED_MESH__
 #define ANIMATED_MESH__
 
-// -----------------------------------------------------------------------------
-
 #include "animesh_enum.hpp"
 #include "cuda_utils.hpp"
 #include "mesh.hpp"
-
-// -----------------------------------------------------------------------------
+#include "skeleton.hpp"
+#include "tree_cu_type.hpp"
+#include "bone.hpp"
 
 #include <map>
 #include <vector>
 
-// Forward def -----------------------------------------------------------------
-//#include "skeleton.hpp"
-#include "tree_cu_type.hpp"
-#include "bone.hpp"
-struct Skeleton;
-// End Forward def -------------------------------------------------------------
-
-/** @brief Class of animated meshes
-
-    As the joints of the skeleton rotates, the mesh is deformed accordingly.
-*/
-
 struct Animesh{
 public:
-
-    // -------------------------------------------------------------------------
-    /// @name Inner class
-    // -------------------------------------------------------------------------
-
-
-
-    /// @warning The input mesh 'm_' vertices memory layout might be changed
-    /// for optimization. Yet we garantee the layout is same in Animesh as
-    /// in Mesh
+    // The Mesh must exist for the lifetime of this object.
     Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_);
-
     ~Animesh();
 
     // Get the loaded skeleton.
     const Skeleton *get_skel() const { return _skel.get(); }
+
+    // Get the mesh.
+    const Mesh*     get_mesh() const { return _mesh; }
 
     /// Computes the potential at each vertex of the mesh. When the mesh is
     /// animated, if implicit skinning is enabled, vertices move so as to match
@@ -89,24 +69,15 @@ public:
     // Copy the given vertices into the mesh.
     void set_vertices(const std::vector<Vec3_cu> &vertices);
 
-    inline void set_smooth_factor(int i, float val){
-        d_input_smooth_factors.set(i, val);
-    }
+    inline void set_smooth_factor(int i, float val) { d_input_smooth_factors.set(i, val); }
 
-    void set_smoothing_weights_diffusion_iter(int nb_iter){
-        diffuse_smooth_weights_iter = nb_iter;
-    }
+    void set_smoothing_weights_diffusion_iter(int nb_iter) { diffuse_smooth_weights_iter = nb_iter; }
     void set_smoothing_iter (int nb_iter ) { smoothing_iter = nb_iter;   }
     void set_smooth_mesh    (bool state  ) { do_smooth_mesh = state;     }
     void set_local_smoothing(bool state  ) { do_local_smoothing = state; }
     void set_smooth_force_a (float alpha ) { smooth_force_a = alpha;     }
     void set_smooth_force_b (float beta  ) { smooth_force_b = beta;      }
-
-    void set_smoothing_type (EAnimesh::Smooth_type type ) {
-        mesh_smoothing = type;
-    }
-
-    const Mesh*     get_mesh() const { return _mesh; }
+    void set_smoothing_type (EAnimesh::Smooth_type type ) { mesh_smoothing = type; }
 
 private:
     // -------------------------------------------------------------------------
