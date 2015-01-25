@@ -42,7 +42,7 @@ typedef HRBF_3f::VectorX  VectorX;
 /// size MatriDX.cols()
 static void matrixDX_to_Vec3_cu_array(const MatrixDX& mat, Vec3_cu*& vec)
 {
-    int nb_col = mat.cols();
+    int nb_col = (int) mat.cols();
     vec        = new Vec3_cu[nb_col];
     for(int i = 0; i < nb_col; i++)
     {
@@ -59,7 +59,7 @@ static void matrixDX_to_Vec3_cu_array(const MatrixDX& mat, Vec3_cu*& vec)
 template<class Scalar>
 void vectorX_to_array(const VectorX& vec, Scalar*& tab)
 {
-    int nb_row = vec.rows();
+    int nb_row = (int) vec.rows();
     tab        = new Scalar[nb_row];
     for(int i = 0; i < nb_row; i++)
         tab[i] = vec(i);
@@ -86,7 +86,7 @@ void hermite_fit(const Vec3_cu* points,
     g_hrbf->hermite_fit(vec_points, vec_normals);
 
     // return Coeffs :
-    res.size = g_hrbf->_node_centers.cols();
+    res.size = (int) g_hrbf->_node_centers.cols();
     vectorX_to_array<float>  (g_hrbf->_alphas,       res.alphas      );
     matrixDX_to_Vec3_cu_array(g_hrbf->_betas,        res.betas       );
     matrixDX_to_Vec3_cu_array(g_hrbf->_node_centers, res.nodeCenters );

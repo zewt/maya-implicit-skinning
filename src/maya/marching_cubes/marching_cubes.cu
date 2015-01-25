@@ -176,8 +176,8 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
         // blended surfaces may extend beyond the bounding box of any of the underlying bones,
         // so we extend the bbox a little further.
         Vec3_cu box_size = bb.pmax - bb.pmin;
-        bb.pmin = bb.pmin - box_size * 0.2;
-        bb.pmax = bb.pmax + box_size * 0.2;
+        bb.pmin = bb.pmin - box_size * 0.2f;
+        bb.pmax = bb.pmax + box_size * 0.2f;
 
         Point_cu delta = (obbox._bb.pmax - obbox._bb.pmin).to_point() / gridRes;
 

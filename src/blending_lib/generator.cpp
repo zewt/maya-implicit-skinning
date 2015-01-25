@@ -382,7 +382,7 @@ void gen_custom_operator(const Profile_polar::Base& profile,
         for(int i = 0; i < nb_samples_ocu; i++)
         {
             double x = ((double)i * range) / (double)(nb_samples_ocu-1);
-            double x2 = opening.f(x, tan_alpha);
+            double x2 = opening.f((float) x, (float) tan_alpha);
 
             for(int j = 0; j < ((x2 * (double)(nb_samples_ocu-1)) / range); j++){
                 assert((i + j*nb_samples_ocu + offset) < size);
@@ -394,7 +394,7 @@ void gen_custom_operator(const Profile_polar::Base& profile,
             //printf("i = %d\n",i);fflush(stdout);
             double c0 = x2;
             double xtmp = ((double)(i+1) * range) / (double)(nb_samples_ocu-1);
-            double c1 = opening.f(xtmp, tan_alpha);
+            double c1 = opening.f((float) xtmp, (float) tan_alpha);
 
             int k0 = (int)floor( ((x2 * (double)(nb_samples_ocu-1)) / range) ) /* x2 * (nb_samples_ocu-1)*/;
             int k1 = i;
@@ -413,12 +413,12 @@ void gen_custom_operator(const Profile_polar::Base& profile,
                             values[ik + jk*nb_samples_ocu + offset] = (dx<dy)?yk:xk;
                         } else {
                             double r0 = sqrt(dx*dx + dy*dy);
-                            r0 /= profile.f(tan0);
+                            r0 /= profile.f((float) tan0);
                             dx = xk - c1;
                             dy = yk - c1;
                             double tan1 = (dx<dy)?dx/dy:(dy/dx);
                             double r1 = sqrt(dx*dx + dy*dy);
-                            r1 /= profile.f(tan1);
+                            r1 /= profile.f((float) tan1);
 
                             if( (r0 >= (x - c0)) & (r1 <  (xtmp - c1)))
                             {
@@ -436,7 +436,7 @@ void gen_custom_operator(const Profile_polar::Base& profile,
         }
 
         // Building isos which are not connected to a max
-        double org = opening.f(range, tan_alpha);
+        double org = opening.f((float) range, (float) tan_alpha);
         int   p0  = (int)floor( ((org * (double)(nb_samples_ocu-1)) / range) );
         for(int i = p0; i < nb_samples_ocu; i++){
             double xi = ((double)i * range) / (double)(nb_samples_ocu-1);
@@ -448,7 +448,7 @@ void gen_custom_operator(const Profile_polar::Base& profile,
                     double dy = xj - org;
                     double r = sqrt(dx*dx + dy*dy);
                     double tant = (dx<dy) ? (dx/dy) : (dy/dx);
-                    r /= profile.f(tant);
+                    r /= profile.f((float) tant);
                     values[i + j*nb_samples_ocu + offset] = r + org;
                 }
             }
