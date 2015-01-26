@@ -389,13 +389,15 @@ MBoundingBox ImplicitBlend::boundingBox() const
 {
     // Our bounding box is the union of our bones' bounding boxes.
     BBox_cu bbox;
-    for(Bone::Id boneId: skeleton->get_bone_ids())
-    {
-        const Bone *bone = skeleton->get_bone(boneId).get();
+    if(skeleton.get() != NULL) {
+        for(Bone::Id boneId: skeleton->get_bone_ids())
+        {
+            const Bone *bone = skeleton->get_bone(boneId).get();
 
-        // Get the surface bounding box in world space.
-        BBox_cu boneBbox = bone->get_bbox(true, true);
-        bbox = bbox.bbox_union(boneBbox);
+            // Get the surface bounding box in world space.
+            BBox_cu boneBbox = bone->get_bbox(true, true);
+            bbox = bbox.bbox_union(boneBbox);
+        }
     }
 
     Point_cu top = bbox.get_corner(0);
