@@ -188,8 +188,8 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
     if(status != MS::kSuccess) return status;
 
     // Create a list of our input surfaces and their relationships.
-    vector<shared_ptr<const Skeleton> > implicitBones;
-    vector<int> surfaceParents;
+    map<int, shared_ptr<const Skeleton> > logicalIndexToImplicitBones;
+    map<int,int> logicalIndexToParentIndex;
     for(int i = 0; i < (int) surfacesHandle.elementCount(); ++i)
     {
         status = surfacesHandle.jumpToElement(i);
@@ -198,14 +198,11 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
         int logicalIndex = surfacesHandle.elementIndex(&status);
         if(status != MS::kSuccess) return status;
 
-        implicitBones.resize(max(logicalIndex+1, (int) implicitBones.size()));
-        surfaceParents.resize(max(logicalIndex+1, (int) surfaceParents.size()), -1);
-
         MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
         if(status != MS::kSuccess) return status;
 
         ImplicitSurfaceData *implicitSurfaceData = (ImplicitSurfaceData *) implicitHandle.asPluginData();
-        implicitBones[logicalIndex] = implicitSurfaceData->getSkeleton();
+        logicalIndexToImplicitBones[logicalIndex] = implicitSurfaceData->getSkeleton();
 
         MDataHandle parentJointHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::parentJoint);
         if(status != MS::kSuccess) return status;
@@ -213,19 +210,19 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
         int parentIdx = DagHelpers::readHandle<int>(parentJointHandle, &status);
         if(status != MS::kSuccess) return status;
 
-        surfaceParents[logicalIndex] = parentIdx;
+        logicalIndexToParentIndex[logicalIndex] = parentIdx;
     }
 
     // Check for out of bounds parent indexes.
-    for(int i = 0; i < surfaceParents.size(); ++i)
+    for(auto &it: logicalIndexToParentIndex)
     {
-        if(surfaceParents[i] < -1 || surfaceParents[i] >= (int) surfaceParents.size())
-            surfaceParents[i] = -1;
+        if(logicalIndexToParentIndex.find(it.second) == logicalIndexToParentIndex.end())
+            it.second = -1;
     }
 
     // Get the hierarchy order of the inputs, so we can create parents before children.
     vector<int> hierarchyOrder;
-    if(!MiscUtils::getHierarchyOrder(surfaceParents, hierarchyOrder)) {
+    if(!MiscUtils::getHierarchyOrder(logicalIndexToParentIndex, hierarchyOrder)) {
         // The input contains cycles.
         MDagPath dagPath = MDagPath::getAPathTo(thisMObject(), &status);
         if(status != MS::kSuccess) return status;
@@ -237,18 +234,17 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
         return MStatus::kSuccess;
     }
 
-    // Each entry in implicitBones represents a Skeleton.  These will usually be skeletons with
+    // Each entry in logicalIndexToImplicitBones represents a Skeleton.  These will usually be skeletons with
     // just a single bone, representing an ImplicitSurface, but they can also have multiple bones,
     // if the input is another ImplicitBlend.  Add all bones in the input into our skeleton.
     // We can have the same bone more than once, if multiple skeletons give it to us, but a skeleton
     // can never have the same bone more than once.
 
     // firstBonePerSkeleton[n] is the index of the first bone (in bones) added for implicitBones[n].
-    std::vector<int> firstBonePerSkeleton(surfaceParents.size(), -1);
-    for(int i = 0; i < (int) hierarchyOrder.size(); ++i)
+    map<int,int> firstBonePerSkeleton;
+    for(int idx: hierarchyOrder)
     {
-        int idx = hierarchyOrder[i];
-        shared_ptr<const Skeleton> subSkeleton = implicitBones[idx];
+        shared_ptr<const Skeleton> subSkeleton = logicalIndexToImplicitBones.at(idx);
 
         int firstBoneIdx = -1;
 
@@ -263,7 +259,7 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
         }
         firstBonePerSkeleton[idx] = firstBoneIdx;
 
-        int surfaceParentIdx = surfaceParents[idx];
+        int surfaceParentIdx = logicalIndexToParentIndex.at(idx);
         for(Bone::Id boneId: subSkeleton->get_bone_ids())
         {
             int parentBoneIdx = -1;
@@ -281,7 +277,7 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
                 // surface.  If the parent surface doesn't actually have any bones, leave this
                 // as a root joint.  It's guaranteed that we've already created the parent,
                 // since we're traversing in hierarchy order.
-                parentBoneIdx = firstBonePerSkeleton[surfaceParentIdx];
+                parentBoneIdx = firstBonePerSkeleton.at(surfaceParentIdx);
             }
 
             parents.push_back(parentBoneIdx);

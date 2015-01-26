@@ -30,26 +30,26 @@ static bool addHierarchyOrderRecursive(const map<int, vector<int> > children, ve
     return true;
 }
 
-bool MiscUtils::getHierarchyOrder(const std::vector<int> &parent, std::vector<int> &out)
+bool MiscUtils::getHierarchyOrder(const std::map<int,int> &node_to_parent, std::vector<int> &out)
 {
     // Make a list of each node's children.
     map<int, vector<int> > children;
-    for(int idx = 0; idx < (int) parent.size(); ++idx) {
-        int parent_idx = parent[idx];
-        if(parent_idx >= 0 && parent_idx < parent.size())
-            children[parent_idx].push_back(idx);
+    for(auto &it: node_to_parent) {
+        int parent_idx = it.second;
+        if(node_to_parent.find(parent_idx) != node_to_parent.end())
+            children[parent_idx].push_back(it.first);
     }
 
     // Start processing root nodes.
     set<int> indexesOnStack;
     set<int> reachedIndexes;
-    for(int idx = 0; idx < (int) parent.size(); ++idx)
+    for(auto &it: node_to_parent)
     {
-        int parent_idx = parent[idx];
-        if(parent_idx >= 0 && parent_idx < parent.size())
+        int parent_idx = it.second;
+        if(node_to_parent.find(parent_idx) != node_to_parent.end())
             continue;
 
-        if(!addHierarchyOrderRecursive(children, out, idx, indexesOnStack, reachedIndexes))
+        if(!addHierarchyOrderRecursive(children, out, it.first, indexesOnStack, reachedIndexes))
         {
             out.clear();
             return false;
@@ -57,7 +57,7 @@ bool MiscUtils::getHierarchyOrder(const std::vector<int> &parent, std::vector<in
     }
 
     // If we don't reach all nodes, then we either have a cycle or an out-of-bounds index.
-    if(reachedIndexes.size() != parent.size())
+    if(reachedIndexes.size() != node_to_parent.size())
         return false;
 
     return true;
