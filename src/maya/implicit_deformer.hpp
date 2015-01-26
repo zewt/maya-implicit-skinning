@@ -24,9 +24,8 @@ public:
 
     MStatus calculate_base_potential();
 
-    // The base potential of the mesh, as [normalX, normalY, normalZ, pot].
+    // The base potential of the mesh.
     static MObject basePotential;
-    static MObject baseGradient;
 
     // The input implicit surface.
     static MObject implicit;

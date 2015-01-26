@@ -66,7 +66,6 @@ using namespace std;
 const MTypeId ImplicitDeformer::id(0xEA115);
 MObject ImplicitDeformer::implicit;
 MObject ImplicitDeformer::basePotential;
-MObject ImplicitDeformer::baseGradient;
 MObject ImplicitDeformer::deformerIterations;
 MObject ImplicitDeformer::iterativeSmoothing;
 MObject ImplicitDeformer::finalFitting;
@@ -127,15 +126,8 @@ MStatus ImplicitDeformer::initialize()
     addAttribute(basePotential);
     dependencies.add(implicit, basePotential);
 
-    baseGradient = numAttr.create("baseGradient", "bg", MFnNumericData::Type::k3Float, 0, &status);
-    numAttr.setArray(true);
-    numAttr.setUsesArrayDataBuilder(true);
-    addAttribute(baseGradient);
-    dependencies.add(implicit, baseGradient);
-
     dependencies.add(ImplicitDeformer::implicit, ImplicitDeformer::outputGeom);
     dependencies.add(ImplicitDeformer::basePotential, ImplicitDeformer::outputGeom);
-    dependencies.add(ImplicitDeformer::baseGradient, ImplicitDeformer::outputGeom);
     dependencies.add(ImplicitDeformer::input, ImplicitDeformer::outputGeom);
     dependencies.add(ImplicitDeformer::inputGeom, ImplicitDeformer::outputGeom);
 
@@ -152,7 +144,7 @@ void ImplicitDeformer::postConstructor()
 bool ImplicitDeformer::setInternalValueInContext(const MPlug &plug, const MDataHandle &dataHandle, MDGContext &ctx)
 {
     MStatus status = MStatus::kSuccess;
-    if(plug == basePotential || plug == baseGradient)
+    if(plug == basePotential)
     {
         bool result = MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
 
@@ -366,12 +358,10 @@ MStatus ImplicitDeformer::calculate_base_potential()
 
     // Read the result.
     vector<float> pot;
-    vector<Vec3_cu> grad;
     animesh->get_base_potential(pot);
 
-    // Save the base potential to basePotential and baseGradient.
+    // Save the base potential to basePotential.
     status = DagHelpers::setArray(dataBlock, ImplicitDeformer::basePotential, pot); check("setArray(basePotential)");
-    status = DagHelpers::setArray(dataBlock, ImplicitDeformer::baseGradient, grad); check("setArray(baseGradient)");
 
     // Work around a Maya bug.  Setting an array on the dataBlock doesn't trigger dependencies.  We
     // need to set a value using an MPlug to trigger updates.
@@ -413,13 +403,6 @@ MStatus ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
 
     vector<float> pot;
     status = DagHelpers::readArray(basePotentialHandle, pot);
-
-    MArrayDataHandle baseGradientHandle = dataBlock.inputArrayValue(ImplicitDeformer::baseGradient, &status);
-    if(status != MS::kSuccess) return status;
-
-    vector<Vec3_cu> grad;
-    status = DagHelpers::readArray(baseGradientHandle, grad);
-    if(status != MS::kSuccess) return status;
 
     // Set the base potential that we loaded.
     animesh->set_base_potential(pot);
