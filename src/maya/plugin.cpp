@@ -466,7 +466,8 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     // Create entries in abs_skeleton for each influence object.  Each joint is placed at the same world
     // space position as the corresponding influence object.
     Abs_skeleton abs_skeleton;
-    abs_skeleton.load(skinClusterPlug.node());
+    status = abs_skeleton.load(skinClusterPlug.node());
+    if(status != MS::kSuccess) return status;
 
     // Create bones from the Abs_skeleton.  These are temporary and used only for sampling.
     // New, final bones will be created within the ImplicitSurfaces once we decide which ones
