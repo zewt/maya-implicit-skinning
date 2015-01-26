@@ -165,24 +165,10 @@ namespace {
         MStatus load(MObject skinClusterNode)
         {
             MStatus status = MStatus::kSuccess;
-            MFnSkinCluster skinCluster(skinClusterNode, &status);
-            if(status != MS::kSuccess) return status;
-
-            MDagPathArray influenceObjects;
-            skinCluster.influenceObjects(influenceObjects, &status);
-            if(status != MS::kSuccess) return status;
 
             map<int,MDagPath> logicalIndexToInfluenceObjects;
-            for(int i = 0; i < (int) influenceObjects.length(); ++i)
-            {
-                const MDagPath &influenceObjectPath = influenceObjects[i];
-
-                int logicalIndex = skinCluster.indexForInfluenceObject(influenceObjectPath, &status);
-                if(status != MS::kSuccess) return status;
-
-                logicalIndexToPhysicalIndex[logicalIndex] = i;
-                logicalIndexToInfluenceObjects[logicalIndex] = influenceObjectPath;
-            }
+            status = DagHelpers::getInfluenceObjectsForSkinCluster(skinClusterNode, logicalIndexToInfluenceObjects, logicalIndexToPhysicalIndex);
+            if(status != MS::kSuccess) return status;
 
             map<int,int> logicalIndexToParentIdx;
             MayaData::loadSkeletonHierarchyFromSkinCluster(logicalIndexToInfluenceObjects, logicalIndexToParentIdx);
@@ -215,7 +201,6 @@ namespace {
             }
             return MStatus::kSuccess;
         }
-
     };
 
     struct BoneItem

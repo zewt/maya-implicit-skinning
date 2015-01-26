@@ -132,6 +132,73 @@ namespace DagHelpers
         }
     }
 
+    // Retrieve the influence objects attached to a skin cluster, and their physical index in
+    // the skin cluster.
+    //
+    // In addition, any joints attached to these objects (non-recursively) that aren't actually
+    // in the skin cluster will be included.  These items will have no entry in logicalIndexToPhysicalIndex.
+    MStatus getInfluenceObjectsForSkinCluster(MObject skinClusterNode, map<int,MDagPath> &logicalIndexToInfluenceObjects, map<int,int> &logicalIndexToPhysicalIndex)
+    {
+        MStatus status = MStatus::kSuccess;
+
+        MFnSkinCluster skinCluster(skinClusterNode, &status);
+        if(status != MS::kSuccess) return status;
+
+        MDagPathArray influenceObjects;
+        skinCluster.influenceObjects(influenceObjects, &status);
+        if(status != MS::kSuccess) return status;
+
+        std::vector<MDagPath> influenceObjectsArray;
+        for(int i = 0; i < (int) influenceObjects.length(); ++i)
+            influenceObjectsArray.push_back(influenceObjects[i]);
+
+        for(int i = 0; i < (int) influenceObjects.length(); ++i)
+        {
+            const MDagPath &influenceObjectPath = influenceObjects[i];
+
+            int logicalIndex = skinCluster.indexForInfluenceObject(influenceObjectPath, &status);
+            if(status != MS::kSuccess) return status;
+
+            logicalIndexToPhysicalIndex[logicalIndex] = i;
+            logicalIndexToInfluenceObjects[logicalIndex] = influenceObjectPath;
+        }
+
+        // Many skeletons have leaf bones in the hierarchy, eg. representing the end of fingertips,
+        // which have no actual weights.  These set the length of the last bone.  Since they have no
+        // weights, they're often not actually added to the skinCluster's inputs, but we need to know
+        // about them.  Check each influence's children for child joints that aren't in influenceObject,
+        // and add them.  These will have a physical index of -1, and we'll assign a dummy logical index.
+        // void getImmediateChildren();
+        int nextLogicalIndex = 0;
+        for(auto &it: logicalIndexToPhysicalIndex)
+            nextLogicalIndex = max(nextLogicalIndex, it.first+1);
+        for(const MDagPath &dagPath: influenceObjectsArray)
+        {
+            int childCount = dagPath.childCount(&status);
+            if(status != MS::kSuccess) return status;
+            for(int i = 0; i < childCount; ++i)
+            {
+                MObject child = dagPath.child(i, &status);
+                if(status != MS::kSuccess) return status;
+
+                if(!child.hasFn(MFn::kJoint))
+                    continue;
+
+                MDagPath childDagPath(dagPath);
+                status = childDagPath.push(child);
+                if(status != MS::kSuccess) return status;
+
+                if(std::find(influenceObjectsArray.begin(), influenceObjectsArray.end(), childDagPath) != influenceObjectsArray.end())
+                    continue;
+
+                influenceObjects.append(childDagPath);
+                logicalIndexToInfluenceObjects[nextLogicalIndex] = childDagPath;
+                logicalIndexToPhysicalIndex[nextLogicalIndex] = i;
+                ++nextLogicalIndex;
+            }
+        }
+        return MStatus::kSuccess;
+    }
     /* Return the skin weights for all vertices.  weightsPerIndex[vtx] is the weights for vertex n.
      * weightsPerIndex[vtx][physical_idx] is the weight for a single influence on the vertex.  Note
      * that this uses physical indexes, not logical indexes. */
