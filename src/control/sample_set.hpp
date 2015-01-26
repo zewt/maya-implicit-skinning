@@ -115,10 +115,7 @@ private:
     void compute_jcaps(const Skeleton &skel, const SampleSetSettings &settings, int bone_id, InputSample &out) const;
 
     /// Compute caps at the tip of the bone to close the hrbf
-    /// @param use_parent_dir: add the cap following the parent direction and
-    /// not the direction of 'bone_id'
     void compute_pcaps(const Skeleton &skel, const SampleSetSettings &settings, int bone_id,
-                                     bool use_parent_dir,
                                      InputSample &out) const;
 };
 

@@ -69,11 +69,7 @@ void SampleSet::SampleSet::choose_hrbf_samples(const Mesh *mesh, const Skeleton 
         compute_jcaps(*skel, settings, bone_id, _samples[bone_id]);
 
     if(settings.pcap)
-    {
-        int parent = skel->parent( bone_id );
-        bool use_parent_dir = false;
-        compute_pcaps(*skel, settings, bone_id, use_parent_dir, _samples[bone_id]);
-    }
+        compute_pcaps(*skel, settings, bone_id, _samples[bone_id]);
 }
 
 void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, const SampleSetSettings &settings, int bone_id, InputSample &out) const
@@ -86,45 +82,50 @@ void SampleSet::SampleSet::compute_jcaps(const Skeleton &skel, const SampleSetSe
     // Get the average _junction_radius of the joint's children.
     float jrad = 0.f;// joint radius mean radius
     const std::vector<int> &children = skel.get_sons(bone_id);
-    int nb_sons = (int) children.size();
-    for (int i = 0; i < nb_sons; ++i)
-        jrad += settings.junction_radius.at(children[i]);
+    int count = 0;
 
-    // Note that there should never actually be zero children, because our caller checks.
-    jrad /= nb_sons > 0 ? (float)nb_sons : 1.f;
+    // Ignore children that are leaves.  
+    // We're assuming that most bones are cylindrical (arms, fingers), and looking for the radius
+    // of the cylinder where it joints with children.  The junction_radius for a bone is its minimum
+    // distance from the bone to any of its vertices, and we'll take the average of those to guess
+    // the radius.
+    //
+    // This assumes that the "caps" of each cylinder have effectively been chopped off during
+    // clusterization, but that's not the case for leaf joints: the end of a finger will still
+    // be there.  The last joint of a finger often sits right at the fingertip, which means that
+    // the radius of that last joint will be 0, which isn't what we want.  Work around this by
+    // ignoring leaf joints, and if we end up with no joints at all, use the parent joint's radius
+    // instead.  This isn't perfect, but seems to help.
+    for (int i = 0; i < (int) children.size(); ++i) {
+        int child_bone_id = children[i];
+        if(skel.is_leaf(child_bone_id))
+            continue;
+
+        ++count;
+        jrad += settings.junction_radius.at(child_bone_id);
+    }
+
+    if(count == 0)
+        jrad = settings.junction_radius.at(bone_id);
+    else
+        jrad /= count;
 
     Point_cu p = b->end() + b->dir().normalized() * jrad;
     Vec3_cu  n = b->dir().normalized();
     out.nodes.  push_back( p );
     out.n_nodes.push_back( n );
-
-    //add_circle(jrad, b->get_org(), n, out_verts, out_normals);
 }
 
 void SampleSet::SampleSet::compute_pcaps(const Skeleton &skel, const SampleSetSettings &settings, int bone_id,
-                                 bool use_parent_dir,
                                  InputSample &out) const
 {
     const Bone* b = skel.get_bone(bone_id).get();
-    int parent = skel.parent(bone_id);
-    float prad = settings.junction_radius.at(bone_id); // parent joint radius
-    Vec3_cu p;
-    Vec3_cu n;
-
-    if( use_parent_dir)
-    {
-        const Bone* pb = skel.get_bone( parent ).get();
-        p =  pb->end() - pb->dir().normalized() * prad;
-        n = -pb->dir().normalized();
-    }
-    else
-    {
-        p =  b->org() - b->dir().normalized() * prad;
-        n = -b->dir().normalized();
-    }
+    float prad = settings.junction_radius.at(bone_id);
+    Vec3_cu p =  b->org() - b->dir().normalized() * prad;
     out.nodes.push_back(p);
+
+    Vec3_cu n = -b->dir().normalized();
     out.n_nodes.push_back(n);
-    //add_circle(prad, b->get_org() + b->get_dir(), n, out_verts, out_normals);
 }
 
 
