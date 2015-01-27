@@ -321,9 +321,6 @@
     <ClInclude Include="..\src\maya\marching_cubes\marching_cubes.hpp">
       <Filter>maya\marching_cubes</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\maya\marching_cubes\tables.h">
-      <Filter>maya\marching_cubes</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp">
       <Filter>animation</Filter>
     </ClInclude>

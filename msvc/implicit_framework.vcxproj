@@ -276,7 +276,6 @@
     <ClInclude Include="..\src\maya\implicit_surface.hpp" />
     <ClInclude Include="..\src\maya\implicit_surface_geometry_override.hpp" />
     <ClInclude Include="..\src\maya\marching_cubes\marching_cubes.hpp" />
-    <ClInclude Include="..\src\maya\marching_cubes\tables.h" />
     <ClInclude Include="..\src\maya\maya_data.hpp" />
     <ClInclude Include="..\src\maya\maya_helpers.hpp" />
     <ClInclude Include="..\src\maya\plugin.hpp" />
