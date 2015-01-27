@@ -30,6 +30,8 @@ public:
     bool isBounded() const;
     MBoundingBox boundingBox() const;
     MStatus setDependentsDirty(const MPlug &plug_, MPlugArray &plugArray);
+    MStatus connectionMade(const MPlug &plug, const MPlug &otherPlug, bool asSrc);
+    MStatus connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc);
     MStatus compute(const MPlug &plug, MDataBlock &dataBlock);
     const MeshGeom &get_mesh_geometry();
 
@@ -59,6 +61,8 @@ private:
     // last update.
     vector<shared_ptr<const Bone> > lastImplicitBones;
     vector<int> lastParents;
+
+    set<int> implicitConnectedIndexes;
 
     // This is updated by meshGeometryUpdateAttr, and contains a mesh reprensentation of the
     // implicit surface.  This is used for preview rendering.  If the surface shape is hidden

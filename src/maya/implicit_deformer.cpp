@@ -139,6 +139,7 @@ MStatus ImplicitDeformer::initialize()
 
 void ImplicitDeformer::postConstructor()
 {
+    implicitIsConnected = false;
 }
 
 bool ImplicitDeformer::setInternalValueInContext(const MPlug &plug, const MDataHandle &dataHandle, MDGContext &ctx)
@@ -160,6 +161,24 @@ bool ImplicitDeformer::setInternalValueInContext(const MPlug &plug, const MDataH
     return MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
 }
 
+// Remember whether implicit inputs are connected, since Maya doesn't clear them on
+// disconnection.
+MStatus ImplicitDeformer::connectionMade(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
+{
+    if(!asSrc && plug == ImplicitDeformer::implicit)
+        implicitIsConnected = true;
+
+    return MPxDeformerNode::connectionMade(plug, otherPlug, asSrc);
+}
+
+MStatus ImplicitDeformer::connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
+{
+    if(!asSrc && plug == ImplicitDeformer::implicit)
+        implicitIsConnected = false;
+
+    return MPxDeformerNode::connectionBroken(plug, otherPlug, asSrc);
+}
+
 MStatus ImplicitDeformer::compute(const MPlug& plug, MDataBlock& dataBlock)
 {
     // If we're calculating the output geometry, use the default implementation, which will
@@ -177,6 +196,9 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
         return MStatus::kSuccess;
 
     MStatus status = MStatus::kSuccess;
+
+    if(!implicitIsConnected)
+        return MStatus::kSuccess;
 
     // Read the dependency attributes that represent data we need.  We don't actually use the
     // results of inputvalue(); this is triggering updates for cudaCtrl data.

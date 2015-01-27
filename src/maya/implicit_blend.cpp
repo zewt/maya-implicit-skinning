@@ -139,6 +139,33 @@ MStatus ImplicitBlend::setDependentsDirty(const MPlug &plug_, MPlugArray &plugAr
     return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
 }
 
+// Remember whether implicit inputs are connected, since Maya doesn't clear them on
+// disconnection.
+MStatus ImplicitBlend::connectionMade(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
+{
+    MStatus status = MStatus::kSuccess;
+    if(!asSrc && plug == ImplicitBlend::implicit) {
+        MPlug arrayPlug = plug.parent(&status);
+        if(status != MS::kSuccess) return status;
+        
+        implicitConnectedIndexes.insert(arrayPlug.logicalIndex());
+    }
+    return MPxSurfaceShape::connectionMade(plug, otherPlug, asSrc);
+}
+
+MStatus ImplicitBlend::connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
+{
+    MStatus status = MStatus::kSuccess;
+    if(!asSrc && plug == ImplicitBlend::implicit) {
+        MPlug arrayPlug = plug.parent(&status);
+        if(status != MS::kSuccess) return status;
+        
+        implicitConnectedIndexes.erase(arrayPlug.logicalIndex());
+    }
+
+    return MPxSurfaceShape::connectionBroken(plug, otherPlug, asSrc);
+}
+
 MStatus ImplicitBlend::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
     if(plug == worldImplicit) return load_world_implicit(plug, dataBlock);
@@ -197,6 +224,11 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
 
         int logicalIndex = surfacesHandle.elementIndex(&status);
         if(status != MS::kSuccess) return status;
+
+        // If this node isn't actually connected, don't read it.  Maya doesn't reset MPxData when
+        // connections are removed.
+        if(implicitConnectedIndexes.find(logicalIndex) == implicitConnectedIndexes.end())
+            continue;
 
         MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
         if(status != MS::kSuccess) return status;
@@ -335,6 +367,9 @@ MStatus ImplicitBlend::update_skeleton_params(MDataBlock &dataBlock)
 
         int logicalIndex = surfacesHandle.elementIndex(&status);
         if(status != MS::kSuccess) return status;
+
+        if(implicitConnectedIndexes.find(logicalIndex) == implicitConnectedIndexes.end())
+            continue;
 
         MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
         if(status != MS::kSuccess) return status;
