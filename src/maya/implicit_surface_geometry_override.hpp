@@ -3,7 +3,7 @@
 
 #include <maya/MPxGeometryOverride.h>
 
-#include "marching_cubes/marching_cubes.hpp"
+#include "marching_cubes.hpp"
 
 interface ImplicitSurfaceGeometryOverrideSource
 {

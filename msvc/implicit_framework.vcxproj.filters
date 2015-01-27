@@ -318,9 +318,6 @@
     <ClInclude Include="..\src\maya\plugin.hpp">
       <Filter>maya</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\maya\marching_cubes\marching_cubes.hpp">
-      <Filter>maya\marching_cubes</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\animation\animesh_hrbf_heuristic.hpp">
       <Filter>animation</Filter>
     </ClInclude>
@@ -350,6 +347,9 @@
     </ClInclude>
     <ClInclude Include="..\src\primitives\precomputed_prim_constants.hpp">
       <Filter>primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maya\marching_cubes.hpp">
+      <Filter>maya</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -397,9 +397,6 @@
     </Filter>
     <Filter Include="maya">
       <UniqueIdentifier>{2a994f5b-9149-40e6-9670-c4d09f393ae9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="maya\marching_cubes">
-      <UniqueIdentifier>{f322788f-9032-4197-8991-7775a87a0934}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -463,8 +460,8 @@
     <CudaCompile Include="..\src\animation\vert_to_bone_info.cu">
       <Filter>animation</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\src\maya\marching_cubes\marching_cubes.cu">
-      <Filter>maya\marching_cubes</Filter>
+    <CudaCompile Include="..\src\maya\marching_cubes.cu">
+      <Filter>maya</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "marching_cubes/marching_cubes.hpp"
+#include "marching_cubes.hpp"
 #include "implicit_surface_geometry_override.hpp"
 #include "implicit_surface.hpp"
 #include "implicit_blend.hpp"
