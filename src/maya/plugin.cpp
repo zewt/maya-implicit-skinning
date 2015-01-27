@@ -611,7 +611,7 @@ void ImplicitCommand::test(MString nodeName)
 
 MStatus ImplicitCommand::doIt(const MArgList &args)
 {
-    try {
+    return handle_exceptions([&] {
         MStatus status;
         for(int i = 0; i < (int) args.length(); ++i)
         {
@@ -619,7 +619,7 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
             {
                 ++i;
                 MString nodeName = args.asString(i, &status);
-                if(status != MS::kSuccess) return status;
+                if(status != MS::kSuccess) merr("args.asString");
 
                 init(nodeName);
             }
@@ -627,7 +627,7 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
             {
                 ++i;
                 MString nodeName = args.asString(i, &status);
-                if(status != MS::kSuccess) return status;
+                if(status != MS::kSuccess) merr("args.asString");
 
                 calculate_base_potential(nodeName);
             }
@@ -635,70 +635,64 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
             {
                 ++i;
                 MString nodeName = args.asString(i, &status);
-                if(status != MS::kSuccess) return status;
+                if(status != MS::kSuccess) merr("args.asString");
 
                 test(nodeName);
             }
         }
-        return MS::kSuccess;
-    }
-    catch (std::exception &e) {
-        MGlobal::displayError(e.what());
-        return MS::kFailure;
-    }
+    });
 }
 
 MStatus initializePlugin(MObject obj)
 {
-    MStatus status;
+    return handle_exceptions([&] {
+        try {
+            MStatus status;
 
-    std::vector<Blending_env::Op_t> op;
-    op.push_back( Blending_env::B_D  );
-    op.push_back( Blending_env::U_OH );
-    op.push_back( Blending_env::C_D  );
+            std::vector<Blending_env::Op_t> op;
+            op.push_back( Blending_env::B_D  );
+            op.push_back( Blending_env::U_OH );
+            op.push_back( Blending_env::C_D  );
 
-    Cuda_ctrl::cuda_start(op);
+            Cuda_ctrl::cuda_start(op);
 
-    // XXX "HACK: Because blending_env initialize to elbow too ..." What?
-    IBL::Ctrl_setup shape = IBL::Shape::elbow();
+            // XXX "HACK: Because blending_env initialize to elbow too ..." What?
+            IBL::Ctrl_setup shape = IBL::Shape::elbow();
 
-    try {
-        MFnPlugin plugin(obj, "", "1.0", "Any");
+            MFnPlugin plugin(obj, "", "1.0", "Any");
 
-        status = plugin.registerData("ImplicitSurfaceData", ImplicitSurfaceData::id, ImplicitSurfaceData::creator);
-        merr("registerData(ImplicitSurfaceData)");
+            status = plugin.registerData("ImplicitSurfaceData", ImplicitSurfaceData::id, ImplicitSurfaceData::creator);
+            merr("registerData(ImplicitSurfaceData)");
 
-        status = ImplicitSurfaceGeometryOverride::initialize();
-        merr("ImplicitSurfaceGeometryOverride::initialize");
+            status = ImplicitSurfaceGeometryOverride::initialize();
+            merr("ImplicitSurfaceGeometryOverride::initialize");
 
-        status = plugin.registerShape("implicitSurface", ImplicitSurface::id, &ImplicitSurface::creator,
-               &ImplicitSurface::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
-        merr("registerShape(implicitSurface)");
+            status = plugin.registerShape("implicitSurface", ImplicitSurface::id, &ImplicitSurface::creator,
+                   &ImplicitSurface::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+            merr("registerShape(implicitSurface)");
 
-        status = plugin.registerShape("ImplicitBlend", ImplicitBlend::id, &ImplicitBlend::creator,
-               &ImplicitBlend::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
-        merr("registerShape(ImplicitBlend)");
+            status = plugin.registerShape("ImplicitBlend", ImplicitBlend::id, &ImplicitBlend::creator,
+                   &ImplicitBlend::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+            merr("registerShape(ImplicitBlend)");
 
-        status = plugin.registerNode("implicitDeformer", ImplicitDeformer::id, ImplicitDeformer::creator, ImplicitDeformer::initialize, MPxNode::kDeformerNode);
-        merr("registerNode(implicitDeformer)");
+            status = plugin.registerNode("implicitDeformer", ImplicitDeformer::id, ImplicitDeformer::creator, ImplicitDeformer::initialize, MPxNode::kDeformerNode);
+            merr("registerNode(implicitDeformer)");
 
-        status = plugin.registerCommand("implicitSkin", ImplicitCommand::creator);
-        merr("registerCommand(implicitSkin)");
-    }
-    catch (std::exception &e) {
-        // We don't try to clean up registrations if we've partially registered, but let's at least
-        // shut down CUDA.
-        Cuda_ctrl::cleanup();
-        MGlobal::displayError(e.what());
-        return MS::kFailure;
-    }
-
-    return MS::kSuccess;
+            status = plugin.registerCommand("implicitSkin", ImplicitCommand::creator);
+            merr("registerCommand(implicitSkin)");
+        }
+        catch (std::exception &) {
+            // We don't try to clean up registrations if we've partially registered, but let's at least
+            // shut down CUDA.
+            Cuda_ctrl::cleanup();
+            throw;
+        }
+    });
 }
 
 MStatus uninitializePlugin(MObject obj)
 {
-    try {
+    return handle_exceptions([&] {
         MStatus status;
 
         Cuda_ctrl::cleanup();
@@ -722,11 +716,5 @@ MStatus uninitializePlugin(MObject obj)
 
         status = plugin.deregisterData(ImplicitSurfaceData::id);
         merr("deregisterData(ImplicitSurfaceData)");
-    }
-    catch (std::exception &e) {
-        MGlobal::displayError(e.what());
-        return MS::kFailure;
-    }
-
-    return MS::kSuccess;
+    });
 }

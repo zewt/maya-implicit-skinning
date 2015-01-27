@@ -12,8 +12,10 @@
 #include <maya/MString.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MMatrix.h>
+#include <maya/MGlobal.h>
 #include <maya/MDagPath.h>
 #include <exception>
+#include <functional>
 #include <string>
 #include <vector>
 #include <map>
@@ -38,6 +40,19 @@ private:
 };
 
 #define merr(reason) { if(status != MS::kSuccess) throw MayaException(status, reason); }
+
+// All functions being called directly from Maya which return MStatus must
+// handle exceptions.  handle_exceptions catches exceptions, prints them to
+// the Maya console, and returns kFailure.
+//
+// Example:
+//
+// MStatus Plugin::compute(const MPlug &plug, MDataBlock &dataBlock) {
+//    return handle_exceptions([&] {
+//         throw runtime_error("Error");
+//     });
+// }
+MStatus handle_exceptions(const std::function<void()> &func);
 
 namespace DagHelpers
 {

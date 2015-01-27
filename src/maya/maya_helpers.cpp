@@ -1668,5 +1668,16 @@ MStatus MayaDependencies::apply_one(MObject from, MObject to, set<MObject, MObje
 
 }
 
+MStatus handle_exceptions(const std::function<void()> &func)
+{
+    try {
+        func();
+    }
+    catch (std::exception &e) {
+        MGlobal::displayError(e.what());
+        return MS::kFailure;
+    }
+    return MS::kSuccess;
+}
 
 
