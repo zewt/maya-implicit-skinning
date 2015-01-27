@@ -62,14 +62,14 @@ public:
 //    MStatus redoIt();
 //    MStatus undoIt();
 
-    MStatus init(MString nodeName);
-    MStatus calculate_base_potential(MString deformerName);
+    void init(MString nodeName);
+    void calculate_base_potential(MString deformerName);
 
     ImplicitDeformer *getDeformerByName(MString nodeName);
 
     bool isUndoable() const { return false; }
     static void *creator() { return new ImplicitCommand(); }
-    MStatus test(MString nodeName);
+    void test(MString nodeName);
 
 private:
     MPlug getOnePlugByName(MString nodeName);
@@ -104,16 +104,12 @@ ImplicitDeformer *ImplicitCommand::getDeformerByName(MString nodeName)
     return result;
 }
 
-MStatus ImplicitCommand::calculate_base_potential(MString deformerName)
+void ImplicitCommand::calculate_base_potential(MString deformerName)
 {
     MStatus status = MStatus::kSuccess;
 
     ImplicitDeformer *deformer = getDeformerByName(deformerName);
-
-    status = deformer->calculate_base_potential();
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
+    status = deformer->calculate_base_potential(); merr("calculate_base_potential");
 }
 
 // Create a shape node of a custom type, and return its interface.
@@ -122,8 +118,10 @@ MStatus ImplicitCommand::calculate_base_potential(MString deformerName)
 // the surrounding transform.  If transformNodeOut is non-NULL, it will be set to the
 // transform node.
 template<typename T>
-T *createShape(MString name, MObject *transformNodeOut, MStatus &status)
+T *createShape(MString name, MObject *transformNodeOut)
 {
+    MStatus status = MStatus::kSuccess;
+
     // Create the shape node.  We'll actually be given the transform node created around it.
     MFnDependencyNode depNode;
     MObject transformNode = depNode.create(T::id, name + "Shape", &status);
@@ -131,18 +129,18 @@ T *createShape(MString name, MObject *transformNodeOut, MStatus &status)
         *transformNodeOut = transformNode;
 
     // Name the transform node that was created above our shape.
-    MFnDependencyNode transformDepNode(transformNode, &status);
-    if(status != MS::kSuccess) return NULL;
+    MFnDependencyNode transformDepNode(transformNode, &status); merr("transformDepNode");
 
-    transformDepNode.setName(name, &status);
+    transformDepNode.setName(name, &status); merr("setName");
     if(status != MS::kSuccess) return NULL;
 
     // Get our actual node from the transform.
-    MObject shapeNode = DagHelpers::getShapeUnderNode(transformNode, &status);
+    MObject shapeNode = DagHelpers::getShapeUnderNode(transformNode, &status); merr("getShapeUnderNode");
     if(status != MS::kSuccess) return NULL;
 
     // Pull out the ImplicitSurface interface from the node.
-    return DagHelpers::GetInterfaceFromNode<T>(shapeNode, &status);
+    T *result = DagHelpers::GetInterfaceFromNode<T>(shapeNode, &status); merr("GetInterfaceFromNode");
+    return result;
 }
 
 namespace {
@@ -161,13 +159,13 @@ namespace {
         // influence object and don't really exist will have no entry.
         map<int,int> logicalIndexToPhysicalIndex;
 
-        MStatus load(MObject skinClusterNode)
+        void load(MObject skinClusterNode)
         {
             MStatus status = MStatus::kSuccess;
 
             map<int,MDagPath> logicalIndexToInfluenceObjects;
             status = DagHelpers::getInfluenceObjectsForSkinCluster(skinClusterNode, logicalIndexToInfluenceObjects, logicalIndexToPhysicalIndex);
-            if(status != MS::kSuccess) return status;
+            merr("getInfluenceObjectsForSkinCluster");
 
             map<int,int> logicalIndexToParentIdx;
             MayaData::loadSkeletonHierarchyFromSkinCluster(logicalIndexToInfluenceObjects, logicalIndexToParentIdx);
@@ -175,17 +173,13 @@ namespace {
             // Order the indexes parent nodes first.
             vector<int> hierarchyOrder;
             if(!MiscUtils::getHierarchyOrder(logicalIndexToParentIdx, hierarchyOrder))
-            {
-                MGlobal::displayError("The input hierarchy contains cycles.");
-                return MStatus::kFailure;
-            }
+                throw runtime_error("The input hierarchy contains cycles.");
 
             for(int logicalIndex: hierarchyOrder)
             {
                 const MDagPath &influenceObjectPath = logicalIndexToInfluenceObjects.at(logicalIndex);
 
-                MMatrix jointWorldMat = influenceObjectPath.inclusiveMatrix(&status);
-                if(status != MS::kSuccess) return status;
+                MMatrix jointWorldMat = influenceObjectPath.inclusiveMatrix(&status); merr("influenceObjectPath.inclusiveMatrix");
 
                 // Make space for the item, if needed.
                 int size = max((int) _parents.size(), logicalIndex+1);
@@ -198,7 +192,6 @@ namespace {
                 _parents[logicalIndex] = logicalIndexToParentIdx[logicalIndex];
                 dagPaths[logicalIndex] = influenceObjectPath;
             }
-            return MStatus::kSuccess;
         }
     };
 
@@ -310,26 +303,22 @@ namespace {
     }
 
     // Return a Mesh loaded from the output of the given skin cluster.
-    std::unique_ptr<Mesh> createMeshFromSkinClusterOutput(MObject skinClusterNode, MStatus &status)
+    std::unique_ptr<Mesh> createMeshFromSkinClusterOutput(MObject skinClusterNode)
     {
-        MFnSkinCluster skinCluster(skinClusterNode, &status);
-        if(status != MS::kSuccess) return std::unique_ptr<Mesh>();
+        MStatus status = MStatus::kSuccess;
+        MFnSkinCluster skinCluster(skinClusterNode, &status); merr("skinCluster()");
 
         MDagPath skinClusterOutputPath;
-        status = skinCluster.getPathAtIndex(0, skinClusterOutputPath);
-        if(status != MS::kSuccess) return std::unique_ptr<Mesh>();
+        status = skinCluster.getPathAtIndex(0, skinClusterOutputPath); merr("skinCluster.getPathAtIndex(0)");
     
         MObject skinClusterOutputShape = skinClusterOutputPath.node();
-        if(!skinClusterOutputShape.hasFn(MFn::kMesh)) {
-            status = MStatus::kFailure;
-            return std::unique_ptr<Mesh>();
-        }
+        if(!skinClusterOutputShape.hasFn(MFn::kMesh))
+            throw runtime_error("skinClusterOutputShape doesn't have MFn::kMesh.  Only meshes are supported.");
 
         // Load the input mesh from the skinCluster's output.
         Loader::Abs_mesh loaderMesh;
         MMatrix objectToWorldMatrix = skinClusterOutputPath.inclusiveMatrix(&status);
-        status = MayaData::load_mesh(skinClusterOutputShape, loaderMesh, objectToWorldMatrix);
-        if(status != MS::kSuccess) return std::unique_ptr<Mesh>();
+        status = MayaData::load_mesh(skinClusterOutputShape, loaderMesh, objectToWorldMatrix); merr("MayaData::load_mesh");
 
         // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
         std::unique_ptr<Mesh> mesh(new Mesh(loaderMesh));
@@ -337,14 +326,11 @@ namespace {
         return mesh;
     }
 
-    MStatus clusterVerticesToBones(MObject skinClusterNode, const Mesh *mesh, const std::map<Bone::Id, BoneItem> &boneItems, std::vector< std::vector<Bone::Id> > &bonesPerVertex)
+    void clusterVerticesToBones(MObject skinClusterNode, const Mesh *mesh, const std::map<Bone::Id, BoneItem> &boneItems, std::vector< std::vector<Bone::Id> > &bonesPerVertex)
     {
-        MStatus status = MS::kSuccess;
-
         // Retrieve skin weights.  We'll use these to cluster vertices to surfaces.
         vector<vector<double> > weightsPerIndex;
-        status = DagHelpers::getWeightsForAllVertices(skinClusterNode, weightsPerIndex);
-        if(status != MS::kSuccess) return status;
+        MStatus status = DagHelpers::getWeightsForAllVertices(skinClusterNode, weightsPerIndex); merr("DagHelpers::getWeightsForAllVertices");
 
         // Make a list of bones that we want each vertex to be a part of.  A vertex can be in
         // more than one bone.
@@ -395,8 +381,6 @@ namespace {
             if(closestBoneId != -1)
                 bones.push_back(closestBoneId);
         }
-
-        return MS::kSuccess;
     }
 
     // Remove items from loaderSkeleton that have no samples, reparenting children.
@@ -428,7 +412,7 @@ namespace {
     }
 }
 
-MStatus ImplicitCommand::init(MString skinClusterName)
+void ImplicitCommand::init(MString skinClusterName)
 {
     MStatus status = MStatus::kSuccess;
 
@@ -437,7 +421,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     // Create entries in abs_skeleton for each influence object.  Each joint is placed at the same world
     // space position as the corresponding influence object.
     Abs_skeleton abs_skeleton;
-    status = abs_skeleton.load(skinClusterPlug.node()); merr("Loading abs_skeleton failed");
+    abs_skeleton.load(skinClusterPlug.node());
 
     // Create bones from the Abs_skeleton.  These are temporary and used only for sampling.
     // New, final bones will be created within the ImplicitSurfaces once we decide which ones
@@ -453,11 +437,11 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
     // Get the output of the skin cluster, which is what we'll sample.  We'll create
     // implicit surfaces based on the skin cluster in its current pose.
-    std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node(), status)); merr("loading mesh");
+    std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node()));
 
     // Create a list of the bones that each vertex should be included in.
     std::vector< std::vector<Bone::Id> > bonesPerVertex;
-    status = clusterVerticesToBones(skinClusterPlug.node(), mesh.get(), loaderSkeleton, bonesPerVertex); merr("clustering vertices");
+    clusterVerticesToBones(skinClusterPlug.node(), mesh.get(), loaderSkeleton, bonesPerVertex);
 
     VertToBoneInfo vertToBoneInfo(skeleton.get(), mesh.get(), bonesPerVertex);
     
@@ -485,8 +469,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
     // Create an ImplicitBlend to combine the surfaces that we're creating together.
     MObject blendTransformNode;
-    ImplicitBlend *blend = createShape<ImplicitBlend>(skinClusterName + "ImplicitBlend", &blendTransformNode, status);
-    merr("createShape<ImplicitBlend>");
+    ImplicitBlend *blend = createShape<ImplicitBlend>(skinClusterName + "ImplicitBlend", &blendTransformNode);
 
     status = DagHelpers::lockTransforms(blendTransformNode); merr("lockTransforms");
     status = DagHelpers::setParent(mainGroup, blendTransformNode); merr("setParent");
@@ -510,7 +493,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // Figure out a name for the surface.
         MString surfaceName = influenceObjectPath.partialPathName();
         MObject transformNode;
-        ImplicitSurface *surface = createShape<ImplicitSurface>(surfaceName + "Implicit", &transformNode, status); merr("createShape<ImplicitSurface>");
+        ImplicitSurface *surface = createShape<ImplicitSurface>(surfaceName + "Implicit", &transformNode);
 
         // Remember the offset in surfaces[] for this source bone ID.
         sourceBoneIdToIdx[bone->get_bone_id()] = (int) surfaces.size();
@@ -619,64 +602,45 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     MString path = dagPath.partialPathName(&status); merr("dagPath.partialPathName");
 
     appendToResult(path);
-
-    return MStatus::kSuccess;
 }
 
-MStatus ImplicitCommand::test(MString nodeName)
+void ImplicitCommand::test(MString nodeName)
 {
     ImplicitDeformer *deformer = getDeformerByName(nodeName);
-    return MS::kSuccess;
 }
 
 MStatus ImplicitCommand::doIt(const MArgList &args)
 {
     try {
-    MStatus status;
-    for(int i = 0; i < (int) args.length(); ++i)
-    {
-        if(args.asString(i, &status) == MString("-createShapes") && MS::kSuccess == status)
+        MStatus status;
+        for(int i = 0; i < (int) args.length(); ++i)
         {
-            ++i;
-            MString nodeName = args.asString(i, &status);
-            if(status != MS::kSuccess) return status;
+            if(args.asString(i, &status) == MString("-createShapes") && MS::kSuccess == status)
+            {
+                ++i;
+                MString nodeName = args.asString(i, &status);
+                if(status != MS::kSuccess) return status;
 
-            status = init(nodeName);
+                init(nodeName);
+            }
+            else if(args.asString(i, &status) == MString("-updateBase") && MS::kSuccess == status)
+            {
+                ++i;
+                MString nodeName = args.asString(i, &status);
+                if(status != MS::kSuccess) return status;
 
-            if(status != MS::kSuccess) {
-                displayError(status.errorString());
-                return status;
+                calculate_base_potential(nodeName);
+            }
+            else if(args.asString(i, &status) == MString("-test") && MS::kSuccess == status)
+            {
+                ++i;
+                MString nodeName = args.asString(i, &status);
+                if(status != MS::kSuccess) return status;
+
+                test(nodeName);
             }
         }
-        else if(args.asString(i, &status) == MString("-updateBase") && MS::kSuccess == status)
-        {
-            ++i;
-            MString nodeName = args.asString(i, &status);
-            if(status != MS::kSuccess) return status;
-
-            status = calculate_base_potential(nodeName);
-
-            if(status != MS::kSuccess) {
-                displayError(status.errorString());
-                return status;
-            }
-        
-        }
-        else if(args.asString(i, &status) == MString("-test") && MS::kSuccess == status)
-        {
-            ++i;
-            MString nodeName = args.asString(i, &status);
-            if(status != MS::kSuccess) return status;
-
-            status = test(nodeName);
-
-            if(status != MS::kSuccess) {
-                displayError(status.errorString());
-                return status;
-            }
-        }
-    }
-    return MS::kSuccess;
+        return MS::kSuccess;
     }
     catch (std::exception &e) {
         MGlobal::displayError(e.what());
@@ -698,66 +662,71 @@ MStatus initializePlugin(MObject obj)
     // XXX "HACK: Because blending_env initialize to elbow too ..." What?
     IBL::Ctrl_setup shape = IBL::Shape::elbow();
 
-    MFnPlugin plugin(obj, "", "1.0", "Any");
+    try {
+        MFnPlugin plugin(obj, "", "1.0", "Any");
 
-    status = plugin.registerData("ImplicitSurfaceData", ImplicitSurfaceData::id, ImplicitSurfaceData::creator);
-    if (!status) return status;
+        status = plugin.registerData("ImplicitSurfaceData", ImplicitSurfaceData::id, ImplicitSurfaceData::creator);
+        merr("registerData(ImplicitSurfaceData)");
 
-    status = ImplicitSurfaceGeometryOverride::initialize();
-    if (!status) return status;
+        status = ImplicitSurfaceGeometryOverride::initialize();
+        merr("ImplicitSurfaceGeometryOverride::initialize");
 
-    status = plugin.registerShape("implicitSurface", ImplicitSurface::id, &ImplicitSurface::creator,
-           &ImplicitSurface::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
-    if (!status) {
-       status.perror("registerNode");
-       return status;
+        status = plugin.registerShape("implicitSurface", ImplicitSurface::id, &ImplicitSurface::creator,
+               &ImplicitSurface::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+        merr("registerShape(implicitSurface)");
+
+        status = plugin.registerShape("ImplicitBlend", ImplicitBlend::id, &ImplicitBlend::creator,
+               &ImplicitBlend::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
+        merr("registerShape(ImplicitBlend)");
+
+        status = plugin.registerNode("implicitDeformer", ImplicitDeformer::id, ImplicitDeformer::creator, ImplicitDeformer::initialize, MPxNode::kDeformerNode);
+        merr("registerNode(implicitDeformer)");
+
+        status = plugin.registerCommand("implicitSkin", ImplicitCommand::creator);
+        merr("registerCommand(implicitSkin)");
     }
-
-    status = plugin.registerShape("ImplicitBlend", ImplicitBlend::id, &ImplicitBlend::creator,
-           &ImplicitBlend::initialize, &ImplicitSurfaceUI::creator, &ImplicitSurfaceGeometryOverride::drawDbClassification);
-    if (!status) {
-       status.perror("registerNode");
-       return status;
+    catch (std::exception &e) {
+        // We don't try to clean up registrations if we've partially registered, but let's at least
+        // shut down CUDA.
+        Cuda_ctrl::cleanup();
+        MGlobal::displayError(e.what());
+        return MS::kFailure;
     }
-
-    status = plugin.registerNode("implicitDeformer", ImplicitDeformer::id, ImplicitDeformer::creator, ImplicitDeformer::initialize, MPxNode::kDeformerNode);
-    if(status != MS::kSuccess) return status;
-
-    status = plugin.registerCommand("implicitSkin", ImplicitCommand::creator);
-    if(status != MS::kSuccess) return status;
 
     return MS::kSuccess;
 }
 
 MStatus uninitializePlugin(MObject obj)
 {
-    MStatus status;
+    try {
+        MStatus status;
 
-    Cuda_ctrl::cleanup();
+        Cuda_ctrl::cleanup();
 
-    MFnPlugin plugin(obj);
+        MFnPlugin plugin(obj);
 
-    status = plugin.deregisterNode(ImplicitDeformer::id);
-    if(status != MS::kSuccess) return status;
+        status = plugin.deregisterNode(ImplicitDeformer::id);
+        merr("deregisterNode(ImplicitDeformer)");
 
-    status = plugin.deregisterNode(ImplicitBlend::id);
-    if(!status) return status;
+        status = plugin.deregisterNode(ImplicitBlend::id);
+        merr("deregisterNode(ImplicitBlend)");
 
-    status = plugin.deregisterNode(ImplicitSurface::id);
-    if(!status) {
-       status.perror("deregisterNode");
-       return status;
+        status = plugin.deregisterNode(ImplicitSurface::id);
+        merr("deregisterNode(ImplicitSurface)");
+
+        status = ImplicitSurfaceGeometryOverride::uninitialize();
+        merr("ImplicitSurfaceGeometryOverride::uninitialize");
+
+        status = plugin.deregisterCommand("implicitSkin");
+        merr("deregisterCommand(implicitSkin)");
+
+        status = plugin.deregisterData(ImplicitSurfaceData::id);
+        merr("deregisterData(ImplicitSurfaceData)");
     }
-
-    status = ImplicitSurfaceGeometryOverride::uninitialize();
-    if(!status) return status;
-
-    status = plugin.deregisterCommand("implicitSkin");
-    if(status != MS::kSuccess) return status;
-
-    status = plugin.deregisterData(ImplicitSurfaceData::id);
-    if(!status) return status;
-
+    catch (std::exception &e) {
+        MGlobal::displayError(e.what());
+        return MS::kFailure;
+    }
 
     return MS::kSuccess;
 }
