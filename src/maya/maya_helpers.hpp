@@ -13,6 +13,7 @@
 #include <maya/MFnDependencyNode.h>
 #include <maya/MMatrix.h>
 #include <maya/MDagPath.h>
+#include <exception>
 #include <string>
 #include <vector>
 #include <map>
@@ -21,7 +22,22 @@ using namespace std;
 
 #include "vec3_cu.hpp"
 #include "transfo.hpp"
-class MFnSkinCluster;
+
+class MayaException: public std::exception
+{
+public:
+    MayaException(MStatus status_, string reason_=""): status(status_) {
+        MString s = status.errorString();
+        reason = "Error (" + reason_ + "): " + status.errorString().asChar();
+    }
+    const char *what() const { return reason.c_str(); }
+    const MStatus status;
+
+private:
+    string reason;
+};
+
+#define merr(reason) { if(status != MS::kSuccess) throw MayaException(status, reason); }
 
 namespace DagHelpers
 {

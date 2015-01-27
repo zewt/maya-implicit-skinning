@@ -65,51 +65,50 @@ public:
     MStatus init(MString nodeName);
     MStatus calculate_base_potential(MString deformerName);
 
-    ImplicitDeformer *getDeformerByName(MString nodeName, MStatus *status);
+    ImplicitDeformer *getDeformerByName(MString nodeName);
 
     bool isUndoable() const { return false; }
     static void *creator() { return new ImplicitCommand(); }
     MStatus test(MString nodeName);
 
 private:
-    MStatus getOnePlugByName(MString nodeName, MPlug &plug);
+    MPlug getOnePlugByName(MString nodeName);
 };
 
-MStatus ImplicitCommand::getOnePlugByName(MString nodeName, MPlug &plug)
+MPlug ImplicitCommand::getOnePlugByName(MString nodeName)
 {
     MSelectionList slist;
     MStatus status = slist.add(nodeName);
-    if(status != MS::kSuccess) return status;
+    if(status != MS::kSuccess)
+        throw runtime_error(string("Node \"") + nodeName.asChar() + "\" not found.");
 
-    int matches = slist.length(&status);
-    if(status != MS::kSuccess) return status;
+    int matches = slist.length(&status); merr("slist.length");
 
     if(matches > 1)
-    {
-        displayError("Multiple nodes found: " + nodeName);
-        return MS::kFailure;
-    }
+        throw runtime_error(string("Multiple nodes found: ") + nodeName.asChar());
 
-    MPlug implicitPlug;
-    return slist.getPlug(0, plug);
+    MPlug plug;
+    status = slist.getPlug(0, plug); merr("slist.getPlug");
+    return plug;
 }
 
-ImplicitDeformer *ImplicitCommand::getDeformerByName(MString nodeName, MStatus *status)
+ImplicitDeformer *ImplicitCommand::getDeformerByName(MString nodeName)
 {
-    // Get the MPlug for the selected node.
-    MPlug implicitPlug;
-    *status = getOnePlugByName(nodeName, implicitPlug);
-    if(*status != MS::kSuccess) return NULL;
+    MStatus status = MStatus::kSuccess;
 
-    return DagHelpers::GetInterfaceFromNode<ImplicitDeformer>(implicitPlug.node(), status);
+    // Get the MPlug for the selected node.
+    MPlug implicitPlug = getOnePlugByName(nodeName);
+
+    ImplicitDeformer *result = DagHelpers::GetInterfaceFromNode<ImplicitDeformer>(implicitPlug.node(), &status);
+    merr("DagHelpers::GetInterfaceFromNode<ImplicitDeformer>");
+    return result;
 }
 
 MStatus ImplicitCommand::calculate_base_potential(MString deformerName)
 {
     MStatus status = MStatus::kSuccess;
 
-    ImplicitDeformer *deformer = getDeformerByName(deformerName, &status);
-    if(status != MS::kSuccess) return status;
+    ImplicitDeformer *deformer = getDeformerByName(deformerName);
 
     status = deformer->calculate_base_potential();
     if(status != MS::kSuccess) return status;
@@ -433,15 +432,12 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 {
     MStatus status = MStatus::kSuccess;
 
-    MPlug skinClusterPlug;
-    status = getOnePlugByName(skinClusterName, skinClusterPlug);
-    if(status != MS::kSuccess) return status;
+    MPlug skinClusterPlug = getOnePlugByName(skinClusterName);
 
     // Create entries in abs_skeleton for each influence object.  Each joint is placed at the same world
     // space position as the corresponding influence object.
     Abs_skeleton abs_skeleton;
-    status = abs_skeleton.load(skinClusterPlug.node());
-    if(status != MS::kSuccess) return status;
+    status = abs_skeleton.load(skinClusterPlug.node()); merr("Loading abs_skeleton failed");
 
     // Create bones from the Abs_skeleton.  These are temporary and used only for sampling.
     // New, final bones will be created within the ImplicitSurfaces once we decide which ones
@@ -457,13 +453,11 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
     // Get the output of the skin cluster, which is what we'll sample.  We'll create
     // implicit surfaces based on the skin cluster in its current pose.
-    std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node(), status));
-    if(status != MS::kSuccess) return status;
+    std::unique_ptr<Mesh> mesh(createMeshFromSkinClusterOutput(skinClusterPlug.node(), status)); merr("loading mesh");
 
     // Create a list of the bones that each vertex should be included in.
     std::vector< std::vector<Bone::Id> > bonesPerVertex;
-    status = clusterVerticesToBones(skinClusterPlug.node(), mesh.get(), loaderSkeleton, bonesPerVertex);
-    if(status != MS::kSuccess) return status;
+    status = clusterVerticesToBones(skinClusterPlug.node(), mesh.get(), loaderSkeleton, bonesPerVertex); merr("clustering vertices");
 
     VertToBoneInfo vertToBoneInfo(skeleton.get(), mesh.get(), bonesPerVertex);
     
@@ -485,22 +479,17 @@ MStatus ImplicitCommand::init(MString skinClusterName)
     vertToBoneInfo.get_default_hrbf_radius(skeleton.get(), mesh.get(), hrbf_radius);
 
     // Create a group to store all of the nodes we'll create.
-    MObject mainGroup = DagHelpers::createTransform(skinClusterName + "Implicit", status);
-    if(status != MS::kSuccess) return status;
+    MObject mainGroup = DagHelpers::createTransform(skinClusterName + "Implicit", status); merr("createTransform");
 
-    status = DagHelpers::lockTransforms(mainGroup);
-    if(status != MS::kSuccess) return status;
+    status = DagHelpers::lockTransforms(mainGroup); merr("lockTransforms");
 
     // Create an ImplicitBlend to combine the surfaces that we're creating together.
     MObject blendTransformNode;
     ImplicitBlend *blend = createShape<ImplicitBlend>(skinClusterName + "ImplicitBlend", &blendTransformNode, status);
-    if(status != MS::kSuccess) return status;
+    merr("createShape<ImplicitBlend>");
 
-    status = DagHelpers::lockTransforms(blendTransformNode);
-    if(status != MS::kSuccess) return status;
-
-    status = DagHelpers::setParent(mainGroup, blendTransformNode);
-    if(status != MS::kSuccess) return status;
+    status = DagHelpers::lockTransforms(blendTransformNode); merr("lockTransforms");
+    status = DagHelpers::setParent(mainGroup, blendTransformNode); merr("setParent");
 
     // The surfaces that we're creating, and their corresponding parents.
     vector<ImplicitSurface *> surfaces;
@@ -521,16 +510,14 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // Figure out a name for the surface.
         MString surfaceName = influenceObjectPath.partialPathName();
         MObject transformNode;
-        ImplicitSurface *surface = createShape<ImplicitSurface>(surfaceName + "Implicit", &transformNode, status);
-        if(status != MS::kSuccess) return status;
+        ImplicitSurface *surface = createShape<ImplicitSurface>(surfaceName + "Implicit", &transformNode, status); merr("createShape<ImplicitSurface>");
 
         // Remember the offset in surfaces[] for this source bone ID.
         sourceBoneIdToIdx[bone->get_bone_id()] = (int) surfaces.size();
 
         surfaces.push_back(surface);
 
-        status = DagHelpers::setParent(mainGroup, transformNode);
-        if(status != MS::kSuccess) return status;
+        status = DagHelpers::setParent(mainGroup, transformNode); merr("setParent");
 
         // This surface was created for a joint.  Get the transform for the joint associated
         // with this surface, and move the transform to the same place.  This positions the
@@ -538,34 +525,27 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // means that the samples are in the correct place: the samples are in the source mesh's
         // object space, and we're giving the surface that same world space.
         {
-            MMatrix jointTransformMatrix = influenceObjectPath.exclusiveMatrix(&status);
-            if(status != MS::kSuccess) return status;
+            MMatrix jointTransformMatrix = influenceObjectPath.exclusiveMatrix(&status); merr("influenceObjectPath.exclusiveMatrix");
 
-            MFnTransform transform(transformNode, &status);
-            if(status != MS::kSuccess) return status;
+            MFnTransform transform(transformNode, &status); merr("transform(transformNode)");
 
-            status = transform.set(MTransformationMatrix(jointTransformMatrix));
-            if(status != MS::kSuccess) return status;
+            status = transform.set(MTransformationMatrix(jointTransformMatrix)); merr("transform.set");
 
             // Parent this implicit surface's transform under the parent influence.
             const MDagPath &parentInfluenceObjectPath = bone_item.parentInfluence;
             assert(!parentInfluenceObjectPath.node().isNull());
 
-            MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status);
-            if(status != MS::kSuccess) return status;
-
-            MString pathName = transform.fullPathName(&status);
-            MString parentPathName = parentInfluenceObjectPath.fullPathName(&status);
+            MFnDagNode dagNode(parentInfluenceObjectPath.node(), &status); merr("dagNode(parentInfluenceObjectPath)");
+            MString pathName = transform.fullPathName(&status); merr("transform.fullPathName");
+            MString parentPathName = parentInfluenceObjectPath.fullPathName(&status); merr("parentInfluenceObjectPath.fullPathName");
             MString cmd("parentConstraint -mo \"" + parentPathName + "\" \"" + pathName + "\";");
 
-            status = MGlobal::executeCommand(cmd);
-            if(status != MS::kSuccess) return status;
+            status = MGlobal::executeCommand(cmd); merr("parentConstraint");
         }
 
         // Store this surface's HRBF radius.
         MPlug hrbfRadiusPlug(surface->thisMObject(), ImplicitSurface::hrbfRadiusAttr);
-        status = hrbfRadiusPlug.setFloat(hrbf_radius.at(bone_id));
-        if(status != MS::kSuccess) return status;
+        status = hrbfRadiusPlug.setFloat(hrbf_radius.at(bone_id)); merr("hrbfRadiusPlug.setFloat");
 
         // Grab the samples for this surface.
         SampleSet::InputSample inputSample;
@@ -573,8 +553,7 @@ MStatus ImplicitCommand::init(MString skinClusterName)
             inputSample = samples._samples.at(bone_id);
 
         // We created the samples in world space.  Transform them into the object space of the transform.
-        MMatrix jointTransformInvMatrix = influenceObjectPath.exclusiveMatrixInverse(&status);
-        if(status != MS::kSuccess) return status;
+        MMatrix jointTransformInvMatrix = influenceObjectPath.exclusiveMatrixInverse(&status); merr("influenceObjectPath.exclusiveMatrixInverse");
 
         Transfo worldToObjectMatrix = DagHelpers::MMatrixToTransfo(jointTransformInvMatrix);
         inputSample.transform(worldToObjectMatrix);
@@ -584,12 +563,10 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         // now.  We don't need to set the origin, since surface bones always start at the origin.
         // It would be cleaner to avoid creating the extra bones in the first place, but we might
         // end up needing to delete bones instead (if they have no samples).
-        status = surface->set_bone_direction(worldToObjectMatrix * bone_item.bone->_dir);
-        if(status != MS::kSuccess) return status;
+        status = surface->set_bone_direction(worldToObjectMatrix * bone_item.bone->_dir); merr("surface->set_bone_direction");
 
         // Store this surface's samples.
-        status = surface->save_sampleset(inputSample);
-        if(status != MS::kSuccess) return status;
+        status = surface->save_sampleset(inputSample); merr("save_sampleset");
 
         if(bone_item.parent != -1)
         {
@@ -621,35 +598,25 @@ MStatus ImplicitCommand::init(MString skinClusterName)
         MPlug worldSurfaceOutputArray(surface->thisMObject(), ImplicitSurface::worldImplicit);
         MPlug worldSurfaceOutput = worldSurfaceOutputArray.elementByLogicalIndex(0);
         MPlug blendSurfacesArray(blend->thisMObject(), ImplicitBlend::surfaces);
-        MPlug blendSurface = blendSurfacesArray.elementByLogicalIndex(nextBlendInputIdx, &status);
-        if(status != MS::kSuccess) return status;
+        MPlug blendSurface = blendSurfacesArray.elementByLogicalIndex(nextBlendInputIdx, &status); merr("blendSurfacesArray.elementByLogicalIndex");
+        MPlug blendImplicitInput = blendSurface.child(ImplicitBlend::implicit, &status); merr("blendSurface.child");
 
-        MPlug blendImplicitInput = blendSurface.child(ImplicitBlend::implicit, &status);
-        if(status != MS::kSuccess) return status;
-
-        status = dgModifier.connect(worldSurfaceOutput, blendImplicitInput);
-        if(status != MS::kSuccess) return status;
-
-        MPlug parentJoint = blendSurface.child(ImplicitBlend::parentJoint, &status);
-        if(status != MS::kSuccess) return status;
+        status = dgModifier.connect(worldSurfaceOutput, blendImplicitInput); merr("dgModifier.connect");
 
         // Tell the blend node about this bone's parent.  This is -1 if this is a root joint.
+        MPlug parentJoint = blendSurface.child(ImplicitBlend::parentJoint, &status); merr("blendSurface.child");
         int parent_idx = parent_index[i];
         dgModifier.newPlugValueInt(parentJoint, parent_idx);
         ++nextBlendInputIdx;
     }
 
-    status = dgModifier.doIt();
-    if(status != MS::kSuccess) return status;
+    status = dgModifier.doIt(); merr("dgModifier.doIt");
 
     // Return the path to the new blend node.  We don't need to return the names of the individual
     // surfaces, since they can be found by looking at the inputs into the blend node.
     MDagPath dagPath;
-    status = MDagPath::getAPathTo(blend->thisMObject(), dagPath);
-    if(status != MS::kSuccess) return status;
-    
-    MString path = dagPath.partialPathName(&status);
-    if(status != MS::kSuccess) return status;
+    status = MDagPath::getAPathTo(blend->thisMObject(), dagPath); merr("MDagPath::getAPathTo");
+    MString path = dagPath.partialPathName(&status); merr("dagPath.partialPathName");
 
     appendToResult(path);
 
@@ -658,15 +625,13 @@ MStatus ImplicitCommand::init(MString skinClusterName)
 
 MStatus ImplicitCommand::test(MString nodeName)
 {
-    MStatus status;
-    ImplicitDeformer *deformer = getDeformerByName(nodeName, &status);
-    if(status != MS::kSuccess) return status;
-
+    ImplicitDeformer *deformer = getDeformerByName(nodeName);
     return MS::kSuccess;
 }
 
 MStatus ImplicitCommand::doIt(const MArgList &args)
 {
+    try {
     MStatus status;
     for(int i = 0; i < (int) args.length(); ++i)
     {
@@ -712,6 +677,11 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
         }
     }
     return MS::kSuccess;
+    }
+    catch (std::exception &e) {
+        MGlobal::displayError(e.what());
+        return MS::kFailure;
+    }
 }
 
 MStatus initializePlugin(MObject obj)
