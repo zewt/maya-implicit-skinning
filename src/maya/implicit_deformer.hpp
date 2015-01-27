@@ -48,9 +48,9 @@ public:
 private:
     static DagHelpers::MayaDependencies dependencies;
 
-    MStatus load_mesh(MDataBlock &dataBlock);
-    MStatus load_base_potential(MDataBlock &dataBlock);
-    std::shared_ptr<const Skeleton> get_implicit_skeleton(MDataBlock &dataBlock, MStatus *status);
+    void load_mesh(MDataBlock &dataBlock);
+    void load_base_potential(MDataBlock &dataBlock);
+    std::shared_ptr<const Skeleton> get_implicit_skeleton(MDataBlock &dataBlock);
 
     bool implicitIsConnected;
 

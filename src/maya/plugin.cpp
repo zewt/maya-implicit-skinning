@@ -318,7 +318,7 @@ namespace {
         // Load the input mesh from the skinCluster's output.
         Loader::Abs_mesh loaderMesh;
         MMatrix objectToWorldMatrix = skinClusterOutputPath.inclusiveMatrix(&status);
-        status = MayaData::load_mesh(skinClusterOutputShape, loaderMesh, objectToWorldMatrix); merr("MayaData::load_mesh");
+        MayaData::load_mesh(skinClusterOutputShape, loaderMesh, objectToWorldMatrix);
 
         // Abs_mesh is a simple representation that doesn't touch CUDA.  Load it into Mesh.
         std::unique_ptr<Mesh> mesh(new Mesh(loaderMesh));
@@ -549,7 +549,7 @@ void ImplicitCommand::init(MString skinClusterName)
         status = surface->set_bone_direction(worldToObjectMatrix * bone_item.bone->_dir); merr("surface->set_bone_direction");
 
         // Store this surface's samples.
-        status = surface->save_sampleset(inputSample); merr("save_sampleset");
+        surface->save_sampleset(inputSample);
 
         if(bone_item.parent != -1)
         {

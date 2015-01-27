@@ -25,21 +25,23 @@ using namespace std;
 #include "vec3_cu.hpp"
 #include "transfo.hpp"
 
-class MayaException: public std::exception
+class MStatusException: public std::runtime_error
 {
-public:
-    MayaException(MStatus status_, string reason_=""): status(status_) {
+    static string make_error(MStatus status, string reason)
+    {
         MString s = status.errorString();
-        reason = "Error (" + reason_ + "): " + status.errorString().asChar();
+        return "Error (" + reason + "): " + status.errorString().asChar();
     }
-    const char *what() const { return reason.c_str(); }
-    const MStatus status;
 
-private:
-    string reason;
+public:
+    MStatusException(MStatus status_, string reason=""):
+        std::runtime_error(make_error(status_, reason)),
+        status(status_)
+    {}
+    const MStatus status;
 };
 
-#define merr(reason) { if(status != MS::kSuccess) throw MayaException(status, reason); }
+#define merr(reason) { if(status != MS::kSuccess) throw MStatusException(status, reason); }
 
 // All functions being called directly from Maya which return MStatus must
 // handle exceptions.  handle_exceptions catches exceptions, prints them to
@@ -53,6 +55,23 @@ private:
 //     });
 // }
 MStatus handle_exceptions(const std::function<void()> &func);
+MStatus handle_exceptions_ret(const std::function<MStatus()> &func);
+
+// Handle exceptions, returning the return value of func to the caller, or errorValue
+// on error.
+template<typename T>
+T handle_exceptions_ret(T errorValue, const std::function<T()> &func)
+{
+    try {
+        return func();
+    }
+    catch (std::exception &e) {
+        MGlobal::displayError(e.what());
+        return MS::kFailure;
+    }
+}
+
+MStatus handle_exceptions_ret(const std::function<MStatus()> &func);
 
 namespace DagHelpers
 {

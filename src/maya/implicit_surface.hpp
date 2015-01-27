@@ -45,7 +45,7 @@ public:
     MBoundingBox boundingBox() const;
     MStatus compute(const MPlug &plug, MDataBlock &dataBlock);
 
-    MStatus save_sampleset(const SampleSet::InputSample &inputSample);
+    void save_sampleset(const SampleSet::InputSample &inputSample);
 
     const MeshGeom &get_mesh_geometry();
 
@@ -61,9 +61,9 @@ public:
     
 private:
     // compute() implementations:
-    MStatus load_sampleset(MDataBlock &dataBlock);
-    MStatus load_mesh_geometry(MDataBlock &dataBlock);
-    MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
+    void load_sampleset(MDataBlock &dataBlock);
+    void load_mesh_geometry(MDataBlock &dataBlock);
+    void load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
 
     void set_world_space(Transfo tr);
 

@@ -64,113 +64,113 @@ namespace {
 
 MStatus ImplicitBlend::initialize()
 {
-    MStatus status = MStatus::kSuccess;
+    return handle_exceptions([&] {
+        MStatus status = MStatus::kSuccess;
 
-    MFnNumericAttribute numAttr;
-    MFnCompoundAttribute cmpAttr;
-    MFnTypedAttribute typedAttr;
+        MFnNumericAttribute numAttr;
+        MFnCompoundAttribute cmpAttr;
+        MFnTypedAttribute typedAttr;
 
-    meshGeometryUpdateAttr = numAttr.create("meshGeometryUpdate", "meshGeometryUpdate", MFnNumericData::Type::kInt, 0, &status);
-    numAttr.setStorable(false);
-    numAttr.setHidden(true);
-    addAttribute(meshGeometryUpdateAttr);
+        meshGeometryUpdateAttr = numAttr.create("meshGeometryUpdate", "meshGeometryUpdate", MFnNumericData::Type::kInt, 0, &status);
+        numAttr.setStorable(false);
+        numAttr.setHidden(true);
+        addAttribute(meshGeometryUpdateAttr);
 
-    previewIso = numAttr.create("previewIso", "previewIso", MFnNumericData::Type::kFloat, 0.5f, &status);
-    addAttribute(previewIso);
-    dependencies.add(previewIso, meshGeometryUpdateAttr);
+        previewIso = numAttr.create("previewIso", "previewIso", MFnNumericData::Type::kFloat, 0.5f, &status);
+        addAttribute(previewIso);
+        dependencies.add(previewIso, meshGeometryUpdateAttr);
 
-    // Note that this attribute isn't set to worldSpace.  The input surfaces are world space, and the
-    // output combined surfaces are world space, but we ignore the position of this actual node.
-    worldImplicit = typedAttr.create("worldImplicit", "worldImplicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
-    if(status != MS::kSuccess) return status;
-    typedAttr.setUsesArrayDataBuilder(true);
-    typedAttr.setWritable(false);
-    addAttribute(worldImplicit);
-    dependencies.add(ImplicitBlend::worldImplicit, ImplicitBlend::meshGeometryUpdateAttr);
+        // Note that this attribute isn't set to worldSpace.  The input surfaces are world space, and the
+        // output combined surfaces are world space, but we ignore the position of this actual node.
+        worldImplicit = typedAttr.create("worldImplicit", "worldImplicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
+        typedAttr.setUsesArrayDataBuilder(true);
+        typedAttr.setWritable(false);
+        addAttribute(worldImplicit);
+        dependencies.add(ImplicitBlend::worldImplicit, ImplicitBlend::meshGeometryUpdateAttr);
 
-    implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
-    if(status != MS::kSuccess) return status;
-    typedAttr.setReadable(false);
-    dependencies.add(ImplicitBlend::implicit, ImplicitBlend::worldImplicit);
-    addAttribute(implicit);
+        implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
+        typedAttr.setReadable(false);
+        dependencies.add(ImplicitBlend::implicit, ImplicitBlend::worldImplicit);
+        addAttribute(implicit);
 
-    parentJoint = numAttr.create("parentIdx", "parentIdx", MFnNumericData::Type::kInt, -1, &status);
-    addAttribute(parentJoint);
-    dependencies.add(parentJoint, worldImplicit);
+        parentJoint = numAttr.create("parentIdx", "parentIdx", MFnNumericData::Type::kInt, -1, &status);
+        addAttribute(parentJoint);
+        dependencies.add(parentJoint, worldImplicit);
 
-    surfaces = cmpAttr.create("surfaces", "surfaces", &status);
-    cmpAttr.setReadable(false);
-    cmpAttr.setArray(true);
-    cmpAttr.addChild(implicit);
-    cmpAttr.addChild(parentJoint);
-    addAttribute(surfaces);
-    dependencies.add(ImplicitBlend::surfaces, ImplicitBlend::worldImplicit);
+        surfaces = cmpAttr.create("surfaces", "surfaces", &status);
+        cmpAttr.setReadable(false);
+        cmpAttr.setArray(true);
+        cmpAttr.addChild(implicit);
+        cmpAttr.addChild(parentJoint);
+        addAttribute(surfaces);
+        dependencies.add(ImplicitBlend::surfaces, ImplicitBlend::worldImplicit);
 
-    status = dependencies.apply();
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
+        status = dependencies.apply(); merr("dependencies.apply");
+    });
 }
 
 MStatus ImplicitBlend::setDependentsDirty(const MPlug &plug_, MPlugArray &plugArray)
 {
-    MStatus status = MStatus::kSuccess;
+    return handle_exceptions_ret([&] {
+        MStatus status = MStatus::kSuccess;
 
-    MPlug plug(plug_);
+        MPlug plug(plug_);
 
-    // If the plug that was changed is a child, eg. point[0].x, move up to the parent
-    // compound plug, eg. point[0].
-    if(plug.isChild()) {
-        plug = plug.parent(&status);
-        if(status != MS::kSuccess) return status;
-    }
+        // If the plug that was changed is a child, eg. point[0].x, move up to the parent
+        // compound plug, eg. point[0].
+        if(plug.isChild()) {
+            plug = plug.parent(&status); merr("plug.parent");
+        }
 
-    // The rendered geometry is based on meshGeometryUpdateAttr.  If the node that was changed
-    // affects that, then tell Maya that it needs to redraw the geometry.  This will
-    // trigger ImplicitSurfaceGeometryOverride::updateDG, etc. if the shape is visible.
-    // It looks like setAffectsAppearance() on meshGeometryUpdateAttr should do this for
-    // us, but that doesn't seem to work.
-    MObject node = plug.attribute();
-    if(dependencies.isAffectedBy(node, ImplicitBlend::meshGeometryUpdateAttr)) {
-        childChanged(kBoundingBoxChanged);
-        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
-    }
+        // The rendered geometry is based on meshGeometryUpdateAttr.  If the node that was changed
+        // affects that, then tell Maya that it needs to redraw the geometry.  This will
+        // trigger ImplicitSurfaceGeometryOverride::updateDG, etc. if the shape is visible.
+        // It looks like setAffectsAppearance() on meshGeometryUpdateAttr should do this for
+        // us, but that doesn't seem to work.
+        MObject node = plug.attribute();
+        if(dependencies.isAffectedBy(node, ImplicitBlend::meshGeometryUpdateAttr)) {
+            childChanged(kBoundingBoxChanged);
+            MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
+        }
 
-    return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
+        return MPxSurfaceShape::setDependentsDirty(plug, plugArray);
+    });
 }
 
 // Remember whether implicit inputs are connected, since Maya doesn't clear them on
 // disconnection.
 MStatus ImplicitBlend::connectionMade(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
 {
-    MStatus status = MStatus::kSuccess;
-    if(!asSrc && plug == ImplicitBlend::implicit) {
-        MPlug arrayPlug = plug.parent(&status);
-        if(status != MS::kSuccess) return status;
-        
-        implicitConnectedIndexes.insert(arrayPlug.logicalIndex());
-    }
-    return MPxSurfaceShape::connectionMade(plug, otherPlug, asSrc);
+    return handle_exceptions_ret([&] {
+        MStatus status = MStatus::kSuccess;
+        if(!asSrc && plug == ImplicitBlend::implicit) {
+            MPlug arrayPlug = plug.parent(&status); merr("plug.parent");
+            implicitConnectedIndexes.insert(arrayPlug.logicalIndex());
+        }
+        return MPxSurfaceShape::connectionMade(plug, otherPlug, asSrc);
+    });
 }
 
 MStatus ImplicitBlend::connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
 {
-    MStatus status = MStatus::kSuccess;
-    if(!asSrc && plug == ImplicitBlend::implicit) {
-        MPlug arrayPlug = plug.parent(&status);
-        if(status != MS::kSuccess) return status;
-        
-        implicitConnectedIndexes.erase(arrayPlug.logicalIndex());
-    }
+    return handle_exceptions_ret([&] {
+        MStatus status = MStatus::kSuccess;
+        if(!asSrc && plug == ImplicitBlend::implicit) {
+            MPlug arrayPlug = plug.parent(&status); merr("plug.parent");
+            implicitConnectedIndexes.erase(arrayPlug.logicalIndex());
+        }
 
-    return MPxSurfaceShape::connectionBroken(plug, otherPlug, asSrc);
+        return MPxSurfaceShape::connectionBroken(plug, otherPlug, asSrc);
+    });
 }
 
 MStatus ImplicitBlend::compute(const MPlug &plug, MDataBlock &dataBlock)
 {
-    if(plug == worldImplicit) return load_world_implicit(plug, dataBlock);
-    else if(plug == meshGeometryUpdateAttr) return load_mesh_geometry(dataBlock);
-    return MStatus::kUnknownParameter;
+    return handle_exceptions_ret([&] {
+        if(plug == worldImplicit) load_world_implicit(plug, dataBlock);
+        else if(plug == meshGeometryUpdateAttr) load_mesh_geometry(dataBlock);
+        return MStatus::kUnknownParameter;
+    });
 }
 
 const MeshGeom &ImplicitBlend::get_mesh_geometry()
@@ -183,64 +183,52 @@ const MeshGeom &ImplicitBlend::get_mesh_geometry()
 }
 
 // On meshGeometryUpdateAttr, update meshGeometry.
-MStatus ImplicitBlend::load_mesh_geometry(MDataBlock &dataBlock)
+void ImplicitBlend::load_mesh_geometry(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
-    dataBlock.inputValue(ImplicitBlend::worldImplicit, &status);
-    if(status != MS::kSuccess) return status;
+    dataBlock.inputValue(ImplicitBlend::worldImplicit, &status); merr("inputValue(worldImplicit)");
 
-    float iso = DagHelpers::readHandle<float>(dataBlock, ImplicitBlend::previewIso, &status);
-    if(status != MS::kSuccess) return status;
+    float iso = DagHelpers::readHandle<float>(dataBlock, ImplicitBlend::previewIso, &status); merr("readHandle(previewIso)")
 
     meshGeometry = MeshGeom();
 
     // If we have no skeleton, just clear the geometry.
     if(skeleton.get() == NULL)
-        return MStatus::kSuccess;
+        return;
 
     MarchingCubes::compute_surface(meshGeometry, skeleton.get(), iso);
-
-    return MStatus::kSuccess;
 }
 
 // Retrieve the list of input bones and their parents from our attributes.
-MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
+void ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
     std::vector<shared_ptr<const Bone> > &bones, std::vector<Bone::Id> &parents) const
 {
     MStatus status = MStatus::kSuccess;
 
     // Retrieve our input surfaces.  This will also update their transforms, etc. if needed.
-    MArrayDataHandle surfacesHandle = dataBlock.inputArrayValue(ImplicitBlend::surfaces, &status);
-    if(status != MS::kSuccess) return status;
+    MArrayDataHandle surfacesHandle = dataBlock.inputArrayValue(ImplicitBlend::surfaces, &status); merr("inputArrayValue(surfaces)");
 
     // Create a list of our input surfaces and their relationships.
     map<int, shared_ptr<const Skeleton> > logicalIndexToImplicitBones;
     map<int,int> logicalIndexToParentIndex;
     for(int i = 0; i < (int) surfacesHandle.elementCount(); ++i)
     {
-        status = surfacesHandle.jumpToElement(i);
-        if(status != MS::kSuccess) return status;
+        status = surfacesHandle.jumpToElement(i); merr("surfacesHandle.jumpToElement");
 
-        int logicalIndex = surfacesHandle.elementIndex(&status);
-        if(status != MS::kSuccess) return status;
+        int logicalIndex = surfacesHandle.elementIndex(&status); merr("surfacesHandle.elementIndex");
 
         // If this node isn't actually connected, don't read it.  Maya doesn't reset MPxData when
         // connections are removed.
         if(implicitConnectedIndexes.find(logicalIndex) == implicitConnectedIndexes.end())
             continue;
 
-        MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
-        if(status != MS::kSuccess) return status;
-
+        MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit); merr("surfacesHandle.inputValue");
         ImplicitSurfaceData *implicitSurfaceData = (ImplicitSurfaceData *) implicitHandle.asPluginData();
         logicalIndexToImplicitBones[logicalIndex] = implicitSurfaceData->getSkeleton();
 
-        MDataHandle parentJointHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::parentJoint);
-        if(status != MS::kSuccess) return status;
-
-        int parentIdx = DagHelpers::readHandle<int>(parentJointHandle, &status);
-        if(status != MS::kSuccess) return status;
+        MDataHandle parentJointHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::parentJoint); merr("surfacesHandle.inputValue");
+        int parentIdx = DagHelpers::readHandle<int>(parentJointHandle, &status); merr("readHandle(parentJointHandle)");
 
         logicalIndexToParentIndex[logicalIndex] = parentIdx;
     }
@@ -256,14 +244,9 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
     vector<int> hierarchyOrder;
     if(!MiscUtils::getHierarchyOrder(logicalIndexToParentIndex, hierarchyOrder)) {
         // The input contains cycles.
-        MDagPath dagPath = MDagPath::getAPathTo(thisMObject(), &status);
-        if(status != MS::kSuccess) return status;
-
-        MString path = dagPath.partialPathName(&status);
-        if(status != MS::kSuccess) return status;
-
-        MGlobal::displayError("The ImplicitBlend node " + path + " contains cycles.");
-        return MStatus::kSuccess;
+        MDagPath dagPath = MDagPath::getAPathTo(thisMObject(), &status); merr("getAPathTo");
+        MString path = dagPath.partialPathName(&status); merr("partialPathName");
+        throw runtime_error(string("The ImplicitBlend node ") + path.asChar() + " contains cycles.");
     }
 
     // Each entry in logicalIndexToImplicitBones represents a Skeleton.  These will usually be skeletons with
@@ -315,21 +298,19 @@ MStatus ImplicitBlend::get_input_bones(MDataBlock &dataBlock,
             parents.push_back(parentBoneIdx);
         }
     }
-
-    return MStatus::kSuccess;
 }
 
-MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
+void ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
     std::vector<shared_ptr<const Bone> > bones;
     std::vector<Bone::Id> parents;
-    status = get_input_bones(dataBlock, bones, parents);
+    get_input_bones(dataBlock, bones, parents);
 
     // If the actual bones and their parenting hasn't changed, we're already up to date.
     if(bones == lastImplicitBones && parents == lastParents)
-        return MStatus::kSuccess;
+        return;
 
     lastImplicitBones = bones;
     lastParents = parents;
@@ -337,42 +318,35 @@ MStatus ImplicitBlend::update_skeleton(MDataBlock &dataBlock)
     // Skeletons can't have zero bones, so don't create one if we have no data.
     if(bones.size() == 0) {
         skeleton.reset();
-        return MStatus::kSuccess;
+        return;
     }
 
     // Create a skeleton containing the bones, replacing any previous skeleton.
     skeleton.reset(new Skeleton(bones, parents));
-
-    return MStatus::kSuccess;
 }
 
 // Load the parameters associated with our input skeletons.  This is done on
 // every update.
-MStatus ImplicitBlend::update_skeleton_params(MDataBlock &dataBlock)
+void ImplicitBlend::update_skeleton_params(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
     if(skeleton.get() == NULL)
-        return MStatus::kSuccess;
+        return;
 
-    MArrayDataHandle surfacesHandle = dataBlock.inputArrayValue(ImplicitBlend::surfaces, &status);
-    if(status != MS::kSuccess) return status;
+    MArrayDataHandle surfacesHandle = dataBlock.inputArrayValue(ImplicitBlend::surfaces, &status); merr("inputArrayValue(surfaces)");
 
     // Propagate each source bone's blending properties to our skeleton.  These are set
     // per-bone, but are stored on the skeleton.
     for(int i = 0; i < (int) surfacesHandle.elementCount(); ++i)
     {
-        status = surfacesHandle.jumpToElement(i);
-        if(status != MS::kSuccess) return status;
-
-        int logicalIndex = surfacesHandle.elementIndex(&status);
-        if(status != MS::kSuccess) return status;
+        status = surfacesHandle.jumpToElement(i); merr("surfacesHandle.jumpToElement");
+        int logicalIndex = surfacesHandle.elementIndex(&status); merr("surfacesHandle.elementIndex");
 
         if(implicitConnectedIndexes.find(logicalIndex) == implicitConnectedIndexes.end())
             continue;
 
-        MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit);
-        if(status != MS::kSuccess) return status;
+        MDataHandle implicitHandle = surfacesHandle.inputValue(&status).child(ImplicitBlend::implicit); merr("surfacesHandle.inputValue");
 
         ImplicitSurfaceData *implicitSurfaceData = (ImplicitSurfaceData *) implicitHandle.asPluginData();
         const Skeleton *skel = implicitSurfaceData->getSkeleton().get();
@@ -391,18 +365,14 @@ MStatus ImplicitBlend::update_skeleton_params(MDataBlock &dataBlock)
             skeleton->set_joint_controller(boneId, controller);
         }
     }
-
-    return MStatus::kSuccess;
 }
 
-MStatus ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBlock)
+void ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
-    status = update_skeleton(dataBlock);
-    if(status != MS::kSuccess) return status;
-    status = update_skeleton_params(dataBlock);
-    if(status != MS::kSuccess) return status;
+    update_skeleton(dataBlock);
+    update_skeleton_params(dataBlock);
 
     if(skeleton.get() != NULL) {
         // Update our skeleton based on the bone data.  This lets the skeleton know that the bones
@@ -411,10 +381,7 @@ MStatus ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBl
     }
 
     // Set ImplicitBlend::worldImplicit to our skeleton.  This may be NULL.
-    status = setImplicitSurfaceData(dataBlock, ImplicitBlend::worldImplicit, skeleton);
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
+    status = setImplicitSurfaceData(dataBlock, ImplicitBlend::worldImplicit, skeleton); merr("setImplicitSurfaceData");
 }
 
 

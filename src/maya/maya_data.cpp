@@ -14,15 +14,13 @@
 
 using namespace std;
 
-MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix vertexTransform)
+void MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix vertexTransform)
 {
     MStatus status = MS::kSuccess;
-    MItMeshVertex meshIt(inputObject, &status);
-    if(status != MS::kSuccess) return status;
+    MItMeshVertex meshIt(inputObject, &status); merr("MItMeshVertex");
 
     // Load vertices and normals.
-    int num_verts = meshIt.count(&status);
-    if(status != MS::kSuccess) return status;
+    int num_verts = meshIt.count(&status); merr("meshIt.count");
 
     mesh._vertices.resize(num_verts);
     mesh._normals.resize(num_verts);
@@ -30,8 +28,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
     int idx = 0;
     for ( ; !meshIt.isDone(); meshIt.next())
     {
-        MPoint point = meshIt.position(MSpace::kObject, &status);
-        if(status != MS::kSuccess) return status;
+        MPoint point = meshIt.position(MSpace::kObject, &status); merr("meshIt.position");
 
         // If specified, transform the point from object space to another coordinate space.
         point = point * vertexTransform;
@@ -42,8 +39,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
         // the averaged normal.  Since we're normally blending soft surfaces, this is usually
         // okay.
         MVector normal;
-        status = meshIt.getNormal(normal, MSpace::kObject);
-        if(status != MS::kSuccess) return status;
+        status = meshIt.getNormal(normal, MSpace::kObject); merr("meshIt.getNormal");
 
         mesh._normals[idx] = Vec3_cu((float)normal[0], (float)normal[1], (float)normal[2]);
 
@@ -52,8 +48,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
 
     // Load tris using Maya's triangulation.
     MItMeshPolygon polyIt(inputObject);
-    int num_faces = polyIt.count(&status);
-    if(status != MS::kSuccess) return status;
+    int num_faces = polyIt.count(&status); merr("polyIt.count");
 
     for ( ; !polyIt.isDone(); polyIt.next())
     {
@@ -66,8 +61,7 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
 
         MPointArray trianglePoints;
         MIntArray triangleIndexes;
-        status = polyIt.getTriangles(trianglePoints, triangleIndexes, MSpace::kObject);
-        if(status != MS::kSuccess) return status;
+        status = polyIt.getTriangles(trianglePoints, triangleIndexes, MSpace::kObject); merr("polyIt.getTriangles");
 
         assert(triangleIndexes.length() % 3 == 0);
         for(int triIdx = 0; triIdx < (int) triangleIndexes.length(); triIdx += 3)
@@ -82,8 +76,6 @@ MStatus MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix
             mesh._triangles.push_back(f);
         }
     }
-
-    return MS::kSuccess;
 }
 
 void MayaData::loadSkeletonHierarchyFromSkinCluster(const std::map<int,MDagPath> &logicalIndexToInfluenceObjects, std::map<int,int> &logicalIndexToParentIdx)

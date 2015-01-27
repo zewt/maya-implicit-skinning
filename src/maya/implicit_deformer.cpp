@@ -75,66 +75,64 @@ DagHelpers::MayaDependencies ImplicitDeformer::dependencies;
 
 MStatus ImplicitDeformer::initialize()
 {
-    MStatus status = MStatus::kSuccess;
+    return handle_exceptions([&] {
+        MStatus status = MStatus::kSuccess;
 
-    DagHelpers::MayaDependencies dep;
+        DagHelpers::MayaDependencies dep;
 
-    // XXX
-    // MGlobal::executeCommand("makePaintable -attrType multiFloat -sm deformer blendNode weights;");
+        // XXX
+        // MGlobal::executeCommand("makePaintable -attrType multiFloat -sm deformer blendNode weights;");
 
-    MFnMatrixAttribute mAttr;
-    MFnNumericAttribute numAttr;
-    MFnCompoundAttribute cmpAttr;
-    MFnTypedAttribute typedAttr;
-    MFnEnumAttribute enumAttr;
+        MFnMatrixAttribute mAttr;
+        MFnNumericAttribute numAttr;
+        MFnCompoundAttribute cmpAttr;
+        MFnTypedAttribute typedAttr;
+        MFnEnumAttribute enumAttr;
     
-    implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status);
-    if(status != MS::kSuccess) return status;
-    typedAttr.setReadable(false);
-    addAttribute(implicit);
+        implicit = typedAttr.create("implicit", "implicit", ImplicitSurfaceData::id, MObject::kNullObj, &status); merr("typedAttr.create(implicit)");
+        typedAttr.setReadable(false);
+        addAttribute(implicit);
 
-    deformerIterations = numAttr.create("deformerIterations", "deformerIterations", MFnNumericData::Type::kInt, 250, &status);
-    numAttr.setMin(0);
-    numAttr.setSoftMax(500);
-    addAttribute(deformerIterations);
-    dependencies.add(deformerIterations, outputGeom);
+        deformerIterations = numAttr.create("deformerIterations", "deformerIterations", MFnNumericData::Type::kInt, 250, &status);
+        numAttr.setMin(0);
+        numAttr.setSoftMax(500);
+        addAttribute(deformerIterations);
+        dependencies.add(deformerIterations, outputGeom);
 
-    iterativeSmoothing = numAttr.create("iterativeSmoothing", "iterativeSmoothing", MFnNumericData::Type::kBoolean, true, &status);
-    addAttribute(iterativeSmoothing);
-    dependencies.add(ImplicitDeformer::iterativeSmoothing, ImplicitDeformer::outputGeom);
+        iterativeSmoothing = numAttr.create("iterativeSmoothing", "iterativeSmoothing", MFnNumericData::Type::kBoolean, true, &status);
+        addAttribute(iterativeSmoothing);
+        dependencies.add(ImplicitDeformer::iterativeSmoothing, ImplicitDeformer::outputGeom);
 
-    finalFitting = numAttr.create("finalFitting", "finalFitting", MFnNumericData::Type::kBoolean, true, &status);
-    addAttribute(finalFitting);
-    dependencies.add(ImplicitDeformer::finalFitting, ImplicitDeformer::outputGeom);
+        finalFitting = numAttr.create("finalFitting", "finalFitting", MFnNumericData::Type::kBoolean, true, &status);
+        addAttribute(finalFitting);
+        dependencies.add(ImplicitDeformer::finalFitting, ImplicitDeformer::outputGeom);
     
-    // Don't use the raw values of EAnimesh::Smooth_type here.  Maya saves the integer value
-    // to the file for some reason (it should save the string), and we shouldn't embed the
-    // order of Animesh's enums into the file format.
-    finalSmoothingMode = enumAttr.create("finalSmoothingMode", "finalSmoothingMode", 0, &status);
-    enumAttr.addField("Laplacian", 0);
-    enumAttr.addField("Conservative", 1);
-    enumAttr.addField("Tangental", 2);
-    enumAttr.addField("Humphrey", 3);
-    enumAttr.addField("Disabled", 4);
-    addAttribute(finalSmoothingMode);
-    dependencies.add(ImplicitDeformer::finalSmoothingMode, ImplicitDeformer::outputGeom);
+        // Don't use the raw values of EAnimesh::Smooth_type here.  Maya saves the integer value
+        // to the file for some reason (it should save the string), and we shouldn't embed the
+        // order of Animesh's enums into the file format.
+        finalSmoothingMode = enumAttr.create("finalSmoothingMode", "finalSmoothingMode", 0, &status);
+        enumAttr.addField("Laplacian", 0);
+        enumAttr.addField("Conservative", 1);
+        enumAttr.addField("Tangental", 2);
+        enumAttr.addField("Humphrey", 3);
+        enumAttr.addField("Disabled", 4);
+        addAttribute(finalSmoothingMode);
+        dependencies.add(ImplicitDeformer::finalSmoothingMode, ImplicitDeformer::outputGeom);
 
-    // The base potential of the mesh.
-    basePotential = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
-    numAttr.setArray(true);
-    numAttr.setUsesArrayDataBuilder(true);
-    addAttribute(basePotential);
-    dependencies.add(implicit, basePotential);
+        // The base potential of the mesh.
+        basePotential = numAttr.create("basePotential", "bp", MFnNumericData::Type::kFloat, 0, &status);
+        numAttr.setArray(true);
+        numAttr.setUsesArrayDataBuilder(true);
+        addAttribute(basePotential);
+        dependencies.add(implicit, basePotential);
 
-    dependencies.add(ImplicitDeformer::implicit, ImplicitDeformer::outputGeom);
-    dependencies.add(ImplicitDeformer::basePotential, ImplicitDeformer::outputGeom);
-    dependencies.add(ImplicitDeformer::input, ImplicitDeformer::outputGeom);
-    dependencies.add(ImplicitDeformer::inputGeom, ImplicitDeformer::outputGeom);
+        dependencies.add(ImplicitDeformer::implicit, ImplicitDeformer::outputGeom);
+        dependencies.add(ImplicitDeformer::basePotential, ImplicitDeformer::outputGeom);
+        dependencies.add(ImplicitDeformer::input, ImplicitDeformer::outputGeom);
+        dependencies.add(ImplicitDeformer::inputGeom, ImplicitDeformer::outputGeom);
 
-    status = dependencies.apply();
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
+        status = dependencies.apply(); merr("dependencies.apply");
+    });
 }
 
 void ImplicitDeformer::postConstructor()
@@ -144,91 +142,92 @@ void ImplicitDeformer::postConstructor()
 
 bool ImplicitDeformer::setInternalValueInContext(const MPlug &plug, const MDataHandle &dataHandle, MDGContext &ctx)
 {
-    MStatus status = MStatus::kSuccess;
-    if(plug == basePotential)
-    {
-        bool result = MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
+    return handle_exceptions_ret<bool>(false, [&] {
+        MStatus status = MStatus::kSuccess;
+        if(plug == basePotential)
+        {
+            bool result = MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
 
-        // load_mesh should update this, but it won't if it short-circuits due to the
-        // !skeletonChanged optimization.
-        MDataBlock dataBlock = forceCache();
-        status = load_base_potential(dataBlock);
-        if(status != MS::kSuccess) return status;
+            // load_mesh should update this, but it won't if it short-circuits due to the
+            // !skeletonChanged optimization.
+            MDataBlock dataBlock = forceCache();
+            load_base_potential(dataBlock);
         
-        return result;
-    }
+            return result;
+        }
 
-    return MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
+        return MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
+    });
 }
 
 // Remember whether implicit inputs are connected, since Maya doesn't clear them on
 // disconnection.
 MStatus ImplicitDeformer::connectionMade(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
 {
-    if(!asSrc && plug == ImplicitDeformer::implicit)
-        implicitIsConnected = true;
+    return handle_exceptions_ret([&] {
+        if(!asSrc && plug == ImplicitDeformer::implicit)
+            implicitIsConnected = true;
 
-    return MPxDeformerNode::connectionMade(plug, otherPlug, asSrc);
+        return MPxDeformerNode::connectionMade(plug, otherPlug, asSrc);
+    });
 }
 
 MStatus ImplicitDeformer::connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc)
 {
-    if(!asSrc && plug == ImplicitDeformer::implicit)
-        implicitIsConnected = false;
+    return handle_exceptions_ret([&] {
+        if(!asSrc && plug == ImplicitDeformer::implicit)
+            implicitIsConnected = false;
 
-    return MPxDeformerNode::connectionBroken(plug, otherPlug, asSrc);
+        return MPxDeformerNode::connectionBroken(plug, otherPlug, asSrc);
+    });
 }
 
 MStatus ImplicitDeformer::compute(const MPlug& plug, MDataBlock& dataBlock)
 {
-    // If we're calculating the output geometry, use the default implementation, which will
-    // call deform().
-    printf("Compute: %s\n", plug.name().asChar());
-    if(plug.attribute() == ImplicitDeformer::outputGeom) return MPxDeformerNode::compute(plug, dataBlock);
+    return handle_exceptions_ret([&] {
+        // If we're calculating the output geometry, use the default implementation, which will
+        // call deform().
+        printf("Compute: %s\n", plug.name().asChar());
+        if(plug.attribute() == ImplicitDeformer::outputGeom) return MPxDeformerNode::compute(plug, dataBlock);
     
-    else return MStatus::kUnknownParameter;
+        else return MStatus(MStatus::kUnknownParameter);
+    });
 }
 
 MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, const MMatrix &mat, unsigned int multiIndex)
 {
+    return handle_exceptions([&] {
+
     // We only support a single input, like skinCluster.
     if(multiIndex > 0)
-        return MStatus::kSuccess;
+        return;
 
     MStatus status = MStatus::kSuccess;
 
     if(!implicitIsConnected)
-        return MStatus::kSuccess;
+        return;
 
     // Read the dependency attributes that represent data we need.  We don't actually use the
     // results of inputvalue(); this is triggering updates for cudaCtrl data.
-    dataBlock.inputValue(ImplicitDeformer::implicit, &status);
-    if(status != MS::kSuccess) return status;
-
-    status = load_mesh(dataBlock);
-    if(status != MS::kSuccess) return status;
+    dataBlock.inputValue(ImplicitDeformer::implicit, &status); merr("ImplicitDeformer::implicit");
+    load_mesh(dataBlock);
 
     // If we don't have a mesh yet, stop.
     if(animesh.get() == NULL)
-        return MStatus::kSuccess;
+        return;
 
     // Run the algorithm.  XXX: If we're being applied to a set, use init_vert_to_fit to only
     // process the vertices we need to.
-    int iterations = DagHelpers::readHandle<int>(dataBlock, ImplicitDeformer::deformerIterations, &status);
-    if(status != MS::kSuccess) return status;
+    int iterations = DagHelpers::readHandle<int>(dataBlock, ImplicitDeformer::deformerIterations, &status); merr("deformerIterations");
     animesh->set_nb_transform_steps(iterations);
 
-    bool iterativeSmoothing = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::iterativeSmoothing, &status);
-    if(status != MS::kSuccess) return status;
+    bool iterativeSmoothing = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::iterativeSmoothing, &status); merr("iterativeSmoothing");
     animesh->set_smooth_mesh(iterativeSmoothing);
 
-    bool finalFitting = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::finalFitting, &status);
-    if(status != MS::kSuccess) return status;
+    bool finalFitting = DagHelpers::readHandle<bool>(dataBlock, ImplicitDeformer::finalFitting, &status); merr("finalFitting");
     animesh->set_final_fitting(finalFitting);
 
-    int smoothMode = DagHelpers::readHandle<short>(dataBlock, ImplicitDeformer::finalSmoothingMode, &status);
-    if(status != MS::kSuccess) return status;
-
+    int smoothMode = DagHelpers::readHandle<short>(dataBlock, ImplicitDeformer::finalSmoothingMode, &status); merr("finalSmoothingMode");
     EAnimesh::Smooth_type smoothType = EAnimesh::Smooth_type::LAPLACIAN;
 
     // These values must match the values in initialize().
@@ -254,41 +253,35 @@ MStatus ImplicitDeformer::deform(MDataBlock &dataBlock, MItGeometry &geomIter, c
 
         Point_cu v = result_verts[vertex_index];
         MPoint pt = MPoint(v.x, v.y, v.z) * invMat;
-        status = geomIter.setPosition(pt, MSpace::kObject);
-        if(status != MS::kSuccess) return status;
+        status = geomIter.setPosition(pt, MSpace::kObject); merr("setPosition");
     }
-
-    return MStatus::kSuccess;
+    });
 }
 
-MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
+void ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
-    shared_ptr<const Skeleton> skel = get_implicit_skeleton(dataBlock, &status);
+    shared_ptr<const Skeleton> skel = get_implicit_skeleton(dataBlock);
     if(skel == NULL) {
         // We don't have a surface connected.  If we have an animMesh, discard it, since it's
         // pointing to an old Skeleton that no longer exists.
         animesh.reset();
-        return MStatus::kSuccess;
+        return;
     }
 
     // Get input.
-    MArrayDataHandle inputArray = dataBlock.inputArrayValue(input, &status);
-    if(status != MS::kSuccess) return status;
+    MArrayDataHandle inputArray = dataBlock.inputArrayValue(input, &status); merr("inputArrayValue(input)");
 
     // Get input[multiIndex].
-    MDataHandle inputGeomData = DagHelpers::readArrayHandleLogicalIndex<MDataHandle>(inputArray, 0, &status);
-    if(status != MS::kSuccess) return status;
+    MDataHandle inputGeomData = DagHelpers::readArrayHandleLogicalIndex<MDataHandle>(inputArray, 0, &status); merr("readArrayHandleLogicalIndex(inputArray)");
 
     // Get input[multiIndex].inputGeometry.
     MDataHandle inputGeomDataHandle = inputGeomData.child(inputGeom);
 
     MObject geom = inputGeomDataHandle.asMesh();
-    if(!geom.hasFn(MFn::kMesh)) {
-        // XXX: only meshes are supported
-        return MStatus::kFailure;
-    }
+    if(!geom.hasFn(MFn::kMesh))
+        throw runtime_error("Only meshes are supported.");
 
     // Get our input's transformation.  We'll load the mesh in world space according to that
     // transform.  This is different from deform() because deform() gives us the matrix to use.
@@ -318,8 +311,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
         MItGeometry allGeomIter(inputGeomDataHandle, true);
 
         MPointArray points;
-        status = allGeomIter.allPositions(points, MSpace::kObject);
-        if(status != MS::kSuccess) return status;
+        status = allGeomIter.allPositions(points, MSpace::kObject); merr("allGeomIter.allPositions");
 
         if(points.length() == mesh.get()->get_nb_vertices())
         {
@@ -335,15 +327,14 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
 
             animesh->set_vertices(inputVerts);
 
-            return MStatus::kSuccess;
+            return;
         }
     }
 
     // Load the input mesh from the unskinned geometry.
     Loader::Abs_mesh loaderMesh;
 
-    status = MayaData::load_mesh(geom, loaderMesh, worldMatrix);
-    if(status != MS::kSuccess) return status;
+    MayaData::load_mesh(geom, loaderMesh, worldMatrix);
 
     // Create our Mesh from the loaderMesh, discarding any previous mesh.
     mesh.reset(new Mesh(loaderMesh));
@@ -353,10 +344,7 @@ MStatus ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     animesh.reset(AnimeshBase::create(mesh.get(), skel));
 
     // Load base potential.
-    status = load_base_potential(dataBlock);
-    if(status != MS::kSuccess) return status;
-
-    return MStatus::kSuccess;
+    load_base_potential(dataBlock);
 }
 
 // Update the base potential for the current mesh and input implicit surface.
@@ -368,8 +356,7 @@ MStatus ImplicitDeformer::calculate_base_potential()
     // Make sure our dependencies are up to date.
     dataBlock.inputValue(ImplicitDeformer::implicit, &status); check("inputValue(implicit)");
 
-    status = load_mesh(dataBlock);
-    if(status != MS::kSuccess) return status;
+    load_mesh(dataBlock);
 
     // If we don't have a mesh yet, don't do anything.
     if(animesh.get() == NULL)
@@ -398,36 +385,29 @@ MStatus ImplicitDeformer::calculate_base_potential()
     return MStatus::kSuccess;
 }
 
-std::shared_ptr<const Skeleton> ImplicitDeformer::get_implicit_skeleton(MDataBlock &dataBlock, MStatus *status)
+std::shared_ptr<const Skeleton> ImplicitDeformer::get_implicit_skeleton(MDataBlock &dataBlock)
 {
-    MDataHandle implicitHandle = dataBlock.inputValue(ImplicitDeformer::implicit, status);
-    if(*status != MS::kSuccess) return NULL;
-
-    MFnPluginData fnData(implicitHandle.data(), status);
-    if(*status != MS::kSuccess) return NULL;
-
-    ImplicitSurfaceData *data = (ImplicitSurfaceData *) fnData.data(status);
-    if(*status != MS::kSuccess) return NULL;
+    MStatus status;
+    MDataHandle implicitHandle = dataBlock.inputValue(ImplicitDeformer::implicit, &status); merr("get_implicit_skeleton(inputValue)");
+    MFnPluginData fnData(implicitHandle.data(), &status); merr("fnData(implicitHandle)");
+    ImplicitSurfaceData *data = (ImplicitSurfaceData *) fnData.data(&status); merr("fnData.data(implicit)");
 
     return data->getSkeleton();
 }
 
-MStatus ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
+void ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
 {
     MStatus status = MStatus::kSuccess;
 
     // If we don't have the animMesh to load into yet, stop.
     if(animesh.get() == NULL)
-        return MS::kSuccess;
+        return;
 
-    MArrayDataHandle basePotentialHandle = dataBlock.inputArrayValue(ImplicitDeformer::basePotential, &status);
-    if(status != MS::kSuccess) return status;
+    MArrayDataHandle basePotentialHandle = dataBlock.inputArrayValue(ImplicitDeformer::basePotential, &status); merr("basePotential");
 
     vector<float> pot;
-    status = DagHelpers::readArray(basePotentialHandle, pot);
+    status = DagHelpers::readArray(basePotentialHandle, pot); merr("readArray(basePotential)");
 
     // Set the base potential that we loaded.
     animesh->set_base_potential(pot);
-
-    return MStatus::kSuccess;
 }

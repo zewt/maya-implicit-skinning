@@ -49,11 +49,11 @@ public:
 
 private:
     // compute() implementations:
-    MStatus load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
-    MStatus load_mesh_geometry(MDataBlock &dataBlock);
-    MStatus get_input_bones(MDataBlock &dataBlock, std::vector<shared_ptr<const Bone> > &bones, std::vector<Bone::Id> &parents) const;
-    MStatus update_skeleton(MDataBlock &dataBlock);
-    MStatus update_skeleton_params(MDataBlock &dataBlock);
+    void load_world_implicit(const MPlug &plug, MDataBlock &dataBlock);
+    void load_mesh_geometry(MDataBlock &dataBlock);
+    void get_input_bones(MDataBlock &dataBlock, std::vector<shared_ptr<const Bone> > &bones, std::vector<Bone::Id> &parents) const;
+    void update_skeleton(MDataBlock &dataBlock);
+    void update_skeleton_params(MDataBlock &dataBlock);
 
     std::shared_ptr<Skeleton> skeleton;
 

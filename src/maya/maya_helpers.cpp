@@ -1680,4 +1680,7 @@ MStatus handle_exceptions(const std::function<void()> &func)
     return MS::kSuccess;
 }
 
-
+MStatus handle_exceptions_ret(const std::function<MStatus()> &func)
+{
+    return handle_exceptions_ret<MStatus>(MStatus::kFailure, func);
+}
