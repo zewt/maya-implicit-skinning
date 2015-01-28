@@ -128,6 +128,7 @@ void Animesh::init_vert_to_fit()
     d_vert_to_fit_base.malloc(acc);
 
     d_vert_to_fit_buff_scan.malloc(acc+1);
+    d_vert_to_fit_buff_scan.set(0, 0);
     d_vert_to_fit_buff.malloc(acc);
     h_vert_to_fit_buff.malloc(acc);
 
@@ -320,6 +321,7 @@ void pack(const int* prefix_sum, const int* src, int* dst, const int nb_vert)
     }
 }
 
+// The first element of buff must be 0.
 int Animesh::pack_vert_to_fit_gpu(
         const Cuda_utils::Device::Array<int>& d_vert_to_fit,
         Cuda_utils::Device::Array<int>& buff,
@@ -333,9 +335,8 @@ int Animesh::pack_vert_to_fit_gpu(
 
     // Set buff[n] to true if d_vert_to_fit[n] is valid, or false if it's -1.
     const int block_s = 16;
-    const int grid_s  = (nb_vert_to_fit + block_s - 1) / block_s;
+    const int grid_s  = (nb_vert_to_fit + block_s) / block_s;
     transform_vert_to_fit<<<grid_s, block_s >>>(d_vert_to_fit.ptr(), buff.ptr()+1, nb_vert_to_fit);
-    buff.set(0, 0);// First element to zero
     CUDA_CHECK_ERRORS();
 
     // Compute prefix sum in buff between [1 nb_vert_to_fit]
