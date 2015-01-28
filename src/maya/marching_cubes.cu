@@ -191,6 +191,8 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
         const int grid_size = (gridRes*gridRes*gridRes) / block_size;
         CUDA_CHECK_KERNEL_SIZE(block_size, grid_size);
         compute_marching_cubes_grid<<<grid_size, block_size>>>(skel->get_skel_id(), gridRes, &isoBuffer[0], &normalBuffer[0], obbox._bb.pmin, delta, obbox._tr);
+        // Synchronize, so the results are available in isoBuffer and normalBuffer.
+        cudaThreadSynchronize();
         CUDA_CHECK_ERRORS();
 
         for(int x = 0; x < gridRes-1; ++x) {
