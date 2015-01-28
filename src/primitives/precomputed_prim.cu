@@ -273,6 +273,8 @@ void Precomputed_prim::update_device(int _id) {
     }
 
     d_precomputed_info.realloc((int) h_precomputed_info.size());
+
+    cudaThreadSynchronize();
     dp_precomputed_info = d_precomputed_info.ptr();
 
     // Update the buffer in device memory.
