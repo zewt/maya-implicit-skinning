@@ -118,7 +118,7 @@ namespace
 {
     __global__
     void compute_marching_cubes_grid(int skel_id, int gridRes, float *isoBuffer, Vec3_cu *normals,
-        Point_cu origin, Point_cu delta, Transfo transfo)
+        Point_cu worldOrigin, Point_cu delta, Transfo transfo)
     {
         int idx = blockIdx.x * blockDim.x + threadIdx.x;
         if(idx >= gridRes*gridRes*gridRes)
@@ -129,13 +129,17 @@ namespace
         int z = idx % gridRes;
 
         Point_cu pWorld = Point_cu(x, y, z)*delta;
-        pWorld = pWorld  + origin;
+        pWorld = pWorld  + worldOrigin;
         pWorld = transfo * pWorld;
 
         isoBuffer[idx] = Skeleton_env::compute_potential(skel_id, pWorld, normals[idx]);
     }
 }
 
+// Note that we draw in world space, but the caller usually wants to render in object
+// space.  It's up to the caller to set the world space matrix of the bones for the coordinate
+// space it wants the output to be in.  Surface nodes set the bone's world space matrix to
+// identity, to draw in object space.  Blend nodes leave them alone, to draw in world space.
 void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float isoLevel)
 {
     // Get the set of all of the bounding boxes in the skeleton.  These may overlap.
@@ -165,10 +169,10 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
         // If the user has changed the ISO level to display the surface beyond that, use the full
         // bbox.
         bool use_surface_bbox = isoLevel >= 0.5 - 1e-6;
-        OBBox_cu obbox = bone->get_obbox(use_surface_bbox);
+        OBBox_cu worldObbox = bone->get_obbox(use_surface_bbox, true);
 
         // Don't draw a grid for empty regions.
-        BBox_cu &bb = obbox._bb;
+        BBox_cu &bb = worldObbox._bb;
         if(!bb.is_valid())
             continue;
 
@@ -181,7 +185,7 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
         bb.pmin = bb.pmin - box_size * 0.2f;
         bb.pmax = bb.pmax + box_size * 0.2f;
 
-        Point_cu delta = (obbox._bb.pmax - obbox._bb.pmin).to_point() / gridRes;
+        Point_cu delta = (worldObbox._bb.pmax - worldObbox._bb.pmin).to_point() / gridRes;
 
         // Calculate the iso and normal at each grid position.
         CudaManagedArray<float> isoBuffer(gridRes*gridRes*gridRes);
@@ -190,7 +194,7 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
         const int block_size = 512;
         const int grid_size = (gridRes*gridRes*gridRes) / block_size;
         CUDA_CHECK_KERNEL_SIZE(block_size, grid_size);
-        compute_marching_cubes_grid<<<grid_size, block_size>>>(skel->get_skel_id(), gridRes, &isoBuffer[0], &normalBuffer[0], obbox._bb.pmin, delta, obbox._tr);
+        compute_marching_cubes_grid<<<grid_size, block_size>>>(skel->get_skel_id(), gridRes, &isoBuffer[0], &normalBuffer[0], worldObbox._bb.pmin, delta, worldObbox._tr);
         // Synchronize, so the results are available in isoBuffer and normalBuffer.
         cudaThreadSynchronize();
         CUDA_CHECK_ERRORS();
@@ -208,8 +212,8 @@ void MarchingCubes::compute_surface(MeshGeom &geom, const Skeleton *skel, float 
                         // the axis-aligned bounding box, add pmin to offset to the bounding box, and
                         // multiply by _tr to convert to world space.
                         Point_cu pWorld = Point_cu((float) p.x, (float) p.y, (float) p.z)*delta;
-                        pWorld = pWorld  + obbox._bb.pmin;
-                        pWorld = obbox._tr * pWorld;
+                        pWorld = pWorld  + worldObbox._bb.pmin;
+                        pWorld = worldObbox._tr * pWorld;
 
                         cell.p[i] = pWorld;
 
