@@ -40,6 +40,7 @@ void MayaData::load_mesh(MObject inputObject, Loader::Abs_mesh &mesh, MMatrix ve
         // okay.
         MVector normal;
         status = meshIt.getNormal(normal, MSpace::kObject); merr("meshIt.getNormal");
+        normal = normal.transformAsNormal(vertexTransform);
 
         mesh._normals[idx] = Vec3_cu((float)normal[0], (float)normal[1], (float)normal[2]);
 
