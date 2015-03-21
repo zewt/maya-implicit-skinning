@@ -917,7 +917,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         r.set_pos(v0);
         float t = 0.f;
 
-        r.set_pos(v0);
         if( raphson ){
             float nm = gf0.norm_squared();
             r.set_dir( gf0 );
