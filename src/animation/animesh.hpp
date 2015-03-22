@@ -102,9 +102,8 @@ private:
                            int nb_iter);
 
     /// make the mesh smooth with the smoothing technique specified by
-    /// mesh_smoothing
+    /// mesh_smoothing.  This will overwrite d_vert_buffer and d_vert_buffer_2.
     void smooth_mesh(Vec3_cu* output_vertices,
-                     Vec3_cu* output_normals,
                      const float* factors,
                      int nb_iter,
                      bool local_smoothing);

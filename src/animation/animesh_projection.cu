@@ -132,7 +132,6 @@ void Animesh::tangential_smooth(const float* factors,
 // -----------------------------------------------------------------------------
 
 void Animesh::smooth_mesh(Vec3_cu* output_vertices,
-                          Vec3_cu* output_vertices_temp,
                           const float* factors,
                           int nb_iter,
                           bool local_smoothing = true)
@@ -147,7 +146,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
     case EAnimesh::NONE:
         break;
     case EAnimesh::LAPLACIAN:
-        Animesh_kers::laplacian_smooth(output_vertices, output_vertices_temp, d_edge_list,
+        Animesh_kers::laplacian_smooth(output_vertices, buff, d_edge_list,
                                        d_edge_list_offsets, factors, local_smoothing,
                                        smooth_force_a, nb_iter, 3);
         break;
@@ -166,7 +165,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
                                           local_smoothing);// use smooth fac ?
         break;
     case EAnimesh::TANGENTIAL:
-        tangential_smooth(factors, output_vertices, buff, output_vertices_temp, nb_iter);
+        tangential_smooth(factors, output_vertices, buff, buff2, nb_iter);
         break;
     case EAnimesh::HUMPHREY:
 
@@ -178,7 +177,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
 
         Animesh_kers::hc_laplacian_smooth(d_vert_buffer,
                                           output_vertices,
-                                          output_vertices_temp,
+                                          buff,
                                           buff2,
                                           d_edge_list,
                                           d_edge_list_offsets,
@@ -294,7 +293,7 @@ void Animesh::transform_vertices()
             Utils::swap_pointers(curr, prev);
 
             // user smoothing
-            //smooth_mesh(output_vertices, output_normals, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
+            //smooth_mesh(output_vertices, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
             conservative_smooth(out_verts, d_vert_buffer.ptr(), *curr, nb_vert_to_fit, smoothing_iter);
         }
     }
@@ -311,7 +310,7 @@ void Animesh::transform_vertices()
 #if 1
     // Smooth the initial guess
     this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-    smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth1_iter);
+    smooth_mesh(out_verts, d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth1_iter);
 
     // Final fitting (global evaluation of the skeleton)
     if(final_fitting)
@@ -323,7 +322,7 @@ void Animesh::transform_vertices()
 
     // Final smoothing
     this->diffuse_attr(diffuse_smooth_weights_iter, 1.f, d_smooth_factors_laplacian.ptr());
-    smooth_mesh(out_verts, d_vert_buffer.ptr(), d_smooth_factors_laplacian.ptr(), Cuda_ctrl::_debug._smooth2_iter);
+    smooth_mesh(out_verts, d_smooth_factors_laplacian.ptr(), 2 /*Cuda_ctrl::_debug._smooth2_iter*/);
 #endif
 }
 
