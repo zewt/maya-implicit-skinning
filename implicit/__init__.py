@@ -143,3 +143,82 @@ def create_locators():
 
     return group_name
 
+def create_end_cap_locators():
+    """
+    Create locators that can be used to edit the selected surfaces' end
+    caps.  The locators can be deleted after edits are finished.
+
+    Important: After making edits to the surface, the attached implicitDeformers
+    must be updated.  In bind pose, run:
+
+    implicitSkin -updateBase deformer_name
+
+    We should do this automatically in the future, or at least not require that
+    the mesh be in bind pose.
+    """
+    nodes = cmds.ls(sl=True, l=True)
+    for node in nodes:
+        # If the implicitShape itself is selected, move to the transform.
+        if cmds.nodeType(node) == 'implicitSurface':
+            node = cmds.listRelatives(node, p=True)[0]
+
+        # Check the node type.
+        if not cmds.listRelatives(node, typ='implicitSurface'):
+            print 'Node %s isn\'t an implicitSurface.' % node
+            continue
+
+
+        print node
+        points = cmds.getAttr('%s.point[*]' % node)
+        end_cap_1 = len(points) - 1
+        end_cap_2 = len(points) - 2
+
+        for idx in (end_cap_1, end_cap_2):
+            if idx < 0:
+                continue
+
+            # End caps aren't specially tagged, but they're always at the end of the
+            # point list, and since they lie on the bone, they always have two out of three
+            # translate coordinates at 0.  This is a bit of a hack, but it's cleaner than
+            # trying to keep track of which samples are caps.
+            zero_coordinates = 0
+            non_zero_coord = -1
+            for coord in range(3):
+                if abs(points[idx][coord]) < 0.0001:
+                    zero_coordinates += 1
+                else:
+                    cap_axis = ('X', 'Y', 'Z')[coord]
+
+            if zero_coordinates != 2:
+                continue
+                
+            # This is an end cap, and the axis that the coordinate should be moved along is cap_axis.
+            # Check if the point is already connected.
+            pointPath = '%s.point[%i]' % (node, idx)
+            if cmds.listConnections(pointPath):
+                print 'Skipping surface point %s that\'s already connected.' % pointPath
+                continue
+
+            # Create the locator.  Don't specify a name here; the return value isn't a fully qualified node
+            # path, so if we give one that's ambiguous we may fail to address it below.  Let Maya pick a name,
+            # and then rename it after we've parented it.
+            cap_locator_name = cmds.spaceLocator()[0]
+
+            cap_locator_name = cmds.parent(cap_locator_name, node)[0]
+            print points[idx]
+            cmds.xform(cap_locator_name, t=points[idx], ro=(0,0,0), os=True)
+            cap_locator_name = cmds.rename(cap_locator_name, 'CapPosition1')
+            cmds.connectAttr('%s.translate' % cap_locator_name, pointPath)
+
+            # Lock the translate axes that aren't the cap axis.  If they're changed we won't identify this as a cap
+            # in the future, and it's probably not what the user is meaning to change.  Lock rotation, since
+            # it doesn't affect the output and changing it just makes the locator not aligned with the cap.
+            for attr in ('X', 'Y', 'Z'):
+                if attr == cap_axis:
+                    continue
+                cmds.setAttr('%s.translate%s' % (cap_locator_name, attr), lock=True);
+            for attr in ('rotate', ):
+                cmds.setAttr('%s.%s' % (cap_locator_name, attr), lock=True);
+
+            print 'Created locator', cap_locator_name, 'for', node
+
