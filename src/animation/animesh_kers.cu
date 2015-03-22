@@ -899,15 +899,17 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
         return;
     }
 
-    // Inside we march along the inverted gradient
-    // outside along the gradient :
+    // If f0 < 0, then the vertex's potential is less than the base potential, eg. the vertex
+    // is outside where it should be, so we move the vertex along the gradient (the gradient points
+    // inward).  Otherwise, the vertex's potential is greater and the vertex is inside where it
+    // should be, so move in the opposite direction.
     const float dl = (f0 > 0.f) ? -step_length : step_length;
 
     float    abs_f0 = fabsf(f0);
 
     for(unsigned short i = 0; i < nb_iter; ++i)
     {
-        // Stop if the gradient is null, so we don't know which way to go.
+        // Stop if the gradient is zero, since we won't go anywhere.  We're too far outside of the surface.
         if(gf0.norm_squared() < 0.00001f) {
             vert_to_fit[thread_idx] = -1;
             break;
@@ -935,6 +937,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
 
         Point_cu vi = r(t);
 
+        // Get the new position's gradient (gfi) and difference in potential (fi).
         Vec3_cu gfi;
         float fi = eval_potential(skel_id, vi, gfi) - ptl;
 
@@ -956,7 +959,9 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             break;
         }
 
-        // STOP CASE 2 : Gradient divergence
+        // STOP CASE 2 : Gradient divergence.  The gradient points in a very different direction than
+        // we were following, which probably means that we jumped into a different part of the mesh.
+        // Stop here without saving this step.
         if( (gf0.normalized()).dot(gfi.normalized()) < gradient_threshold)
         {
             #if 0
@@ -979,6 +984,7 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
             break;
         }
 
+        // Save the results of this iteration for the next loop.
         v0  = vi;
         f0  = fi;
         gf0 = gfi;
