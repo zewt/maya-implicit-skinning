@@ -905,8 +905,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
     // should be, so move in the opposite direction.
     const float dl = (f0 > 0.f) ? -step_length : step_length;
 
-    float    abs_f0 = fabsf(f0);
-
     for(unsigned short i = 0; i < nb_iter; ++i)
     {
         // Stop if the gradient is zero, since we won't go anywhere.  We're too far outside of the surface.
@@ -917,42 +915,19 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
 
         Ray_cu r;
         r.set_pos(v0);
-        float t = 0.f;
+        r.set_dir(gf0.normalized());
 
-        if( raphson ){
-            float nm = gf0.norm_squared();
-            r.set_dir( gf0 );
-            t = dl * abs_f0 / nm;
-            //t = t < 0.001f ? dl : t;
-        } else {
-            #if 1
-                r.set_dir( gf0.normalized() );
-            #else
-                if( gf0.dot( c_dir ) > 0.f ) r.set_dir(  c_dir );
-                else                         r.set_dir( -c_dir );
-
-            #endif
-            t = dl;
-        }
-
-        Point_cu vi = r(t);
+        // Move v0 along the vector gf0 by dl.
+        Point_cu vi = r(dl);
 
         // Get the new position's gradient (gfi) and difference in potential (fi).
         Vec3_cu gfi;
         float fi = eval_potential(skel_id, vi, gfi) - ptl;
 
-        // STOP CASE 1 : Initial iso-surface reached
-        abs_f0 = fabsf(fi);
-        if(raphson && abs_f0 < EPSILON )
-        {
-            vert_to_fit[thread_idx] = -1;
-            break;
-        }
-        
         // If the sign of the potential is different, we've overshot.  Switch to binary search.
         if( fi * f0 <= 0.f)
         {
-            t = binary_search(skel_id, r, 0.f, t, gfi, ptl);
+            float t = binary_search(skel_id, r, 0.f, dl, gfi, ptl);
             v0 = r(t);
 
             vert_to_fit[thread_idx] = -1;
