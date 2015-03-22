@@ -137,5 +137,9 @@ def create_locators():
     group_name = cmds.group()
     cmds.parent(group_name, parent_node)
     cmds.xform(group_name, ro=(0,0,0), s=(1,1,1), t=(0,0,0), os=True)
+
+    # Constrain the group containing the locators to the implicit surface.
+    cmds.parentConstraint(node, group_name, weight=1)
+
     return group_name
 
