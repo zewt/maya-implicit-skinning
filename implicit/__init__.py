@@ -55,7 +55,6 @@ def create_deformer(node):
     # Connect the blend node to the deformer.
     mel.eval('connectAttr -f "%s.worldImplicit" "%s.implicit"' % (implicit_blend_node, deformer_name))
 
-    # XXX: base potential
     mel.eval('implicitSkin -updateBase "%s"' % deformer_name)
 
 def getOnePlugByName(nodeName):
