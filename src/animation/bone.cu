@@ -406,7 +406,16 @@ void Bone::precompute(const Skeleton *skeleton)
     if(_precomputed)
         return;
 
+    // Set our transform to identity while we calculate the grid.  The grid is always
+    // calculated in object space.
+    Transfo world_space = this->get_world_space_matrix();
+    set_world_space_matrix(Transfo::identity());
+
+    // Fill in the precomputed grid.
     _primitive.fill_grid_with( skeleton->get_skel_id(), this );
+
+    // Set back any world space transformation.
+    set_world_space_matrix(world_space);
 
     // Cache the object space bounding box.
     _obbox = get_obbox_object_space(false);

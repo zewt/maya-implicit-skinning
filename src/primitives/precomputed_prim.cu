@@ -357,8 +357,10 @@ void Precomputed_prim::fill_grid_with(Skeleton_env::Skel_id skel_id, const Bone*
         }
     }
 
+    // Get the bounding box of the bone that we'll cache.  The bone's coordinate space is always
+    // set to identity when we're called, so we cache in object space.
     Bone::Id bone_id = bone->get_bone_id();
-    OBBox_cu obbox = bone->get_obbox();
+    OBBox_cu obbox = bone->get_obbox(false, false);
 
     // Compute the primive's grid
     fill_grid(info, bone_id, skel_id, obbox, GRID_RES);
