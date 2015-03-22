@@ -251,7 +251,7 @@ private:
     mutable bool _obbox_surface_cached;
     mutable OBBox_cu _obbox_surface;
 
-    // Our orientation in world space.
+    // The direction and length of the bone in object space.
     Vec3_cu _object_space;
 
     Transfo _world_space_transform;

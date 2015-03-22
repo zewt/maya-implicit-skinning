@@ -346,10 +346,6 @@ void ImplicitSurface::load_world_implicit(const MPlug &plug, MDataBlock &dataBlo
     // Update dependencies.
     dataBlock.inputValue(ImplicitSurface::sampleSetUpdateAttr, &status); merr("inputValue(sampleSetUpdate)");
 
-    // Get the world matrix from MPxSurfaceShape.  We assume that implicit surfaces aren't instanced.
-    MMatrix worldMatrix = getWorldMatrix(dataBlock, 0);
-    Transfo worldMatrixTransfo = DagHelpers::MMatrixToTransfo(worldMatrix);
-
     // Load the initialDir.  We don't actually need this to have access to it (it's already been
     // stored in the Bone by setInternalValueInContext), but we need to do this to let Maya know
     // that we're actually using the ImplicitSurface::initialDir dependency.
@@ -371,7 +367,8 @@ void ImplicitSurface::load_world_implicit(const MPlug &plug, MDataBlock &dataBlo
     float bulgeStrength = DagHelpers::readHandle<float>(dataBlock, ImplicitSurface::bulgeStrength, &status); merr("readHandle(bulgeStrength)");
     boneSkeleton->set_joint_bulge_mag(bone->get_bone_id(), bulgeStrength);
 
-    // Set our orientation to world space.
+    MMatrix worldMatrix = getWorldMatrix(dataBlock, 0);
+    Transfo worldMatrixTransfo = DagHelpers::MMatrixToTransfo(worldMatrix);
     set_world_space(worldMatrixTransfo);
 
     // Set the attribute to a ImplicitSurfaceData data node pointing at the skeleton.

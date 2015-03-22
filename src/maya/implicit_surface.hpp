@@ -49,7 +49,8 @@ public:
 
     const MeshGeom &get_mesh_geometry();
 
-    // This is only used during creation.
+    // This is only used during creation.  Set the object-space direction of the bone away
+    // from the origin.
     MStatus set_bone_direction(Vec3_cu dir);
 //    const Bone &get_bone() const { return bone; }
 
