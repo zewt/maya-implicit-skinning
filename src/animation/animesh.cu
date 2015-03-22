@@ -72,6 +72,7 @@ Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     h_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer(_mesh->get_nb_vertices()),
     d_vert_buffer_2(_mesh->get_nb_vertices()),
+    d_vert_buffer_3(_mesh->get_nb_vertices()),
     d_vals_buffer(_mesh->get_nb_vertices())
 {
 

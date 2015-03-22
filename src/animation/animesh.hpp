@@ -260,6 +260,7 @@ private:
     Cuda_utils::Host::Array<Vec3_cu>    h_vert_buffer;
     Cuda_utils::Device::Array<Vec3_cu>  d_vert_buffer;
     Cuda_utils::Device::Array<Vec3_cu>  d_vert_buffer_2;
+    Cuda_utils::Device::Array<Vec3_cu>  d_vert_buffer_3;
     Cuda_utils::Device::Array<float>    d_vals_buffer;
 
     Cuda_utils::Device::Array<int>      d_vert_to_fit;

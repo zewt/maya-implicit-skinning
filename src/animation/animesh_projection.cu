@@ -136,21 +136,18 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
 {
     if(nb_iter == 0) return;
 
-    Vec3_cu* buff  = d_vert_buffer.ptr();
-    Vec3_cu* buff2 = d_vert_buffer_2.ptr();
-
     switch(mesh_smoothing)
     {
     case EAnimesh::NONE:
         break;
     case EAnimesh::LAPLACIAN:
-        Animesh_kers::laplacian_smooth(output_vertices, buff, d_edge_list,
+        Animesh_kers::laplacian_smooth(output_vertices, d_vert_buffer.ptr(), d_edge_list,
                                        d_edge_list_offsets, factors, local_smoothing,
                                        smooth_force_a, nb_iter, 3);
         break;
     case EAnimesh::CONSERVATIVE:
         Animesh_kers::conservative_smooth(output_vertices,
-                                          buff,
+                                          d_vert_buffer.ptr(),
                                           d_gradient.ptr(),
                                           d_edge_list,
                                           d_edge_list_offsets,
@@ -163,7 +160,7 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
                                           local_smoothing);// use smooth fac ?
         break;
     case EAnimesh::TANGENTIAL:
-        tangential_smooth(factors, output_vertices, buff, buff2, nb_iter);
+        tangential_smooth(factors, output_vertices, d_vert_buffer.ptr(), d_vert_buffer_2.ptr(), nb_iter);
         break;
     case EAnimesh::HUMPHREY:
 
@@ -175,8 +172,8 @@ void Animesh::smooth_mesh(Vec3_cu* output_vertices,
 
         Animesh_kers::hc_laplacian_smooth(d_vert_buffer,
                                           output_vertices,
-                                          buff,
-                                          buff2,
+                                          d_vert_buffer_2.ptr(),
+                                          d_vert_buffer_3.ptr(),
                                           d_edge_list,
                                           d_edge_list_offsets,
                                           factors,
