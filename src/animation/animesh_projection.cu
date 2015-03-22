@@ -30,7 +30,7 @@
 #include "cuda_current_device.hpp"
 #include "std_utils.hpp"
 
-void Animesh::update_base_potential()
+void Animesh::calculate_base_potential(std::vector<float> &out) const
 {
     Timer time;
     time.start();
@@ -42,12 +42,16 @@ void Animesh::update_base_potential()
     assert(d_input_vertices.ptr());
     assert(d_base_potential.ptr());
 
+    Cuda_utils::Device::Array<float> base_potential;
+    base_potential.malloc(d_input_vertices.size());
+
     Animesh_kers::compute_base_potential<<<grid_size, block_size>>>
-        (_skel->get_skel_id(), d_input_vertices.ptr(), nb_verts, d_base_potential.ptr());
+        (_skel->get_skel_id(), d_input_vertices.ptr(), nb_verts, base_potential.ptr());
 
     CUDA_CHECK_ERRORS();
 
     std::cout << "Update base potential in " << time.stop() << " sec" << std::endl;
+    out = base_potential.to_host_vector();
 }
 
 void Animesh::get_base_potential(std::vector<float> &pot) const

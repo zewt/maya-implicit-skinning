@@ -22,8 +22,10 @@ public:
     MStatus connectionBroken(const MPlug &plug, const MPlug &otherPlug, bool asSrc);
     MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
     MStatus deform(MDataBlock &block, MItGeometry &iter, const MMatrix &mat, unsigned int multiIndex);
-    bool setInternalValueInContext(const MPlug &plug, const MDataHandle &dataHandle, MDGContext &ctx);
+    MStatus setDependentsDirty(const MPlug &plug_, MPlugArray &plugArray);
 
+    // Calculate the base potential based on the current mesh, and store it to the
+    // basePotential attribute.
     MStatus calculate_base_potential();
 
     // The base potential of the mesh.
@@ -53,6 +55,9 @@ private:
     std::shared_ptr<const Skeleton> get_implicit_skeleton(MDataBlock &dataBlock);
 
     bool implicitIsConnected;
+
+    // If true, the contents of basePotential have been modified and not yet loaded.
+    bool basePotentialIsDirty;
 
     // The loaded mesh.  We own this object.
     std::unique_ptr<Mesh> mesh;

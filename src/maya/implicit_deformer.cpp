@@ -16,6 +16,7 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnMatrixAttribute.h>
+#include <maya/MFnFloatArrayData.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnMatrixData.h>
 #include <maya/MFnEnumAttribute.h>
@@ -138,26 +139,20 @@ MStatus ImplicitDeformer::initialize()
 void ImplicitDeformer::postConstructor()
 {
     implicitIsConnected = false;
+    basePotentialIsDirty = false;
 }
 
-bool ImplicitDeformer::setInternalValueInContext(const MPlug &plug, const MDataHandle &dataHandle, MDGContext &ctx)
+MStatus ImplicitDeformer::setDependentsDirty(const MPlug &plug, MPlugArray &plugArray)
 {
-    return handle_exceptions_ret<bool>(false, [&] {
-        MStatus status = MStatus::kSuccess;
-        if(plug == basePotential)
-        {
-            bool result = MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
+    MStatus status = MS::kSuccess;
+    MPlug array = plug.array(&status);
 
-            // load_mesh should update this, but it won't if it short-circuits due to the
-            // !skeletonChanged optimization.
-            MDataBlock dataBlock = forceCache();
-            load_base_potential(dataBlock);
-        
-            return result;
-        }
+    // Remember when the basePotential array is modified, so we know when we need to
+    // reload it into the animesh.
+    if(array == ImplicitDeformer::basePotential)
+        basePotentialIsDirty = true;
 
-        return MPxDeformerNode::setInternalValueInContext(plug, dataHandle, ctx);
-    });
+    return MPxDeformerNode::setDependentsDirty(plug, plugArray);
 }
 
 // Remember whether implicit inputs are connected, since Maya doesn't clear them on
@@ -303,10 +298,12 @@ void ImplicitDeformer::load_mesh(MDataBlock &dataBlock)
     // vertex.  We don't want to recalculate that every time our input (skinned) geometry changes.
     // Maya only tells us that the input data has changed, not how.  For now, if we already have
     // geometry loaded and it has the same number of vertices, assume that we already have the correct
-    // mesh loaded.  This will handle the mesh being disconnected, etc.  It'll fail on the edge case
-    // of switching out the geometry with another mesh that has the same number of vertices but a
-    // completely different topology.  XXX
-    if(!skeletonChanged && animesh.get() != NULL)
+    // mesh loaded.  This will handle the mesh being disconnected, etc.  Don't do this if we still
+    // need to load base potential.
+    //
+    // This will fail on the edge case of switching out the geometry with another mesh that has the
+    // same number of vertices but a completely different topology.  XXX
+    if(!skeletonChanged && animesh.get() != NULL && !basePotentialIsDirty)
     {
         MItGeometry allGeomIter(inputGeomDataHandle, true);
 
@@ -362,24 +359,16 @@ MStatus ImplicitDeformer::calculate_base_potential()
     if(animesh.get() == NULL)
         return MStatus::kSuccess;
 
-    // Update base potential.
-    animesh->update_base_potential();
-
-    // Read the result.
+    // Calculate the base potential.
     vector<float> pot;
-    animesh->get_base_potential(pot);
+    animesh->calculate_base_potential(pot);
 
-    // Save the base potential to basePotential.
-    status = DagHelpers::setArray(dataBlock, ImplicitDeformer::basePotential, pot); check("setArray(basePotential)");
-
-    // Work around a Maya bug.  Setting an array on the dataBlock doesn't trigger dependencies.  We
-    // need to set a value using an MPlug to trigger updates.
-    if(pot.size() > 0)
+    // Save it to ImplicitDeformer::basePotential.
+    MPlug basePotentialPlug(thisMObject(), ImplicitDeformer::basePotential);
+    for(int i = 0; i < (int) pot.size(); ++i)
     {
-        MPlug basePotentialPlug(thisMObject(), ImplicitDeformer::basePotential);
-        basePotentialPlug = basePotentialPlug.elementByLogicalIndex(0, &status);
-        if(status != MS::kSuccess) return status;
-        basePotentialPlug.setFloat(pot[0]);
+        MPlug item = basePotentialPlug.elementByLogicalIndex(i, &status); merr("basePotentialPlug.elementByLogicalIndex");
+        item.setFloat(pot[i]);
     }
 
     return MStatus::kSuccess;
@@ -410,4 +399,7 @@ void ImplicitDeformer::load_base_potential(MDataBlock &dataBlock)
 
     // Set the base potential that we loaded.
     animesh->set_base_potential(pot);
+
+    // Base potential is loaded, so it's no longer dirty.
+    basePotentialIsDirty = false;
 }

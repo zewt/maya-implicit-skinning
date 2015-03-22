@@ -44,8 +44,9 @@ public:
 
     /// Computes the potential at each vertex of the mesh. When the mesh is
     /// animated, if implicit skinning is enabled, vertices move so as to match
-    /// that value of the potential.
-    void update_base_potential();
+    /// that value of the potential.  Returns the result, which may then be loaded
+    /// with set_base_potential().
+    void calculate_base_potential(std::vector<float> &out) const;
 
     // Read and write the base potential (and gradient).
     void get_base_potential(std::vector<float> &pot) const;
