@@ -250,7 +250,6 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
          Cuda_ctrl::_debug._potential_pit,
          d_vertices_state.ptr(),
          smooth_strength,
-         Cuda_ctrl::_debug._collision_depth,
          Cuda_ctrl::_debug._slope_smooth_weight,
          Cuda_ctrl::_debug._raphson);
 

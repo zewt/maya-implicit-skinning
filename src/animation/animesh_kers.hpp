@@ -64,7 +64,6 @@ void match_base_potential(Skeleton_env::Skel_id skel_id,
                           const bool potential_pit,
                           EAnimesh::Vert_state *d_vert_state,
                           const float smooth_strength,
-                          const float collision_depth,
                           const int slope,
                           const bool raphson);
 

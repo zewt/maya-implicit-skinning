@@ -25,13 +25,10 @@ class Debug_ctrl {
 public:
 
     Debug_ctrl() :
-        _show_gradient(false),
-        _do_selection(false),
         _potential_pit(true),
         _step_length(0.05f),
         _raphson(false),
         _collision_threshold(0.9f),
-        _propagation_factor(1.f),
         _smooth1_iter(7),
         _smooth2_iter(1),
         _smooth1_force(1.f),
@@ -40,17 +37,10 @@ public:
     {
     }
 
-    bool _show_gradient;
-
-    bool _do_selection;
-
     bool _potential_pit;
-
     float _step_length;
     bool  _raphson;
     float _collision_threshold;
-    float _propagation_factor;    ///< How mush do we correct the fitting direction
-    float _collision_depth;       ///< How mush a vertex interpenetrate when collifing other primitives
 
     int _smooth1_iter;
     int _smooth2_iter;
