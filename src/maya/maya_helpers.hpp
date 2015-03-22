@@ -151,10 +151,23 @@ namespace DagHelpers
         MStatus status = MStatus::kSuccess;
         out.resize(arrayHandle.elementCount());
 
+        // XXX: jumpToElement takes array elements and does a binary search.  For large arrays, it would be
+        // faster to use jumpToArrayElement and elementIndex.
         for(int i = 0; i < (int) arrayHandle.elementCount(); ++i)
         {
             status = arrayHandle.jumpToElement(i);
-            if(status != MS::kSuccess) return status;
+            if(status != MS::kSuccess) {
+                // kInvalidParameter means the index doesn't exist.  This can happen normally.  For example,
+                // an int array of [0,0,10,10] can be stored as ".attr[2:4] 10 10", with the zero elements
+                // being unchanged and having an implicit value of 0.
+                if(status == MS::kInvalidParameter)
+                {
+                    out[i] = 0;
+                    continue;
+                }
+
+                return status;
+            }
         
             MDataHandle item = arrayHandle.inputValue(&status);
             out[i] = DagHelpers::readHandle<T>(item, &status);
