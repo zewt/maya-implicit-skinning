@@ -434,37 +434,39 @@ void tangential_smooth_kernel_first_pass(const Vec3_cu* in_vertices,
                                          int n)
 {
     int p = blockIdx.x * blockDim.x + threadIdx.x;
-    if(p < n)
+    if(p >= n)
+        return;
+
+    Vec3_cu in_vertex = in_vertices[p];
+    Vec3_cu in_normal = in_normals[p];
+    Vec3_cu centroid  = Vec3_cu(0.f, 0.f, 0.f);
+
+    int offset = edge_list_offsets[2*p  ];
+    int nb_ngb = edge_list_offsets[2*p+1];
+    if(nb_ngb <= nb_min_neighbours)
     {
-        Vec3_cu in_vertex = in_vertices[p];
-        Vec3_cu in_normal = in_normals[p];
-        Vec3_cu centroid  = Vec3_cu(0.f, 0.f, 0.f);
-        float     factor    = factors[p];
-
-        int offset = edge_list_offsets[2*p  ];
-        int nb_ngb = edge_list_offsets[2*p+1];
-        if(nb_ngb > nb_min_neighbours)
-        {
-            for(int i = offset; i < offset + nb_ngb; i++){
-                int j = edge_list[i];
-                centroid += in_vertices[j];
-            }
-
-            centroid = centroid * (1.f/nb_ngb);
-
-            if(use_smooth_factors)
-                centroid = centroid * factor + in_vertex * (1.f-factor);
-            else
-                centroid = centroid * strength + in_vertex * (1.f-strength);
-
-            Vec3_cu u = centroid - in_vertex;
-
-            out_vector[p] = u - (in_normal * u.dot(in_normal));
-        }
-        else
-            out_vector[p] = Vec3_cu(0.f, 0.f, 0.f);
+        // We don't have enough neighbors to calculate the centroid.  Note that this vertex
+        // is in edge_list_offsets, but we don't count as one of our own neighbors, hence
+        // nb_ngb <= nb_min_neighbours rather than nb_ngb < nb_min_neighbours.
+        out_vector[p] = Vec3_cu(0.f, 0.f, 0.f);
+        return;
     }
 
+    for(int i = offset; i < offset + nb_ngb; i++){
+        int j = edge_list[i];
+        centroid += in_vertices[j];
+    }
+
+    centroid = centroid * (1.f/nb_ngb);
+
+    float factor = use_smooth_factors? factors[p]:strength;
+    centroid = centroid * factor + in_vertex * (1.f-factor);
+
+    Vec3_cu u = centroid - in_vertex;
+
+    // Why don't we just output the sum into out_vector, instead of making a separate
+    // addition pass?
+    out_vector[p] = u - (in_normal * u.dot(in_normal));
 }
 
 // -----------------------------------------------------------------------------
