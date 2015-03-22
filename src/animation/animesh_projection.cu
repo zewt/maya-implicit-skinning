@@ -94,15 +94,14 @@ void Animesh::tangential_smooth(const float* factors,
     const int grid_size = (nb_threads + block_size - 1) / block_size;
     Vec3_cu* d_vertices_a = d_vertices;
     Vec3_cu* d_vertices_b = d_vertices_prealloc;
-    Vec3_cu* normals   = d_normals;
-
-    compute_normals(d_vertices, d_normals);
 
     for(int i = 0; i < nb_iter; i++)
     {
+        compute_normals(d_vertices_a, d_normals);
+
         Animesh_kers::tangential_smooth_kernel_first_pass
                 <<<grid_size, block_size>>>(d_vertices_a,  // in vertices
-                                            normals,       // in normals
+                                            d_normals,     // in normals
                                             d_vertices_b,  // out vector
                                             d_edge_list.ptr(),
                                             d_edge_list_offsets.ptr(),
@@ -118,7 +117,6 @@ void Animesh::tangential_smooth(const float* factors,
                                             d_vertices_b, // res = vert + vec
                                             nb_threads);
 
-        compute_normals(d_vertices, d_normals);
         Utils::swap_pointers(d_vertices_a, d_vertices_b);
     }
 
