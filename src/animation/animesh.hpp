@@ -95,7 +95,7 @@ private:
     /// @param d_normals normals after smoothing
     /// @param nb_iter number of iteration for smoothing the mesh.
     /// N.B : Even numbers of iteratons are faster than odd.
-    void tangential_smooth(float* factors,
+    void tangential_smooth(const float* factors,
                            Vec3_cu* d_vertices,
                            Vec3_cu* d_vertices_prealloc,
                            Vec3_cu* d_normals,
@@ -105,7 +105,7 @@ private:
     /// mesh_smoothing
     void smooth_mesh(Vec3_cu* output_vertices,
                      Vec3_cu* output_normals,
-                     float* factors,
+                     const float* factors,
                      int nb_iter,
                      bool local_smoothing);
 

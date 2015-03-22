@@ -82,7 +82,7 @@ void Animesh::compute_normals(const Vec3_cu* vertices, Vec3_cu* normals)
 
 // -----------------------------------------------------------------------------
 
-void Animesh::tangential_smooth(float* factors,
+void Animesh::tangential_smooth(const float* factors,
                                 Vec3_cu* d_vertices,
                                 Vec3_cu* d_vertices_prealloc,
                                 Vec3_cu* d_normals,
@@ -133,7 +133,7 @@ void Animesh::tangential_smooth(float* factors,
 
 void Animesh::smooth_mesh(Vec3_cu* output_vertices,
                           Vec3_cu* output_vertices_temp,
-                          float* factors,
+                          const float* factors,
                           int nb_iter,
                           bool local_smoothing = true)
 {
