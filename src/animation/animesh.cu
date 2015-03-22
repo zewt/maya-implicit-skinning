@@ -98,8 +98,6 @@ Animesh::Animesh(const Mesh *m_, std::shared_ptr<const Skeleton> s_) :
     init_vert_to_fit();
 
     compute_mvc();
-
-    update_base_potential();
 }
 
 // -----------------------------------------------------------------------------
