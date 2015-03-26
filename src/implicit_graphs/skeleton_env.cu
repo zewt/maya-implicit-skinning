@@ -199,6 +199,10 @@ void cell_to_blending_list(Skel_id sid,
 
 /// Fill device array : hd_grid_blending_list; hd_offset (only grid_data field);
 /// hd_grid; hd_grid_data
+// XXX: This is fairly expensive, and we're updating every grid and not just the
+// one that was requested.  This is hard to fix right now, since all of the data
+// is put in the same array to allow putting it into a texture.  This doesn't really
+// need to be in a texture, and once that's changed this will be easier to fix.
 static void update_device_grid()
 {
 #if 1
