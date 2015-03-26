@@ -372,7 +372,7 @@ OBBox_cu Bone::get_obbox(bool surface, bool world_space) const
 
     // Transform it to world space.  Don't cache this value.
     if(world_space)
-        obbox._tr = _primitive.get_user_transform() * obbox._tr;
+        obbox._tr = _world_space_transform * obbox._tr;
 
     return obbox;
 }
@@ -422,6 +422,11 @@ void Bone::precompute(const Skeleton *skeleton)
     _obbox = get_obbox_object_space(false);
 
     _precomputed = true;
+    
+    // When we go to or from precomputed, update the current (HRBF or precomputed)
+    // primitive's transform, since when set_world_space_matrix is called we only update
+    // the transform that's actually in use.
+    update_primitive_transform();
 }
 
 void Bone::discard_precompute()
@@ -439,17 +444,27 @@ void Bone::set_world_space_matrix(Transfo tr)
     set_length(dir.norm());
     set_orientation(tr * Point_cu(0,0,0), dir);
 
-    // Update HRBF and precomp with the new world space.
-    const int hrbf_id = get_hrbf().get_id();
-    if(hrbf_id > -1) HRBF_env::set_transfo(hrbf_id, tr);
-        
-    get_primitive().set_transform(tr);
-
-
-    HRBF_env::apply_hrbf_transfos();
-    get_primitive().update_device_transformation();
+    // Update HRBF or precomp with the new world space.
+    update_primitive_transform();
 
     _update_sequence++;
+}
+
+void Bone::update_primitive_transform()
+{
+    // Only update the transform for the primitive that we're actually using.  Updating the HRBF
+    // is more expensive than updating the precomputed version, since we have to run a CUDA kernel
+    // to actually transform the samples.
+    if(_precomputed) {
+        get_primitive().set_transform(_world_space_transform);
+        get_primitive().update_device_transformation();
+    } else {
+        const int hrbf_id = get_hrbf().get_id();
+        if(hrbf_id > -1) {
+            HRBF_env::set_transfo(hrbf_id, _world_space_transform);
+            HRBF_env::apply_hrbf_transfos();
+        }
+    }
 }
 
 // END Bone_hrbf CLASS =========================================================

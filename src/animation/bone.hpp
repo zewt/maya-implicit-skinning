@@ -235,6 +235,7 @@ public:
 
 private:
     OBBox_cu get_obbox_object_space(bool surface) const;
+    void update_primitive_transform();
 
     // A globally unique bone ID.
     const Id _bone_id;
