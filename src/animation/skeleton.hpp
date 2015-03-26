@@ -86,7 +86,7 @@
  */
 struct SkeletonJoint
 {
-    SkeletonJoint() { _parent = -1; }
+    SkeletonJoint() { _parent = -1; last_bone_update_sequence = 0; }
 
     std::shared_ptr<const Bone> _anim_bone;
 
@@ -97,6 +97,11 @@ struct SkeletonJoint
     Bone::Id _parent;
 
     Skeleton_env::Joint_data _joint_data;
+
+    // The bone->update_sequence we last updated bone data.  If this is less than the current
+    // bone->update_sequence, we're out of date and need to update_bones_data() when the grid
+    // is needed.
+    mutable uint64_t last_bone_update_sequence;
 
     // TODO: this might not be really needed as blending env already stores it
     /// shape of the controller associated to each joint
@@ -183,8 +188,9 @@ struct Skeleton {
   /// Get the id of the skeleton in the skeleton environment
   Skeleton_env::Skel_id get_skel_id() const { return _skel_id; }
 
-  // This must be called when a Bone's transform changes.
-  void update_bones_data();
+  // If bone data is out of date, update bone data.  This is const because it updates internal caches
+  // but doesn't change the skeleton's real data; it needs to be called by const users.
+  void update_bones_data() const;
 
 private:
 

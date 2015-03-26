@@ -162,8 +162,23 @@ IBL::Ctrl_setup Skeleton::get_joint_controller(Bone::Id bone_id) const
     return _joints.at(bone_id)._controller;
 }
 
-void Skeleton::update_bones_data()
+void Skeleton::update_bones_data() const
 {
+    // Only update_bones_data() if we're out of date.
+    bool any_bones_need_update = false;
+    for(auto &it: _joints)
+    {
+        const SkeletonJoint &joint = it.second;
+        uint64_t current_sequence = joint._anim_bone->get_update_sequence();
+        if(current_sequence > joint.last_bone_update_sequence) {
+            any_bones_need_update = true;
+            joint.last_bone_update_sequence = current_sequence;
+        }
+    }
+
+    if(!any_bones_need_update)
+        return;
+
     Skeleton_env::update_bones_data(_skel_id);
 }
 

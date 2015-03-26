@@ -228,6 +228,11 @@ public:
     void set_world_space_matrix(Transfo tr);
     Transfo get_world_space_matrix() const { return _world_space_transform; }
 
+    // When a change is made to this bone that invalidates the caching performed by a Skeleton containing
+    // this bone, this is incremented.  This allows Skeletons holding us to know that they need to update,
+    // without us needing to have a reference to all Skeletons that are using us.
+    uint64_t get_update_sequence() const { return _update_sequence; }
+
 private:
     OBBox_cu get_obbox_object_space(bool surface) const;
 
@@ -255,6 +260,7 @@ private:
     Vec3_cu _object_space;
 
     Transfo _world_space_transform;
+    uint64_t _update_sequence;
 };
 
 #endif // BONE_HPP__

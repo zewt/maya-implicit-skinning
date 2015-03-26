@@ -236,6 +236,7 @@ Bone::Bone():
     _hrbf.initialize();
     _primitive.initialize();
     _world_space_transform = Transfo::identity();
+    _update_sequence = 1;
 }
 
 Bone::~Bone() {
@@ -447,6 +448,8 @@ void Bone::set_world_space_matrix(Transfo tr)
 
     HRBF_env::apply_hrbf_transfos();
     Precomputed_prim::update_device_transformations();
+
+    _update_sequence++;
 }
 
 // END Bone_hrbf CLASS =========================================================

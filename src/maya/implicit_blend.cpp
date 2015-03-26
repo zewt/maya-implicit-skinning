@@ -197,6 +197,7 @@ void ImplicitBlend::load_mesh_geometry(MDataBlock &dataBlock)
     if(skeleton.get() == NULL)
         return;
 
+    skeleton->update_bones_data();
     MarchingCubes::compute_surface(meshGeometry, skeleton.get(), iso);
 }
 
@@ -373,12 +374,6 @@ void ImplicitBlend::load_world_implicit(const MPlug &plug, MDataBlock &dataBlock
 
     update_skeleton(dataBlock);
     update_skeleton_params(dataBlock);
-
-    if(skeleton.get() != NULL) {
-        // Update our skeleton based on the bone data.  This lets the skeleton know that the bones
-        // may have changed orientation.
-        skeleton->update_bones_data();
-    }
 
     // Set ImplicitBlend::worldImplicit to our skeleton.  This may be NULL.
     status = setImplicitSurfaceData(dataBlock, ImplicitBlend::worldImplicit, skeleton); merr("setImplicitSurfaceData");

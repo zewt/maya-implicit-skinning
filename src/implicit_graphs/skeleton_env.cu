@@ -173,6 +173,7 @@ void cell_to_blending_list(Skel_id sid,
                            int cell_id,
                            std::vector<Cluster>& blist)
 {
+    blist.reserve(16);
     // Note: if in each cell the list of bones is order from root to leaf
     // then blending list will be also ordered root to leaf
     const Grid*    g    = h_envs[sid]->h_grid;

@@ -309,6 +309,7 @@ void ImplicitSurface::load_mesh_geometry(MDataBlock &dataBlock)
     set_world_space(Transfo::identity());
 
     meshGeometry = MeshGeom();
+    boneSkeleton->update_bones_data();
     MarchingCubes::compute_surface(meshGeometry, boneSkeleton.get());
 
     // Set the transform of the bone back.
@@ -317,10 +318,11 @@ void ImplicitSurface::load_mesh_geometry(MDataBlock &dataBlock)
 
 void ImplicitSurface::set_world_space(Transfo tr)
 {
-    bone->set_world_space_matrix(tr);
+    // If the transform hasn't changed, don't update.
+    if(bone->get_world_space_matrix().equal(tr))
+        return;
 
-    // Let the bone skeleton know that our bone positions have changed.
-    boneSkeleton->update_bones_data();
+    bone->set_world_space_matrix(tr);
 }
 
 bool ImplicitSurface::setInternalValueInContext(const MPlug &plug, const MDataHandle &dataHandle, MDGContext &ctx)

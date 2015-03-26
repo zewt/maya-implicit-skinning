@@ -258,6 +258,9 @@ void Animesh::fit_mesh(int nb_vert_to_fit,
 
 void Animesh::transform_vertices()
 {
+    // If the bone data needs to be updated, do it now.
+    this->_skel->update_bones_data();
+
     const int nb_vert    = d_input_vertices.size();
 
     // XXX: This is actually Point_cu; we should probably adjust the calls below to allow using

@@ -374,6 +374,14 @@ struct Transfo {
                fabsf( y().dot( z() ) ) < eps;
     }
 
+    // Return true if the transforms are equal, within a margin of error.
+    inline bool equal(const Transfo &rhs) {
+        for(int i = 0; i < 16; ++i)
+            if(abs((*this)[i] - rhs[i]) > 1e-6)
+                return false;
+        return true;
+    }
+
     inline
     void print() const
     {
