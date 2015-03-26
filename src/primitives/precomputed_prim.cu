@@ -230,6 +230,11 @@ void Precomputed_prim::set_transform(const Transfo& transfo)
     info.grid_transfo_buffer = info.grid_transform * info.user_transform.fast_invert();
 }
 
+void Precomputed_prim::update_device_transformation()
+{
+    update_device(_id);
+}
+
 void Precomputed_prim::update_device_transformations()
 {
     for(int i = 0; i < (int) h_precomputed_info.size(); ++i)

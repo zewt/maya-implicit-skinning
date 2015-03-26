@@ -82,6 +82,10 @@ struct Precomputed_prim {
 
     /// Copy the host transformations set by set_transform() to texture
     /// @see set_transform()
+    void update_device_transformation();
+
+    /// Copy the host transformations set by set_transform() to texture
+    /// @see set_transform()
     static void update_device_transformations();
 
 #if !defined(NO_CUDA)

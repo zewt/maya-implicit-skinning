@@ -447,7 +447,7 @@ void Bone::set_world_space_matrix(Transfo tr)
 
 
     HRBF_env::apply_hrbf_transfos();
-    Precomputed_prim::update_device_transformations();
+    get_primitive().update_device_transformation();
 
     _update_sequence++;
 }
