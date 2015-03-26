@@ -165,20 +165,19 @@ void unbind()
 
 // =============================================================================
 
-/// @param sid : skeleton identifier
+/// @param env : SkeletonEnv
 /// @param cell_id : linear index of the 3d cell we want to extract the blending
 /// list
 /// @param blist : described the sub-skeleton in the
-void cell_to_blending_list(Skel_id sid,
+void cell_to_blending_list(SkeletonEnv *env,
                            int cell_id,
-                           std::vector<Cluster>& blist)
+                           std::list<Cluster>& blist)
 {
-    blist.reserve(16);
     // Note: if in each cell the list of bones is order from root to leaf
     // then blending list will be also ordered root to leaf
-    const Grid*    g    = h_envs[sid]->h_grid;
-    const Tree_cu* tree = h_envs[sid]->h_tree_cu_instance;
-    const std::list<Bone::Id> &bones_in_cell = g->_grid_cells[cell_id];
+    const Grid*    grid = env->h_grid;
+    const Tree_cu* tree = env->h_tree_cu_instance;
+    const std::list<Bone::Id> &bones_in_cell = grid->_grid_cells[cell_id];
 
     std::vector<bool> cluster_done(tree->_clusters.size(), false);
 
@@ -220,26 +219,33 @@ static void update_device_grid()
         if(h_envs[grid_id] == NULL)
             continue;
 
-        const Grid* grid = h_envs[grid_id]->h_grid;
-        const Tree_cu *tree = h_envs[grid_id]->h_tree_cu_instance;
+        SkeletonEnv *env = h_envs[grid_id];
+        const Grid* grid = env->h_grid;
+        const Tree_cu *tree = env->h_tree_cu_instance;
 
         // Get the blending list for each cell, and the total number of resulting clusters.
-        std::map<int, std::vector<Cluster> > blist_per_cell;
+        std::list<std::list<Cluster> > blist_per_cell;
         int total_size = 0;
         for(int cell_idx: grid->_filled_cells) {
-            cell_to_blending_list(grid_id, cell_idx, blist_per_cell[cell_idx]);
-            total_size += blist_per_cell[cell_idx].size();
+            blist_per_cell.emplace_back();
+            std::list<Cluster> &blist = blist_per_cell.back();
+            cell_to_blending_list(env, cell_idx, blist);
+            total_size += blist.size();
         }
 
         // Allocate space for these clusters.
         hd_grid_blending_list.realloc(offset + total_size);
         hd_grid_data.realloc(offset + total_size);
 
+        // Iterate over _filled_cells again, copying the results to hd_grid_blending_list and hd_grid_data.
+        auto blist_per_cell_it = blist_per_cell.begin();
         for(int cell_idx: grid->_filled_cells)
         {
-            std::vector<Cluster> &blist = blist_per_cell.at(cell_idx);
-            if(blist.size() > 0)
-                blist[0].datas._blend_type = (EJoint::Joint_t)(blist.size()/2);
+            std::list<Cluster> &blist = *blist_per_cell_it;
+            blist_per_cell_it++;
+
+            if(!blist.empty())
+                blist.front().datas._blend_type = (EJoint::Joint_t)(blist.size()/2);
 
             hd_grid[grid_offset + cell_idx] = offset;
 
@@ -266,7 +272,7 @@ static void update_device_grid()
         hd_grid_bbox[grid_id*2 + 1] = bb.pmax.to_float4();
         hd_grid_bbox[grid_id*2 + 0].w = (float)res;
 
-        off_bone += h_envs[grid_id]->h_tree_cu_instance->_bone_aranged.size();
+        off_bone += tree->_bone_aranged.size();
     }
 
     hd_offset.update_device_mem(); // This is also done in update_device_tree maybe we can factorize
@@ -358,7 +364,7 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         }
 
         // Concatenate blending list and update bone index accordingly
-        std::vector<Cluster>::const_iterator it = tree_cu->_blending_list.begin();
+        std::list<Cluster>::const_iterator it = tree_cu->_blending_list.begin();
         for(int i = 0; it != tree_cu->_blending_list.end(); ++it, ++i)
         {
             Cluster c = *it;

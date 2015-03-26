@@ -136,7 +136,7 @@ void Tree_cu::clear_blending_list()
 
 // -----------------------------------------------------------------------------
 
-void Tree_cu::add_cluster(Cluster_id cid, std::vector<Cluster> &out) const
+void Tree_cu::add_cluster(Cluster_id cid, std::list<Cluster> &out) const
 {
     Cluster cl = _clusters[cid.id()];
     DBone_id d_bone_id = cl.first_bone;
