@@ -169,9 +169,10 @@ void unbind()
 /// @param cell_id : linear index of the 3d cell we want to extract the blending
 /// list
 /// @param blist : described the sub-skeleton in the
-void cell_to_blending_list(SkeletonEnv *env,
+int cell_to_blending_list(SkeletonEnv *env,
                            int cell_id,
-                           std::list<Cluster>& blist)
+                           std::vector< std::vector<Cluster> * >& blist,
+                           std::vector<std::vector<Cluster> > &blists)
 {
     // Note: if in each cell the list of bones is order from root to leaf
     // then blending list will be also ordered root to leaf
@@ -181,17 +182,21 @@ void cell_to_blending_list(SkeletonEnv *env,
 
     std::vector<bool> cluster_done(tree->_clusters.size(), false);
 
+    int total_size = 0;
     for(Bone::Id bone_id: bones_in_cell)
     {
         DBone_id dbone = tree->hidx_to_didx(bone_id);
 
         Cluster_id clus_id = tree->bone_to_cluster( dbone );
         if( cluster_done[clus_id.id()] ) continue;
-
-        tree->add_cluster( clus_id, blist );
-
         cluster_done[clus_id.id()] = true;
+
+        std::vector<Cluster> &cluster = blists[clus_id.id()];
+
+        total_size += cluster.size();
+        blist.push_back(&cluster);
     }
+    return total_size;
 }
 
 // -----------------------------------------------------------------------------
@@ -223,14 +228,36 @@ static void update_device_grid()
         const Grid* grid = env->h_grid;
         const Tree_cu *tree = env->h_tree_cu_instance;
 
+        // Cache cluster IDs to blending lists.
+        std::vector<std::vector<Cluster> > blist_cache;
+
+        Cluster_id clus_id(0);
+        for(Cluster c: tree->_clusters) {
+            std::vector<Cluster> cluster;
+            tree->add_cluster(clus_id, cluster);
+            blist_cache.push_back(cluster);
+            clus_id += 1;
+        }
+
         // Get the blending list for each cell, and the total number of resulting clusters.
-        std::list<std::list<Cluster> > blist_per_cell;
+        // Each element of blist_per_cell is a list of blending lists, pointing into blist_cache.
+        // The list is concatenated down below.
+        std::vector< std::vector< std::vector<Cluster> * > > blist_per_cell;
+
+        // The grid has res^3 cells.  We'll only process cells that actually have surfaces affecting them,
+        // but preallocate the maximum for efficiency.
+        blist_per_cell.reserve(grid->res() * grid->res() * grid->res());
+
         int total_size = 0;
         for(int cell_idx: grid->_filled_cells) {
             blist_per_cell.emplace_back();
-            std::list<Cluster> &blist = blist_per_cell.back();
-            cell_to_blending_list(env, cell_idx, blist);
-            total_size += blist.size();
+            std::vector< std::vector<Cluster> * > &blist = blist_per_cell.back();
+
+            // The number of clusters that the blending list can possibly have is the number of bones.
+            // Preallocate that amount, so we don't have to reallocate.
+            blist.reserve(grid->_grid_cells[cell_idx].size());
+
+            total_size += cell_to_blending_list(env, cell_idx, blist, blist_cache);
         }
 
         // Allocate space for these clusters.
@@ -241,25 +268,31 @@ static void update_device_grid()
         auto blist_per_cell_it = blist_per_cell.begin();
         for(int cell_idx: grid->_filled_cells)
         {
-            std::list<Cluster> &blist = *blist_per_cell_it;
+            std::vector< std::vector<Cluster> *> blists_list = *blist_per_cell_it;
             blist_per_cell_it++;
-
-            if(!blist.empty())
-                blist.front().datas._blend_type = (EJoint::Joint_t)(blist.size()/2);
 
             hd_grid[grid_offset + cell_idx] = offset;
 
-            for(const Cluster &c: blist)
-            {
-                // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
-                Cluster_cu clus(c);
+            int first_offset = offset;
+            int total_size = 0;
+            for(std::vector<Cluster> *blists: blists_list) {
+                for(const Cluster &c: *blists) {
+                    // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
+                    Cluster_cu clus(c);
 
-                clus.first_bone += off_bone;
+                    clus.first_bone += off_bone;
 
-                hd_grid_blending_list[offset] = clus;
-                hd_grid_data         [offset]._bulge_strength = c.datas._bulge_strength;
-                offset++;
+                    hd_grid_blending_list[offset] = clus;
+                    hd_grid_data         [offset]._bulge_strength = c.datas._bulge_strength;
+                    offset++;
+                    total_size++;
+                }
             }
+
+            // Store the total number of bones (divided by two) in the first item's blend_type.  If first_offset and offset
+            // are the same then there were no clusters at all, so don't do anything.
+            if(first_offset != offset)
+                hd_grid_blending_list[first_offset].blend_type = (EJoint::Joint_t) (total_size/2);
         }
 
         hd_offset[grid_id].grid_data = grid_offset;
@@ -364,7 +397,7 @@ static void update_device_tree(std::vector<const Bone*> &h_generic_bones)
         }
 
         // Concatenate blending list and update bone index accordingly
-        std::list<Cluster>::const_iterator it = tree_cu->_blending_list.begin();
+        auto it = tree_cu->_blending_list.begin();
         for(int i = 0; it != tree_cu->_blending_list.end(); ++it, ++i)
         {
             Cluster c = *it;

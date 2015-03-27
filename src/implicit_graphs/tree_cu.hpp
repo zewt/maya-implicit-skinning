@@ -61,7 +61,7 @@ public:
     }
 
     /// Add a cluster to the blending list.
-    void add_cluster(Cluster_id cid, std::list<Cluster> &out) const;
+    void add_cluster(Cluster_id cid, std::vector<Cluster> &out) const;
 
     /// Erase every elements from the blending list
     void clear_blending_list();
@@ -73,7 +73,7 @@ public:
     /// Pairs and singletons are to be blended altogether with the max
     /// operator:
     /// max( pair_0, ..., pair_n )
-    std::list<Cluster> _blending_list;
+    std::vector<Cluster> _blending_list;
 
     /// Tree we're building the GPU representation from
     const Tree *_tree;
