@@ -67,10 +67,10 @@ struct Grid {
 
     /// 3D grid stored linearly of size _res*_res*_res.
     /// Each cell contains a list of bones that intersects it
-    std::vector< std::list<Bone::Id> > _grid_cells;
+    std::vector< std::vector<Bone::Id> > _grid_cells;
 
     /// Indices of the cells empty not empty.
-    std::set<int> _filled_cells;
+    std::vector<bool> _filled_cells;
 
 private:
 
@@ -81,11 +81,8 @@ private:
     /// clear _filled_cells and list of bones for each cell in _grid_cells
     void reset_grid();
 
-    /// Fill the bone list in cells with the current tree '_tree'
-    void add_tree();
-
     /// Add a bone to the cell the bounding box intersects
-    void add_bone( Bone::Id bid );
+    void add_bone(const Bone *bone);
 
     //--------------------------------------------------------------------------
     /// @name Attributes

@@ -76,33 +76,27 @@ void Grid::build_grid()
     const Vec3_cu eps(e, e, e);
     _pos.pmin = _pos.pmin - eps;
     _pos.pmax = _pos.pmax + eps;
-    // Add tree if bbox is large enough
-    if( _pos.is_valid( ) )
-        add_tree();
-}
 
-// -----------------------------------------------------------------------------
+    // If the bounding box is too small, don't do anything.
+    if(!_pos.is_valid())
+        return;
+
+    for(auto bone: _tree->bones())
+        add_bone(bone);
+}
 
 void Grid::reset_grid()
 {
-    for( unsigned i = 0; i < _grid_cells.size(); ++i)
+    int total_bones = _tree->bones().size();
+    for( unsigned i = 0; i < _grid_cells.size(); ++i) {
         _grid_cells[i].clear();
-    _filled_cells.clear();
+        _grid_cells[i].reserve(total_bones);
+    }
+    _filled_cells.assign(_grid_cells.size(), false);
 }
 
-// -----------------------------------------------------------------------------
-
-void Grid::add_tree()
+void Grid::add_bone(const Bone *bone)
 {
-    for(auto bone: _tree->bones())
-        add_bone(bone->get_bone_id());
-}
-
-// -----------------------------------------------------------------------------
-
-void Grid::add_bone( Bone::Id bid )
-{
-    const Bone* bone = _tree->bone( bid );
     if( bone->get_type() == EBone::SSD)
         return;
 
@@ -129,16 +123,16 @@ void Grid::add_bone( Bone::Id bid )
         int i = (offset + idx.to_vec3i()).to_linear();
         assert(i < grid_size.product() );
         assert(i >= 0);
-        _filled_cells.insert( i );
-        _grid_cells[i].push_back( bid );
+        _filled_cells[i] = true;
+        _grid_cells[i].push_back( bone->get_bone_id() );
     }
 
     if( sub_size.product() == 0)
     {
         int i = offset.to_linear();
         assert( offset.is_in() );
-        _filled_cells.insert( i );
-        _grid_cells[i].push_back( bid );
+        _filled_cells[i] = true;
+        _grid_cells[i].push_back(bone->get_bone_id());
     }
 }
 
