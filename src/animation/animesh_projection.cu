@@ -280,19 +280,32 @@ void Animesh::transform_vertices()
     if(do_smooth_mesh)
     {
         Cuda_utils::DA_int* prev = &d_vert_to_fit_buff;
+
+        cudaEvent_t event;
+        cudaEventCreate(&event);
+
         // Interleaved fitting
         // Should we be doing nb_steps/2 steps here, since we're doing two steps per iteration?
         for( int i = 0; i < nb_steps && nb_vert_to_fit != 0; i++)
         {
             fit_mesh(nb_vert_to_fit, curr->ptr(), true/*smooth from iso*/, out_verts, 2, smooth_force_a);
 
-            nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
-            Utils::swap_pointers(curr, prev);
+            // Querying an event causes CUDA to flush the kernel queue to the GPU.  If we don't do this,
+            // fit_mesh won't actually start until we do our readback in pack_vert_to_fit_gpu down below.
+            // This allows the expensive fit_mesh kernel to start, while we queue the rest of the kernels
+            // in parallel, which takes some time on Windows.
+            cudaEventRecord(event);
+            cudaEventQuery(event);
 
             // user smoothing
             //smooth_mesh(output_vertices, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
             conservative_smooth(out_verts, d_vert_buffer.ptr(), *curr, nb_vert_to_fit, smoothing_iter);
+
+            nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
+            Utils::swap_pointers(curr, prev);
         }
+
+        cudaEventDestroy(event);
     }
     else
     {

@@ -341,10 +341,9 @@ int Animesh::pack_vert_to_fit_gpu(
     // Compute prefix sum in buff between [1 nb_vert_to_fit]
     Cuda_utils::inclusive_scan(0, nb_vert_to_fit-1, buff.ptr()+1);
 
-    const int new_nb_vert_to_fit = buff.fetch(nb_vert_to_fit);
-
     pack<<<grid_s, block_s >>>(buff.ptr(), d_vert_to_fit.ptr(), packed_array.ptr(), nb_vert_to_fit);
     CUDA_CHECK_ERRORS();
 
-    return new_nb_vert_to_fit;
+    // This causes a flush, so do this last.
+    return buff.fetch(nb_vert_to_fit);
 }
