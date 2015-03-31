@@ -643,6 +643,54 @@ MStatus ImplicitCommand::doIt(const MArgList &args)
     });
 }
 
+// We can't include cuda_utils_common.hpp here, since CUDA conflicts with Maya.
+namespace Cuda_utils {
+    void setCudaDebugChecking(bool value);
+    bool getCudaDebugChecking();
+}
+
+class ImplicitSkinConfig: public MPxCommand
+{
+    bool origCudaDebugChecking;
+    bool cudaDebugChecking;
+
+public:
+    MStatus doIt(const MArgList &args)
+    {
+        return handle_exceptions_ret([&] {
+            origCudaDebugChecking = cudaDebugChecking = Cuda_utils::getCudaDebugChecking();
+            
+            MStatus status;
+            for(int i = 0; i < (int) args.length(); ++i)
+            {
+                if(args.asString(i, &status) == MString("-debug") && MS::kSuccess == status)
+                {
+                    ++i;
+                    cudaDebugChecking = args.asBool(i, &status);
+                    if(status != MS::kSuccess) throw invalid_argument("-debug requires a boolean argument");
+                }
+            }
+
+            return redoIt();
+        });
+    }
+
+    MStatus redoIt()
+    {
+        Cuda_utils::setCudaDebugChecking(cudaDebugChecking);
+        return MS::kSuccess;
+    }
+
+    MStatus undoIt()
+    {
+        Cuda_utils::setCudaDebugChecking(origCudaDebugChecking);
+        return MS::kSuccess;
+    }
+
+    bool isUndoable() const { return true; }
+    static void *creator() { return new ImplicitSkinConfig(); }
+};
+
 MStatus initializePlugin(MObject obj)
 {
     return handle_exceptions([&] {
@@ -680,6 +728,9 @@ MStatus initializePlugin(MObject obj)
 
             status = plugin.registerCommand("implicitSkin", ImplicitCommand::creator);
             merr("registerCommand(implicitSkin)");
+
+            status = plugin.registerCommand("implicitSkinConfig", ImplicitSkinConfig::creator);
+            merr("registerCommand(implicitSkinConfig)");
         }
         catch (std::exception &) {
             // We don't try to clean up registrations if we've partially registered, but let's at least
@@ -712,6 +763,9 @@ MStatus uninitializePlugin(MObject obj)
         merr("ImplicitSurfaceGeometryOverride::uninitialize");
 
         status = plugin.deregisterCommand("implicitSkin");
+        merr("deregisterCommand(implicitSkin)");
+
+        status = plugin.deregisterCommand("implicitSkinConfig");
         merr("deregisterCommand(implicitSkin)");
 
         status = plugin.deregisterData(ImplicitSurfaceData::id);

@@ -62,13 +62,23 @@
 /// Use this macro to check the latest cuda error. It exits when the test
 /// failed. This is useful when you want to check kernels errors. You just
 /// need to put the CUDA_CHECK_ERRORS(); right after the kernel call.
-#define CUDA_CHECK_ERRORS() do { Cuda_utils::checkCudaErrors(__FILE__, __LINE__); } while(0)
+#define CUDA_CHECK_ERRORS() do { Cuda_utils::checkCudaErrors(__FILE__, __LINE__, false); } while(0)
+
+// Like CUDA_CHECK_ERRORS, but check for errors regardless of the value of
+// setCudaDebugChecking.
+#define CUDA_CHECK_ERRORS_ALWAYS() do { Cuda_utils::checkCudaErrors(__FILE__, __LINE__, true); } while(0)
 
 // =============================================================================
 namespace Cuda_utils{
 // =============================================================================
 
-void checkCudaErrors(const char *file, int line);
+void checkCudaErrors(const char *file, int line, bool always);
+
+// Enable or disable runtime CUDA error checking.  On by default in debug builds, off by
+// default in release builds.  If disabled, errors are only checked when we'd need to
+// stall the pipeline anyway, eg. at the end of the deformer.
+void setCudaDebugChecking(bool value);
+bool getCudaDebugChecking();
 
 // =============================================================================
 namespace Common{

@@ -18,15 +18,25 @@
  */
 #include "cuda_utils.hpp"
 
+namespace {
+#ifdef NDEBUG
+    bool enableDebugChecks = false;
+#else
+    bool enableDebugChecks = true;
+#endif
+}
+
 // =============================================================================
 namespace Cuda_utils{
 // =============================================================================
 
     
 /// Check a cuda API call.
-void checkCudaErrors(const char *file, int line)
+void checkCudaErrors(const char *file, int line, bool always)
 {
-#ifndef NDEBUG
+    if(!always && !enableDebugChecks)
+        return;
+
     cudaError_t code = cudaDeviceSynchronize();
     if(code == cudaSuccess)
         return;
@@ -39,8 +49,17 @@ void checkCudaErrors(const char *file, int line)
     cuda_print_rusage();
     assert(false);
     throw new std::runtime_error("CUDA error");
-#endif
 }
+
+void setCudaDebugChecking(bool value)
+{
+    enableDebugChecks = value;
+    
+    // If we're turning debug checking on, check for any unchecked errors that have already happened.
+    CUDA_CHECK_ERRORS();
+}
+
+bool getCudaDebugChecking() { return enableDebugChecks; }
 
 int get_max_gflops_device_id()
 {
