@@ -326,7 +326,7 @@ void conservative_smooth(Vec3_cu* d_verts,
                                                               use_smooth_fac);
         CUDA_CHECK_ERRORS();
 
-        Utils::swap_pointers(d_verts_a, d_verts_b);
+        std::swap(d_verts_a, d_verts_b);
     }
 
     if(nb_iter % 2 == 1){
@@ -409,7 +409,7 @@ void laplacian_smooth(Vec3_cu* d_vertices,
                                                            nb_min_neighbours,
                                                            nb_threads);
         CUDA_CHECK_ERRORS();
-        Utils::swap_pointers(d_vertices_a, d_vertices_b);
+        std::swap(d_vertices_a, d_vertices_b);
     }
 
     if(nb_iter % 2 == 1){
@@ -618,7 +618,7 @@ void hc_laplacian_smooth(const DA_Vec3_cu& d_original_vertices,
                                             nb_threads);
         CUDA_CHECK_ERRORS();
 
-        Utils::swap_pointers(d_vertices_a, d_vertices_b);
+        std::swap(d_vertices_a, d_vertices_b);
     }
 
     if(nb_iter % 2 == 1){
@@ -681,7 +681,7 @@ void diffuse_values(float* d_values,
         diffusion_kernel<<<grid_size, block_size>>>
             (d_values_a, d_values_b, d_edge_list.ptr(), d_edge_list_offsets.ptr(), strength, nb_threads);
         CUDA_CHECK_ERRORS();
-        Utils::swap_pointers(d_values_a, d_values_b);
+        std::swap(d_values_a, d_values_b);
     }
 
     if(nb_iter % 2 == 1){

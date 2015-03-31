@@ -117,7 +117,7 @@ void Animesh::tangential_smooth(const float* factors,
                                             d_vertices_b, // res = vert + vec
                                             nb_threads);
 
-        Utils::swap_pointers(d_vertices_a, d_vertices_b);
+        std::swap(d_vertices_a, d_vertices_b);
     }
 
     if(nb_iter % 2 == 1)
@@ -302,7 +302,7 @@ void Animesh::transform_vertices()
             conservative_smooth(out_verts, d_vert_buffer.ptr(), *curr, nb_vert_to_fit, smoothing_iter);
 
             nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
-            Utils::swap_pointers(curr, prev);
+            std::swap(curr, prev);
         }
 
         cudaEventDestroy(event);

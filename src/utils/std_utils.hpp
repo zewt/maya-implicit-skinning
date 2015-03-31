@@ -228,16 +228,6 @@ static bool exists(const std::map<Key, Elt>& map, const PKey& elt)
 namespace Utils {
 // =============================================================================
 
-/// Function macro to generically swap pointers
-template<class T> static inline
-void swap_pointers(T*& src, T*& dst){
-    T* tmp = src;
-    src = dst;
-    dst = tmp;
-}
-
-// -----------------------------------------------------------------------------
-
 template<class T>
 void copy(T* dst, const T* src, int nb_elt)
 {
