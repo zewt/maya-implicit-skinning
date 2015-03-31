@@ -37,8 +37,6 @@
     @see Cuda_utils
 */
 
-#ifndef NDEBUG
-
 /// Check a cuda API call.
 /// exit() if not cudaSuccess:
 #define CUDA_SAFE_CALL(x) do{\
@@ -53,25 +51,6 @@
     }\
     } while(0)
 
-/// Use this macro to check the latest cuda error. It exists when the test
-/// failed. This is usefull when you want to check kernels errors. You just
-/// need to put the CUDA_CHECK_ERRORS(); right after the kernel call.
-
-#define CUDA_CHECK_ERRORS() \
-    do{\
-        cudaThreadSynchronize(); \
-        cudaError_t code = cudaGetLastError();\
-        if(code != cudaSuccess){\
-            const char *error = cudaGetErrorString(code); \
-            fprintf(stderr,"CUDA error: %s at %s, line %d\n", error, __FILE__, __LINE__);\
-            fflush(stderr);\
-            cuda_print_memory_trace();\
-            cuda_print_rusage();\
-            assert(false);\
-        }\
-    } while(0)
-
-
 #define CU_SAFE_CALL(call) do{                                               \
     CUresult err = call;                                                     \
     if( CUDA_SUCCESS != err) {                                               \
@@ -80,19 +59,16 @@
         assert(false);                                                       \
     } }while(0)
 
-#else
-
-#define CUDA_CHECK_ERRORS()
-
-#define CUDA_SAFE_CALL(code) code
-
-#define CU_SAFE_CALL( call ) call
-
-#endif
+/// Use this macro to check the latest cuda error. It exits when the test
+/// failed. This is useful when you want to check kernels errors. You just
+/// need to put the CUDA_CHECK_ERRORS(); right after the kernel call.
+#define CUDA_CHECK_ERRORS() do { Cuda_utils::checkCudaErrors(__FILE__, __LINE__); } while(0)
 
 // =============================================================================
 namespace Cuda_utils{
 // =============================================================================
+
+void checkCudaErrors(const char *file, int line);
 
 // =============================================================================
 namespace Common{

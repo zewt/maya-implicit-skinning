@@ -22,6 +22,26 @@
 namespace Cuda_utils{
 // =============================================================================
 
+    
+/// Check a cuda API call.
+void checkCudaErrors(const char *file, int line)
+{
+#ifndef NDEBUG
+    cudaError_t code = cudaDeviceSynchronize();
+    if(code == cudaSuccess)
+        return;
+
+    const char *error = cudaGetErrorString(code);
+    fprintf(stderr,"CUDA error: %s at %s, line %d\n", error, file, line);
+    fflush(stderr);
+
+    cuda_print_memory_trace();
+    cuda_print_rusage();
+    assert(false);
+    throw new std::runtime_error("CUDA error");
+#endif
+}
+
 int get_max_gflops_device_id()
 {
     int current_device   = 0, sm_per_multiproc = 0;
