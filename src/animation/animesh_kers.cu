@@ -223,6 +223,8 @@ void conservative_smooth_kernel(const Vec3_cu* in_vertices,
     if(thread_idx < nb_verts)
     {
         const int p = vert_to_fit[thread_idx];
+        if(p == -1)
+            return;
 
         const Vec3_cu n       = normals[p].normalized();
         const Vec3_cu in_vert = in_vertices[p];
@@ -272,10 +274,14 @@ void copy_vert_to_fit(const T* d_in,
                       int n)
 {
     int thread_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(thread_idx < n){
-        const int p = vert_to_fit[thread_idx];
-        d_out[p] = d_in[p];
-    }
+    if(thread_idx >= n)
+        return;
+
+    const int p = vert_to_fit[thread_idx];
+    if(p == -1)
+        return;
+    
+    d_out[p] = d_in[p];
 }
 
 // -----------------------------------------------------------------------------

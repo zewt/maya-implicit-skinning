@@ -288,6 +288,8 @@ void Animesh::transform_vertices()
         // Should we be doing nb_steps/2 steps here, since we're doing two steps per iteration?
         for( int i = 0; i < nb_steps && nb_vert_to_fit != 0; i++)
         {
+            // Make a fitting pass over all vertices in curr that aren't -1.  curr will be updated
+            // in-place, setting finished vertex indices to -1.
             fit_mesh(nb_vert_to_fit, curr->ptr(), true/*smooth from iso*/, out_verts, 2, smooth_force_a);
 
             // Querying an event causes CUDA to flush the kernel queue to the GPU.  If we don't do this,
@@ -301,7 +303,11 @@ void Animesh::transform_vertices()
             //smooth_mesh(output_vertices, d_smooth_factors.ptr(), smoothing_iter, false/*local smoothing*/);
             conservative_smooth(out_verts, d_vert_buffer.ptr(), *curr, nb_vert_to_fit, smoothing_iter);
 
+            // Copy values from curr to prev that don't have a value of -1, to remove indices that are
+            // finished.  Update nb_vert_to_fit with the new number of remaining vertices.
             nb_vert_to_fit = pack_vert_to_fit_gpu(*curr, d_vert_to_fit_buff_scan, *prev, nb_vert_to_fit );
+
+            // Switch curr and prev, so we use the new pruned index list for the next pass.
             std::swap(curr, prev);
         }
 
