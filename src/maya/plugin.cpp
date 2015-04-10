@@ -694,15 +694,17 @@ public:
 MStatus initializePlugin(MObject obj)
 {
     return handle_exceptions([&] {
+        std::vector<Blending_env::Op_t> op;
+        op.push_back( Blending_env::B_D  );
+        op.push_back( Blending_env::U_OH );
+        op.push_back( Blending_env::C_D  );
+
+        // If CUDA initialization fails, this will throw an exception.  Don't call Cuda_ctrl::cleanup
+        // in this case.
+        Cuda_ctrl::cuda_start(op);
+
         try {
             MStatus status;
-
-            std::vector<Blending_env::Op_t> op;
-            op.push_back( Blending_env::B_D  );
-            op.push_back( Blending_env::U_OH );
-            op.push_back( Blending_env::C_D  );
-
-            Cuda_ctrl::cuda_start(op);
 
             // XXX "HACK: Because blending_env initialize to elbow too ..." What?
             IBL::Ctrl_setup shape = IBL::Shape::elbow();

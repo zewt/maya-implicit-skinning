@@ -46,9 +46,6 @@ extern Debug_ctrl         _debug;
 extern Operators_ctrl    _operators;
 
 /// Initialization of the cuda implicit skinning library
-/// init glew, opengl, cuda context and pre-compute some heavy stuff
-/// such as ultimate blending operators.
-/// Sets atexit() so the memory is freed when exit(0); primitive is called
 void cuda_start(const std::vector<Blending_env::Op_t>& op);
 
 /// Free CUDA memory

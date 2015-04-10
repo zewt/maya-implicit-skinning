@@ -106,11 +106,7 @@ int get_max_gflops_device_id()
         }
         ++current_device;
     }
-    cudaGetDeviceProperties(&deviceProp, max_perf_device);
-    printf("\nDevice %d: \"%s\"\n", max_perf_device,
-           deviceProp.name);
-    printf("Compute Capability   : %d.%d\n",
-           deviceProp.major, deviceProp.minor);
+
     return max_perf_device;
 }
 

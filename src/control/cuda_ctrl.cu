@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+using namespace std;
 
 #include "skeleton.hpp"
 #include "cuda_utils_common.hpp"
@@ -73,29 +74,23 @@ void cuda_start(const std::vector<Blending_env::Op_t>& op)
 #ifndef NDEBUG
     std::cout << "WARNING: you're still in debug mode" << std::endl;
 #endif
-    std::cout << "Initialize constants\n";
-    Constants::init();
-    std::cout << "Done\n";
-
     // We choose the most efficient GPU and use it :
     int device_id = Cuda_utils::get_max_gflops_device_id();
 
-    //CUDA_SAFE_CALL( cudaDeviceSynchronize() );
-    //CUDA_SAFE_CALL( cudaDeviceReset() );
+    cudaError_t code = cudaSetDevice(device_id);
+    if(code != cudaSuccess)
+        throw std::runtime_error(cudaGetErrorString(code));
 
-    // these two functions are said to be mutually exclusive
-    //{
-    /// MUST be called after OpenGL/Glew context are init and before any cuda calls that create context like malloc
-    //CUDA_SAFE_CALL(cudaGLSetGLDevice(device_id) );
-    CUDA_SAFE_CALL(cudaSetDevice(device_id) );
-    //}
+    cudaDeviceProp deviceProp;
+    CUDA_SAFE_CALL(cudaGetDeviceProperties(&deviceProp, device_id));
+    printf("Device %d: \"%s\"\n", device_id, deviceProp.name);
+    printf("Compute Capability   : %d.%d\n", deviceProp.major, deviceProp.minor);
 
-    //CUDA_SAFE_CALL( cudaDeviceSynchronize() );
+    Constants::init();
+
     //Cuda_utils::print_device_attribs(get_cu_device() );
 
-
-    // Compute on host implicit blending operators
-    // and allocate them on device memory
+    // Compute on host implicit blending operators and allocate them on device memory
     std::cout << "\nInitialize blending operators" << std::endl;
 
     std::cout << "GPU memory usage: \n";
@@ -128,8 +123,6 @@ void cuda_start(const std::vector<Blending_env::Op_t>& op)
 
 
     set_default_controller_parameters();
-
-//    atexit(cleanup);
 }
 
 // -----------------------------------------------------------------------------
