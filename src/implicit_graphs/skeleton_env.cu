@@ -256,20 +256,20 @@ static void update_device_grid()
 
         int total_size = 0;
         for(int cell_idx = 0; cell_idx < grid->_filled_cells.size(); ++cell_idx) {
-            std::vector< std::vector<Cluster> * > &blist = blist_per_cell[cell_idx];
+            std::vector< std::vector<Cluster> * > &blists_list = blist_per_cell[cell_idx];
             // XXX: It's important that we only clear the list and don't deallocate it, so we don't
             // reallocate hundreds of these every frame.  This is what clear() does in MSVC.  What about
             // gnuc++?
-            blist.clear();
+            blists_list.clear();
 
             if(!grid->_filled_cells[cell_idx])
                 continue;
 
             // The number of clusters that the blending list can possibly have is the number of bones.
             // Preallocate that amount, so we don't have to reallocate.
-            blist.reserve(grid->_grid_cells[cell_idx].size());
+            blists_list.reserve(grid->_grid_cells[cell_idx].size());
 
-            total_size += cell_to_blending_list(env, cell_idx, blist, blist_cache);
+            total_size += cell_to_blending_list(env, cell_idx, blists_list, blist_cache);
         }
 
         // Allocate space for these clusters.
