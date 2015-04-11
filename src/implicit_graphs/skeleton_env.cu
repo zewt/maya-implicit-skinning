@@ -207,6 +207,12 @@ int cell_to_blending_list(SkeletonEnv *env,
 // one that was requested.  This is hard to fix right now, since all of the data
 // is put in the same array to allow putting it into a texture.  This doesn't really
 // need to be in a texture, and once that's changed this will be easier to fix.
+
+// This is only a temporary in update_device_grid.  Allocating this is a bit expensive
+// and this is a hot code path, so keep it around and reuse the allocation.  We aren't
+// reentrant, and we won't be called from multiple threads, so this is safe.
+static std::vector< std::vector< std::vector<Cluster> * > > blist_per_cell;
+
 static void update_device_grid()
 {
 #if 1
@@ -242,19 +248,22 @@ static void update_device_grid()
         // Get the blending list for each cell, and the total number of resulting clusters.
         // Each element of blist_per_cell is a list of blending lists, pointing into blist_cache.
         // The list is concatenated down below.
-        std::vector< std::vector< std::vector<Cluster> * > > blist_per_cell;
-
+        //
         // The grid has res^3 cells.  We'll only process cells that actually have surfaces affecting them,
         // but preallocate the maximum for efficiency.
-        blist_per_cell.reserve(grid->res() * grid->res() * grid->res());
+        if(blist_per_cell.size() < grid->_filled_cells.size())
+            blist_per_cell.resize(grid->_filled_cells.size());
 
         int total_size = 0;
         for(int cell_idx = 0; cell_idx < grid->_filled_cells.size(); ++cell_idx) {
+            std::vector< std::vector<Cluster> * > &blist = blist_per_cell[cell_idx];
+            // XXX: It's important that we only clear the list and don't deallocate it, so we don't
+            // reallocate hundreds of these every frame.  This is what clear() does in MSVC.  What about
+            // gnuc++?
+            blist.clear();
+
             if(!grid->_filled_cells[cell_idx])
                 continue;
-
-            blist_per_cell.emplace_back();
-            std::vector< std::vector<Cluster> * > &blist = blist_per_cell.back();
 
             // The number of clusters that the blending list can possibly have is the number of bones.
             // Preallocate that amount, so we don't have to reallocate.
@@ -268,13 +277,11 @@ static void update_device_grid()
         hd_grid_data.realloc(offset + total_size);
 
         // Iterate over _filled_cells again, copying the results to hd_grid_blending_list and hd_grid_data.
-        auto blist_per_cell_it = blist_per_cell.begin();
         for(int cell_idx = 0; cell_idx < grid->_filled_cells.size(); ++cell_idx) {
             if(!grid->_filled_cells[cell_idx])
                 continue;
 
-            std::vector< std::vector<Cluster> *> blists_list = *blist_per_cell_it;
-            blist_per_cell_it++;
+            const std::vector< std::vector<Cluster> *> &blists_list = blist_per_cell[cell_idx];
 
             hd_grid[grid_offset + cell_idx] = offset;
 
