@@ -40,11 +40,14 @@ struct Cluster_cu {
         blend_type(EJoint::NONE), ctrl_id(-1)
     { }
 
-    Cluster_cu(const Cluster& c){
+    Cluster_cu(const Cluster& c) { *this = c; }
+
+    Cluster_cu &operator=(const Cluster &c) {
         nb_bone    = c.nb_bone;
         first_bone = c.first_bone;
         blend_type = c.datas._blend_type;
         ctrl_id    = c.datas._ctrl_id;
+        return *this;
     }
 
     /// Number of bones in the cluster

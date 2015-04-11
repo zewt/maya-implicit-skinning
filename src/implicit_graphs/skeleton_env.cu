@@ -287,14 +287,11 @@ static void update_device_grid()
 
             int first_offset = offset;
             int total_size = 0;
-            for(std::vector<Cluster> *blists: blists_list) {
+            for(const std::vector<Cluster> *blists: blists_list) {
                 for(const Cluster &c: *blists) {
                     // Convert cluster to cluster_cu and offset bones id to match the concateneted representation
-                    Cluster_cu clus(c);
-
-                    clus.first_bone += off_bone;
-
-                    hd_grid_blending_list[offset] = clus;
+                    hd_grid_blending_list[offset] = c;
+                    hd_grid_blending_list[offset].first_bone += off_bone;
                     hd_grid_data         [offset]._bulge_strength = c.datas._bulge_strength;
                     offset++;
                     total_size++;
