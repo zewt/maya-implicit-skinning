@@ -3,7 +3,8 @@ Implicit skinning
 If not otherwise stated the files under this folder are:
 
 - Copyright (C) 2013 Rodolphe Vaillant, Loic Barthe, Florian Cannezin,
-Gael Guennebaud, Marie Paule Cani, Damien Rohmer, Brian Wyvill, Olivier Gourmel 
+Gael Guennebaud, Marie Paule Cani, Damien Rohmer, Brian Wyvill, Olivier Gourmel,
+Glenn Maynard
 
 - Under the Mozilla Public License Version 2.0.
 
