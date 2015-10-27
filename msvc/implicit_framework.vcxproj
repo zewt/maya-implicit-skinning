@@ -183,10 +183,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\blending_lib\controller.hpp" />
-    <ClInclude Include="..\include\blending_lib\controller_tools.hpp" />
-    <ClInclude Include="..\include\blending_lib\opening.hpp" />
-    <ClInclude Include="..\include\blending_lib\structs.hpp" />
     <CudaCompile Include="..\src\animation\vert_to_bone_info.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -228,6 +224,8 @@
     <ClInclude Include="..\src\animation\joint_type.hpp" />
     <ClInclude Include="..\src\animation\skeleton.hpp" />
     <ClInclude Include="..\src\animation\vert_to_bone_info.hpp" />
+    <ClInclude Include="..\src\blending_lib\controller.hpp" />
+    <ClInclude Include="..\src\blending_lib\controller_tools.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_env_type.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\blending_functions.hpp" />
@@ -240,9 +238,14 @@
     <ClInclude Include="..\src\blending_lib\cuda_interface\uclean.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\ucommon.hpp" />
     <ClInclude Include="..\src\blending_lib\cuda_interface\ultimate.hpp" />
+    <ClInclude Include="..\src\blending_lib\funcs.hpp" />
     <ClInclude Include="..\src\blending_lib\generator.hpp" />
+    <ClInclude Include="..\src\blending_lib\opening.hpp" />
     <ClInclude Include="..\src\blending_lib\splines.hpp" />
+    <ClInclude Include="..\src\blending_lib\structs.hpp" />
+    <ClInclude Include="..\src\blending_lib\tools.hpp" />
     <ClInclude Include="..\src\containers\grid3_cu.hpp" />
+    <ClInclude Include="..\src\containers\identifier.hpp" />
     <ClInclude Include="..\src\containers\idx3_cu.hpp" />
     <ClInclude Include="..\src\control\cuda_ctrl.hpp" />
     <ClInclude Include="..\src\control\debug_ctrl.hpp" />
