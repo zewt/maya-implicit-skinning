@@ -5,7 +5,7 @@
 
 #include "marching_cubes.hpp"
 
-interface ImplicitSurfaceGeometryOverrideSource
+struct ImplicitSurfaceGeometryOverrideSource
 {
     virtual const MeshGeom &get_mesh_geometry() = 0;
 };
