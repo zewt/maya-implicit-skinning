@@ -20,10 +20,13 @@
 */
 
 /// Check a cuda API call.
+//
+/// Don't fail on cudaErrorCudartUnloading.  Maya doesn't properly unload modules on exit,
+/// which causes our static objects like HD_Array to be unloaded after CUDA has uninitialized.
 /// exit() if not cudaSuccess:
 #define CUDA_SAFE_CALL(x) do{\
     cudaError_t code = x;\
-    if(code != cudaSuccess){\
+    if(code != cudaSuccess && code != cudaErrorCudartUnloading){\
     fprintf(stderr,"CUDA error: %s at %s, line %d\n",\
     cudaGetErrorString(code), __FILE__, __LINE__);\
     fflush(stderr);\
