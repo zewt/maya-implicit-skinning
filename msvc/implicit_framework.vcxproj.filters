@@ -96,18 +96,6 @@
     <ClInclude Include="..\src\animation\animesh_kers.hpp">
       <Filter>animation</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\blending_lib\controller.hpp">
-      <Filter>blending_lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\blending_lib\controller_tools.hpp">
-      <Filter>blending_lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\blending_lib\opening.hpp">
-      <Filter>blending_lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\blending_lib\structs.hpp">
-      <Filter>blending_lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\blending_lib\cuda_interface\n_ary_constant_interface.hpp">
       <Filter>blending_lib\cuda_interface</Filter>
     </ClInclude>
@@ -350,6 +338,27 @@
     </ClInclude>
     <ClInclude Include="..\src\maya\marching_cubes.hpp">
       <Filter>maya</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\controller.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\controller_tools.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\structs.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\containers\identifier.hpp">
+      <Filter>containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\tools.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\funcs.hpp">
+      <Filter>blending_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\blending_lib\opening.hpp">
+      <Filter>blending_lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
