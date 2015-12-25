@@ -14,7 +14,7 @@ namespace Utils_sampling {
 /// @param nors : list of normlas coresponding to each verts[].
 /// @param tris : triangle indices in verts[] array.
 /// @code
-///     tri(v0;v1;v3) = { verts[ tris[ith_tri*3 + 0] ],
+///     tri(v0;v1;v2) = { verts[ tris[ith_tri*3 + 0] ],
 ///                       verts[ tris[ith_tri*3 + 1] ],
 ///                       verts[ tris[ith_tri*3 + 2] ]   }
 /// @endcode
