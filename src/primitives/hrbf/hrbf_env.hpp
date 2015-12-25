@@ -204,19 +204,10 @@ void get_weights(int hrbf_id, std::vector<float4>& weights_list);
 /// get normal in initial postion
 Vec3_cu get_normal(int hrbf_id, int sample_idx);
 
-/// get animated normal
-Vec3_cu get_anim_normal(int hrbf_id, int sample_idx);
-
 /// Get the list of normals that belongs to the instance hrbf_id.
 /// 'normal_list' will be resized to match get_instance_size(hrbf_id) and
 /// filled with the initial direction of the samples' normals.
 void get_normals(int hrbf_id, std::vector<Vec3_cu>& normal_list);
-
-/// Get the list of normals that belongs to the instance hrbf_id.
-/// 'normal_list' will be resized to match get_instance_size(hrbf_id) and
-/// filled with the animated direction of the samples' normals.
-/// We use get_normals() normals and apply the inverse transpose.
-void get_anim_normals(int hrbf_id, std::vector<Vec3_cu>& normal_list);
 
 #if !defined(NO_CUDA)
 /// get weights

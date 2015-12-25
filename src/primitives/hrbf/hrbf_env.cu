@@ -291,29 +291,6 @@ void get_normals(int hrbf_id, std::vector<Vec3_cu>& normal_list)
 
 // -----------------------------------------------------------------------------
 
-void get_anim_normals(int hrbf_id, std::vector<Vec3_cu>& normal_list)
-{
-    get_normals(hrbf_id, normal_list);
-
-    Transfo tr = get_transfo( hrbf_id );
-    Transfo tr_nor = tr.fast_invert().transpose();
-
-    for(unsigned i = 0; i < normal_list.size(); ++i)
-        normal_list[i] = tr_nor * normal_list[i];
-}
-
-// -----------------------------------------------------------------------------
-
-Vec3_cu get_anim_normal(int hrbf_id, int sample_idx)
-{
-    Transfo tr = get_transfo( hrbf_id );
-    Transfo tr_nor = tr.fast_invert().transpose();
-
-    return tr_nor * get_normal(hrbf_id, sample_idx);
-}
-
-// -----------------------------------------------------------------------------
-
 float4 get_weights(int hrbf_id, int sample_idx){
     assert( hrbf_id < h_offset.size() );
     assert( hrbf_id >= 0 );
