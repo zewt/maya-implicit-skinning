@@ -3,6 +3,7 @@
 *.suo
 *.sdf
 *.pdb
+*.pyc
 
 build/
 msvc/Debug/
