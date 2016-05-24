@@ -65,7 +65,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>E:\temp\Maya devkit\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;E:\temp\Maya devkit\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <Optimization>Disabled</Optimization>
@@ -98,7 +98,7 @@
     </CudaCompile>
     <CudaLink />
     <Link>
-      <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMayaRender.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMayaUI.lib;C:\Program Files\Autodesk\Maya2016\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaRender.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaUI.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cuda.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions> /debug /export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <ImportLibrary />
     </Link>
@@ -108,7 +108,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>E:\temp\Maya devkit\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\Maya2015\include;E:\temp\Maya devkit\include;..\libs\include;..\libs\include\vcglib;..\src;..\src\animation;..\src\blending_lib;..\src\blending_lib\cuda_interface;..\src\control;..\src\containers;..\src\global_datas;..\src\maths;..\src\maths\intersections;..\src\meshes;..\src\meshes\vcg_lib;..\src\primitives;..\src\primitives\hrbf;..\src\rendering;..\src\utils;..\src\utils\cuda_utils;..\src\implicit_graphs;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -140,7 +140,7 @@
       <CodeGeneration>compute_30,sm_30</CodeGeneration>
     </CudaCompile>
     <Link>
-      <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMayaRender.lib;C:\Program Files\Autodesk\Maya2016\lib\OpenMayaUI.lib;C:\Program Files\Autodesk\Maya2016\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cudart.lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64\cuda.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMaya.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaAnim.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaRender.lib;C:\Program Files\Autodesk\Maya2015\lib\OpenMayaUI.lib;C:\Program Files\Autodesk\Maya2015\lib\Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions> /debug /export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <ImportLibrary />
     </Link>

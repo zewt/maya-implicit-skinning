@@ -42,58 +42,8 @@ SOURCES += \
     src/meshes/vcg_lib/*.* \
     src/meshes/voxelizer/*.* \
     src/meshes/*.* \
+    src/maya/*.* \
     src/*.*
-
-#-------------------------------------------------------------------------------
-
-HEADERS += \
-    include/maths/*.* \
-    include/maths/intersections/*.* \
-    include/rendering/*.hpp \
-    include/rendering/environment_map/*.hpp \
-    include/rendering/environment_map/*.inl \
-    include/animation/*.* \
-    include/animation/pinocchio/*.* \
-    include/global_datas/* \
-    include/blending_lib/*.* \
-    include/blending_lib/cuda_interface/*.* \
-    include/primitives/*.* \
-    include/primitives/hrbf/*.* \
-    include/primitives/precomputed_prim/*.* \
-    include/scene_tree/* \
-    include/qt_gui/*.hpp \
-    include/qt_gui/common/customize/*.hpp \
-    include/qt_gui/common/popup/*.hpp \
-    include/qt_gui/common/toolbars/*.hpp \
-    include/qt_gui/common/tools/*.hpp \
-    include/qt_gui/common/widgets/*.hpp \
-    include/qt_gui/common/gl_widgets/*.hpp \
-    include/qt_gui/common/objects/*.hpp \
-    include/qt_gui/common/gizmo2/*.hpp \
-    include/qt_gui/common/gizmo_deprecated/*.hpp \
-    include/qt_gui/common/*.hpp \
-    include/qt_gui/CSG/*.hpp \
-    include/qt_gui/SKIN/*.hpp \
-    include/qt_gui/SKIN_V2/*.hpp \
-    include/implicit_graphs/*.* \
-    include/implicit_graphs/CSG/*.* \
-    include/implicit_graphs/skinning/*.* \
-    include/control/* \
-    include/containers/* \
-    include/parsers/* \
-    include/utils/*.hpp \
-    include/utils/portable_includes/* \
-    include/utils/gl_utils/*.* \
-    include/utils/cuda_utils/*.hpp \
-    include/utils/cuda_utils/*.inl \
-    include/meshes/*.* \
-    include/meshes/vcg_lib/*.* \
-    include/meshes/voxelizer/*.* \
-    include/*.hpp \
-    include/*.inl \
-    include/qt_gui/common/gl_widgets/IO_Spline_edit.hpp \
-    include/qt_gui/common/gl_widgets/spline_popup.hpp \
-    include/qt_gui/common/gl_widgets/operator_name_dialog.h
 
 #-------------------------------------------------------------------------------
 # SHADERS
@@ -129,38 +79,37 @@ INCLUDEPATH += \
     libs/include \
     libs/include/vcglib \
     include \
-    include/animation \
-    include/blending_functions \
-    include/blending_lib \
-    include/blending_lib/cuda_interface \
-    include/control \
-    include/containers \
-    include/gizmo \
-    include/global_datas \
-    include/maths \
-    include/maths/intersections \
-    include/parsers \
-    include/pinocchio \
-    include/primitives \
-    include/primitives/hrbf \
-    include/primitives/precomputed_prim \
-    include/qt_gui \
-    include/implicit_graphs \
-    include/implicit_graphs/CSG \
-    include/implicit_graphs/skinnning \
-    include/rendering \
-    include/utils \
-    include/utils/portable_includes \
-    include/utils/gl_utils \
-    include/utils/cuda_utils \
-    include/meshes/voxelizer \
-    include/meshes/vcg_lib \
-    include/meshes \
-    include/scene_tree
+    src \
+    src/animation \
+    src/blending_functions \
+    src/blending_lib \
+    src/blending_lib/cuda_interface \
+    src/control \
+    src/containers \
+    src/gizmo \
+    src/global_datas \
+    src/maths \
+    src/maths/intersections \
+    src/parsers \
+    src/pinocchio \
+    src/primitives \
+    src/primitives/hrbf \
+    src/primitives/precomputed_prim \
+    src/qt_gui \
+    src/implicit_graphs \
+    src/implicit_graphs/CSG \
+    src/implicit_graphs/skinnning \
+    src/rendering \
+    src/utils \
+    src/utils/portable_srcs \
+    src/utils/gl_utils \
+    src/utils/cuda_utils \
+    src/meshes/voxelizer \
+    src/meshes/vcg_lib \
+    src/meshes \
+    src/scene_tree
 
 TARGET = implicit_skinning
-Debug:DESTDIR = .
-Release:DESTDIR = .
 
 # QT CUDA TRICKS
 #(autocompletion with cuda)
@@ -168,12 +117,13 @@ unix:INCLUDEPATH += /usr/local/cuda/include
 unix:INCLUDEPATH += /usr/include/qt4
 unix:INCLUDEPATH += /usr/include/qt4/QtGUI
 unix:INCLUDEPATH += /usr/include/c++/4.4
-unix:INCLUDEPATH += /usr/include/c++/*.*
+unix:INCLUDEPATH += /usr/include/c++/
 win32:INCLUDEPATH += "C:\CUDA\include"
 win32:INCLUDEPATH += "F:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v4.2\include"
 win32:INCLUDEPATH += "F:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.2\C\common\inc"
 win32:INCLUDEPATH += "F:\ProgramData\NVIDIA Corporation\NVIDIA GPU Computing SDK 4.2\C\common\inc"
 
+win32:INCLUDEPATH += "C:\Program Files\Autodesk\Maya2015\include"
 INCLUDEPATH += libs/include
 
 #(avoid unrecognized keywords)

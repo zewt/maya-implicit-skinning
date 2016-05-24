@@ -1,1 +1,10 @@
 *.swp
+*.deps
+*.suo
+*.sdf
+*.pdb
+
+build/
+msvc/Debug/
+msvc/Release/
+msvc/src/

@@ -16,7 +16,7 @@ loadPlugin "/path/to/implicit_framework.mll"
 - In the Python tab, add the top directory containing "implicit" to the Python path:
 
 import sys
-sys.path.append('/path/to/repository')
+sys.path.append('C:/Users/73000150/Desktop/maya_is')
 
 - Open a scene and select a mesh.  The mesh must already be skinned.
 - In the Python script tab, import and run the main script:
