@@ -1,3 +1,11 @@
+Note
+----
+
+This code is unmaintained, but released in case it's useful to anyone.
+
+Building
+--------
+
 To build in Windows, just open msvc/implicit_framework.vcxproj.  If you're not
 in Maya 2015 or CUDA 6.5, you may need to update the include and library paths.
 
