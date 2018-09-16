@@ -284,7 +284,7 @@ void ImplicitSurface::load_sampleset(MDataBlock &dataBlock)
         bone->set_enabled(true);
         bone->discard_precompute();
         bone->get_hrbf().init_coeffs(inputSample.nodes, inputSample.n_nodes);
-        printf("update_bone_samples: Solved %i nodes\n", inputSample.nodes.size());
+        printf("update_bone_samples: Solved %i nodes\n", (int) inputSample.nodes.size());
 
         // Make sure the current transforms are applied now that we've changed the bone.
         // XXX: If this is needed, Bone should probably do this internally.

@@ -195,7 +195,7 @@ void print_device_attribs(CUdevice id)
     case CU_COMPUTEMODE_DEFAULT:
         printf("Default mode - Device is not restricted and can have multiple CUDA contexts present at a single time\n");
         break;
-    case CU_COMPUTEMODE_EXCLUSIVE:
+    case CU_COMPUTEMODE_EXCLUSIVE_PROCESS:
         printf("Compute-exclusive mode - Device can have only one CUDA context present on it at a time\n");
         break;
     case CU_COMPUTEMODE_PROHIBITED:

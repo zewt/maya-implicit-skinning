@@ -286,15 +286,14 @@ template<typename Derived> class DenseBase
     template<int Size> struct FixedSegmentReturnType { typedef VectorBlock<Derived, Size> Type; };
     template<int Size> struct ConstFixedSegmentReturnType { typedef const VectorBlock<const Derived, Size> Type; };
     
-    // Note: The "DenseBase::" prefixes are added to help MSVC9 to match these declarations with the later implementations.
-    SegmentReturnType segment(Index start, Index size);
-    typename DenseBase::ConstSegmentReturnType segment(Index start, Index size) const;
+    typename SegmentReturnType segment(Index start, Index size); 
+    typename ConstSegmentReturnType segment(Index start, Index size) const { return const_cast<const DenseBase *>(this)->segment(start, size); }
 
     SegmentReturnType head(Index size);
-    typename DenseBase::ConstSegmentReturnType head(Index size) const;
+    typename ConstSegmentReturnType head(Index size) const { return const_cast<const DenseBase *>(this)->head(size); }
 
     SegmentReturnType tail(Index size);
-    typename DenseBase::ConstSegmentReturnType tail(Index size) const;
+    typename ConstSegmentReturnType tail(Index size) const { return const_cast<const DenseBase *>(this)->tail(size); }
 
     template<int Size> typename FixedSegmentReturnType<Size>::Type head();
     template<int Size> typename ConstFixedSegmentReturnType<Size>::Type head() const;
