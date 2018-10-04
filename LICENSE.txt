@@ -1,5 +1,9 @@
 Implicit skinning
 
+Note: Files in libs/include/vcglib/ is under the GPL.  This directory only remains
+for validating the reimplemented poisson disk sampling implementation and isn't
+included in the build by default.
+
 If not otherwise stated the files under this folder are:
 
 - Copyright (C) 2013 Rodolphe Vaillant, Loic Barthe, Florian Cannezin,
